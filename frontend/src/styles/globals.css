@@ -1,0 +1,169 @@
+@import "@fontsource-variable/comfortaa";
+@import "@fontsource-variable/noto-sans-sc";
+@import "@fontsource-variable/noto-serif-sc";
+@import "tailwindcss";
+
+@theme {
+  --color-luma-ivory-50: #fffdf8;
+  --color-luma-ivory-100: #faf6ec;
+  --color-luma-ivory-200: #f2eadb;
+
+  --color-luma-teal-50: #edf8f5;
+  --color-luma-teal-100: #d4eee7;
+  --color-luma-teal-300: #78c8b6;
+  --color-luma-teal-500: #168a78;
+  --color-luma-teal-600: #0f7163;
+  --color-luma-teal-700: #105a51;
+  --color-luma-teal-900: #173f3a;
+
+  --color-luma-gold-100: #fbefca;
+  --color-luma-gold-300: #edcd70;
+  --color-luma-gold-500: #c99a2e;
+  --color-luma-gold-700: #8d6719;
+
+  --color-luma-ink: #20352f;
+  --color-luma-muted: #64766f;
+  --color-luma-white: #ffffff;
+
+  --font-sans:
+    "Noto Sans SC Variable", "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+    "SF Pro Text", system-ui, sans-serif;
+  --font-display:
+    "Noto Serif SC Variable", "Noto Serif SC", "Source Han Serif SC",
+    "Songti SC", serif;
+  --font-brand:
+    "Comfortaa Variable", Comfortaa, "SF Pro Rounded", var(--font-sans);
+
+  --shadow-luma-sm: 0 1px 2px rgb(23 63 58 / 0.04), 0 8px 24px rgb(23 63 58 / 0.06);
+  --shadow-luma-md: 0 2px 4px rgb(23 63 58 / 0.04), 0 18px 48px rgb(23 63 58 / 0.10);
+  --shadow-luma-glow: 0 14px 40px rgb(22 138 120 / 0.20);
+
+  --radius-luma-sm: 0.75rem;
+  --radius-luma-md: 1.25rem;
+  --radius-luma-lg: 2rem;
+}
+
+:root {
+  color: var(--color-luma-ink);
+  background: var(--color-luma-ivory-50);
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  font-optical-sizing: auto;
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  color: var(--color-luma-teal-900);
+  background: var(--color-luma-gold-100);
+}
+
+@layer components {
+  .luma-display {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    font-weight: 720;
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+  }
+
+  .luma-heading-1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.25rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .luma-heading-2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3vw, 2.75rem);
+    font-weight: 680;
+    line-height: 1.28;
+    letter-spacing: -0.015em;
+  }
+
+  .luma-heading-3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 660;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+
+  .luma-body-lg {
+    font-size: 1.125rem;
+    line-height: 1.85;
+    letter-spacing: 0.005em;
+  }
+
+  .luma-body {
+    font-size: 1rem;
+    line-height: 1.75;
+    letter-spacing: 0.005em;
+  }
+
+  .luma-caption {
+    font-size: 0.8125rem;
+    font-weight: 560;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+  }
+
+  .luma-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 720;
+    line-height: 1.4;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+}
+
+@supports (font-variation-settings: normal) {
+  .luma-display,
+  .luma-heading-1,
+  .luma-heading-2,
+  .luma-heading-3 {
+    font-variation-settings: "wght" 680;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
