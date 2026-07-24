@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { defaultAvatars } from '@/assets/avatars'
+import bgParent from '@/assets/images/bg-parent.png'
 import { Navbar } from '@/components/layout'
 import { Button, Card } from '@/components/ui'
 import { fadeUp, staggerContainer } from '@/design-system'
@@ -98,7 +99,14 @@ export function ParentDemoPage() {
   }
 
   return (
-    <main className="min-h-screen bg-luma-ivory-50 px-4 py-4 sm:px-5 sm:py-5">
+    <main className="relative min-h-screen bg-luma-ivory-50 px-4 py-4 sm:px-5 sm:py-5">
+      <img
+        src={bgParent}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40 select-none"
+      />
+      <div className="relative z-0">
       <Navbar
         items={[
           { label: '成长概览', href: '#overview', isActive: true },
@@ -399,6 +407,7 @@ export function ParentDemoPage() {
           </motion.section>
         )}
       </motion.div>
+      </div>
     </main>
   )
 }

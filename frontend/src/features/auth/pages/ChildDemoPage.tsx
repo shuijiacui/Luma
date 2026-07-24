@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { Brand } from '@/components/brand'
 import { Button, Card } from '@/components/ui'
+import bgChild from '@/assets/images/bg-child.png'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { useAuth } from '../AuthContext'
 
@@ -16,6 +17,12 @@ export function ChildDemoPage() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-luma-teal-50 px-5 py-6">
+      <img
+        src={bgChild}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40 select-none"
+      />
       <div
         className="absolute top-20 -left-24 size-80 rounded-full bg-luma-gold-100/60 blur-3xl"
         aria-hidden="true"

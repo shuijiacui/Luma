@@ -64,7 +64,7 @@ export function AuthShell({
 
       <div
         className={cn(
-          'relative z-10 mx-auto flex w-full max-w-7xl justify-center lg:px-16 xl:px-24',
+          'relative z-10 mx-auto flex w-full max-w-7xl justify-center lg:px-24 xl:px-36 2xl:px-40',
           role === 'child' ? 'lg:justify-start' : 'lg:justify-end',
         )}
       >
