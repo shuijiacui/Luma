@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import homeHero from '@/assets/images/home-hero.png'
@@ -6,6 +7,7 @@ import { Brand } from '@/components/brand'
 import { Button } from '@/components/ui'
 import { fadeUp, staggerContainer } from '@/design-system'
 import { useAuth } from '@/features/auth/AuthContext'
+import { PricingModal } from '@/features/marketing/components/PricingModal'
 
 const particles = [
   { left: '8%', top: '25%', size: 5, delay: 0.1 },
@@ -21,6 +23,7 @@ export function HomePage() {
   const navigate = useNavigate()
   const { session } = useAuth()
   const destination = session ? `/${session.role}/demo` : '/auth?mode=login'
+  const [pricingOpen, setPricingOpen] = useState(false)
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-luma-ivory-50">
@@ -80,13 +83,14 @@ export function HomePage() {
           />
         </Link>
         <div className="hidden text-right sm:block">
-          <div className="font-brand text-sm font-bold tracking-[0.04em] text-luma-gold-700">
-            Create freely
+            <button
+              type="button"
+              onClick={() => setPricingOpen(true)}
+              className="rounded-full border border-luma-gold-300/40 bg-luma-ivory-50/60 px-4 py-1.5 text-sm font-bold tracking-[0.04em] text-luma-gold-700 backdrop-blur-sm transition hover:bg-luma-gold-100/70"
+            >
+              订阅计划
+            </button>
           </div>
-          <div className="mt-1 text-xs tracking-[0.08em] text-luma-muted">
-            Imagine with Nilo
-          </div>
-        </div>
       </header>
 
       <section className="relative z-10 mx-auto flex min-h-[calc(100vh-104px)] max-w-7xl items-center px-5 pb-20 sm:px-8 lg:px-10">
@@ -162,6 +166,8 @@ export function HomePage() {
           </motion.p>
         </motion.div>
       </section>
+
+      <PricingModal open={pricingOpen} onClose={() => setPricingOpen(false)} />
     </main>
   )
 }

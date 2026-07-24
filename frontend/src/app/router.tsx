@@ -7,6 +7,7 @@ import { ParentDemoPage } from '@/features/auth/pages/ParentDemoPage'
 import { UnifiedAuthPage } from '@/features/auth/pages/UnifiedAuthPage'
 import { ChildCreatePage } from '@/features/child/pages/ChildCreatePage'
 import { HomePage } from '@/features/marketing/pages/HomePage'
+import { ArchivePage } from '@/features/parents/pages/ArchivePage'
 
 export const router = createBrowserRouter([
   {
@@ -33,7 +34,10 @@ export const router = createBrowserRouter([
       },
       {
         element: <ProtectedRoute role="parent" />,
-        children: [{ path: 'parent/demo', Component: ParentDemoPage }],
+        children: [
+          { path: 'parent/demo', Component: ParentDemoPage },
+          { path: 'parent/archive', Component: ArchivePage },
+        ],
       },
       {
         element: <ProtectedRoute role="child" />,
