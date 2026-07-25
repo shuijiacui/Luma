@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { defaultAvatars } from '@/assets/avatars'
@@ -11,6 +11,7 @@ import { CommunicationSection } from '@/features/parents/components/Communicatio
 import { DrawingInsightSection } from '@/features/parents/components/DrawingInsightSection'
 import { TimelineSection } from '@/features/parents/components/TimelineSection'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
+import { fetchMe, type MeResponse } from '@/lib/api/authApi'
 import { cn } from '@/lib/cn'
 import { useAuth } from '../AuthContext'
 import { findFamilyById, getChildrenForFamily } from '../storage'
@@ -77,14 +78,26 @@ const demoInsight = {
 export function ParentDemoPage() {
   const navigate = useNavigate()
   const { session, logout } = useAuth()
-  const family = session ? findFamilyById(session.familyId) : undefined
+  const isGuest = !session || session.isGuest || !session.token
+  // 游客：本地演示家庭；登录：后端真实家庭与孩子列表
+  const [me, setMe] = useState<MeResponse | null>(null)
+  useEffect(() => {
+    if (!session?.isGuest && session?.token) {
+      fetchMe(session.token).then(setMe).catch(() => setMe(null))
+    }
+  }, [session])
+  const family = isGuest
+    ? (session ? findFamilyById(session.familyId) : undefined)
+    : me?.family
+  const inviteCode = isGuest ? family?.inviteCode : me?.family.inviteCode
   const children = useMemo(
-    () => (session ? getChildrenForFamily(session.familyId) : []),
-    [session],
+    () =>
+      isGuest
+        ? (session ? getChildrenForFamily(session.familyId) : [])
+        : (me?.children ?? []),
+    [isGuest, session, me],
   )
-  const [selectedChildId, setSelectedChildId] = useState(
-    () => children[0]?.id ?? '',
-  )
+  const [selectedChildId, setSelectedChildId] = useState('')
   const [copied, setCopied] = useState(false)
   const selectedChild =
     children.find((child) => child.id === selectedChildId) ?? children[0]
@@ -95,8 +108,8 @@ export function ParentDemoPage() {
   }
 
   async function copyInviteCode() {
-    if (!family?.inviteCode) return
-    await navigator.clipboard.writeText(family.inviteCode)
+    if (!inviteCode) return
+    await navigator.clipboard.writeText(inviteCode)
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1600)
   }
@@ -179,7 +192,7 @@ export function ParentDemoPage() {
               <div className="luma-caption text-luma-muted">家庭邀请码</div>
               <div className="mt-1 flex items-center gap-3">
                 <strong className="font-brand text-xl tracking-[0.12em] text-luma-teal-900">
-                  {family?.inviteCode ?? '—'}
+                  {inviteCode ?? '—'}
                 </strong>
                 <button
                   type="button"
@@ -389,7 +402,10 @@ export function ParentDemoPage() {
                 </Card>
               </motion.section>
 
-              <DrawingInsightSection />
+              <DrawingInsightSection
+                childId={selectedChild?.id}
+                token={session?.token}
+              />
               <TimelineSection childName={selectedChild?.nickname ?? '孩子'} />
               <CommunicationSection childName={selectedChild?.nickname ?? '孩子'} />
             </motion.div>
@@ -403,7 +419,7 @@ export function ParentDemoPage() {
               className="mx-auto max-w-2xl text-center"
             >
               <div className="font-brand mt-3 text-3xl font-bold tracking-[0.14em] text-luma-teal-900">
-                {family?.inviteCode ?? '—'}
+                {inviteCode ?? '—'}
               </div>
               <Button
                 variant="secondary"

@@ -18,7 +18,13 @@ export async function apiClient<T>(
   })
 
   if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`)
+    // 后端统一错误格式 { error: '...' }，优先透传服务端文案
+    let message = `Request failed with status ${response.status}`
+    try {
+      const body = (await response.json()) as { error?: string }
+      if (body.error) message = body.error
+    } catch { /* 非 JSON 错误体，保留默认文案 */ }
+    throw new Error(message)
   }
 
   return response.json() as Promise<T>

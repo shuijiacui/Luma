@@ -22,6 +22,7 @@ const niloPrompts = [
 ] as const
 
 export const LATEST_FEATURES_KEY = 'luma_latest_features'
+export const LATEST_ANALYSIS_ID_KEY = 'luma_latest_analysis_id'
 
 export function ChildCreatePage() {
   const navigate = useNavigate()
@@ -45,9 +46,15 @@ export function ChildCreatePage() {
     setAnalysis('loading')
     try {
       // priorFeatures 传入上一轮特征：孩子继续画 = 补充绘画，特征由 server 合并
-      const result = await analyzeDrawing(imageBase64, features)
+      // 登录孩子带 token：server 落库并返回 analysisId（游客不落库）
+      const result = await analyzeDrawing(imageBase64, features, session?.token)
       setFeatures(result.features)
       window.sessionStorage.setItem(LATEST_FEATURES_KEY, JSON.stringify(result.features))
+      if (result.analysisId) {
+        window.sessionStorage.setItem(LATEST_ANALYSIS_ID_KEY, result.analysisId)
+      } else {
+        window.sessionStorage.removeItem(LATEST_ANALYSIS_ID_KEY)
+      }
       setAnalysis('done')
       setServerBubble(`${result.feedbackText}。${result.followUp}`)
     } catch {
