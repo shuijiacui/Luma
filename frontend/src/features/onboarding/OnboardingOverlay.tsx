@@ -16,6 +16,8 @@ function getTargetRect(selector: string): Rect | null {
   const el = document.querySelector(selector)
   if (!el) return null
   const r = el.getBoundingClientRect()
+  // Treat visually hidden elements (zero size) as not found
+  if (r.width === 0 || r.height === 0) return null
   return {
     top: r.top - PADDING,
     left: r.left - PADDING,
@@ -34,11 +36,8 @@ export function OnboardingOverlay() {
 
   useLayoutEffect(() => {
     if (!active || !step) return
-    const measure = () => {
-      setRect(getTargetRect(step.target))
-    }
+    const measure = () => setRect(getTargetRect(activeSelector))
     measure()
-    // Re-measure on resize / scroll in case layout shifts
     window.addEventListener('resize', measure)
     window.addEventListener('scroll', measure, true)
     return () => {
@@ -46,38 +45,87 @@ export function OnboardingOverlay() {
       window.removeEventListener('scroll', measure, true)
       cancelAnimationFrame(rafRef.current)
     }
-  }, [active, step])
+  }, [active, activeSelector])
 
-  // Scroll target into view when step changes
   useEffect(() => {
     if (!active || !step) return
-    const el = document.querySelector(step.target)
+    const el = document.querySelector(activeSelector)
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      // Re-measure after scroll settles
       rafRef.current = requestAnimationFrame(() => {
-        setRect(getTargetRect(step.target))
+        setRect(getTargetRect(activeSelector))
       })
     }
-  }, [active, step])
+  }, [active, activeSelector])
 
   if (!active || !step) return null
 
-  // Determine bubble position: below target if top half of screen, else above
-  const vp = window.innerHeight
-  const BUBBLE_H = 220 // generous estimate to ensure button stays in viewport
-  const bubbleBelow = rect ? rect.top + rect.height / 2 < vp / 2 : true
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const isMobile = vw < 640
+
+  // On mobile, prefer mobileTarget if provided
+  const activeSelector = (isMobile && step.mobileTarget) ? step.mobileTarget : step.target
+
+  // Desktop bubble positioning
+  const BUBBLE_W = 320
+  const BUBBLE_H = 220
+  const bubbleBelow = rect ? rect.top + rect.height / 2 < vh / 2 : true
   const rawBubbleTop = rect
     ? bubbleBelow
       ? rect.top + rect.height + 16
       : rect.top - BUBBLE_H - 16
-    : (vp - BUBBLE_H) / 2
-  const bubbleTop = Math.max(16, Math.min(rawBubbleTop, vp - BUBBLE_H - 16))
-  const bubbleLeft = rect ? Math.max(16, Math.min(rect.left, window.innerWidth - 332)) : 16
+    : (vh - BUBBLE_H) / 2
+  const bubbleTop = Math.max(16, Math.min(rawBubbleTop, vh - BUBBLE_H - 16))
+  const bubbleLeft = rect
+    ? Math.max(16, Math.min(rect.left, vw - BUBBLE_W - 16))
+    : Math.max(16, (vw - BUBBLE_W) / 2)
+
+  const bubbleContent = (
+    <>
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs font-semibold text-luma-muted">
+          {currentIndex + 1} / {steps.length}
+        </span>
+        <button
+          type="button"
+          onClick={skip}
+          className="text-xs text-luma-muted underline-offset-2 hover:text-luma-teal-700 hover:underline"
+        >
+          跳过引导
+        </button>
+      </div>
+
+      <h3 className="text-base font-bold text-luma-teal-900">{step.title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-luma-muted">{step.body}</p>
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="flex gap-1">
+          {steps.map((_, i) => (
+            <span
+              key={i}
+              className={
+                i === currentIndex
+                  ? 'size-1.5 rounded-full bg-luma-teal-500'
+                  : 'size-1.5 rounded-full bg-luma-ivory-200'
+              }
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={next}
+          className="rounded-full bg-luma-teal-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-luma-teal-600 active:scale-95"
+        >
+          {isLast ? '完成' : '下一步'}
+        </button>
+      </div>
+    </>
+  )
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999]">
-      {/* Spotlight overlay using clip-path or box-shadow cutout */}
+      {/* Spotlight overlay */}
       {rect ? (
         <svg
           className="absolute inset-0 h-full w-full"
@@ -126,58 +174,32 @@ export function OnboardingOverlay() {
         />
       )}
 
-      {/* Bubble */}
+      {/* Bubble — bottom sheet on mobile, floating on desktop */}
       <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIndex}
-          className="pointer-events-auto absolute w-80 rounded-2xl border border-white/60 bg-white p-5 shadow-luma-md"
-          style={{ top: bubbleTop, left: bubbleLeft }}
-          initial={{ opacity: 0, y: bubbleBelow ? -8 : 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: bubbleBelow ? -8 : 8 }}
-          transition={{ duration: 0.2 }}
-        >
-          {/* Step counter */}
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs font-semibold text-luma-muted">
-              {currentIndex + 1} / {steps.length}
-            </span>
-            <button
-              type="button"
-              onClick={skip}
-              className="text-xs text-luma-muted underline-offset-2 hover:text-luma-teal-700 hover:underline"
-            >
-              跳过引导
-            </button>
-          </div>
-
-          <h3 className="text-base font-bold text-luma-teal-900">{step.title}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-luma-muted">{step.body}</p>
-
-          <div className="mt-4 flex items-center justify-between gap-3">
-            {/* Dot indicators */}
-            <div className="flex gap-1">
-              {steps.map((_, i) => (
-                <span
-                  key={i}
-                  className={
-                    i === currentIndex
-                      ? 'size-1.5 rounded-full bg-luma-teal-500'
-                      : 'size-1.5 rounded-full bg-luma-ivory-200'
-                  }
-                />
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={next}
-              className="rounded-full bg-luma-teal-500 px-4 py-1.5 text-sm font-bold text-white transition hover:bg-luma-teal-600 active:scale-95"
-            >
-              {isLast ? '完成' : '下一步'}
-            </button>
-          </div>
-        </motion.div>
+        {isMobile ? (
+          <motion.div
+            key={`m-${currentIndex}`}
+            className="pointer-events-auto absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-white/60 bg-white px-5 pt-5 pb-10 shadow-luma-md"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.22 }}
+          >
+            {bubbleContent}
+          </motion.div>
+        ) : (
+          <motion.div
+            key={`d-${currentIndex}`}
+            className="pointer-events-auto absolute rounded-2xl border border-white/60 bg-white p-5 shadow-luma-md"
+            style={{ top: bubbleTop, left: bubbleLeft, width: BUBBLE_W }}
+            initial={{ opacity: 0, y: bubbleBelow ? -8 : 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: bubbleBelow ? -8 : 8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {bubbleContent}
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   )

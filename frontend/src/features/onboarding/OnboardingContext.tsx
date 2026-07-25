@@ -11,6 +11,8 @@ import {
 export interface OnboardingStep {
   /** CSS selector for the element to highlight */
   target: string
+  /** Fallback selector used on mobile when target is hidden */
+  mobileTarget?: string
   title: string
   body: string
 }
