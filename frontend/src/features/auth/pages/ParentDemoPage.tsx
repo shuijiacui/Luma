@@ -184,18 +184,10 @@ export function ParentDemoPage() {
         className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-40 select-none"
       />
       <Navbar
-        className="sticky top-4 z-30 flex-wrap py-3"
-        items={[
-          ...TABS.map((tab) => ({
-            label: tab.label,
-            onClick: () => setActiveTab(tab.key),
-            isActive: activeTab === tab.key,
-          })),
-          { label: '成长档案', href: '/parent/archive' },
-        ]}
+        className="sticky top-4 z-30"
         actions={
           <>
-            {/* 孩子切换 + 邀请码：桌面(lg+)并入顶栏，窄屏见下方 */}
+            {/* 第一行右侧：孩子切换 + 邀请码(lg+) + 账号 */}
             <div className="hidden items-center gap-2 lg:flex">
               {childSwitcher}
               {invitePill}
@@ -212,6 +204,35 @@ export function ParentDemoPage() {
               退出
             </Button>
           </>
+        }
+        secondaryRow={
+          <nav
+            aria-label="家长端分区"
+            className="flex gap-1.5 overflow-x-auto"
+          >
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                aria-current={activeTab === tab.key ? 'page' : undefined}
+                className={cn(
+                  'shrink-0 rounded-full px-4 py-1.5 text-sm font-bold outline-none transition focus-visible:ring-3 focus-visible:ring-luma-gold-300/60',
+                  activeTab === tab.key
+                    ? 'bg-luma-teal-500 text-white shadow-luma-sm'
+                    : 'text-luma-muted hover:bg-white hover:text-luma-teal-700',
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+            <a
+              href="/parent/archive"
+              className="shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-luma-muted outline-none transition hover:bg-white hover:text-luma-teal-700 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
+            >
+              成长档案
+            </a>
+          </nav>
         }
       />
 
@@ -251,35 +272,6 @@ export function ParentDemoPage() {
             >
               {childSwitcher}
               {invitePill}
-            </motion.div>
-
-            {/* 移动端(<md)标签条（md+ 标签在顶栏内） */}
-            <motion.div
-              variants={fadeUp}
-              className="mb-6 flex gap-2 overflow-x-auto pb-1 md:hidden"
-            >
-              {TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  aria-current={activeTab === tab.key ? 'page' : undefined}
-                  className={cn(
-                    'shrink-0 rounded-full px-4 py-2 text-sm font-bold outline-none transition focus-visible:ring-3 focus-visible:ring-luma-gold-300/60',
-                    activeTab === tab.key
-                      ? 'bg-luma-teal-500 text-white shadow-luma-sm'
-                      : 'bg-luma-ivory-100 text-luma-muted',
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-              <a
-                href="/parent/archive"
-                className="shrink-0 rounded-full bg-luma-ivory-100 px-4 py-2 text-sm font-bold text-luma-muted outline-none transition focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
-              >
-                成长档案
-              </a>
             </motion.div>
 
             {/* 标签内容：切换标签或孩子时重放入场动画 */}
