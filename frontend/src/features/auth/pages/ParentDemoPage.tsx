@@ -124,6 +124,57 @@ export function ParentDemoPage() {
     window.setTimeout(() => setCopied(false), 1600)
   }
 
+  // 孩子切换（紧凑）——顶栏与移动条共用
+  const childSwitcher = children.length > 0 && (
+    <div className="flex items-center gap-1.5">
+      {children.map((child, index) => {
+        const active = selectedChild?.id === child.id
+        return (
+          <button
+            key={child.id}
+            type="button"
+            onClick={() => setSelectedChildId(child.id)}
+            aria-pressed={active}
+            title={`查看 ${child.nickname}`}
+            className={cn(
+              'flex items-center gap-1.5 rounded-full border py-0.5 pr-3 pl-0.5 text-xs font-bold outline-none transition focus-visible:ring-2 focus-visible:ring-luma-gold-300/60',
+              active
+                ? 'border-luma-teal-300 bg-white text-luma-teal-900 shadow-luma-sm'
+                : 'border-transparent bg-luma-ivory-100 text-luma-muted hover:bg-white',
+            )}
+          >
+            <img
+              src={
+                window.localStorage.getItem(`luma_avatar_${child.id}`) ??
+                defaultAvatars[index % defaultAvatars.length].src
+              }
+              alt=""
+              className="size-7 shrink-0 object-contain"
+            />
+            {child.nickname}
+          </button>
+        )
+      })}
+    </div>
+  )
+
+  // 家庭邀请码（紧凑）——顶栏与移动条共用
+  const invitePill = (
+    <div className="flex shrink-0 items-center gap-2 rounded-full border border-luma-teal-100 bg-white/70 py-1 pr-1 pl-3">
+      <span className="text-xs font-semibold text-luma-muted">邀请码</span>
+      <strong className="font-brand text-sm tracking-[0.1em] text-luma-teal-900">
+        {inviteCode ?? '—'}
+      </strong>
+      <button
+        type="button"
+        onClick={copyInviteCode}
+        className="rounded-full bg-luma-teal-50 px-2.5 py-1 text-xs font-bold text-luma-teal-700 transition hover:bg-luma-teal-100"
+      >
+        {copied ? '已复制' : '复制'}
+      </button>
+    </div>
+  )
+
   return (
     <main className="relative z-0 min-h-screen bg-luma-ivory-50 px-4 py-4 sm:px-5 sm:py-5">
       <img
@@ -133,7 +184,7 @@ export function ParentDemoPage() {
         className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-40 select-none"
       />
       <Navbar
-        className="sticky top-4 z-30"
+        className="sticky top-4 z-30 flex-wrap py-3"
         items={[
           ...TABS.map((tab) => ({
             label: tab.label,
@@ -144,7 +195,13 @@ export function ParentDemoPage() {
         ]}
         actions={
           <>
-            <div className="hidden text-right lg:block">
+            {/* 孩子切换 + 邀请码：桌面(lg+)并入顶栏，窄屏见下方 */}
+            <div className="hidden items-center gap-2 lg:flex">
+              {childSwitcher}
+              {invitePill}
+              <span className="h-6 w-px bg-luma-ivory-200" aria-hidden="true" />
+            </div>
+            <div className="hidden text-right 2xl:block">
               <div className="text-sm font-bold text-luma-teal-900">
                 {session?.displayName}
               </div>
@@ -187,7 +244,16 @@ export function ParentDemoPage() {
 
         {children.length > 0 ? (
           <>
-            {/* 移动端标签条（桌面端标签在顶部导航栏内） */}
+            {/* 窄屏(<lg)：孩子切换 + 邀请码（lg+ 已并入顶栏） */}
+            <motion.div
+              variants={fadeUp}
+              className="mb-4 flex flex-wrap items-center justify-between gap-3 lg:hidden"
+            >
+              {childSwitcher}
+              {invitePill}
+            </motion.div>
+
+            {/* 移动端(<md)标签条（md+ 标签在顶栏内） */}
             <motion.div
               variants={fadeUp}
               className="mb-6 flex gap-2 overflow-x-auto pb-1 md:hidden"
@@ -216,64 +282,12 @@ export function ParentDemoPage() {
               </a>
             </motion.div>
 
-            {/* 通用上下文：孩子切换 + 邀请码（所有标签共用） */}
-            <motion.section
-              variants={fadeUp}
-              className="flex flex-col justify-between gap-4 md:flex-row md:items-center"
-            >
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="mr-1 text-sm font-semibold text-luma-muted">
-                  查看：
-                </span>
-                {children.map((child, index) => (
-                  <button
-                    key={child.id}
-                    type="button"
-                    onClick={() => setSelectedChildId(child.id)}
-                    className={cn(
-                      'flex items-center gap-2.5 rounded-2xl border px-2.5 py-2 pr-4 text-sm font-bold outline-none transition-all focus-visible:ring-3 focus-visible:ring-luma-gold-300/60',
-                      selectedChild?.id === child.id
-                        ? 'border-luma-teal-300 bg-white text-luma-teal-900 shadow-luma-sm'
-                        : 'border-transparent bg-luma-ivory-100 text-luma-muted hover:bg-white',
-                    )}
-                  >
-                    <img
-                      src={
-                        window.localStorage.getItem(`luma_avatar_${child.id}`) ??
-                        defaultAvatars[index % defaultAvatars.length].src
-                      }
-                      alt=""
-                      className="size-10 object-contain"
-                    />
-                    {child.nickname}
-                  </button>
-                ))}
-              </div>
-
-              <div className="shrink-0 rounded-2xl border border-luma-teal-100 bg-white px-5 py-3 shadow-luma-sm">
-                <div className="luma-caption text-luma-muted">家庭邀请码</div>
-                <div className="mt-1 flex items-center gap-3">
-                  <strong className="font-brand text-xl tracking-[0.12em] text-luma-teal-900">
-                    {inviteCode ?? '—'}
-                  </strong>
-                  <button
-                    type="button"
-                    onClick={copyInviteCode}
-                    className="rounded-lg bg-luma-teal-50 px-2.5 py-1 text-xs font-bold text-luma-teal-700 transition hover:bg-luma-teal-100"
-                  >
-                    {copied ? '已复制' : '复制'}
-                  </button>
-                </div>
-              </div>
-            </motion.section>
-
             {/* 标签内容：切换标签或孩子时重放入场动画 */}
             <motion.div
               key={`${activeTab}-${selectedChild?.id}`}
               variants={staggerContainer}
               initial="hidden"
               animate="visible"
-              className="mt-8"
             >
               {activeTab === 'overview' && (
                 <>
