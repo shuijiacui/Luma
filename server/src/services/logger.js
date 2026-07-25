@@ -3,8 +3,9 @@
 // 每次判定记录命中条目 ID + 知识库版本，供"判定依据"展示与事后审计
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const LOG_DIR = decodeURIComponent(new URL('../../logs/', import.meta.url).pathname)
+const LOG_DIR = fileURLToPath(new URL('../../logs/', import.meta.url))
 
 function ensureDir() {
   fs.mkdirSync(LOG_DIR, { recursive: true })
