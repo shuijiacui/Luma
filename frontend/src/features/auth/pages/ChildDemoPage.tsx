@@ -87,7 +87,7 @@ export function ChildDemoPage() {
       <div className="relative mx-auto flex max-w-6xl items-start px-5">
 
         {/* left: hero + card */}
-        <section className="relative z-10 min-w-0 flex-1 py-14 pr-6">
+        <section className="relative z-10 min-w-0 flex-1 py-8 pr-6 sm:py-10 lg:py-14">
           {session?.isGuest && (
             <div className="mb-7 w-fit rounded-full bg-luma-gold-100 px-4 py-2 text-sm font-semibold text-luma-gold-700">
               正在体验模式中 · 作品不会保存
@@ -130,7 +130,7 @@ export function ChildDemoPage() {
         </section>
 
         {/* right: vine — no top padding, hugs the header bottom */}
-        <div className="relative z-0 hidden w-[40%] shrink-0 sm:block" data-onboarding="child-vine">
+        <div className="relative z-0 hidden w-[40%] max-h-screen shrink-0 overflow-hidden sm:block" data-onboarding="child-vine">
           <VineCreations
             works={pastWorks}
             onOpen={() => navigate('/child/create')}

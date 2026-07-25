@@ -26,7 +26,7 @@ export function HomePage() {
   const [pricingOpen, setPricingOpen] = useState(false)
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-luma-ivory-50">
+    <main className="relative min-h-screen overflow-x-hidden bg-luma-ivory-50">
       <img
         src={homeHero}
         alt=""
@@ -93,7 +93,7 @@ export function HomePage() {
           </div>
       </header>
 
-      <section className="relative z-10 mx-auto flex min-h-[calc(100vh-104px)] max-w-7xl items-center px-5 pb-20 sm:px-8 lg:px-10">
+      <section className="relative z-10 mx-auto flex min-h-[calc(100svh-104px)] max-w-7xl items-center px-5 py-10 sm:px-8 lg:px-10">
         <motion.div
           className="max-w-[35rem] lg:-translate-x-4"
           variants={staggerContainer}
