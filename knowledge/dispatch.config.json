@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "description": "知识库调度策略：dispatcher 按此配置调度四层知识",
+  "tiers": {
+    "1": {
+      "name": "实证层",
+      "role": "主判定证据。含定量数据（OR/相关系数/Rasch验证）的同行评审条目",
+      "reliabilityRange": [0.7, 0.9],
+      "canTriggerAlone": true,
+      "strengthCap": 0.6,
+      "note": "唯一可以独立支撑预警的层"
+    },
+    "2": {
+      "name": "体系层",
+      "role": "经典评分体系条目（Buck框架、Koppitz指标）——结构完整但效度有争议",
+      "reliabilityRange": [0.4, 0.6],
+      "canTriggerAlone": false,
+      "strengthCap": 0.2,
+      "groupEvidenceCap": 0.6,
+      "note": "若某情绪组证据全部来自 L2+L3，该组 E 强制截断至 0.6（低于阈值0.7 → 信息不足）"
+    },
+    "3": {
+      "name": "经验层",
+      "role": "定性观察/专家经验条目——仅作共现加成",
+      "reliabilityRange": [0.0, 0.3],
+      "canTriggerAlone": false,
+      "strengthCap": 0.2,
+      "cooccurrenceRequired": true,
+      "note": "仅当同情绪组已有 ≥1 条 L1 命中时才计入合成"
+    }
+  },
+  "decision": {
+    "threshold": 0.7,
+    "conflictThreshold": 0.5,
+    "confidenceCeilingRef": "constraints.json#validityCeiling",
+    "rulesVersion": "v2.2（与 RAG设计.md Step 6 决策序一致）",
+    "rules": [
+      "提取质量闸：全部特征被闸门丢弃 → 信息不足（区别于零命中）",
+      "空证据分支：特征有效但零命中 → 乐观平稳，confidence=prior（基率判断）",
+      "乐观抑制：任一负面组 posterior ≥ 0.4 → 乐观平稳移出候选",
+      "最低证据数：负面组输出倾向需 ≥2 独立簇；单簇最高只能落需要关注",
+      "弱预警带：负面组 posterior ∈ [0.4,0.7) 或相反两组均 ≥ 0.5 → 需要关注",
+      "主判定：候选组未截断 posterior 最高且 ≥ 0.7 → 输出该倾向（展示值经天花板截断）",
+      "兜底：信息不足",
+      "输出红线：疾病词正则 + 条目ID存在性校验，失败 → 降级信息不足",
+      "参数自校验：断言 fpr ≤ prior·(1-threshold)/(threshold·(1-prior))，不满足拒绝加载",
+      "命中 conflictRegistry 规则 → 判定日志强制记录冲突ID"
+    ]
+  },
+  "loading": {
+    "hotReload": false,
+    "loadOrder": ["constraints.json", "entries.jsonl"],
+    "indexBy": ["tier", "emotionSignal", "cluster"],
+    "auditSnapshot": true,
+    "auditNote": "每次判定记录命中条目ID+版本号快照，供家长页'判定依据'展示与事后审计"
+  }
+}

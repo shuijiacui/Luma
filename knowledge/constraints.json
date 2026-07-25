@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "description": "L4 元认知层：不直接参与特征命中，全程约束/调制其他三层的判定",
+  "validityCeiling": {
+    "value": 0.85,
+    "reason": "Lin et al. 2022 Acta Psychologica (n=4196): HTP指标与心理健康无可靠关联；Önol 2025 (n=93): 三大假设全部不成立。任何情况下置信度不得越过此线"
+  },
+  "priors": {
+    "低落倾向": 0.15,
+    "焦虑倾向": 0.15,
+    "乐观平稳": 0.6,
+    "note": "儿童人群基率标定值，env 可覆盖；v2 应按年龄段分层"
+  },
+  "fpr": {
+    "value": 0.3,
+    "reason": "HTP 单一指标假阳性率普遍偏高（Lilienfeld et al. 2000），保守估计。注意：score.js v2.2 按阈值可达性约束反推 fpr=0.05，且 Xiong/Lin et al. 2023（MMESE, n=1904, DOI:10.1007/978-981-99-4882-6_37）报告系统虚报率 4.70%——两处独立证据支持实际运行值 0.05；本 0.30 为文献保守上界，供敏感性分析"
+  },
+  "ageMods": {
+    "description": "发育混淆调制：命中以下条目时，按儿童年龄段对 c 因子（LLM特征置信度）额外乘系数",
+    "bands": [
+      {"min": 4, "max": 7, "multiplier": 0.5, "reason": "低龄儿童省略四肢/细节少/画得小是发育常态（Catte 1998: 控制成熟度后指标差异消失）"},
+      {"min": 8, "max": 12, "multiplier": 0.8, "reason": "部分发育混淆仍存在，证据样本多为12+"}
+    ],
+    "affectedEntries": ["HTP-001", "HTP-002", "HTP-009", "HTP-010", "HTP-012", "HTP-029"],
+    "defaultMultiplier": 1.0
+  },
+  "conflictRegistry": [
+    {
+      "id": "CONFLICT-01",
+      "entries": ["HTP-017", "HTP-026"],
+      "issue": "天气意象方向冲突：FBANet定性(雨→低落) vs Yan 2014 OR=0.086(雪/雨→保护)",
+      "policy": "两条同时命中 → weather 簇在两组均作废，判定日志标记 CONFLICT-01"
+    },
+    {
+      "id": "CONFLICT-02",
+      "entries": ["HTP-018"],
+      "issue": "擦改方向争议：Alnamlah r=.72(焦虑) vs Yan OR=0.508(保护)",
+      "policy": "擦改条目只在 ≥3 次且伴随 line_quality/heavy_pressure 簇命中时计入"
+    },
+    {
+      "id": "CONFLICT-03",
+      "entries": ["HTP-020"],
+      "issue": "重笔触方向分歧：Piombo/Puura(焦虑) vs FBANet定性(低落)",
+      "policy": "保守归焦虑组，strength 已压至 0.35，不再调整"
+    }
+  ],
+  "negativeEvidence": [
+    {"claim": "画面大小/位置与情绪无可靠关联", "source": "Joiner et al. 1996; Thomas & Jolley 1998; Önol 2025", "appliedTo": ["HTP-012", "HTP-013"], "action": "strength ≤ 0.25"},
+    {"claim": "HTP整体计分预测力在大样本下不成立", "source": "Lin et al. 2022 (n=4196)", "appliedTo": ["*"], "action": "validityCeiling 0.85"},
+    {"claim": "Koppitz指标控制成熟度后失效", "source": "Catte 1998", "appliedTo": ["HTP-029"], "action": "strength ≤ 0.15 且入 ageMods"}
+  ],
+  "redLineWords": ["抑郁", "抑郁症", "焦虑障碍", "多动症", "自闭", "孤独症", "双相", "精神分裂", "心理疾病", "诊断"],
+  "redLinePolicy": "输出文案命中任一词 → 拦截并降级为'信息不足'，记安全日志"
+}

@@ -8,6 +8,7 @@ import { Navbar } from '@/components/layout'
 import { Button, Card } from '@/components/ui'
 import { fadeUp, staggerContainer } from '@/design-system'
 import { CommunicationSection } from '@/features/parents/components/CommunicationSection'
+import { DrawingInsightSection } from '@/features/parents/components/DrawingInsightSection'
 import { TimelineSection } from '@/features/parents/components/TimelineSection'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { cn } from '@/lib/cn'
@@ -388,6 +389,7 @@ export function ParentDemoPage() {
                 </Card>
               </motion.section>
 
+              <DrawingInsightSection />
               <TimelineSection childName={selectedChild?.nickname ?? '孩子'} />
               <CommunicationSection childName={selectedChild?.nickname ?? '孩子'} />
             </motion.div>
