@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom'
 
 import {
   isOnboardingDone,
+  isOnboardingShownThisSession,
   markOnboardingDone,
+  markOnboardingShownThisSession,
   useOnboarding,
 } from '@/features/onboarding/OnboardingContext'
 import { parentSteps } from '@/features/onboarding/steps/parentSteps'
@@ -142,11 +144,17 @@ export function ParentDemoPage() {
 
   const { start: startOnboarding } = useOnboarding()
   useEffect(() => {
-    if (!isGuest && isOnboardingDone('parent')) return
+    if (isGuest) {
+      if (isOnboardingShownThisSession('parent')) return
+      const timer = window.setTimeout(() => {
+        markOnboardingShownThisSession('parent')
+        startOnboarding(parentSteps)
+      }, 600)
+      return () => window.clearTimeout(timer)
+    }
+    if (isOnboardingDone('parent')) return
     const timer = window.setTimeout(() => {
-      startOnboarding(parentSteps, {
-        onDismiss: () => { if (!isGuest) markOnboardingDone('parent') },
-      })
+      startOnboarding(parentSteps, { onDismiss: () => markOnboardingDone('parent') })
     }, 600)
     return () => window.clearTimeout(timer)
   }, [isGuest, startOnboarding])

@@ -31,6 +31,9 @@ export function OnboardingOverlay() {
   const step = steps[currentIndex]
   const isLast = currentIndex === steps.length - 1
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+  const activeSelector = (isMobile && step?.mobileTarget) ? step.mobileTarget : (step?.target ?? '')
+
   const [rect, setRect] = useState<Rect | null>(null)
   const rafRef = useRef<number>(0)
 
@@ -62,10 +65,6 @@ export function OnboardingOverlay() {
 
   const vw = window.innerWidth
   const vh = window.innerHeight
-  const isMobile = vw < 640
-
-  // On mobile, prefer mobileTarget if provided
-  const activeSelector = (isMobile && step.mobileTarget) ? step.mobileTarget : step.target
 
   // Desktop bubble positioning
   const BUBBLE_W = 320

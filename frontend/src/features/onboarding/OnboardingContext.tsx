@@ -37,6 +37,11 @@ const STORAGE_KEYS = {
   child: 'luma_onboarding_child_done',
 } as const
 
+const SESSION_KEYS = {
+  parent: 'luma_onboarding_parent_session',
+  child: 'luma_onboarding_child_session',
+} as const
+
 export type OnboardingRole = keyof typeof STORAGE_KEYS
 
 export function isOnboardingDone(role: OnboardingRole): boolean {
@@ -45,6 +50,19 @@ export function isOnboardingDone(role: OnboardingRole): boolean {
 
 export function markOnboardingDone(role: OnboardingRole): void {
   localStorage.setItem(STORAGE_KEYS[role], '1')
+}
+
+export function isOnboardingShownThisSession(role: OnboardingRole): boolean {
+  return sessionStorage.getItem(SESSION_KEYS[role]) === '1'
+}
+
+export function markOnboardingShownThisSession(role: OnboardingRole): void {
+  sessionStorage.setItem(SESSION_KEYS[role], '1')
+}
+
+export function clearOnboardingSession(): void {
+  sessionStorage.removeItem(SESSION_KEYS.parent)
+  sessionStorage.removeItem(SESSION_KEYS.child)
 }
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {

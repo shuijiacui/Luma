@@ -20,6 +20,7 @@ import {
   removeSession,
   saveSession,
 } from './storage'
+import { clearOnboardingSession } from '@/features/onboarding/OnboardingContext'
 import type { AuthResult, AuthSession, UserRole } from './types'
 
 interface ParentRegistration {
@@ -132,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     if (session?.token) logoutApi(session.token).catch(() => {})
     removeSession()
+    clearOnboardingSession()
     setSession(null)
   }, [session])
 

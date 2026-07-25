@@ -8,8 +8,10 @@ import { UnifiedAuthPage } from '@/features/auth/pages/UnifiedAuthPage'
 import { ChildCreatePage } from '@/features/child/pages/ChildCreatePage'
 import { HomePage } from '@/features/marketing/pages/HomePage'
 import { ArchivePage } from '@/features/parents/pages/ArchivePage'
+import { PresentPage } from '@/features/present/PresentPage'
 
 export const router = createBrowserRouter([
+  { path: '/present', Component: PresentPage },
   {
     path: '/',
     Component: App,
