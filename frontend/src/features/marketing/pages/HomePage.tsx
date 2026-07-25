@@ -128,7 +128,7 @@ export function HomePage() {
             variants={fadeUp}
             className="luma-body-lg mt-7 max-w-lg text-luma-muted"
           >
-            和 AI 伙伴 Nilo 一起绘画、讲故事，
+            和 AI 伙伴 Nilo 一起绘画，
             <br className="hidden sm:block" />
             创造只属于孩子的奇妙世界。
           </motion.p>

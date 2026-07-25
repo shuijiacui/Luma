@@ -21,17 +21,17 @@ const demoInsight = {
   themes: [
     {
       name: '探索新世界',
-      detail: '在 3 个故事和 2 幅画中出现',
+      detail: '在 5 幅画中出现',
       color: 'bg-luma-teal-500',
     },
     {
       name: '伙伴与合作',
-      detail: '角色常常一起解决问题',
+      detail: '画面中角色常常一起出现',
       color: 'bg-luma-gold-300',
     },
     {
       name: '自然想象',
-      detail: '云朵、河流和森林成为故事场景',
+      detail: '云朵、河流和森林成为画面背景',
       color: 'bg-[#7a82d8]',
     },
   ],
@@ -48,16 +48,16 @@ const demoInsight = {
     },
   ],
   observation:
-    '孩子最近的故事经常出现探索和伙伴主题。角色面对未知时，常常会邀请朋友一起行动；在画面里，通往远方的道路、河流和小船也多次出现。',
+    '孩子最近的绘画经常出现探索和伙伴主题。角色面对未知时，常常会邀请朋友一起行动；在画面里，通往远方的道路、河流和小船也多次出现。',
   observations: [
-    '故事角色从独自出发，逐渐变成结伴探索。',
-    '孩子会为画面中的小物件补充名字和故事。',
-    '同一个想法会通过绘画和讲述继续发展。',
+    '画面角色从独自出发，逐渐变成结伴探索。',
+    '孩子会为画面中的小物件补充细节和标注。',
+    '同一个想象会通过不同绘画继续发展。',
   ],
   suggestions: [
     {
-      title: '从故事继续',
-      prompt: '“如果小船明天继续出发，它最想邀请谁一起去？”',
+      title: '从画面继续',
+      prompt: '”如果小船明天继续出发，它最想邀请谁一起去？”',
     },
     {
       title: '听孩子来定义',
@@ -69,9 +69,9 @@ const demoInsight = {
     },
   ],
   recentCreations: [
-    { title: '会发光的森林', type: '故事', day: '周四', tone: 'teal' },
+    { title: '会发光的森林', type: '绘画', day: '周四', tone: 'teal' },
     { title: 'Nilo 的蓝色小船', type: '绘画', day: '周二', tone: 'gold' },
-    { title: '云朵上的城市', type: '故事', day: '上周日', tone: 'violet' },
+    { title: '云朵上的城市', type: '绘画', day: '上周日', tone: 'violet' },
   ],
 } as const
 
@@ -184,7 +184,7 @@ export function ParentDemoPage() {
                 看见创作里的成长轨迹
               </h1>
               <p className="luma-body-lg mt-4 max-w-2xl text-luma-muted">
-                从孩子画下的画面和讲过的故事中，整理值得继续倾听的主题与表达。
+                从孩子画下的画面中，整理值得继续倾听的主题与表达。
               </p>
             </div>
 
@@ -254,7 +254,7 @@ export function ParentDemoPage() {
                 <Card
                   eyebrow="创作主题"
                   title={`${selectedChild?.nickname} 最近在探索什么？`}
-                  description="根据近期绘画与故事中反复出现的内容整理"
+                  description="根据近期绘画中反复出现的内容整理"
                   className="h-full"
                 >
                   <div className="mt-2 space-y-5">
@@ -342,7 +342,7 @@ export function ParentDemoPage() {
                 <Card
                   eyebrow="沟通建议"
                   title="把观察变成一次温柔的对话"
-                  description="没有标准答案，让孩子决定故事如何继续。"
+                  description="没有标准答案，让孩子决定画面如何继续。"
                 >
                   <div className="mt-2 space-y-3">
                     {demoInsight.suggestions.map((suggestion, index) => (

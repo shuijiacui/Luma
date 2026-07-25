@@ -16,7 +16,7 @@ const archiveData = {
     {
       month: '2024年12月',
       works: [
-        { title: '会唱歌的雪', type: '故事', emoji: '❄️', highlight: true },
+        { title: '会唱歌的雪', type: '绘画', emoji: '❄️', highlight: true },
         { title: '礼物树', type: '绘画', emoji: '🎁', highlight: false },
         { title: 'Nilo 的圣诞帽', type: '绘画', emoji: '🦦', highlight: true },
       ],
@@ -25,7 +25,7 @@ const archiveData = {
     {
       month: '2025年1月',
       works: [
-        { title: '新年第一颗星', type: '故事', emoji: '⭐', highlight: true },
+        { title: '新年第一颗星', type: '绘画', emoji: '⭐', highlight: true },
         { title: '冬天的兔子', type: '绘画', emoji: '🐇', highlight: false },
       ],
       aiSummary: '场景从室内转向室外，户外探索的意象开始出现。',
@@ -33,8 +33,8 @@ const archiveData = {
     {
       month: '2025年2月',
       works: [
-        { title: '云朵上的城市', type: '故事', emoji: '☁️', highlight: true },
-        { title: '会飞的石头', type: '故事', emoji: '🪨', highlight: false },
+        { title: '云朵上的城市', type: '绘画', emoji: '☁️', highlight: true },
+        { title: '会飞的石头', type: '绘画', emoji: '🪨', highlight: false },
         { title: '彩虹桥', type: '绘画', emoji: '🌈', highlight: true },
       ],
       aiSummary: '"不可能发生的事"开始出现，想象力明显扩展。',
@@ -43,7 +43,7 @@ const archiveData = {
       month: '2025年3月',
       works: [
         { title: 'Nilo 的蓝色小船', type: '绘画', emoji: '🚤', highlight: true },
-        { title: '会发光的森林', type: '故事', emoji: '🌲', highlight: false },
+        { title: '会发光的森林', type: '绘画', emoji: '🌲', highlight: false },
       ],
       aiSummary: '孩子开始为动物角色命名，角色有了明确的性格特征。',
     },
@@ -51,8 +51,7 @@ const archiveData = {
 }
 
 const toneMap = {
-  故事: 'bg-luma-teal-50 text-luma-teal-700',
-  绘画: 'bg-luma-gold-100 text-luma-gold-700',
+  绘画: 'bg-luma-teal-50 text-luma-teal-700',
 } as const
 
 export function ArchivePage() {
