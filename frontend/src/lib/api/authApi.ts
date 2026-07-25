@@ -1,9 +1,11 @@
-// 账号/家庭/历史 API（server /api/auth/*，Bearer token 会话）
+// 账号/家庭/历史 API（server /api/auth/*，Bearer token 会话 + 自动 refresh）
 import { apiClient } from '@/lib/api/client'
+import { authFetch } from '@/lib/api/authFetch'
 import type { AuthSession } from '@/features/auth/types'
 
 export interface AuthApiResponse {
   token: string
+  refreshToken: string
   session: AuthSession
   family: { inviteCode: string }
 }
@@ -30,8 +32,6 @@ export interface AnalysisSummary {
   } | null
 }
 
-const authHeaders = (token: string) => ({ Authorization: `Bearer ${token}` })
-
 export function registerParentApi(details: { name: string; email: string; password: string }) {
   return apiClient<AuthApiResponse>('/auth/parent/register', { method: 'POST', body: details })
 }
@@ -49,15 +49,13 @@ export function loginChildApi(details: { nickname: string; creationCode: string 
 }
 
 export function fetchMe(token: string) {
-  return apiClient<MeResponse>('/auth/me', { headers: authHeaders(token) })
+  return authFetch<MeResponse>('/auth/me', { token })
 }
 
 export function logoutApi(token: string) {
-  return apiClient<{ ok: boolean }>('/auth/logout', { method: 'POST', headers: authHeaders(token) })
+  return authFetch<{ ok: boolean }>('/auth/logout', { method: 'POST', token })
 }
 
 export function listAnalyses(childId: string, token: string) {
-  return apiClient<{ analyses: AnalysisSummary[] }>(`/children/${childId}/analyses`, {
-    headers: authHeaders(token),
-  })
+  return authFetch<{ analyses: AnalysisSummary[] }>(`/children/${childId}/analyses`, { token })
 }

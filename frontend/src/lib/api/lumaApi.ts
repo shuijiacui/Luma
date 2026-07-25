@@ -1,5 +1,5 @@
 // Luma 判定服务 API（docs/API契约.md，base 默认 /api，由 vite proxy 转发到 localhost:3001）
-import { apiClient } from '@/lib/api/client'
+import { authFetch } from '@/lib/api/authFetch'
 
 export interface FeatureJSON {
   rawDescription: string
@@ -39,17 +39,14 @@ export interface ReportResponse {
   parentAdvice: string[]
 }
 
-const authHeaders = (token?: string): Record<string, string> =>
-  token ? { Authorization: `Bearer ${token}` } : {}
-
 export function analyzeDrawing(
   imageBase64: string,
   priorFeatures: FeatureJSON | null = null,
   token?: string,
 ): Promise<AnalyzeResponse> {
-  return apiClient<AnalyzeResponse>('/analyze', {
+  return authFetch<AnalyzeResponse>('/analyze', {
     method: 'POST',
-    headers: authHeaders(token),
+    token,
     body: { imageBase64, priorFeatures },
   })
 }
@@ -58,9 +55,9 @@ export function fetchReport(
   features: FeatureJSON,
   opts: { token?: string; analysisId?: string } = {},
 ): Promise<ReportResponse> {
-  return apiClient<ReportResponse>('/report', {
+  return authFetch<ReportResponse>('/report', {
     method: 'POST',
-    headers: authHeaders(opts.token),
+    token: opts.token,
     body: { features, analysisId: opts.analysisId ?? null },
   })
 }

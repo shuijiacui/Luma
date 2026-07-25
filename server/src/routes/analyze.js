@@ -5,8 +5,9 @@ import { retrieve } from '../services/retrieve.js'
 import { score } from '../services/score.js'
 import { buildReport, buildFeedback, FOLLOW_UP } from '../services/report.js'
 import { insertAnalysis, attachReport } from '../services/historyService.js'
+import { log } from '../services/logger.js'
 
-export function createApiRouter({ chatWithImage, entries, scoreConfig, db }) {
+export function createApiRouter({ chatWithImage, entries, scoreConfig, db, kbVersion = 'unknown' }) {
   const router = Router()
 
   router.post('/analyze', async (req, res) => {
@@ -19,7 +20,7 @@ export function createApiRouter({ chatWithImage, entries, scoreConfig, db }) {
       const fresh = await extractFeatures(imageBase64, { chatWithImage })
       features = priorFeatures ? mergeFeatures(priorFeatures, fresh) : fresh
     } catch (err) {
-      console.error('[analyze] feature extraction failed:', err.message)
+      log.error('analyze', { msg: `feature extraction failed: ${err.message}` })
       return res.status(502).json({ error: 'feature_extraction_failed' })
     }
     // 登录孩子：分析落库，返回 analysisId 供 report 关联（游客不落库）
@@ -37,7 +38,18 @@ export function createApiRouter({ chatWithImage, entries, scoreConfig, db }) {
     }
     const matches = retrieve(features, entries)
     const result = score(matches, features, scoreConfig)
-    console.info(`[report] emotion=${result.emotion} confidence=${result.confidence} reason=${result.reason} hits=${matches.map(m => m.id).join(',') || '-'}`)
+    // 判定审计快照（dispatch.config.json loading.auditSnapshot）：命中条目 ID + 知识库版本
+    log.audit(
+      {
+        emotion: result.emotion,
+        confidence: result.confidence,
+        reason: result.reason,
+        hits: matches.map(m => m.id),
+        kbVersion,
+      },
+      { accountId: req.auth?.accountId ?? null, analysisId },
+    )
+    log.info('report', { msg: `emotion=${result.emotion} confidence=${result.confidence} reason=${result.reason} hits=${matches.map(m => m.id).join(',') || '-'}` })
     const report = buildReport(result)
     // 登录用户带 analysisId：报告回写历史记录（归属校验失败静默跳过，不影响返回）
     if (db && req.auth && analysisId) {

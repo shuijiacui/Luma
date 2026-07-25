@@ -1,0 +1,2 @@
+# 每日 03:30 备份 SQLite（crontab -e 添加）
+30 3 * * * cd /opt/luma/server && /usr/bin/node scripts/backup.mjs >> logs/backup.log 2>&1

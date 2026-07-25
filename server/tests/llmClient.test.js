@@ -48,9 +48,9 @@ test('throws LLMParseError with raw content on unparseable response', async () =
   }))
   await expect(chatWithImage('img', 'prompt')).rejects.toThrow(LLMParseError)
   await expect(chatWithImage('img', 'prompt')).rejects.toThrow(/not json at all/)
-})
+}, 20_000)
 
 test('throws on non-ok http response', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, text: async () => 'boom' }))
   await expect(chatWithImage('img', 'prompt')).rejects.toThrow(/500/)
-})
+}, 20_000)

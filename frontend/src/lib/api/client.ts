@@ -4,6 +4,15 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
 }
 
+export class ApiError extends Error {
+  status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
 export async function apiClient<T>(
   path: string,
   options: RequestOptions = {},
@@ -24,7 +33,7 @@ export async function apiClient<T>(
       const body = (await response.json()) as { error?: string }
       if (body.error) message = body.error
     } catch { /* 非 JSON 错误体，保留默认文案 */ }
-    throw new Error(message)
+    throw new ApiError(response.status, message)
   }
 
   return response.json() as Promise<T>

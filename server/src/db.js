@@ -29,6 +29,12 @@ export function createDb(path = process.env.DB_PATH || DEFAULT_DB_PATH) {
       created_at TEXT NOT NULL,
       expires_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      token_hash TEXT PRIMARY KEY,
+      account_id TEXT NOT NULL REFERENCES accounts(id),
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS analyses (
       id TEXT PRIMARY KEY,
       child_id TEXT NOT NULL REFERENCES accounts(id),

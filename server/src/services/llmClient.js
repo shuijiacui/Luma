@@ -30,20 +30,49 @@ function extractJson(text) {
   }
 }
 
+const LLM_TIMEOUT_MS = 90_000   // o3-pro 视觉推理较慢，给足 90s
+const MAX_RETRIES = 2           // 5xx/网络错误重试 2 次（指数退避），4xx 不重试
+
 async function chat(messages, { model, maxTokens = 4000, config = llmConfig() } = {}) {
-  const res = await fetch(`${config.baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({ model, messages, max_tokens: Math.max(maxTokens, 2000) }),
-  })
-  if (!res.ok) throw new Error(`LLM request failed: ${res.status} ${await res.text()}`)
-  const data = await res.json()
-  const msg = data.choices?.[0]?.message ?? {}
-  // reasoning 模型：content 为空时回退 reasoning_content
-  return extractJson(msg.content?.trim() ? msg.content : msg.reasoning_content)
+  const payload = {
+    model,
+    messages,
+    max_tokens: Math.max(maxTokens, 2000),
+  }
+  let lastError
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    try {
+      const res = await fetch(`${config.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
+      })
+      if (!res.ok) {
+        const body = await res.text()
+        // 4xx 是请求/配额问题，重试无意义
+        if (res.status < 500) throw new Error(`LLM request failed: ${res.status} ${body}`)
+        lastError = new Error(`LLM request failed: ${res.status} ${body}`)
+      } else {
+        const data = await res.json()
+        const msg = data.choices?.[0]?.message ?? {}
+        // reasoning 模型：content 为空时回退 reasoning_content
+        return extractJson(msg.content?.trim() ? msg.content : msg.reasoning_content)
+      }
+    } catch (err) {
+      // 解析失败（模型输出格式问题）与 4xx 都是确定性错误，重试无意义
+      if (err instanceof LLMParseError) throw err
+      if (err.message?.startsWith('LLM request failed: 4')) throw err
+      lastError = err
+    }
+    if (attempt < MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, 1000 * 2 ** attempt)) // 1s, 2s
+    }
+  }
+  throw lastError
 }
 
 export async function chatWithImage(imageBase64, prompt, opts = {}) {

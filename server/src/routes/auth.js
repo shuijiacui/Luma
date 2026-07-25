@@ -1,7 +1,7 @@
 // /api/auth/*：注册/登录/会话；/api/children/:id/analyses：画作历史
 import { Router } from 'express'
 import {
-  AuthError, registerParent, loginParent, registerChild, loginChild, logout, getMe,
+  AuthError, registerParent, loginParent, registerChild, loginChild, logout, getMe, refresh,
 } from '../services/authService.js'
 import { listAnalyses } from '../services/historyService.js'
 
@@ -31,6 +31,16 @@ export function createAuthRouter({ db }) {
   router.post('/auth/parent/login', handle(body => loginParent(db, body)))
   router.post('/auth/child/register', handle(body => registerChild(db, body)))
   router.post('/auth/child/login', handle(body => loginChild(db, body)))
+
+  // refresh token 轮换：旧 refresh 作废，返回新 token 对
+  router.post('/auth/refresh', (req, res) => {
+    try {
+      res.json(refresh(db, req.body?.refreshToken))
+    } catch (err) {
+      if (err instanceof AuthError) return res.status(err.status).json({ error: err.message })
+      throw err
+    }
+  })
 
   router.post('/auth/logout', (req, res) => {
     logout(db, req.token)

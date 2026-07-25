@@ -189,3 +189,27 @@ err: 401 未登录 · 403 非本家庭
 
 - `POST /api/analyze`：登录孩子带 Bearer 调用时，分析落库且响应多一个 `analysisId` 字段
 - `POST /api/report`：请求体新增可选 `analysisId`，登录用户调用时报告回写对应历史记录
+
+### POST /api/auth/refresh（token 轮换，2026-07-25 新增）
+```json
+req:  { "refreshToken": "hex" }
+res 200: { "token": "新access(2h)", "refreshToken": "新refresh(30d)" }
+err: 401 无效/过期/已轮换
+```
+- access token 有效期 2 小时（`ACCESS_TOKEN_TTL_MIN`），refresh token 30 天、**旋转式**（每次使用旧 refresh 即作废，重放返回 401）
+- refresh token 服务端只存 SHA-256 哈希
+- `POST /api/auth/logout` 同时吊销该账号全部 refresh token
+
+### 限流（429）
+
+| 档位 | 窗口 | 默认上限 | env |
+|------|------|---------|-----|
+| 全局 /api | 15 分钟 | 600 | `RATE_LIMIT_GLOBAL` |
+| /api/auth/* | 15 分钟 | 20 | `RATE_LIMIT_AUTH` |
+| /api/analyze | 1 小时 | 60 | `RATE_LIMIT_ANALYZE` |
+
+超限响应：`429 { "error": "…" }` + `Retry-After` 头。
+
+### CORS
+
+白名单制（`CORS_ORIGINS`，默认 `http://localhost:5173`）；非白名单来源不发许可头。生产同域部署（`FRONTEND_DIST` 静态托管）不依赖 CORS。

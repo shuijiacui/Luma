@@ -1,0 +1,4 @@
+# Caddy：自动 HTTPS（把 luma.example.com 换成真实域名）
+luma.example.com {
+	reverse_proxy 127.0.0.1:3001
+}
