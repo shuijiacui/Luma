@@ -43,3 +43,40 @@ export function listAnalyses(db, childId, auth) {
       }
     })
 }
+
+// 纵向趋势（描述性聚合，不是新判定类型——v2 界限：不下诊断、不给预测，只呈现历史序列与计数）
+// direction 仅三态：insufficient（报告不足 2 份）/ stable（近 3 份无预警信号）/ watch（近 3 份有需关注或倾向信号）
+const WATCH_EMOTIONS = ['需要关注', '焦虑倾向', '低落倾向']
+
+export function trendSummary(db, childId, auth) {
+  const isOwner = auth.role === 'child' && auth.accountId === childId
+  const child = db.prepare("SELECT family_id FROM accounts WHERE id = ? AND role = 'child'").get(childId)
+  const isFamilyParent = child && auth.role === 'parent' && auth.familyId === child.family_id
+  if (!isOwner && !isFamilyParent) return null
+
+  const rows = db.prepare('SELECT report_json, created_at AS createdAt FROM analyses WHERE child_id = ? ORDER BY created_at DESC LIMIT 30')
+    .all(childId)
+  const points = rows
+    .filter(r => r.report_json)
+    .map(r => {
+      const report = JSON.parse(r.report_json)
+      return { createdAt: r.createdAt, emotion: report.emotion, confidence: report.confidence }
+    })
+
+  const counts = {}
+  for (const p of points) counts[p.emotion] = (counts[p.emotion] ?? 0) + 1
+
+  let direction = 'insufficient'
+  if (points.length >= 2) {
+    const recent = points.slice(0, 3)
+    direction = recent.some(p => WATCH_EMOTIONS.includes(p.emotion)) ? 'watch' : 'stable'
+  }
+
+  return {
+    total: rows.length,
+    withReport: points.length,
+    direction,
+    counts,
+    points: points.slice(0, 10).reverse(), // 时间正序，最近 10 个点
+  }
+}

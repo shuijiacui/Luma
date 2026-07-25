@@ -9,7 +9,7 @@ import {
   type FeatureJSON,
   type ReportResponse,
 } from '@/lib/api/lumaApi'
-import { listAnalyses, type AnalysisSummary } from '@/lib/api/authApi'
+import { listAnalyses, fetchTrend, type AnalysisSummary, type TrendResponse } from '@/lib/api/authApi'
 import {
   LATEST_ANALYSIS_ID_KEY,
   LATEST_FEATURES_KEY,
@@ -43,6 +43,13 @@ function formatTime(iso: string) {
   return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
+// 趋势方向文案（描述性，不做预测、不下结论——v2 界限）
+const DIRECTION_TEXT: Record<TrendResponse['direction'], { text: string; className: string }> = {
+  insufficient: { text: '解读次数还太少，趋势需更多画作积累', className: 'text-luma-muted' },
+  stable: { text: '近期解读未见预警信号，状态平稳', className: 'text-luma-teal-700' },
+  watch: { text: '近期解读中出现了需要留意的信号，建议持续观察', className: 'text-[#c4533f]' },
+}
+
 interface DrawingInsightSectionProps {
   childId?: string
   token?: string
@@ -53,6 +60,7 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
   const [reportSource, setReportSource] = useState<'latest' | 'history'>('latest')
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [history, setHistory] = useState<AnalysisSummary[]>([])
+  const [trend, setTrend] = useState<TrendResponse | null>(null)
   const features = readLatestFeatures()
 
   const loadHistory = useCallback(() => {
@@ -60,6 +68,9 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
     listAnalyses(childId, token)
       .then((res) => setHistory(res.analyses))
       .catch(() => setHistory([]))
+    fetchTrend(childId, token)
+      .then(setTrend)
+      .catch(() => setTrend(null))
   }, [childId, token])
 
   useEffect(loadHistory, [loadHistory])
@@ -179,6 +190,33 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
               {status === 'loading' ? '正在解读…' : '重新解读最新画作'}
             </Button>
           )}
+        </div>
+      )}
+
+      {token && trend && trend.withReport > 0 && (
+        <div className="mt-4 rounded-xl bg-luma-ivory-50 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="luma-eyebrow text-luma-gold-700">近期趋势</span>
+            <span className="flex items-center gap-1" aria-label="历次解读结果">
+              {trend.points.map((p) => (
+                <span
+                  key={p.createdAt}
+                  title={`${formatTime(p.createdAt)} ${p.emotion} ${Math.round(p.confidence * 100)}%`}
+                  className={cn(
+                    'inline-block size-2.5 rounded-full',
+                    p.emotion === '需要关注' && 'bg-[#ef7b69]',
+                    (p.emotion === '焦虑倾向' || p.emotion === '低落倾向') && 'bg-luma-gold-300',
+                    (p.emotion === '乐观平稳' || p.emotion === '未见明显风险信号') && 'bg-luma-teal-500',
+                    p.emotion === '信息不足' && 'bg-luma-ivory-200',
+                  )}
+                />
+              ))}
+            </span>
+          </div>
+          <p className={cn('mt-1.5 text-xs font-semibold', DIRECTION_TEXT[trend.direction].className)}>
+            {DIRECTION_TEXT[trend.direction].text}
+            <span className="ml-2 font-normal text-luma-muted">（基于最近 {trend.withReport} 次解读，仅为历史呈现，不构成预测）</span>
+          </p>
         </div>
       )}
 

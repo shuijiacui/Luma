@@ -14,7 +14,7 @@ const FEATURES = {
 }
 
 const ENTRIES = [
-  { id: 'HTP-001', featureMatch: { elements: ['house', 'tree'] }, emotionSignal: '乐观平稳', cluster: 'classic_htp', strength: 0.3, reliability: 0.7, source: 'test', note: '房树共现为画面完整性的积极信号' },
+  { id: 'HTP-001', featureMatch: { elements: ['house', 'tree'] }, emotionSignal: '乐观平稳', cluster: 'classic_htp', strength: 0.3, reliability: 0.7, tier: 1, source: 'test', note: '房树共现为画面完整性的积极信号' },
 ]
 
 const RED_LINE = /抑郁|焦虑障碍|多动症|自闭|孤独症|双相|精神分裂|心理疾病|诊断|难过|悲伤|害怕|紧张/

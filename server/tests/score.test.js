@@ -7,8 +7,8 @@ import {
   DEFAULT_CONFIG,
 } from '../src/services/score.js'
 
-const mk = (id, signal, cluster, s, r, note = '文献依据摘要') =>
-  ({ id, featureMatch: {}, emotionSignal: signal, cluster, strength: s, reliability: r, note })
+const mk = (id, signal, cluster, s, r, note = '文献依据摘要', tier = 1) =>
+  ({ id, featureMatch: {}, emotionSignal: signal, cluster, strength: s, reliability: r, note, tier })
 
 const VALID_FEATURES = {
   elements: ['sun'], colors: { dominant: ['black'], darkRatio: 0.7 },
