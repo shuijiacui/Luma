@@ -21,6 +21,14 @@ const niloPrompts = [
   'Keep going!',
 ] as const
 
+const niloSaveMessages = [
+  '我会记住这幅画的。',
+  '好喜欢这里的颜色！',
+  '你今天画的这个，我会一直记着。',
+  '保存好啦，它现在是你的了。',
+  '我们一起完成了这幅画。',
+]
+
 export const LATEST_FEATURES_KEY = 'luma_latest_features'
 export const LATEST_ANALYSIS_ID_KEY = 'luma_latest_analysis_id'
 
@@ -35,9 +43,18 @@ export function ChildCreatePage() {
   const [features, setFeatures] = useState<FeatureJSON | null>(null)
   const [analysis, setAnalysis] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [serverBubble, setServerBubble] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
 
   function handleStrokeComplete() {
     setPromptIndex((current) => (current + 1) % niloPrompts.length)
+  }
+
+  function handleSave() {
+    canvasRef.current?.download()
+    const msg = niloSaveMessages[Math.floor(Math.random() * niloSaveMessages.length)]
+    setServerBubble(msg)
+    setSaved(true)
+    window.setTimeout(() => setSaved(false), 2200)
   }
 
   async function handleFinish() {
@@ -139,8 +156,11 @@ export function ChildCreatePage() {
               )}
             </AnimatePresence>
             <motion.div
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              animate={saved ? { y: [0, -22, 0], scale: [1, 1.15, 1] } : { y: [0, -5, 0] }}
+              transition={saved
+                ? { duration: 0.5, ease: 'easeOut' }
+                : { duration: 3, repeat: Infinity, ease: 'easeInOut' }
+              }
               className="size-20 overflow-hidden rounded-full border-4 border-white bg-luma-gold-100 shadow-luma-md sm:size-24"
               aria-label="Nilo 正陪你创作"
             >
@@ -215,7 +235,7 @@ export function ChildCreatePage() {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => canvasRef.current?.download()}
+              onClick={handleSave}
             >
               保存
             </Button>
