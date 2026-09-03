@@ -9,7 +9,9 @@ import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { VineCreations } from '@/features/child/components/VineCreations'
 import {
   isOnboardingDone,
+  isOnboardingShownThisSession,
   markOnboardingDone,
+  markOnboardingShownThisSession,
   useOnboarding,
 } from '@/features/onboarding/OnboardingContext'
 import { childSteps } from '@/features/onboarding/steps/childSteps'
@@ -29,11 +31,17 @@ export function ChildDemoPage() {
   const { start: startOnboarding } = useOnboarding()
 
   useEffect(() => {
-    if (!isGuest && isOnboardingDone('child')) return
+    if (isGuest) {
+      if (isOnboardingShownThisSession('child')) return
+      const timer = window.setTimeout(() => {
+        markOnboardingShownThisSession('child')
+        startOnboarding(childSteps)
+      }, 600)
+      return () => window.clearTimeout(timer)
+    }
+    if (isOnboardingDone('child')) return
     const timer = window.setTimeout(() => {
-      startOnboarding(childSteps, {
-        onDismiss: () => { if (!isGuest) markOnboardingDone('child') },
-      })
+      startOnboarding(childSteps, { onDismiss: () => markOnboardingDone('child') })
     }, 600)
     return () => window.clearTimeout(timer)
   }, [isGuest, startOnboarding])
