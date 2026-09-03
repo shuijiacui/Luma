@@ -86,7 +86,7 @@ export function ChildCreatePage() {
       : (serverBubble ?? (promptIndex >= 0 ? niloPrompts[promptIndex] : null))
 
   return (
-    <main className="flex min-h-screen flex-col overflow-hidden bg-luma-teal-50">
+    <main className="flex min-h-screen flex-col overflow-x-hidden bg-luma-teal-50">
       <header className="relative z-40 flex items-center justify-between gap-4 border-b border-white/80 bg-luma-ivory-50/85 px-4 py-3 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
           <button
@@ -129,8 +129,8 @@ export function ChildCreatePage() {
         <AvatarPicker userId={session?.id ?? 'guest-child'} />
       </header>
 
-      <section className="relative flex min-h-0 flex-1 p-3 pb-28 sm:p-5 sm:pb-28">
-        <div className="relative mx-auto min-h-[440px] w-full max-w-7xl overflow-hidden rounded-luma-lg border border-white/90 bg-white p-2 shadow-luma-md sm:p-3">
+      <section className="relative flex min-h-0 flex-1 p-3 pb-20 sm:p-5 sm:pb-24">
+        <div className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-luma-lg border border-white/90 bg-white p-2 shadow-luma-md sm:p-3">
           <DrawingCanvas
             ref={canvasRef}
             color={color}

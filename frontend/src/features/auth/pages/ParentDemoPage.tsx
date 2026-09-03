@@ -297,7 +297,7 @@ export function ParentDemoPage() {
       </div>
 
       <motion.div
-        className="mx-auto max-w-6xl py-10 sm:py-14"
+        className="mx-auto max-w-6xl py-6 sm:py-8 lg:py-14"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"

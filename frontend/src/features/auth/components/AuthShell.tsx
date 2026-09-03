@@ -28,7 +28,7 @@ export function AuthShell({
   return (
     <main
       className={cn(
-        'relative flex min-h-screen items-center overflow-hidden px-5 py-10 sm:px-8',
+        'relative flex min-h-screen items-center overflow-y-auto px-5 py-6 sm:px-8 sm:py-10',
         role === 'child' ? 'bg-luma-teal-50' : 'bg-luma-ivory-50',
       )}
     >
