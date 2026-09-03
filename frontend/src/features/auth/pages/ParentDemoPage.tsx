@@ -7,6 +7,8 @@ import bgParent from '@/assets/images/bg-parent.png'
 import { Navbar } from '@/components/layout'
 import { Button, Card } from '@/components/ui'
 import { fadeUp, staggerContainer } from '@/design-system'
+import { CommunicationSection } from '@/features/parents/components/CommunicationSection'
+import { TimelineSection } from '@/features/parents/components/TimelineSection'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { cn } from '@/lib/cn'
 import { useAuth } from '../AuthContext'
@@ -111,7 +113,9 @@ export function ParentDemoPage() {
         items={[
           { label: '成长概览', href: '#overview', isActive: true },
           { label: '创作主题', href: '#themes' },
-          { label: '沟通建议', href: '#conversation' },
+          { label: '成长时间轴', href: '#timeline' },
+          { label: 'AI 沟通助手', href: '#communication' },
+          { label: '成长档案', href: '/parent/archive' },
         ]}
         actions={
           <>
@@ -383,6 +387,9 @@ export function ParentDemoPage() {
                   </div>
                 </Card>
               </motion.section>
+
+              <TimelineSection childName={selectedChild?.nickname ?? '孩子'} />
+              <CommunicationSection childName={selectedChild?.nickname ?? '孩子'} />
             </motion.div>
           </>
         ) : (
