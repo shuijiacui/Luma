@@ -122,7 +122,6 @@ export function ParentDemoPage() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40 select-none"
       />
-      <div className="relative z-0">
       <Navbar
         items={[
           { label: '成长概览', href: '#overview', isActive: true },
@@ -432,7 +431,6 @@ export function ParentDemoPage() {
           </motion.section>
         )}
       </motion.div>
-      </div>
     </main>
   )
 }

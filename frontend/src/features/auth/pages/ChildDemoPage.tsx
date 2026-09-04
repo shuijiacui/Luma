@@ -84,8 +84,7 @@ export function ChildDemoPage() {
             title="画一个新世界"
             description="打开画布，让颜色带你去任何地方。"
             variant="glass"
-            interactive
-            className="min-h-0"
+            className="min-h-0 transition-[border-color,box-shadow] hover:border-luma-teal-300 hover:shadow-luma-md"
           >
             <div className="mt-3 flex items-center justify-between gap-4">
               <span className="text-4xl" aria-hidden="true">✦</span>
@@ -101,8 +100,7 @@ export function ChildDemoPage() {
               title="我的创作"
               description="看看你画过的所有作品。"
               variant="soft"
-              interactive
-              className="min-h-0 cursor-pointer"
+              className="min-h-0 cursor-pointer transition-[border-color,box-shadow] hover:border-luma-teal-300 hover:shadow-luma-md"
               onClick={() => setShowWorks(true)}
             >
               <div className="mt-3 flex items-center justify-between gap-4">
