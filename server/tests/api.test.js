@@ -1,6 +1,7 @@
 import { test, expect } from 'vitest'
 import request from 'supertest'
 import { createApp } from '../src/app.js'
+import { createDb } from '../src/db.js'
 
 const FEATURES = {
   rawDescription: '画面有一座房子和一棵树。',
@@ -22,6 +23,7 @@ function makeApp(chatWithImage) {
   return createApp({
     chatWithImage: chatWithImage ?? (async () => structuredClone(FEATURES)),
     entries: ENTRIES,
+    db: createDb(':memory:'),
   })
 }
 

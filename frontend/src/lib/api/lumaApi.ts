@@ -20,6 +20,8 @@ export interface AnalyzeResponse {
   features: FeatureJSON
   feedbackText: string
   followUp: string
+  /** 登录孩子时返回：本次分析已落库，report 凭此回写历史 */
+  analysisId?: string
 }
 
 export type Emotion =
@@ -37,19 +39,28 @@ export interface ReportResponse {
   parentAdvice: string[]
 }
 
+const authHeaders = (token?: string): Record<string, string> =>
+  token ? { Authorization: `Bearer ${token}` } : {}
+
 export function analyzeDrawing(
   imageBase64: string,
   priorFeatures: FeatureJSON | null = null,
+  token?: string,
 ): Promise<AnalyzeResponse> {
   return apiClient<AnalyzeResponse>('/analyze', {
     method: 'POST',
+    headers: authHeaders(token),
     body: { imageBase64, priorFeatures },
   })
 }
 
-export function fetchReport(features: FeatureJSON): Promise<ReportResponse> {
+export function fetchReport(
+  features: FeatureJSON,
+  opts: { token?: string; analysisId?: string } = {},
+): Promise<ReportResponse> {
   return apiClient<ReportResponse>('/report', {
     method: 'POST',
-    body: { features },
+    headers: authHeaders(opts.token),
+    body: { features, analysisId: opts.analysisId ?? null },
   })
 }

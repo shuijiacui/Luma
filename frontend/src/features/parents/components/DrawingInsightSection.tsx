@@ -1,6 +1,6 @@
-// 画面解读（家长视角）：基于孩子最近一幅画的情绪倾向报告
-// 数据源：/api/report（判定逻辑全在后端，前端只展示，不做阈值判断、不改写文案）
-import { useState } from 'react'
+// 画面解读（家长视角）：基于孩子画作的情绪倾向报告 + 历史解读
+// 数据源：/api/report + /api/children/:id/analyses（判定逻辑全在后端，前端只展示，不做阈值判断、不改写文案）
+import { useCallback, useEffect, useState } from 'react'
 
 import { Button, Card } from '@/components/ui'
 import {
@@ -9,7 +9,11 @@ import {
   type FeatureJSON,
   type ReportResponse,
 } from '@/lib/api/lumaApi'
-import { LATEST_FEATURES_KEY } from '@/features/child/pages/ChildCreatePage'
+import { listAnalyses, type AnalysisSummary } from '@/lib/api/authApi'
+import {
+  LATEST_ANALYSIS_ID_KEY,
+  LATEST_FEATURES_KEY,
+} from '@/features/child/pages/ChildCreatePage'
 import { cn } from '@/lib/cn'
 
 const EMOTION_STYLE: Record<Emotion, { label: string; className: string }> = {
@@ -21,6 +25,10 @@ const EMOTION_STYLE: Record<Emotion, { label: string; className: string }> = {
   信息不足: { label: '信息不足', className: 'bg-luma-ivory-100 text-luma-muted border-luma-ivory-200' },
 }
 
+function emotionStyle(emotion: string) {
+  return EMOTION_STYLE[emotion as Emotion] ?? EMOTION_STYLE.信息不足
+}
+
 function readLatestFeatures(): FeatureJSON | null {
   try {
     const raw = window.sessionStorage.getItem(LATEST_FEATURES_KEY)
@@ -30,36 +38,54 @@ function readLatestFeatures(): FeatureJSON | null {
   }
 }
 
-export function DrawingInsightSection() {
+function formatTime(iso: string) {
+  const date = new Date(iso)
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+interface DrawingInsightSectionProps {
+  childId?: string
+  token?: string
+}
+
+export function DrawingInsightSection({ childId, token }: DrawingInsightSectionProps) {
   const [report, setReport] = useState<ReportResponse | null>(null)
+  const [reportSource, setReportSource] = useState<'latest' | 'history'>('latest')
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [history, setHistory] = useState<AnalysisSummary[]>([])
   const features = readLatestFeatures()
+
+  const loadHistory = useCallback(() => {
+    if (!childId || !token) return
+    listAnalyses(childId, token)
+      .then((res) => setHistory(res.analyses))
+      .catch(() => setHistory([]))
+  }, [childId, token])
+
+  useEffect(loadHistory, [loadHistory])
 
   async function handleGenerate() {
     const latest = readLatestFeatures()
     if (!latest || status === 'loading') return
     setStatus('loading')
     try {
-      setReport(await fetchReport(latest))
+      const analysisId = window.sessionStorage.getItem(LATEST_ANALYSIS_ID_KEY) ?? undefined
+      setReport(await fetchReport(latest, { token, analysisId }))
+      setReportSource('latest')
       setStatus('idle')
+      loadHistory() // report 回写后刷新历史
     } catch {
       setStatus('error')
     }
   }
 
-  if (!features) {
-    return (
-      <Card
-        variant="soft"
-        eyebrow="画面解读"
-        title="还没有可以解读的画作"
-        description="孩子在创作空间完成一幅画后，这里会出现基于画面特征的情绪倾向与沟通建议。"
-        className="mt-5"
-      />
-    )
+  function handleSelectHistory(item: AnalysisSummary) {
+    if (!item.report) return
+    setReport(item.report as ReportResponse)
+    setReportSource('history')
   }
 
-  const style = report ? EMOTION_STYLE[report.emotion] : null
+  const style = report ? emotionStyle(report.emotion) : null
 
   return (
     <Card
@@ -71,9 +97,15 @@ export function DrawingInsightSection() {
     >
       {!report ? (
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <Button variant="secondary" onClick={handleGenerate} disabled={status === 'loading'}>
-            {status === 'loading' ? '正在解读…' : '生成画面解读'}
-          </Button>
+          {features ? (
+            <Button variant="secondary" onClick={handleGenerate} disabled={status === 'loading'}>
+              {status === 'loading' ? '正在解读…' : '生成画面解读'}
+            </Button>
+          ) : (
+            <p className="text-sm text-luma-muted">
+              孩子在创作空间完成一幅画后，这里会出现基于画面特征的情绪倾向与沟通建议。
+            </p>
+          )}
           {status === 'error' && (
             <span className="text-sm font-semibold text-[#c4533f]">
               解读服务暂时不可用，请确认后端已启动后重试
@@ -102,6 +134,9 @@ export function DrawingInsightSection() {
                 置信度 {Math.round(report.confidence * 100)}%
               </span>
             </div>
+            {reportSource === 'history' && (
+              <span className="text-xs font-semibold text-luma-muted">（历史解读）</span>
+            )}
           </div>
 
           {report.evidence.length > 0 && (
@@ -139,9 +174,53 @@ export function DrawingInsightSection() {
             以上仅为单幅画面的情绪倾向参考，置信度已按测量工具效度上限校准；请结合日常观察综合了解孩子。
           </div>
 
-          <Button variant="ghost" size="sm" onClick={handleGenerate} disabled={status === 'loading'}>
-            {status === 'loading' ? '正在解读…' : '重新解读'}
-          </Button>
+          {features && (
+            <Button variant="ghost" size="sm" onClick={handleGenerate} disabled={status === 'loading'}>
+              {status === 'loading' ? '正在解读…' : '重新解读最新画作'}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {token && history.length > 0 && (
+        <div className="mt-6 border-t border-luma-ivory-200 pt-5">
+          <div className="luma-eyebrow text-luma-gold-700">历史解读</div>
+          <ul className="mt-3 space-y-2">
+            {history.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => handleSelectHistory(item)}
+                  disabled={!item.report}
+                  className={cn(
+                    'flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm transition',
+                    item.report
+                      ? 'border-luma-ivory-200 bg-white hover:border-luma-teal-100 hover:bg-luma-teal-50'
+                      : 'cursor-default border-luma-ivory-200 bg-luma-ivory-50 text-luma-muted',
+                  )}
+                >
+                  <span className="text-luma-muted">{formatTime(item.createdAt)}</span>
+                  <span className="flex-1 truncate font-semibold text-luma-teal-900">
+                    {item.summary.elements.length > 0
+                      ? `画了 ${item.summary.elements.join('、')}`
+                      : '画面元素较少'}
+                  </span>
+                  {item.report ? (
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-bold',
+                        emotionStyle(item.report.emotion).className,
+                      )}
+                    >
+                      {item.report.emotion} {Math.round(item.report.confidence * 100)}%
+                    </span>
+                  ) : (
+                    <span className="shrink-0 text-xs">未生成解读</span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </Card>

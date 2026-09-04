@@ -31,6 +31,7 @@ export function UnifiedAuthPage() {
   const [confirmCode, setConfirmCode] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   if (session) return <Navigate to={`/${session.role}/demo`} replace />
 
@@ -45,41 +46,46 @@ export function UnifiedAuthPage() {
     else setConfirmCode(nextValue)
   }
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError('')
-
-    if (role === 'parent' && mode === 'login') {
-      const result = loginParent(email, password)
-      if (!result.ok) return setError(result.message ?? '登录失败。')
-      return navigate('/parent/demo')
-    }
-
-    if (role === 'parent' && mode === 'register') {
-      if (password.length < 6) return setError('密码至少需要 6 位。')
-      if (password !== confirmPassword) {
-        return setError('两次输入的密码不一致。')
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      if (role === 'parent' && mode === 'login') {
+        const result = await loginParent(email, password)
+        if (!result.ok) return setError(result.message ?? '登录失败。')
+        return navigate('/parent/demo')
       }
-      const result = registerParent({ name, email, password })
-      if (!result.ok) return setError(result.message ?? '注册失败。')
-      return navigate('/parent/demo')
-    }
 
-    if (role === 'child' && mode === 'login') {
-      const result = loginChild(nickname, creationCode)
+      if (role === 'parent' && mode === 'register') {
+        if (password.length < 6) return setError('密码至少需要 6 位。')
+        if (password !== confirmPassword) {
+          return setError('两次输入的密码不一致。')
+        }
+        const result = await registerParent({ name, email, password })
+        if (!result.ok) return setError(result.message ?? '注册失败。')
+        return navigate('/parent/demo')
+      }
+
+      if (role === 'child' && mode === 'login') {
+        const result = await loginChild(nickname, creationCode)
+        if (!result.ok) return setError(result.message ?? '还差一点，再试试吧。')
+        return navigate('/child/demo')
+      }
+
+      if (!/^\d{4}$/.test(creationCode)) {
+        return setError('请设置 4 个数字组成的创作码。')
+      }
+      if (creationCode !== confirmCode) {
+        return setError('两个创作码不一样，再看一眼吧。')
+      }
+      const result = await registerChild({ nickname, creationCode, inviteCode })
       if (!result.ok) return setError(result.message ?? '还差一点，再试试吧。')
       return navigate('/child/demo')
+    } finally {
+      setSubmitting(false)
     }
-
-    if (!/^\d{4}$/.test(creationCode)) {
-      return setError('请设置 4 个数字组成的创作码。')
-    }
-    if (creationCode !== confirmCode) {
-      return setError('两个创作码不一样，再看一眼吧。')
-    }
-    const result = registerChild({ nickname, creationCode, inviteCode })
-    if (!result.ok) return setError(result.message ?? '还差一点，再试试吧。')
-    return navigate('/child/demo')
   }
 
   function handleGuest() {
@@ -255,14 +261,17 @@ export function UnifiedAuthPage() {
           variant={!isParent ? 'gold' : 'primary'}
           size="lg"
           className="w-full"
+          disabled={submitting}
         >
-          {isLogin
-            ? isParent
-              ? '登录家长空间'
-              : '去找 Nilo'
-            : isParent
-              ? '创建并进入'
-              : '开启我的小天地'}
+          {submitting
+            ? '请稍候…'
+            : isLogin
+              ? isParent
+                ? '登录家长空间'
+                : '去找 Nilo'
+              : isParent
+                ? '创建并进入'
+                : '开启我的小天地'}
         </Button>
       </form>
 

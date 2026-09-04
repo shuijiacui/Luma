@@ -4,8 +4,9 @@ import { extractFeatures, mergeFeatures } from '../services/extractFeatures.js'
 import { retrieve } from '../services/retrieve.js'
 import { score } from '../services/score.js'
 import { buildReport, buildFeedback, FOLLOW_UP } from '../services/report.js'
+import { insertAnalysis, attachReport } from '../services/historyService.js'
 
-export function createApiRouter({ chatWithImage, entries, scoreConfig }) {
+export function createApiRouter({ chatWithImage, entries, scoreConfig, db }) {
   const router = Router()
 
   router.post('/analyze', async (req, res) => {
@@ -21,18 +22,28 @@ export function createApiRouter({ chatWithImage, entries, scoreConfig }) {
       console.error('[analyze] feature extraction failed:', err.message)
       return res.status(502).json({ error: 'feature_extraction_failed' })
     }
-    res.json({ features, feedbackText: buildFeedback(features), followUp: FOLLOW_UP })
+    // 登录孩子：分析落库，返回 analysisId 供 report 关联（游客不落库）
+    let analysisId = null
+    if (db && req.auth?.role === 'child') {
+      analysisId = insertAnalysis(db, { childId: req.auth.accountId, familyId: req.auth.familyId, features })
+    }
+    res.json({ features, feedbackText: buildFeedback(features), followUp: FOLLOW_UP, ...(analysisId && { analysisId }) })
   })
 
   router.post('/report', (req, res) => {
-    const { features } = req.body ?? {}
+    const { features, analysisId = null } = req.body ?? {}
     if (!features || typeof features !== 'object') {
       return res.status(400).json({ error: 'features required' })
     }
     const matches = retrieve(features, entries)
     const result = score(matches, features, scoreConfig)
     console.info(`[report] emotion=${result.emotion} confidence=${result.confidence} reason=${result.reason} hits=${matches.map(m => m.id).join(',') || '-'}`)
-    res.json(buildReport(result))
+    const report = buildReport(result)
+    // 登录用户带 analysisId：报告回写历史记录（归属校验失败静默跳过，不影响返回）
+    if (db && req.auth && analysisId) {
+      attachReport(db, analysisId, report, req.auth)
+    }
+    res.json(report)
   })
 
   return router

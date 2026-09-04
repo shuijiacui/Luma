@@ -132,3 +132,60 @@
 ## GET /api/health
 
 **Response 200**: `{ "ok": true }`
+
+---
+
+## 账号与历史（2026-07-25 新增）
+
+所有 `/api/auth/*` 响应错误格式：`{ "error": "中文提示文案" }`（直接展示给用户）。
+会话：响应中 `token` 存入前端，后续请求带 `Authorization: Bearer <token>`，30 天有效。
+
+### POST /api/auth/parent/register
+```json
+req:  { "name": "Nilo 妈妈", "email": "mama@example.com", "password": "≥6位" }
+res 201: { "token": "hex", "session": { "id", "role": "parent", "familyId", "displayName", "isGuest": false }, "family": { "inviteCode": "S7N3SV" } }
+err: 400 参数/密码太短 · 409 邮箱已注册
+```
+
+### POST /api/auth/parent/login
+```json
+req:  { "email": "...", "password": "..." }   // 邮箱大小写不敏感
+res 201: 同 register
+err: 401 邮箱或密码不正确
+```
+
+### POST /api/auth/child/register
+```json
+req:  { "nickname": "星星船长", "creationCode": "1234", "inviteCode": "S7N3SV" }
+res 201: { "token", "session": { "role": "child", ... }, "family": { "inviteCode" } }
+err: 400 创作码非4位数字 · 404 邀请码不存在 · 409 昵称已使用
+```
+
+### POST /api/auth/child/login
+```json
+req:  { "nickname": "...", "creationCode": "1234" }
+err: 401 昵称或创作码不对
+```
+
+### GET /api/auth/me（需登录）
+```json
+res 200: { "session": {...}, "family": { "inviteCode" }, "children": [{ "id", "nickname", "createdAt" }] }
+err: 401 { "error": "login required" }
+```
+
+### POST /api/auth/logout — `{ "ok": true }`（使 token 失效）
+
+### GET /api/children/:childId/analyses（需登录：本人或同家庭家长）
+```json
+res 200: { "analyses": [{
+  "id": "uuid", "createdAt": "ISO",
+  "summary": { "elements": ["house"], "darkRatio": 0.15, "distortions": [] },
+  "report": { "emotion", "confidence", "evidence", "parentAdvice" } | null
+}] }
+err: 401 未登录 · 403 非本家庭
+```
+
+### 既有端点的登录态扩展（向后兼容，游客可无登录调用）
+
+- `POST /api/analyze`：登录孩子带 Bearer 调用时，分析落库且响应多一个 `analysisId` 字段
+- `POST /api/report`：请求体新增可选 `analysisId`，登录用户调用时报告回写对应历史记录

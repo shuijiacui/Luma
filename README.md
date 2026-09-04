@@ -7,10 +7,18 @@ AI 引导极度克制（只做镜子描述画面，不做教练引导情绪）�
 
 ```
 ├── frontend/    # React + TS + Vite + Tailwind（画板 / 儿童创作空间 / 家长洞察页）
-├── server/      # Express 判定服务（特征提取 → RAG 检索 → 评分 → 报告）
+├── server/      # Express 判定服务（特征提取 → RAG 检索 → 评分 → 报告）+ 账号/历史（SQLite）
 ├── knowledge/   # 心理学知识库（entries.jsonl，31 条，全部带文献出处）+ 校验脚本
 └── docs/        # 产品边界 / 交互流程 / API 契约 / RAG 设计 / 联调说明等
 ```
+
+## 账号与数据
+
+- **SQLite 单文件库**（`server/data.sqlite`，gitignored；`node:sqlite` 内置驱动，零运维）
+- 家长邮箱注册/登录（scrypt 密码哈希）+ 孩子昵称 + 4 位创作码 + 家庭邀请码，跨设备可用
+- Bearer token 会话（30 天）；游客模式保留，内容不保存
+- 登录孩子的每次分析/解读落库（**只存结构化特征与报告，不存画作原图**——儿童隐私最小化），家长页可看历史解读
+- 接口详见 [docs/API契约.md](docs/API契约.md)「账号与历史」
 
 ## 本地运行（前后端联通）
 
@@ -38,7 +46,7 @@ npm run dev
 ## 测试
 
 ```bash
-cd server && npm test          # 39 个单测（含评分决策序 12 用例）
+cd server && npm test          # 45 个单测（评分决策序 12 用例 + auth/历史 6 用例）
 node knowledge/scripts/validate.mjs   # 知识库校验（提交前必跑）
 cd frontend && npm run build   # 类型检查 + 构建
 ```

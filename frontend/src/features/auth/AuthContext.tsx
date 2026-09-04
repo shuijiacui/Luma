@@ -8,15 +8,16 @@ import {
 } from 'react'
 
 import {
+  loginChildApi,
+  loginParentApi,
+  logoutApi,
+  registerChildApi,
+  registerParentApi,
+} from '@/lib/api/authApi'
+import {
   DEMO_FAMILY_ID,
-  findChild,
-  findFamilyByInviteCode,
-  findParent,
-  getFamilies,
   getStoredSession,
   removeSession,
-  saveAccount,
-  saveFamily,
   saveSession,
 } from './storage'
 import type { AuthResult, AuthSession, UserRole } from './types'
@@ -35,36 +36,28 @@ interface ChildRegistration {
 
 interface AuthContextValue {
   session: AuthSession | null
-  registerParent: (details: ParentRegistration) => AuthResult
-  loginParent: (email: string, password: string) => AuthResult
-  registerChild: (details: ChildRegistration) => AuthResult
-  loginChild: (nickname: string, creationCode: string) => AuthResult
+  registerParent: (details: ParentRegistration) => Promise<AuthResult>
+  loginParent: (email: string, password: string) => Promise<AuthResult>
+  registerChild: (details: ChildRegistration) => Promise<AuthResult>
+  loginChild: (nickname: string, creationCode: string) => Promise<AuthResult>
   continueAsGuest: (role: UserRole) => void
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function createId() {
-  return crypto.randomUUID()
-}
-
-function createInviteCode() {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  const existingCodes = new Set(
-    getFamilies().map((family) => family.inviteCode),
-  )
-
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const values = crypto.getRandomValues(new Uint8Array(6))
-    const code = Array.from(
-      values,
-      (value) => alphabet[value % alphabet.length],
-    ).join('')
-    if (!existingCodes.has(code)) return code
+async function toAuthResult(
+  call: () => Promise<{ token: string; session: AuthSession }>,
+  fallback: string,
+): Promise<{ session?: AuthSession; result: AuthResult }> {
+  try {
+    const { token, session } = await call()
+    return { session: { ...session, token }, result: { ok: true } }
+  } catch (error) {
+    return {
+      result: { ok: false, message: error instanceof Error ? error.message : fallback },
+    }
   }
-
-  throw new Error('Unable to create a unique family invite code')
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -76,111 +69,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const registerParent = useCallback(
-    ({ name, email, password }: ParentRegistration): AuthResult => {
-      if (findParent(email)) {
-        return { ok: false, message: '这个邮箱已经注册过了，请直接登录。' }
-      }
-
-      const id = createId()
-      const familyId = createId()
-      const inviteCode = createInviteCode()
-      saveFamily({
-        id: familyId,
-        inviteCode,
-        createdAt: new Date().toISOString(),
-      })
-      saveAccount({
-        id,
-        role: 'parent',
-        familyId,
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        createdAt: new Date().toISOString(),
-      })
-      commitSession({
-        id,
-        role: 'parent',
-        familyId,
-        displayName: name.trim(),
-        isGuest: false,
-      })
-      return { ok: true }
+    async ({ name, email, password }: ParentRegistration): Promise<AuthResult> => {
+      const { session: next, result } = await toAuthResult(
+        () => registerParentApi({ name: name.trim(), email: email.trim(), password }),
+        '注册失败，请稍后再试。',
+      )
+      if (next) commitSession(next)
+      return result
     },
     [commitSession],
   )
 
   const loginParent = useCallback(
-    (email: string, password: string): AuthResult => {
-      const account = findParent(email.trim())
-      if (!account || account.password !== password) {
-        return { ok: false, message: '邮箱或密码不正确，请再试一次。' }
-      }
-      commitSession({
-        id: account.id,
-        role: 'parent',
-        familyId: account.familyId,
-        displayName: account.name,
-        isGuest: false,
-      })
-      return { ok: true }
+    async (email: string, password: string): Promise<AuthResult> => {
+      const { session: next, result } = await toAuthResult(
+        () => loginParentApi({ email: email.trim(), password }),
+        '登录失败，请稍后再试。',
+      )
+      if (next) commitSession(next)
+      return result
     },
     [commitSession],
   )
 
   const registerChild = useCallback(
-    ({
-      nickname,
-      creationCode,
-      inviteCode,
-    }: ChildRegistration): AuthResult => {
-      if (findChild(nickname)) {
-        return { ok: false, message: '这个昵称已经被使用，换一个试试吧。' }
-      }
-
-      const family = findFamilyByInviteCode(inviteCode)
-      if (!family || family.id === DEMO_FAMILY_ID) {
-        return {
-          ok: false,
-          message: '没有找到这个家庭邀请码，请家长再确认一次。',
-        }
-      }
-
-      const id = createId()
-      saveAccount({
-        id,
-        role: 'child',
-        familyId: family.id,
-        nickname: nickname.trim(),
-        creationCode,
-        createdAt: new Date().toISOString(),
-      })
-      commitSession({
-        id,
-        role: 'child',
-        familyId: family.id,
-        displayName: nickname.trim(),
-        isGuest: false,
-      })
-      return { ok: true }
+    async ({ nickname, creationCode, inviteCode }: ChildRegistration): Promise<AuthResult> => {
+      const { session: next, result } = await toAuthResult(
+        () => registerChildApi({ nickname: nickname.trim(), creationCode, inviteCode }),
+        '还差一点，再试试吧。',
+      )
+      if (next) commitSession(next)
+      return result
     },
     [commitSession],
   )
 
   const loginChild = useCallback(
-    (nickname: string, creationCode: string): AuthResult => {
-      const account = findChild(nickname.trim())
-      if (!account || account.creationCode !== creationCode) {
-        return { ok: false, message: '昵称或创作码不对，再想一想吧。' }
-      }
-      commitSession({
-        id: account.id,
-        role: 'child',
-        familyId: account.familyId,
-        displayName: account.nickname,
-        isGuest: false,
-      })
-      return { ok: true }
+    async (nickname: string, creationCode: string): Promise<AuthResult> => {
+      const { session: next, result } = await toAuthResult(
+        () => loginChildApi({ nickname: nickname.trim(), creationCode }),
+        '还差一点，再试试吧。',
+      )
+      if (next) commitSession(next)
+      return result
     },
     [commitSession],
   )
@@ -199,9 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const logout = useCallback(() => {
+    if (session?.token) logoutApi(session.token).catch(() => {})
     removeSession()
     setSession(null)
-  }, [])
+  }, [session])
 
   const value = useMemo(
     () => ({

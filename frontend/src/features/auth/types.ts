@@ -33,6 +33,8 @@ export interface AuthSession {
   familyId: string
   displayName: string
   isGuest: boolean
+  /** 后端会话 token；游客模式无 token */
+  token?: string
 }
 
 export interface AuthResult {
