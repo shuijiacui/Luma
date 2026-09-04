@@ -3,7 +3,7 @@ import { Router } from 'express'
 import {
   AuthError, registerParent, loginParent, registerChild, loginChild, logout, getMe, refresh,
 } from '../services/authService.js'
-import { listAnalyses } from '../services/historyService.js'
+import { listAnalyses, trendSummary } from '../services/historyService.js'
 
 function handle(fn) {
   return (req, res) => {
@@ -57,6 +57,13 @@ export function createAuthRouter({ db }) {
     const rows = listAnalyses(db, req.params.childId, req.auth)
     if (!rows) return res.status(403).json({ error: 'forbidden' })
     res.json({ analyses: rows })
+  })
+
+  router.get('/children/:childId/trend', (req, res) => {
+    if (!requireAuth(req, res)) return
+    const trend = trendSummary(db, req.params.childId, req.auth)
+    if (!trend) return res.status(403).json({ error: 'forbidden' })
+    res.json(trend)
   })
 
   return router

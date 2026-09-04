@@ -32,6 +32,14 @@ export interface AnalysisSummary {
   } | null
 }
 
+export interface TrendResponse {
+  total: number
+  withReport: number
+  direction: 'insufficient' | 'stable' | 'watch'
+  counts: Record<string, number>
+  points: { createdAt: string; emotion: string; confidence: number }[]
+}
+
 export function registerParentApi(details: { name: string; email: string; password: string }) {
   return apiClient<AuthApiResponse>('/auth/parent/register', { method: 'POST', body: details })
 }
@@ -58,4 +66,8 @@ export function logoutApi(token: string) {
 
 export function listAnalyses(childId: string, token: string) {
   return authFetch<{ analyses: AnalysisSummary[] }>(`/children/${childId}/analyses`, { token })
+}
+
+export function fetchTrend(childId: string, token: string) {
+  return authFetch<TrendResponse>(`/children/${childId}/trend`, { token })
 }

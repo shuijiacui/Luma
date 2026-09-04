@@ -24,6 +24,7 @@ function envNum(name) {
 export function createApp(deps = {}) {
   const entries = deps.entries ?? loadEntries(new URL('entries.jsonl', KNOWLEDGE_DIR))
   const constraints = loadJsonSafe(new URL('constraints.json', KNOWLEDGE_DIR))
+  const dispatchConfig = loadJsonSafe(new URL('dispatch.config.json', KNOWLEDGE_DIR))
   const db = deps.db ?? createDb()
   const limits = deps.limits ?? defaultLimits()
   const corsOrigins = deps.corsOrigins
@@ -41,6 +42,7 @@ export function createApp(deps = {}) {
     },
     validIds: new Set(entries.map(e => e.id)),
     redLineWords: constraints?.redLineWords ?? DEFAULT_CONFIG.redLineWords,
+    l23Cap: dispatchConfig?.tiers?.['2']?.groupEvidenceCap ?? DEFAULT_CONFIG.l23Cap,
   }
 
   const app = express()
@@ -65,6 +67,7 @@ export function createApp(deps = {}) {
   app.use('/api', createApiRouter({
     chatWithImage: deps.chatWithImage ?? undefined,
     entries,
+    constraints: constraints ?? {},
     scoreConfig,
     db,
     kbVersion: `entries-${entries.length}${constraints?.version ? `+constraints-${constraints.version}` : ''}`,

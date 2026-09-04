@@ -23,6 +23,7 @@ export const DEFAULT_CONFIG = {
   redLineWords: RED_LINE_WORDS,
   validIds: null,        // Set<entryId>；null 表示不校验
   crossClusterDiscount: 1.0, // 预留（v2.2 已知局限），当前不生效
+  l23Cap: 0.6,           // 调度规则 1：组证据全部来自 L2+L3 时 E 截断（预警必须有实证）
 }
 
 // Step 4: Bayesian-inspired calibration
@@ -87,7 +88,12 @@ export function score(matches, features, config = DEFAULT_CONFIG) {
   for (const [name, g] of Object.entries(raw)) {
     // Step 2/3：簇内 max → 簇间 noisy-OR
     const weights = [...g.clusterMax.values()]
-    const E = weights.length ? 1 - weights.reduce((acc, w) => acc * (1 - w), 1) : 0
+    let E = weights.length ? 1 - weights.reduce((acc, w) => acc * (1 - w), 1) : 0
+    // 调度规则 1（知识库调度.md）：该组命中全部来自 L2+L3 → E 强制截断
+    // （Buck/Koppitz 体系再好也不能单独定案，Lilienfeld 2000 效度质疑）
+    if (g.hits.length > 0 && !g.hits.some(h => h.entry.tier === 1)) {
+      E = Math.min(E, config.l23Cap)
+    }
     // Step 4：Bayesian-inspired calibration（未截断，排名用）
     const posterior = posteriorScore(E, config.priors[name], config.fpr)
     groups[name] = { E, posterior, clusters: g.clusterMax.size, hits: g.hits }

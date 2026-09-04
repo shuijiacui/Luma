@@ -213,3 +213,18 @@ err: 401 无效/过期/已轮换
 ### CORS
 
 白名单制（`CORS_ORIGINS`，默认 `http://localhost:5173`）；非白名单来源不发许可头。生产同域部署（`FRONTEND_DIST` 静态托管）不依赖 CORS。
+
+### GET /api/children/:childId/trend（需登录：本人或同家庭家长，2026-07-25 新增）
+```json
+res 200: {
+  "total": 3, "withReport": 2,
+  "direction": "insufficient | stable | watch",
+  "counts": { "未见明显风险信号": 2 },
+  "points": [{ "createdAt": "ISO", "emotion": "未见明显风险信号", "confidence": 0.6 }]
+}
+```
+- 描述性纵向聚合，**不是新判定类型**：不下诊断、不做预测；direction 仅三态
+- direction 规则：报告 <2 份 → insufficient；近 3 份含 需要关注/焦虑倾向/低落倾向 → watch；否则 stable
+
+### POST /api/report 请求体新增可选字段（2026-07-25）
+- `childAge`: number | null — 儿童年龄（4-12）。命中发育混淆条目（constraints.ageMods.affectedEntries）时按年龄段做 c×multiplier 门控；不传 = 默认 1.0 无调制
