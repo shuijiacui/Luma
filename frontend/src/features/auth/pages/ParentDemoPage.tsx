@@ -329,8 +329,8 @@ export function ParentDemoPage() {
               variants={fadeUp}
               className="mb-4 flex flex-wrap items-center justify-between gap-3 lg:hidden"
             >
-              {childSwitcher}
-              {invitePill}
+              <div data-onboarding="parent-child-switcher-mobile">{childSwitcher}</div>
+              <div data-onboarding="parent-invite-mobile">{invitePill}</div>
             </motion.div>
 
             <motion.div

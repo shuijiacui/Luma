@@ -12,7 +12,9 @@ export const childSteps: OnboardingStep[] = [
     body: '今天想画什么？不用想太久——点开画布，让画笔带你去！',
   },
   {
+    // Desktop: vine on the right; mobile: vine is hidden, fall back to canvas card
     target: '[data-onboarding="child-vine"]',
+    mobileTarget: '[data-onboarding="child-canvas-card"]',
     title: '你的作品保存在这里',
     body: '你画过的每一幅都会保存在这里，慢慢长成一棵属于你的大树🌱',
   },

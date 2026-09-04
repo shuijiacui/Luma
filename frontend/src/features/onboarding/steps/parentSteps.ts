@@ -7,12 +7,16 @@ export const parentSteps: OnboardingStep[] = [
     body: '孩子每画一幅画，都在用颜色和线条说一些还不知道怎么开口的话。这里帮你把这些话读出来。',
   },
   {
+    // Desktop: switcher in navbar; mobile: switcher in page body
     target: '[data-onboarding="parent-child-switcher"]',
+    mobileTarget: '[data-onboarding="parent-child-switcher-mobile"]',
     title: '切换查看不同的孩子',
     body: '每个孩子的成长节奏都不一样。点头像切换，单独看每一个孩子的故事。',
   },
   {
+    // Desktop: invite pill in navbar; mobile: invite pill in page body
     target: '[data-onboarding="parent-invite"]',
+    mobileTarget: '[data-onboarding="parent-invite-mobile"]',
     title: '邀请孩子加入',
     body: '把这串邀请码发给孩子，他们注册后就会出现在你这里，两个账号就连在一起了。',
   },
