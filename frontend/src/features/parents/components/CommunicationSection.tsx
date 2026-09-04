@@ -9,11 +9,11 @@ const observations = [
   {
     id: 'o1',
     tag: '独处场景',
-    detail: '最近三次作品中，孩子经常创造独处场景——主角一个人探索、一个人等待。',
+    detail: '最近三次画作中，孩子经常创造独处场景——主角一个人探索、一个人等待。',
     suggestions: [
       {
         intent: '顺着孩子的表达问',
-        prompt: '"你的故事里的角色喜欢一个人待着吗？"',
+        prompt: '"你画里的角色喜欢一个人待着吗？"',
       },
       {
         intent: '保持开放，不预设',
@@ -25,7 +25,7 @@ const observations = [
   {
     id: 'o2',
     tag: '未完成的结局',
-    detail: '近期故事里，孩子频繁让故事停在悬念处，没有明确的结尾。',
+    detail: '近期画作里，孩子频繁让画面停在悬念处，没有明确的结局。',
     suggestions: [
       {
         intent: '让孩子掌控叙事',
@@ -33,7 +33,7 @@ const observations = [
       },
       {
         intent: '不急着给答案',
-        prompt: '"你喜欢让故事停在这里吗？"',
+        prompt: '"你喜欢让画面停在这里吗？"',
       },
     ],
     tone: 'gold' as const,
@@ -49,7 +49,7 @@ const observations = [
       },
       {
         intent: '让孩子来解释',
-        prompt: '"这个东西对故事里的角色来说重要吗？"',
+        prompt: '"这个东西对画里的角色来说重要吗？"',
       },
     ],
     tone: 'violet' as const,

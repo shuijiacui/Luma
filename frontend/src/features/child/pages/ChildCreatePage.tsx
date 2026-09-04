@@ -18,7 +18,7 @@ import {
 const colors = ['#20352f', '#168a78', '#edcd70', '#ef7b69', '#7a82d8', '#4aa5d8']
 const niloPrompts = [
   'I noticed something new.',
-  'What story happens here?',
+  'Keep going!',
 ] as const
 
 export const LATEST_FEATURES_KEY = 'luma_latest_features'
