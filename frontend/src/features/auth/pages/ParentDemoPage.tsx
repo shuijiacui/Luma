@@ -75,6 +75,15 @@ const demoInsight = {
   ],
 } as const
 
+type TabKey = 'overview' | 'themes' | 'timeline' | 'communication'
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'overview', label: '成长概览' },
+  { key: 'themes', label: '创作主题' },
+  { key: 'timeline', label: '成长时间轴' },
+  { key: 'communication', label: 'AI 沟通助手' },
+]
+
 export function ParentDemoPage() {
   const navigate = useNavigate()
   const { session, logout } = useAuth()
@@ -99,6 +108,7 @@ export function ParentDemoPage() {
   )
   const [selectedChildId, setSelectedChildId] = useState('')
   const [copied, setCopied] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabKey>('overview')
   const selectedChild =
     children.find((child) => child.id === selectedChildId) ?? children[0]
 
@@ -123,11 +133,13 @@ export function ParentDemoPage() {
         className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-40 select-none"
       />
       <Navbar
+        className="sticky top-4 z-30"
         items={[
-          { label: '成长概览', href: '#overview', isActive: true },
-          { label: '创作主题', href: '#themes' },
-          { label: '成长时间轴', href: '#timeline' },
-          { label: 'AI 沟通助手', href: '#communication' },
+          ...TABS.map((tab) => ({
+            label: tab.label,
+            onClick: () => setActiveTab(tab.key),
+            isActive: activeTab === tab.key,
+          })),
           { label: '成长档案', href: '/parent/archive' },
         ]}
         actions={
@@ -173,41 +185,42 @@ export function ParentDemoPage() {
           </motion.div>
         )}
 
-        <motion.section variants={fadeUp} id="overview">
-          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <div className="luma-eyebrow text-luma-gold-700">
-                {demoInsight.period}
-              </div>
-              <h1 className="luma-heading-1 mt-3 text-luma-teal-900">
-                看见创作里的成长轨迹
-              </h1>
-              <p className="luma-body-lg mt-4 max-w-2xl text-luma-muted">
-                从孩子画下的画面中，整理值得继续倾听的主题与表达。
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-luma-teal-100 bg-white px-5 py-3 shadow-luma-sm">
-              <div className="luma-caption text-luma-muted">家庭邀请码</div>
-              <div className="mt-1 flex items-center gap-3">
-                <strong className="font-brand text-xl tracking-[0.12em] text-luma-teal-900">
-                  {inviteCode ?? '—'}
-                </strong>
-                <button
-                  type="button"
-                  onClick={copyInviteCode}
-                  className="rounded-lg bg-luma-teal-50 px-2.5 py-1 text-xs font-bold text-luma-teal-700 transition hover:bg-luma-teal-100"
-                >
-                  {copied ? '已复制' : '复制'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </motion.section>
-
         {children.length > 0 ? (
           <>
-            <motion.section variants={fadeUp} className="mt-9">
+            {/* 移动端标签条（桌面端标签在顶部导航栏内） */}
+            <motion.div
+              variants={fadeUp}
+              className="mb-6 flex gap-2 overflow-x-auto pb-1 md:hidden"
+            >
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  aria-current={activeTab === tab.key ? 'page' : undefined}
+                  className={cn(
+                    'shrink-0 rounded-full px-4 py-2 text-sm font-bold outline-none transition focus-visible:ring-3 focus-visible:ring-luma-gold-300/60',
+                    activeTab === tab.key
+                      ? 'bg-luma-teal-500 text-white shadow-luma-sm'
+                      : 'bg-luma-ivory-100 text-luma-muted',
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+              <a
+                href="/parent/archive"
+                className="shrink-0 rounded-full bg-luma-ivory-100 px-4 py-2 text-sm font-bold text-luma-muted outline-none transition focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
+              >
+                成长档案
+              </a>
+            </motion.div>
+
+            {/* 通用上下文：孩子切换 + 邀请码（所有标签共用） */}
+            <motion.section
+              variants={fadeUp}
+              className="flex flex-col justify-between gap-4 md:flex-row md:items-center"
+            >
               <div className="flex flex-wrap items-center gap-3">
                 <span className="mr-1 text-sm font-semibold text-luma-muted">
                   查看：
@@ -236,177 +249,218 @@ export function ParentDemoPage() {
                   </button>
                 ))}
               </div>
+
+              <div className="shrink-0 rounded-2xl border border-luma-teal-100 bg-white px-5 py-3 shadow-luma-sm">
+                <div className="luma-caption text-luma-muted">家庭邀请码</div>
+                <div className="mt-1 flex items-center gap-3">
+                  <strong className="font-brand text-xl tracking-[0.12em] text-luma-teal-900">
+                    {inviteCode ?? '—'}
+                  </strong>
+                  <button
+                    type="button"
+                    onClick={copyInviteCode}
+                    className="rounded-lg bg-luma-teal-50 px-2.5 py-1 text-xs font-bold text-luma-teal-700 transition hover:bg-luma-teal-100"
+                  >
+                    {copied ? '已复制' : '复制'}
+                  </button>
+                </div>
+              </div>
             </motion.section>
 
+            {/* 标签内容：切换标签或孩子时重放入场动画 */}
             <motion.div
-              key={selectedChild?.id}
+              key={`${activeTab}-${selectedChild?.id}`}
               variants={staggerContainer}
               initial="hidden"
               animate="visible"
-              className="mt-7"
+              className="mt-8"
             >
-              <motion.section
-                variants={fadeUp}
-                id="themes"
-                className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]"
-              >
-                <Card
-                  eyebrow="创作主题"
-                  title={`${selectedChild?.nickname} 最近在探索什么？`}
-                  description="根据近期绘画中反复出现的内容整理"
-                  className="h-full"
-                >
-                  <div className="mt-2 space-y-5">
-                    {demoInsight.themes.map((theme) => (
-                      <div key={theme.name} className="flex items-start gap-3">
-                        <span
-                          className={cn(
-                            'mt-1.5 size-2.5 shrink-0 rounded-full',
-                            theme.color,
-                          )}
-                        />
-                        <div>
-                          <div className="font-bold text-luma-teal-900">
-                            {theme.name}
+              {activeTab === 'overview' && (
+                <>
+                  <motion.section variants={fadeUp} id="overview">
+                    <div className="luma-eyebrow text-luma-gold-700">
+                      {demoInsight.period}
+                    </div>
+                    <h1 className="luma-heading-1 mt-3 text-luma-teal-900">
+                      看见创作里的成长轨迹
+                    </h1>
+                    <p className="luma-body-lg mt-4 max-w-2xl text-luma-muted">
+                      从孩子画下的画面中，整理值得继续倾听的主题与表达。
+                    </p>
+                  </motion.section>
+
+                  <DrawingInsightSection
+                    childId={selectedChild?.id}
+                    token={session?.token}
+                  />
+
+                  <motion.section variants={fadeUp} className="mt-5">
+                    <Card
+                      variant="glass"
+                      eyebrow="AI 观察"
+                      title="创作中正在延伸的线索"
+                      className="border-luma-teal-100"
+                    >
+                      <p className="font-display text-xl leading-relaxed font-semibold text-luma-teal-900 sm:text-2xl">
+                        “{demoInsight.observation}”
+                      </p>
+                      <div className="mt-6 grid gap-3 md:grid-cols-3">
+                        {demoInsight.observations.map((observation, index) => (
+                          <div
+                            key={observation}
+                            className="rounded-2xl bg-luma-ivory-50 p-4"
+                          >
+                            <span className="luma-eyebrow text-luma-gold-700">
+                              0{index + 1}
+                            </span>
+                            <p className="mt-2 text-sm leading-relaxed text-luma-muted">
+                              {observation}
+                            </p>
                           </div>
-                          <div className="mt-1 text-sm text-luma-muted">
-                            {theme.detail}
+                        ))}
+                      </div>
+                      <div className="mt-5 rounded-xl bg-luma-teal-50 px-4 py-3 text-xs leading-relaxed text-luma-teal-700">
+                        Luma 只整理创作中可见的表达与变化，不为孩子贴标签。
+                      </div>
+                    </Card>
+                  </motion.section>
+                </>
+              )}
+
+              {activeTab === 'themes' && (
+                <>
+                  <motion.section
+                    variants={fadeUp}
+                    id="themes"
+                    className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]"
+                  >
+                    <Card
+                      eyebrow="创作主题"
+                      title={`${selectedChild?.nickname} 最近在探索什么？`}
+                      description="根据近期绘画中反复出现的内容整理"
+                      className="h-full"
+                    >
+                      <div className="mt-2 space-y-5">
+                        {demoInsight.themes.map((theme) => (
+                          <div key={theme.name} className="flex items-start gap-3">
+                            <span
+                              className={cn(
+                                'mt-1.5 size-2.5 shrink-0 rounded-full',
+                                theme.color,
+                              )}
+                            />
+                            <div>
+                              <div className="font-bold text-luma-teal-900">
+                                {theme.name}
+                              </div>
+                              <div className="mt-1 text-sm text-luma-muted">
+                                {theme.detail}
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </Card>
+                    </Card>
 
-                <Card
-                  variant="soft"
-                  eyebrow="孩子说过的话"
-                  title="保留孩子自己的声音"
-                  className="h-full"
-                >
-                  <div className="mt-1 space-y-4">
-                    {demoInsight.quotes.map((quote) => (
-                      <figure
-                        key={quote.source}
-                        className="rounded-2xl border border-white/80 bg-white/70 p-4"
-                      >
-                        <blockquote className="font-display text-lg font-semibold leading-relaxed text-luma-teal-900">
-                          {quote.text}
-                        </blockquote>
-                        <figcaption className="mt-3 text-xs font-semibold text-luma-muted">
-                          {quote.source} · {quote.time}
-                        </figcaption>
-                      </figure>
-                    ))}
-                  </div>
-                </Card>
-              </motion.section>
-
-              <motion.section variants={fadeUp} className="mt-5">
-                <Card
-                  variant="glass"
-                  eyebrow="AI 观察"
-                  title="创作中正在延伸的线索"
-                  className="border-luma-teal-100"
-                >
-                  <p className="font-display text-xl leading-relaxed font-semibold text-luma-teal-900 sm:text-2xl">
-                    “{demoInsight.observation}”
-                  </p>
-                  <div className="mt-6 grid gap-3 md:grid-cols-3">
-                    {demoInsight.observations.map((observation, index) => (
-                      <div
-                        key={observation}
-                        className="rounded-2xl bg-luma-ivory-50 p-4"
-                      >
-                        <span className="luma-eyebrow text-luma-gold-700">
-                          0{index + 1}
-                        </span>
-                        <p className="mt-2 text-sm leading-relaxed text-luma-muted">
-                          {observation}
-                        </p>
+                    <Card
+                      variant="soft"
+                      eyebrow="孩子说过的话"
+                      title="保留孩子自己的声音"
+                      className="h-full"
+                    >
+                      <div className="mt-1 space-y-4">
+                        {demoInsight.quotes.map((quote) => (
+                          <figure
+                            key={quote.source}
+                            className="rounded-2xl border border-white/80 bg-white/70 p-4"
+                          >
+                            <blockquote className="font-display text-lg font-semibold leading-relaxed text-luma-teal-900">
+                              {quote.text}
+                            </blockquote>
+                            <figcaption className="mt-3 text-xs font-semibold text-luma-muted">
+                              {quote.source} · {quote.time}
+                            </figcaption>
+                          </figure>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-5 rounded-xl bg-luma-teal-50 px-4 py-3 text-xs leading-relaxed text-luma-teal-700">
-                    Luma 只整理创作中可见的表达与变化，不为孩子贴标签。
-                  </div>
-                </Card>
-              </motion.section>
+                    </Card>
+                  </motion.section>
 
-              <motion.section
-                variants={fadeUp}
-                id="conversation"
-                className="mt-5 grid gap-5 lg:grid-cols-[1fr_0.72fr]"
-              >
-                <Card
-                  eyebrow="沟通建议"
-                  title="把观察变成一次温柔的对话"
-                  description="没有标准答案，让孩子决定画面如何继续。"
-                >
-                  <div className="mt-2 space-y-3">
-                    {demoInsight.suggestions.map((suggestion, index) => (
-                      <div
-                        key={suggestion.title}
-                        className="group rounded-2xl border border-luma-ivory-200 bg-luma-ivory-50 p-4 transition hover:border-luma-teal-100 hover:bg-luma-teal-50"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="flex size-6 items-center justify-center rounded-full bg-luma-gold-100 text-xs font-bold text-luma-gold-700">
-                            {index + 1}
-                          </span>
-                          <span className="text-sm font-bold text-luma-teal-900">
-                            {suggestion.title}
-                          </span>
-                        </div>
-                        <p className="mt-2.5 pl-8 font-display text-lg font-semibold leading-relaxed text-luma-teal-900">
-                          {suggestion.prompt}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                <Card
-                  variant="outline"
-                  eyebrow="近期创作"
-                  title="表达的足迹"
-                >
-                  <div className="mt-2 space-y-1">
-                    {demoInsight.recentCreations.map((creation, index) => (
-                      <div
-                        key={creation.title}
-                        className="relative flex gap-3 pb-5 last:pb-0"
-                      >
-                        {index < demoInsight.recentCreations.length - 1 && (
-                          <span className="absolute top-6 bottom-0 left-[7px] w-px bg-luma-teal-100" />
-                        )}
-                        <span
-                          className={cn(
-                            'relative mt-1.5 size-4 shrink-0 rounded-full border-4 border-white',
-                            creation.tone === 'teal' && 'bg-luma-teal-500',
-                            creation.tone === 'gold' && 'bg-luma-gold-300',
-                            creation.tone === 'violet' && 'bg-[#7a82d8]',
-                          )}
-                        />
-                        <div>
-                          <div className="font-bold text-luma-teal-900">
-                            {creation.title}
+                  <motion.section
+                    variants={fadeUp}
+                    id="conversation"
+                    className="mt-5 grid gap-5 lg:grid-cols-[1fr_0.72fr]"
+                  >
+                    <Card
+                      eyebrow="沟通建议"
+                      title="把观察变成一次温柔的对话"
+                      description="没有标准答案，让孩子决定画面如何继续。"
+                    >
+                      <div className="mt-2 space-y-3">
+                        {demoInsight.suggestions.map((suggestion, index) => (
+                          <div
+                            key={suggestion.title}
+                            className="group rounded-2xl border border-luma-ivory-200 bg-luma-ivory-50 p-4 transition hover:border-luma-teal-100 hover:bg-luma-teal-50"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="flex size-6 items-center justify-center rounded-full bg-luma-gold-100 text-xs font-bold text-luma-gold-700">
+                                {index + 1}
+                              </span>
+                              <span className="text-sm font-bold text-luma-teal-900">
+                                {suggestion.title}
+                              </span>
+                            </div>
+                            <p className="mt-2.5 pl-8 font-display text-lg font-semibold leading-relaxed text-luma-teal-900">
+                              {suggestion.prompt}
+                            </p>
                           </div>
-                          <div className="mt-1 text-xs text-luma-muted">
-                            {creation.type} · {creation.day}
-                          </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </Card>
-              </motion.section>
+                    </Card>
 
-              <DrawingInsightSection
-                childId={selectedChild?.id}
-                token={session?.token}
-              />
-              <TimelineSection childName={selectedChild?.nickname ?? '孩子'} />
-              <CommunicationSection childName={selectedChild?.nickname ?? '孩子'} />
+                    <Card variant="outline" eyebrow="近期创作" title="表达的足迹">
+                      <div className="mt-2 space-y-1">
+                        {demoInsight.recentCreations.map((creation, index) => (
+                          <div
+                            key={creation.title}
+                            className="relative flex gap-3 pb-5 last:pb-0"
+                          >
+                            {index < demoInsight.recentCreations.length - 1 && (
+                              <span className="absolute top-6 bottom-0 left-[7px] w-px bg-luma-teal-100" />
+                            )}
+                            <span
+                              className={cn(
+                                'relative mt-1.5 size-4 shrink-0 rounded-full border-4 border-white',
+                                creation.tone === 'teal' && 'bg-luma-teal-500',
+                                creation.tone === 'gold' && 'bg-luma-gold-300',
+                                creation.tone === 'violet' && 'bg-[#7a82d8]',
+                              )}
+                            />
+                            <div>
+                              <div className="font-bold text-luma-teal-900">
+                                {creation.title}
+                              </div>
+                              <div className="mt-1 text-xs text-luma-muted">
+                                {creation.type} · {creation.day}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  </motion.section>
+                </>
+              )}
+
+              {activeTab === 'timeline' && (
+                <TimelineSection childName={selectedChild?.nickname ?? '孩子'} />
+              )}
+
+              {activeTab === 'communication' && (
+                <CommunicationSection
+                  childName={selectedChild?.nickname ?? '孩子'}
+                />
+              )}
             </motion.div>
           </>
         ) : (

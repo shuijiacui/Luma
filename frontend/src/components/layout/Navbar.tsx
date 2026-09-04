@@ -7,7 +7,10 @@ import { cn } from '@/lib/cn'
 
 export interface NavItem {
   label: string
-  href: string
+  /** 路由/锚点跳转；提供 onClick 时可省略，此时渲染为按钮 */
+  href?: string
+  /** 页内切换（如标签页）。提供后该项渲染为 <button>，点击不跳转 */
+  onClick?: () => void
   isActive?: boolean
 }
 
@@ -48,20 +51,33 @@ export function Navbar({
 
       {items.length > 0 && (
         <nav aria-label={ariaLabel} className="hidden items-center gap-1 md:flex">
-          {items.map((item) => (
-            <a
-              key={`${item.href}-${item.label}`}
-              href={item.href}
-              aria-current={item.isActive ? 'page' : undefined}
-              className={cn(
-                'rounded-xl px-4 py-2 text-sm font-medium text-luma-muted outline-none transition-colors',
-                'hover:bg-white hover:text-luma-teal-700 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60',
-                item.isActive && 'bg-white text-luma-teal-700 shadow-luma-sm',
-              )}
-            >
-              {item.label}
-            </a>
-          ))}
+          {items.map((item) => {
+            const itemClass = cn(
+              'rounded-xl px-4 py-2 text-sm font-medium text-luma-muted outline-none transition-colors',
+              'hover:bg-white hover:text-luma-teal-700 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60',
+              item.isActive && 'bg-white text-luma-teal-700 shadow-luma-sm',
+            )
+            return item.onClick ? (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.onClick}
+                aria-current={item.isActive ? 'page' : undefined}
+                className={itemClass}
+              >
+                {item.label}
+              </button>
+            ) : (
+              <a
+                key={`${item.href}-${item.label}`}
+                href={item.href}
+                aria-current={item.isActive ? 'page' : undefined}
+                className={itemClass}
+              >
+                {item.label}
+              </a>
+            )
+          })}
         </nav>
       )}
 
