@@ -8,6 +8,7 @@ import { Button } from '@/components/ui'
 import { motionTransition } from '@/design-system'
 import { useAuth } from '@/features/auth/AuthContext'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
+import { analyzeDrawing, type FeatureJSON } from '@/lib/api/lumaApi'
 import { cn } from '@/lib/cn'
 import {
   DrawingCanvas,
@@ -20,6 +21,8 @@ const niloPrompts = [
   'What story happens here?',
 ] as const
 
+export const LATEST_FEATURES_KEY = 'luma_latest_features'
+
 export function ChildCreatePage() {
   const navigate = useNavigate()
   const { session } = useAuth()
@@ -28,10 +31,35 @@ export function ChildCreatePage() {
   const [brushSize, setBrushSize] = useState(8)
   const [isEraser, setIsEraser] = useState(false)
   const [promptIndex, setPromptIndex] = useState(-1)
+  const [features, setFeatures] = useState<FeatureJSON | null>(null)
+  const [analysis, setAnalysis] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [serverBubble, setServerBubble] = useState<string | null>(null)
 
   function handleStrokeComplete() {
     setPromptIndex((current) => (current + 1) % niloPrompts.length)
   }
+
+  async function handleFinish() {
+    const imageBase64 = canvasRef.current?.exportImage()
+    if (!imageBase64 || analysis === 'loading') return
+    setAnalysis('loading')
+    try {
+      // priorFeatures 传入上一轮特征：孩子继续画 = 补充绘画，特征由 server 合并
+      const result = await analyzeDrawing(imageBase64, features)
+      setFeatures(result.features)
+      window.sessionStorage.setItem(LATEST_FEATURES_KEY, JSON.stringify(result.features))
+      setAnalysis('done')
+      setServerBubble(`${result.feedbackText}。${result.followUp}`)
+    } catch {
+      setAnalysis('error')
+      setServerBubble('哎呀，Nilo 走神了，点「完成」再试一次吧')
+    }
+  }
+
+  const bubbleText =
+    analysis === 'loading'
+      ? 'Nilo 正在仔细看你的画…'
+      : (serverBubble ?? (promptIndex >= 0 ? niloPrompts[promptIndex] : null))
 
   return (
     <main className="flex min-h-screen flex-col overflow-hidden bg-luma-teal-50">
@@ -89,9 +117,9 @@ export function ChildCreatePage() {
 
           <div className="pointer-events-none absolute right-4 bottom-5 z-20 flex items-end gap-2 sm:right-7 sm:bottom-6">
             <AnimatePresence mode="wait">
-              {promptIndex >= 0 && (
+              {bubbleText && (
                 <motion.div
-                  key={promptIndex}
+                  key={bubbleText}
                   initial={{ opacity: 0, y: 10, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 5 }}
@@ -99,7 +127,7 @@ export function ChildCreatePage() {
                   className="mb-16 max-w-52 rounded-[1.4rem] rounded-br-md border border-luma-teal-100 bg-white/95 px-4 py-3 text-sm font-semibold leading-relaxed text-luma-teal-900 shadow-luma-md backdrop-blur"
                   role="status"
                 >
-                  {niloPrompts[promptIndex]}
+                  {bubbleText}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -179,10 +207,18 @@ export function ChildCreatePage() {
             </Button>
             <Button
               size="sm"
-              variant="primary"
+              variant="ghost"
               onClick={() => canvasRef.current?.download()}
             >
               保存
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={handleFinish}
+              disabled={analysis === 'loading'}
+            >
+              {analysis === 'loading' ? 'Nilo 在看…' : '完成'}
             </Button>
           </div>
         </div>

@@ -10,6 +10,8 @@ export interface DrawingCanvasHandle {
   undo: () => void
   clear: () => void
   download: () => void
+  /** 导出白底 PNG 的 base64（不含 data: 前缀），供 /api/analyze 使用 */
+  exportImage: () => string | null
 }
 
 interface DrawingCanvasProps {
@@ -75,6 +77,20 @@ export const DrawingCanvas = forwardRef<
     return () => observer.disconnect()
   }, [])
 
+  function flattenToCanvas() {
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const exportCanvas = document.createElement('canvas')
+    exportCanvas.width = canvas.width
+    exportCanvas.height = canvas.height
+    const context = exportCanvas.getContext('2d')
+    if (!context) return null
+    context.fillStyle = '#fffdf8'
+    context.fillRect(0, 0, exportCanvas.width, exportCanvas.height)
+    context.drawImage(canvas, 0, 0)
+    return exportCanvas
+  }
+
   useImperativeHandle(forwardedRef, () => ({
     undo() {
       if (historyRef.current.length <= 1) return
@@ -89,21 +105,18 @@ export const DrawingCanvas = forwardRef<
       saveSnapshot()
     },
     download() {
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const exportCanvas = document.createElement('canvas')
-      exportCanvas.width = canvas.width
-      exportCanvas.height = canvas.height
-      const context = exportCanvas.getContext('2d')
-      if (!context) return
-      context.fillStyle = '#fffdf8'
-      context.fillRect(0, 0, exportCanvas.width, exportCanvas.height)
-      context.drawImage(canvas, 0, 0)
+      const exportCanvas = flattenToCanvas()
+      if (!exportCanvas) return
 
       const link = document.createElement('a')
       link.download = `luma-creation-${Date.now()}.png`
       link.href = exportCanvas.toDataURL('image/png')
       link.click()
+    },
+    exportImage() {
+      const exportCanvas = flattenToCanvas()
+      if (!exportCanvas) return null
+      return exportCanvas.toDataURL('image/png').split(',')[1] ?? null
     },
   }))
 
