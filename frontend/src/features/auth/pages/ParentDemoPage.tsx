@@ -2,6 +2,13 @@ import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import {
+  isOnboardingDone,
+  markOnboardingDone,
+  useOnboarding,
+} from '@/features/onboarding/OnboardingContext'
+import { parentSteps } from '@/features/onboarding/steps/parentSteps'
+
 import { defaultAvatars } from '@/assets/avatars'
 import bgParent from '@/assets/images/bg-parent.png'
 import { Navbar } from '@/components/layout'
@@ -133,6 +140,17 @@ export function ParentDemoPage() {
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>('overview')
 
+  const { start: startOnboarding } = useOnboarding()
+  useEffect(() => {
+    if (!isGuest && isOnboardingDone('parent')) return
+    const timer = window.setTimeout(() => {
+      startOnboarding(parentSteps, {
+        onDismiss: () => { if (!isGuest) markOnboardingDone('parent') },
+      })
+    }, 600)
+    return () => window.clearTimeout(timer)
+  }, [isGuest, startOnboarding])
+
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? children[0]
 
   // 拉取选中孩子的 analyses
@@ -222,13 +240,14 @@ export function ParentDemoPage() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-40 select-none"
       />
+      <div data-onboarding="parent-navbar">
       <Navbar
         className="sticky top-4 z-30"
         actions={
           <>
             <div className="hidden items-center gap-2 lg:flex">
-              {childSwitcher}
-              {invitePill}
+              <div data-onboarding="parent-child-switcher">{childSwitcher}</div>
+              <div data-onboarding="parent-invite">{invitePill}</div>
               <span className="h-6 w-px bg-luma-ivory-200" aria-hidden="true" />
             </div>
             <div className="hidden text-right 2xl:block">
@@ -236,19 +255,25 @@ export function ParentDemoPage() {
               <div className="text-xs text-luma-muted">家长账号</div>
             </div>
             <AvatarPicker userId={session?.id ?? 'guest-parent'} compact />
+            {!isGuest && (
+              <Button variant="ghost" size="sm" onClick={() => startOnboarding(parentSteps, { onDismiss: () => markOnboardingDone('parent') })}>
+                新手引导
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               退出
             </Button>
           </>
         }
         secondaryRow={
-          <nav aria-label="家长端分区" className="flex gap-1.5 overflow-x-auto">
+          <nav aria-label="家长端分区" className="flex gap-1.5 overflow-x-auto" data-onboarding="parent-tabs">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
                 aria-current={activeTab === tab.key ? 'page' : undefined}
+                data-onboarding={tab.key === 'communication' ? 'parent-tab-communication' : undefined}
                 className={cn(
                   'shrink-0 rounded-full px-4 py-1.5 text-sm font-bold outline-none transition focus-visible:ring-3 focus-visible:ring-luma-gold-300/60',
                   activeTab === tab.key
@@ -261,6 +286,7 @@ export function ParentDemoPage() {
             ))}
             <a
               href="/parent/archive"
+              data-onboarding="parent-archive"
               className="shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-luma-muted outline-none transition hover:bg-white hover:text-luma-teal-700 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
             >
               成长档案
@@ -268,6 +294,7 @@ export function ParentDemoPage() {
           </nav>
         }
       />
+      </div>
 
       <motion.div
         className="mx-auto max-w-6xl py-10 sm:py-14"

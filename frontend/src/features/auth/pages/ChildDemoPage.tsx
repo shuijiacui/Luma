@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Brand } from '@/components/brand'
@@ -6,6 +7,12 @@ import bgChild from '@/assets/images/bg-child.png'
 import helloGif from '@/assets/images/hello.gif'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { VineCreations } from '@/features/child/components/VineCreations'
+import {
+  isOnboardingDone,
+  markOnboardingDone,
+  useOnboarding,
+} from '@/features/onboarding/OnboardingContext'
+import { childSteps } from '@/features/onboarding/steps/childSteps'
 import { useAuth } from '../AuthContext'
 
 const pastWorks = [
@@ -18,6 +25,18 @@ const pastWorks = [
 export function ChildDemoPage() {
   const navigate = useNavigate()
   const { session, logout } = useAuth()
+  const isGuest = !session || session.isGuest || !session.token
+  const { start: startOnboarding } = useOnboarding()
+
+  useEffect(() => {
+    if (!isGuest && isOnboardingDone('child')) return
+    const timer = window.setTimeout(() => {
+      startOnboarding(childSteps, {
+        onDismiss: () => { if (!isGuest) markOnboardingDone('child') },
+      })
+    }, 600)
+    return () => window.clearTimeout(timer)
+  }, [isGuest, startOnboarding])
 
   function handleLogout() {
     logout()
@@ -49,7 +68,14 @@ export function ChildDemoPage() {
               </div>
               <div className="text-xs text-luma-muted">我的头像</div>
             </div>
-            <AvatarPicker userId={session?.id ?? 'guest-child'} compact />
+            <div data-onboarding="child-avatar">
+              <AvatarPicker userId={session?.id ?? 'guest-child'} compact />
+            </div>
+            {!isGuest && (
+              <Button variant="ghost" size="sm" onClick={() => startOnboarding(childSteps, { onDismiss: () => markOnboardingDone('child') })}>
+                新手引导
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               下次见
             </Button>
@@ -68,7 +94,7 @@ export function ChildDemoPage() {
             </div>
           )}
 
-          <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+          <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left" data-onboarding="child-hero">
             <div className="luma-eyebrow text-luma-gold-700">Nilo 在等你</div>
             <div className="flex items-center gap-4">
               <img
@@ -86,7 +112,7 @@ export function ChildDemoPage() {
             </p>
           </div>
 
-          <div className="mt-8 text-left">
+          <div className="mt-8 text-left" data-onboarding="child-canvas-card">
             <Card
               title="画一个新世界"
               description="打开画布，让颜色带你去任何地方。"
@@ -104,7 +130,7 @@ export function ChildDemoPage() {
         </section>
 
         {/* right: vine — no top padding, hugs the header bottom */}
-        <div className="relative z-0 hidden w-[40%] shrink-0 sm:block">
+        <div className="relative z-0 hidden w-[40%] shrink-0 sm:block" data-onboarding="child-vine">
           <VineCreations
             works={pastWorks}
             onOpen={() => navigate('/child/create')}
