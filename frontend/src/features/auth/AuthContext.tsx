@@ -47,12 +47,12 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 async function toAuthResult(
-  call: () => Promise<{ token: string; session: AuthSession }>,
+  call: () => Promise<{ token: string; refreshToken: string; session: AuthSession }>,
   fallback: string,
 ): Promise<{ session?: AuthSession; result: AuthResult }> {
   try {
-    const { token, session } = await call()
-    return { session: { ...session, token }, result: { ok: true } }
+    const { token, refreshToken, session } = await call()
+    return { session: { ...session, token, refreshToken }, result: { ok: true } }
   } catch (error) {
     return {
       result: { ok: false, message: error instanceof Error ? error.message : fallback },

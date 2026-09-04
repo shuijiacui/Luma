@@ -1,0 +1,22 @@
+# systemd 单元：/etc/systemd/system/luma-server.service
+# sudo systemctl enable --now luma-server
+[Unit]
+Description=Luma 判定服务（Express + SQLite）
+After=network.target
+
+[Service]
+Type=simple
+User=luma
+WorkingDirectory=/opt/luma/server
+EnvironmentFile=/opt/luma/server/.env
+ExecStart=/usr/bin/node src/index.js
+Restart=on-failure
+RestartSec=3
+# 加固
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

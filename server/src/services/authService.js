@@ -2,7 +2,8 @@
 import crypto from 'node:crypto'
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-const SESSION_TTL_MS = 30 * 24 * 3600 * 1000
+const REFRESH_TTL_MS = 30 * 24 * 3600 * 1000 // refresh token 30 天
+const ACCESS_TTL_MS = (parseInt(process.env.ACCESS_TOKEN_TTL_MIN ?? '', 10) || 120) * 60_000 // access token 默认 2 小时
 
 export class AuthError extends Error {
   constructor(status, message) {
@@ -37,11 +38,29 @@ function createInviteCode(db) {
   throw new AuthError(500, 'invite code generation failed')
 }
 
-function createSession(db, accountId) {
+function createTokenPair(db, accountId) {
   const token = crypto.randomBytes(32).toString('hex')
+  const refreshToken = crypto.randomBytes(32).toString('hex')
   db.prepare('INSERT INTO sessions (token, account_id, created_at, expires_at) VALUES (?, ?, ?, ?)')
-    .run(token, accountId, now(), new Date(Date.now() + SESSION_TTL_MS).toISOString())
-  return token
+    .run(token, accountId, now(), new Date(Date.now() + ACCESS_TTL_MS).toISOString())
+  // refresh token 只存哈希，库泄漏也不可冒用
+  db.prepare('INSERT INTO refresh_tokens (token_hash, account_id, created_at, expires_at) VALUES (?, ?, ?, ?)')
+    .run(sha256(refreshToken), accountId, now(), new Date(Date.now() + REFRESH_TTL_MS).toISOString())
+  return { token, refreshToken }
+}
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex')
+}
+
+// refresh 轮换：旧 refresh 立即作废，签发新 token 对（旋转式，防重放）
+export function refresh(db, refreshToken) {
+  if (!refreshToken) throw new AuthError(401, 'login required')
+  const hash = sha256(refreshToken)
+  const row = db.prepare('SELECT account_id FROM refresh_tokens WHERE token_hash = ? AND expires_at > ?').get(hash, now())
+  if (!row) throw new AuthError(401, '登录已过期，请重新登录。')
+  db.prepare('DELETE FROM refresh_tokens WHERE token_hash = ?').run(hash)
+  return createTokenPair(db, row.account_id)
 }
 
 function sessionOf(account) {
@@ -61,7 +80,7 @@ export function registerParent(db, { name, email, password }) {
   const account = { id: id(), role: 'parent', family_id: familyId, display_name: name.trim() }
   db.prepare("INSERT INTO accounts (id, role, family_id, email, password_hash, display_name, created_at) VALUES (?, 'parent', ?, ?, ?, ?, ?)")
     .run(account.id, familyId, normalized, hashSecret(password), account.display_name, now())
-  return { token: createSession(db, account.id), session: sessionOf(account), family: { inviteCode } }
+  return { ...createTokenPair(db, account.id), session: sessionOf(account), family: { inviteCode } }
 }
 
 export function loginParent(db, { email, password }) {
@@ -70,7 +89,7 @@ export function loginParent(db, { email, password }) {
     throw new AuthError(401, '邮箱或密码不正确，请再试一次。')
   }
   const family = db.prepare('SELECT invite_code FROM families WHERE id = ?').get(account.family_id)
-  return { token: createSession(db, account.id), session: sessionOf(account), family: { inviteCode: family.invite_code } }
+  return { ...createTokenPair(db, account.id), session: sessionOf(account), family: { inviteCode: family.invite_code } }
 }
 
 export function registerChild(db, { nickname, creationCode, inviteCode }) {
@@ -85,7 +104,7 @@ export function registerChild(db, { nickname, creationCode, inviteCode }) {
   const account = { id: id(), role: 'child', family_id: family.id, display_name: nickname.trim() }
   db.prepare("INSERT INTO accounts (id, role, family_id, display_name, creation_code_hash, created_at) VALUES (?, 'child', ?, ?, ?, ?)")
     .run(account.id, family.id, account.display_name, hashSecret(creationCode), now())
-  return { token: createSession(db, account.id), session: sessionOf(account), family: { inviteCode: family.invite_code } }
+  return { ...createTokenPair(db, account.id), session: sessionOf(account), family: { inviteCode: family.invite_code } }
 }
 
 export function loginChild(db, { nickname, creationCode }) {
@@ -94,7 +113,7 @@ export function loginChild(db, { nickname, creationCode }) {
     throw new AuthError(401, '昵称或创作码不对，再想一想吧。')
   }
   const family = db.prepare('SELECT invite_code FROM families WHERE id = ?').get(account.family_id)
-  return { token: createSession(db, account.id), session: sessionOf(account), family: { inviteCode: family.invite_code } }
+  return { ...createTokenPair(db, account.id), session: sessionOf(account), family: { inviteCode: family.invite_code } }
 }
 
 // Bearer token → 账号（无效/过期返回 null，不抛错——analyze/report 允许游客匿名调用）
@@ -108,7 +127,11 @@ export function authenticate(db, token) {
 }
 
 export function logout(db, token) {
-  if (token) db.prepare('DELETE FROM sessions WHERE token = ?').run(token)
+  if (!token) return
+  const row = db.prepare('SELECT account_id FROM sessions WHERE token = ?').get(token)
+  db.prepare('DELETE FROM sessions WHERE token = ?').run(token)
+  // 同时吊销该账号全部 refresh token，彻底登出
+  if (row) db.prepare('DELETE FROM refresh_tokens WHERE account_id = ?').run(row.account_id)
 }
 
 export function getMe(db, auth) {
