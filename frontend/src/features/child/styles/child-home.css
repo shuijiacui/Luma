@@ -1,0 +1,217 @@
+.nilo-home {
+  min-height: 100svh; position: relative; isolation: isolate; overflow: hidden;
+  color: #355e51; background: #faf6e9 url('../../../assets/images/bg-child.png') center/cover no-repeat;
+  display: flex; flex-direction: column;
+}
+.nilo-home::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg,#fffdf655,#fffaf247 55%,#f9f4e622); }
+.nilo-home button { touch-action: manipulation; }
+.nilo-home button:focus-visible { outline: 3px solid #bb8737; outline-offset: 6px; }
+.nilo-home-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 4.5%; gap: 20px; position: relative; z-index: 10; }
+.nilo-home-brand { display: flex; align-items: center; gap: 24px; }
+.nilo-home-brand > span + span { font-size: 11px; letter-spacing: .18em; color: #8b9481; border-left: 1px solid #9ba88a55; padding-left: 24px; }
+.nilo-home-nav { display: flex; align-items: center; gap: 12px; }
+.nilo-icon-button { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #667e5a33; border-radius: 50%; background: #fffdf580; color: #61765d; font-family: var(--font-brand); cursor: pointer; transition: background .2s, transform .2s; }
+.nilo-icon-button:hover { background: #fffdf5; transform: translateY(-2px); }
+.nilo-icon-button svg { width: 18px; height: 18px; }
+.nilo-nav-divider { height: 24px; width: 1px; background: #6b7b5833; margin: 0 6px; }
+.nilo-leave { font-size: 12px; color: #68795e; cursor: pointer; padding: 10px 3px; }
+.nilo-leave span { padding-left: 8px; }
+.nilo-home-intro { text-align: center; padding: 20px 20px 0; position: relative; z-index: 1; }
+.nilo-eyebrow { display: flex; align-items: center; justify-content: center; gap: 12px; font-family: var(--font-brand); font-size: 9px; font-weight: 700; letter-spacing: .25em; color: #9a8a60; }
+.nilo-eyebrow span { width: 22px; height: 1px; background: #c4b994; }
+.nilo-home-intro h1 { font-family: var(--font-display); font-size: clamp(28px,3.2vw,44px); font-weight: 650; letter-spacing: .07em; margin: 15px 0; line-height: 1.4; }
+.nilo-home-intro h1 span { font-family: var(--font-brand); letter-spacing: -.05em; font-weight: 600; }
+.nilo-home-intro > p:last-child { font-size: 13px; line-height: 1.8; color: #7c826d; letter-spacing: .045em; }
+.nilo-welcome-sign { position: relative; display: grid; place-items: center; width: min(590px,100%); min-height: 96px; margin: 0 auto 14px; padding: 21px 35px; transform: rotate(-.8deg); }
+.nilo-welcome-wood { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 4px 4px #9c85541a); }
+.nilo-home-intro .nilo-welcome-sign h1 { position: relative; margin: 0; font-size: clamp(23px,2.8vw,37px); font-weight: 600; letter-spacing: .055em; color: #52664f; text-shadow: 0 1px 0 #fff7df99; }
+.nilo-sign-sprig { position: absolute; right: -12px; top: -18px; width: 58px; height: 54px; transform: rotate(18deg); pointer-events: none; }
+.nilo-room { width: min(1020px,92%); margin: 0 auto; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.1fr); align-items: end; position: relative; padding: 0 30px 12px; flex: 1; min-height: 510px; max-height: 650px; }
+.nilo-companion-area,.nilo-door-area { position: relative; z-index: 2; min-width: 0; }
+.nilo-companion-area { mix-blend-mode: multiply; }
+.nilo-companion { position: relative; padding-bottom: 5px; }
+.nilo-speech-slot { height: 57px; display: flex; justify-content: center; align-items: flex-end; position: relative; z-index: 4; }
+.nilo-speech { position: relative; background: #fffef8ed; border: 1px solid #d5c79b80; border-radius: 20px 20px 20px 5px; padding: 12px 21px; font-size: 14px; color: #6e7256; box-shadow: 0 6px 20px #8b794911; white-space: nowrap; }
+.nilo-speech span { color: #d5ae57; margin-right: 5px; }
+.nilo-speech::after { content: ''; position: absolute; bottom: -8px; left: 35px; width: 14px; height: 14px; background: #fffef8; clip-path: polygon(0 0,100% 0,0 100%); }
+.nilo-character-stage { position: relative; width: min(100%,445px); aspect-ratio: 1; margin: -8px auto -24px; }
+.nilo-character-float { position: relative; z-index: 1; width: 100%; height: 100%; mix-blend-mode: multiply; }
+.nilo-character { position: relative; width: 100%; height: 100%; transform-origin: 50% 88%; }
+.nilo-sprite { width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; mix-blend-mode: multiply; }
+.nilo-rug { position: absolute; width: 91%; height: 20%; left: 5%; bottom: 5%; border-radius: 50%; transform: rotate(-3deg); background: repeating-radial-gradient(ellipse at center,#b7b98b00 0 9px,#a8ae7644 10px 11px),radial-gradient(ellipse,#d4d4aabd,#dad4af4d 65%,#d4c59900 72%); border: 2px solid #b5b68638; box-shadow: 0 12px 18px #a49e6420; }
+.nilo-hotspot { position: absolute; transform: translate(-50%,-50%); border-radius: 50%; border: 0; background: transparent; cursor: pointer; min-width: 44px; min-height: 44px; z-index: 3; }
+.nilo-hotspot:disabled { cursor: default; }
+.nilo-hotspot-dot { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; border-radius: 50%; background: #ffedb7; border: 2px solid #fffef4; box-shadow: 0 0 0 6px #fff8dd44,0 0 16px #f2c74d; opacity: 0; transform: translate(-50%,-50%); transition: opacity .2s; }
+.show-hotspots .nilo-hotspot-dot,.nilo-hotspot:hover .nilo-hotspot-dot,.nilo-hotspot:focus-visible .nilo-hotspot-dot { opacity: 1; }
+.nilo-hotspot-label { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11px; padding: 5px 9px; border-radius: 20px; background: #fffdf3f5; color: #6a6c4c; opacity: 0; pointer-events: none; box-shadow: 0 3px 10px #6a583515; }
+.nilo-hotspot:hover .nilo-hotspot-label,.nilo-hotspot:focus-visible .nilo-hotspot-label { opacity: 1; }
+.nilo-hotspot:focus-visible { background: #fff7d12b; }
+.nilo-companion-caption { position: relative; z-index: 2; text-align: center; font-size: 11px; letter-spacing: .12em; color: #8b896f; }
+.nilo-name { font: 600 19px var(--font-brand); color: #456452; letter-spacing: .02em; }
+.nilo-caption-dot { padding: 0 12px; }
+.nilo-touch-hint { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 13px auto 0; padding: 8px 12px; border-radius: 20px; font-size: 11px; color: #8b8b70; cursor: pointer; background: #fff9ec80; border: 1px solid #d9cda340; }
+.nilo-touch-hint:hover { background: #fffdf4; }
+.nilo-touch-hint svg { width: 18px; height: 18px; transform: rotate(-15deg); }
+.nilo-reaction-particles { position: absolute; pointer-events: none; z-index: 5; }
+.nilo-reaction-particles span { position: absolute; font-size: 28px; color: #dca447; text-shadow: 0 0 15px #ffdf87; animation: nilo-particle .95s ease-out both; animation-delay: calc(var(--i)*.025s); }
+.reaction-head span { color: #d69578; }.reaction-nose span { color: #73a69f; }.reaction-belly span { color: #a38bba; }
+@keyframes nilo-particle { 0% { opacity: 0; transform: translate(0,0) scale(.3); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx),var(--dy)) scale(1.2) rotate(15deg); } }
+.nilo-door-area { display: flex; align-items: center; flex-direction: column; padding-bottom: 18px; }
+.nilo-door-note { color: #929379; font-family: var(--font-display); font-size: 13px; letter-spacing: .06em; margin-bottom: 16px; transform: rotate(5deg); }
+.nilo-door-note span { display: inline-block; font-size: 30px; position: relative; top: 14px; margin-left: 6px; color: #aaa57f; }
+.creation-door { display: block; position: relative; width: 272px; height: 390px; background: transparent; border: 0; padding: 0; perspective: 1100px; cursor: pointer; overflow: visible; border-radius: 150px 150px 10px 10px; isolation: isolate; }
+.door-shadow { position: absolute; inset: 3% -5% 1%; border-radius: 150px 150px 12px 12px; background: #ad97612b; filter: blur(14px); transform: translate(9px,7px); }
+.door-frame { position: absolute; inset: 0 0 14px; border-radius: 150px 150px 6px 6px; background: linear-gradient(105deg,#c3cbb0,#e0dcc0 20%,#e4dfc8 75%,#adb593); border: 1px solid #b4b893; box-shadow: inset 5px 0 0 #fcf7df80,inset -5px 0 0 #89977035,5px 7px 0 #9f9d7740; padding: 14px; perspective: 1100px; }
+.door-world { position: absolute; inset: 13px; overflow: hidden; border-radius: 140px 140px 2px 2px; background: linear-gradient(#b9dcd2,#f7f2c6 65%,#d7dbb0); box-shadow: inset 0 0 25px #ffc; }
+.door-world-sun { position: absolute; left: 30px; top: 45px; width: 66px; height: 66px; border-radius: 50%; background: #fff6bf; box-shadow: 0 0 45px 20px #ffefa966; }
+.door-world-hill { position: absolute; bottom: -10%; width: 150%; height: 50%; border-radius: 50% 50% 0 0; }
+.hill-back { background: #a1beb0; left: -50%; bottom: -1%; transform: rotate(15deg); }.hill-front { background: #779e86; left: 0; transform: rotate(-18deg); }
+.door-easel { position: absolute; width: 105px; height: 140px; left: 50%; top: 48%; transform: translateX(-50%); border-bottom: 8px solid #b88f52; }
+.door-easel::before,.door-easel::after { content: ''; position: absolute; top: -10px; height: 160px; width: 7px; background: #b98f56; transform: rotate(14deg); left: 27px; }
+.door-easel::after { transform: rotate(-14deg); left: auto; right: 27px; }
+.door-easel > span { position: absolute; inset: 0 5px 30px; background: #fffaf0; box-shadow: 0 3px 7px #0002; z-index: 1; }
+.door-easel > span::before { content: ''; position: absolute; left: 20%; right: 20%; top: 32%; height: 40%; border: 5px solid #a5c7b5; border-top-color: transparent; border-radius: 50%; transform: rotate(-20deg); }
+.door-world-star { position: absolute; right: 22px; top: 96px; font-size: 28px; color: #fffcdf; }
+.door-leaf { position: absolute; inset: 13px; display: block; border-radius: 140px 140px 2px 2px; transform-origin: 0 50%; background: linear-gradient(105deg,#759d88,#91ad94 35%,#819f86 80%,#608371); border: 1px solid #57745c; box-shadow: inset 4px 0 0 #d0d8ad55,inset -4px 0 0 #48695644,3px 1px 8px #30482f50; transition: transform .95s cubic-bezier(.25,.7,.25,1),filter .3s; backface-visibility: hidden; transform-style: preserve-3d; }
+.door-grain { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; background: repeating-linear-gradient(90deg,transparent 0 45px,#456e5730 46px,#cbd2a81f 47px,transparent 48px),repeating-linear-gradient(88deg,transparent 0 6px,#355f4820 7px,transparent 8px 20px); opacity: .48; }
+.door-window { position: absolute; left: 23%; right: 23%; height: 81px; top: 27px; border: 7px solid #567965; border-bottom-width: 8px; border-radius: 90px 90px 5px 5px; background: linear-gradient(135deg,#e6e3b6,#f5e3aa 75%); overflow: hidden; box-shadow: 0 2px 0 #c6cca369,inset 0 3px 9px #86734b40; }
+.door-window-sun { position: absolute; width: 37px; height: 37px; background: #fff4c0; border-radius: 50%; left: calc(50% - 18px); bottom: -14px; box-shadow: 0 0 18px #fff1a9; }
+.door-window i { position: absolute; width: 5px; height: 90px; background: #5f8169; bottom: -10px; left: calc(50% - 2px); transform-origin: 50% 100%; }
+.door-window i:nth-of-type(2) { transform: rotate(-42deg); }.door-window i:nth-of-type(3) { transform: rotate(42deg); }
+.door-plaque { position: absolute; top: 143px; left: calc(50% - 69px); width: 138px; height: 113px; background: linear-gradient(120deg,#fff8df,#e9ddba); border: 1px solid #c8b88a; border-radius: 10px; box-shadow: 0 4px 8px #334d392c; transform: rotate(-4deg); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #49684f; }
+.door-plaque::before,.door-plaque::after { content: ''; position: absolute; width: 1px; height: 43px; background: #c9b983; top: -40px; left: 23px; transform: rotate(25deg); transform-origin: 50% 100%; }
+.door-plaque::after { left: auto; right: 23px; transform: rotate(-25deg); }
+.door-plaque svg { width: 33px; height: 33px; margin-bottom: 1px; }
+.door-plaque strong { font-family: var(--font-display); font-size: 26px; letter-spacing: .14em; font-weight: 650; padding-left: 4px; }
+.door-plaque small { font-size: 9px; letter-spacing: .14em; margin-top: 5px; color: #8c8c6f; }
+.door-bottom-panel { position: absolute; left: 24px; right: 24px; bottom: 22px; height: 51px; border: 2px solid #5d7e634d; border-radius: 35% 35% 4px 4px; box-shadow: 0 2px 0 #c5cba638,inset 0 2px 0 #44674822; }
+.door-handle { position: absolute; right: 14px; top: 63%; width: 19px; height: 42px; border-radius: 12px; background: linear-gradient(90deg,#aa8036,#e2c478,#b38c47); border: 1px solid #96773e; box-shadow: 1px 2px 3px #203c3c66; }
+.door-handle i { position: absolute; left: -15px; top: 10px; width: 31px; height: 9px; border-radius: 7px; background: linear-gradient(#f2d993,#c7a25a); box-shadow: 0 2px 3px #5e572655; transition: transform .3s; transform-origin: 90% 50%; }
+.door-hinge { position: absolute; left: -5px; width: 9px; height: 24px; border-radius: 3px; background: #7c7754; border: 1px solid #b2a576; }.hinge-top { top: 36%; }.hinge-bottom { top: 83%; }
+.door-step { position: absolute; left: -7px; right: -8px; bottom: 8px; height: 12px; background: linear-gradient(#dad3ad,#b8b58e); border-radius: 3px; box-shadow: 0 4px 0 #a4a18150; }
+.door-mat { position: absolute; left: 15%; bottom: -25px; width: 70%; height: 35px; border-radius: 50%; display: grid; place-items: center; font: 7px var(--font-brand); letter-spacing: .12em; color: #9a875a; background: repeating-linear-gradient(0deg,#e0d2a4 0 2px,#d3c697 3px 4px); transform: perspective(300px) rotateX(42deg); border: 3px double #c2b684; box-shadow: 0 2px 8px #8d804820; }
+.creation-door:hover:not(:disabled) .door-leaf { transform: rotateY(-9deg); filter: brightness(1.035); }.creation-door:hover .door-handle i { transform: rotate(-15deg); }.creation-door.is-open .door-leaf { transform: rotateY(-105deg); }.creation-door.is-open .door-handle i { transform: rotate(-28deg); }
+.door-leaf > span { backface-visibility: hidden; }
+.nilo-door-caption { margin-top: 44px; font-size: 11px; letter-spacing: .12em; color: #979176; }.nilo-door-caption span { margin-right: 8px; color: #b39c57; }
+.nilo-floor-line { position: absolute; left: 10%; right: 8%; bottom: 80px; height: 1px; background: linear-gradient(90deg,transparent,#b3b18c55,transparent); z-index: 0; }
+.nilo-room-spark { position: absolute; font-size: 28px; color: #cfb26f; opacity: .7; animation: nilo-twinkle 5s ease-in-out infinite; pointer-events: none; }.spark-one { left: 8%; top: 28%; }.spark-two { left: 50%; top: 18%; font-size: 16px; animation-delay: 1s; }.spark-three { right: 2%; top: 55%; font-size: 36px; animation-delay: 2s; }
+@keyframes nilo-twinkle { 50% { opacity: .2; transform: translateY(-6px) rotate(12deg); } }
+.nilo-home-footer { padding: 22px 20px 28px; text-align: center; position: relative; z-index: 1; }.nilo-footer-flower { display: block; color: #b2a470; font-size: 21px; margin-bottom: 7px; }.nilo-home-footer p { font-family: var(--font-display); color: #8e9278; font-size: 12px; letter-spacing: .16em; }.nilo-guest-note { display: block; font-size: 10px; color: #979985; margin-top: 12px; }
+.nilo-door-transition { position: fixed; inset: 0; background: #fffaf0; z-index: 100; pointer-events: all; }
+@media (min-width:1400px) and (min-height:850px) {
+  .nilo-home-intro { padding-top: 35px; }.nilo-room { max-height: 650px; }.nilo-character-stage { width: 490px; max-width: 110%; margin-left: -4%; }.creation-door { width: 300px; height: 425px; }.door-plaque { top: 155px; }.door-window { height: 90px; }.nilo-home-footer { padding-bottom: 38px; }
+}
+@media (max-width:760px) {
+  .nilo-home-header { padding: 18px 5%; }.nilo-home-brand > span + span { display: none; }.nilo-home-nav { gap: 8px; }.nilo-nav-divider { margin: 0 2px; }.nilo-room { width: 100%; padding: 0 12px 10px; min-height: 430px; grid-template-columns: minmax(0,1fr) minmax(0,1.1fr); }.nilo-home-intro h1 { font-size: 31px; }.nilo-home-intro > p:last-child { font-size: 12px; }.creation-door { width: 220px; height: 325px; }.door-window { height: 66px; top: 24px; border-width: 5px; }.door-plaque { top: 120px; width: 115px; height: 95px; left: calc(50% - 57px); }.door-plaque strong { font-size: 22px; }.door-plaque svg { width: 27px; height: 27px; }.door-bottom-panel { height: 36px; bottom: 16px; }.door-handle { right: 9px; }.nilo-character-stage { margin-bottom: -10px; }.nilo-door-note { font-size: 11px; }.nilo-speech { font-size: 12px; padding: 10px 13px; }.nilo-touch-hint { font-size: 10px; gap: 5px; padding: 8px; }.nilo-home-footer { padding-top: 12px; }
+}
+@media (max-width:540px) {
+  .nilo-home-header { padding: 15px 5%; gap: 8px; }.nilo-home-nav { gap: 7px; }.nilo-icon-button { width: 34px; height: 34px; }.nilo-nav-divider { display: none; }.nilo-leave { font-size: 11px; }.nilo-leave span { display: none; }.nilo-home-intro { padding-top: 15px; }.nilo-eyebrow { font-size: 7px; letter-spacing: .16em; gap: 8px; }.nilo-home-intro h1 { font-size: 27px; margin: 13px 0 10px; }.nilo-home-intro > p:last-child { font-size: 11px; max-width: 280px; margin: auto; }.nilo-room { grid-template-columns: minmax(0,1fr) minmax(0,1fr); min-height: 340px; padding: 0 8px 8px; align-items: end; }.nilo-character-stage { width: 245px; max-width: 130%; margin-left: -12%; margin-bottom: -10px; }.nilo-speech-slot { height: 45px; }.nilo-speech { font-size: 10px; padding: 9px 10px; white-space: normal; max-width: 200px; }.nilo-companion-caption { font-size: 9px; letter-spacing: 0; }.nilo-name { font-size: 16px; }.nilo-caption-dot { padding: 0 5px; }.nilo-touch-hint { font-size: 9px; max-width: 180px; line-height: 1.6; margin-top: 7px; padding: 5px 8px; }.nilo-touch-hint svg { flex-shrink: 0; width: 15px; }.nilo-door-area { padding-bottom: 24px; }.nilo-door-note { font-size: 9px; margin-bottom: 16px; letter-spacing: 0; }.nilo-door-note span { font-size: 20px; margin-left: 2px; }.creation-door { width: 154px; height: 244px; }.door-frame { padding: 9px; }.door-leaf,.door-world { inset: 9px; }.door-window { height: 46px; top: 20px; border-width: 4px; left: 22%; right: 22%; }.door-window i { width: 3px; }.door-plaque { top: 92px; width: 89px; height: 77px; left: calc(50% - 44px); border-radius: 7px; }.door-plaque strong { font-size: 19px; }.door-plaque svg { width: 22px; height: 22px; }.door-plaque small { font-size: 7px; margin-top: 3px; }.door-plaque::before,.door-plaque::after { height: 25px; top: -23px; }.door-bottom-panel { height: 25px; bottom: 12px; left: 14px; right: 14px; }.door-handle { right: 3px; top: 74%; width: 12px; height: 24px; }.door-handle i { width: 21px; height: 6px; top: 6px; left: -12px; }.door-hinge { width: 6px; height: 18px; left: -3px; }.door-mat { font-size: 5px; width: 85%; left: 7.5%; bottom: -20px; height: 29px; }.door-easel { transform: translateX(-50%) scale(.7); transform-origin: 50% 0; }.nilo-door-caption { font-size: 9px; letter-spacing: 0; margin-top: 34px; }.nilo-home-footer { padding: 25px 15px 22px; }.nilo-home-footer p { font-size: 11px; }.nilo-guest-note { font-size: 9px; }.nilo-floor-line { bottom: 74px; }.spark-two { left: 53%; top: 5%; }
+}
+@media (max-height:650px) and (min-width:650px) {
+  .nilo-home-header { padding-top: 12px; padding-bottom: 8px; }.nilo-home-intro { padding-top: 3px; }.nilo-home-intro h1 { font-size: 28px; margin: 6px 0; }.nilo-home-intro > p:last-child { font-size: 11px; }.nilo-room { min-height: 340px; width: min(850px,96%); padding-bottom: 0; }.nilo-character-stage { width: 300px; margin-bottom: -22px; }.nilo-speech-slot { height: 39px; }.nilo-speech { font-size: 11px; padding: 8px 13px; }.creation-door { width: 185px; height: 275px; }.door-window { top: 18px; height: 54px; border-width: 5px; }.door-plaque { top: 100px; width: 110px; height: 89px; left: calc(50% - 55px); }.door-plaque strong { font-size: 22px; }.door-plaque svg { width: 26px; height: 26px; }.door-bottom-panel { height: 30px; bottom: 13px; }.door-handle { right: 5px; }.nilo-door-note { font-size: 10px; margin-bottom: 12px; }.nilo-door-caption { margin-top: 33px; font-size: 10px; }.nilo-door-area { padding-bottom: 12px; }.nilo-touch-hint { font-size: 10px; margin-top: 7px; padding: 5px 10px; }.nilo-home-footer { padding: 9px 15px 15px; }.nilo-footer-flower { display: none; }.nilo-home-footer p { font-size: 10px; }.nilo-guest-note { margin-top: 5px; font-size: 9px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .nilo-home *,.nilo-home *::before,.nilo-home *::after { animation: none !important; transition: none !important; }
+  .nilo-reaction-particles span { opacity: 1; font-size: 24px; }.nilo-reaction-particles span:not(:first-child) { display: none; }.creation-door.is-open .door-leaf { opacity: 0; transform: none; }.creation-door:hover:not(:disabled) .door-leaf { transform: none; }
+}
+/* Keep the whole room visible on common laptop and tablet screens. */
+@media (min-width:761px) and (min-height:651px) and (max-height:850px) {
+  .nilo-home-header { padding-top: 16px; padding-bottom: 10px; }
+  .nilo-home-intro { padding-top: 10px; }
+  .nilo-home-intro h1 { font-size: 33px; margin: 10px 0; }
+  .nilo-room { min-height: 410px; max-height: 490px; }
+  .nilo-character-stage { width: 360px; }
+  .creation-door { width: 235px; height: 335px; }
+  .door-window { height: 65px; top: 24px; }
+  .door-plaque { top: 121px; width: 124px; height: 101px; left: calc(50% - 62px); }
+  .door-bottom-panel { height: 35px; bottom: 18px; }
+  .nilo-home-footer { padding: 12px 15px 18px; }
+  .nilo-footer-flower { margin-bottom: 4px; }
+}
+@media (min-width:1400px) and (min-height:850px) {
+  .nilo-home-intro { padding-top: 20px; }
+  .nilo-room { max-height: 590px; }
+  .nilo-character-stage { width: 465px; }
+  .nilo-home-footer { padding-top: 12px; padding-bottom: 24px; }
+}
+@media (max-width:540px) {
+  .nilo-home-brand > span:first-child { gap: 4px; }
+  .nilo-home-brand > span:first-child > span:first-child { width: 34px; height: 34px; }
+  .nilo-home-brand .font-brand { font-size: 20px; }
+  .nilo-home-header { padding-left: 12px; padding-right: 12px; }
+  .nilo-home-nav { gap: 5px; }
+  .nilo-character-stage { width: 120%; max-width: 240px; margin-left: -10%; }
+  .creation-door { width: min(154px,calc(50vw - 20px)); }
+  .nilo-room { flex: 0 0 auto; margin-top: 30px; }
+  .nilo-home-footer { margin-top: auto; }
+  .nilo-home-intro h1 { font-size: clamp(22px,6.8vw,27px); }
+}
+@media (max-height:450px) and (min-width:650px) {
+  .nilo-home-header { padding: 6px 4%; }
+  .nilo-home-brand > span:first-child > span:first-child { width: 35px; height: 35px; }
+  .nilo-home-nav [data-onboarding] img { max-height: 38px; }
+  .nilo-home-intro { position: absolute; top: 14px; left: 28%; right: 28%; padding: 0; }
+  .nilo-home-intro h1 { font-size: 18px; margin: 0; letter-spacing: 0; }
+  .nilo-eyebrow,.nilo-home-intro > p:last-child,.nilo-home-brand > span + span { display: none; }
+  .nilo-room { min-height: 280px; max-height: 285px; width: min(680px,95%); }
+  .nilo-character-stage { width: 237px; margin-top: -12px; }
+  .nilo-speech-slot { height: 25px; }
+  .nilo-speech { font-size: 10px; padding: 6px 12px; }
+  .nilo-touch-hint { margin-top: 4px; padding: 4px 8px; font-size: 9px; }
+  .nilo-door-note { display: none; }
+  .creation-door { width: 152px; height: 235px; }
+  .door-window { height: 42px; top: 18px; border-width: 4px; }
+  .door-plaque { top: 88px; width: 92px; height: 74px; left: calc(50% - 46px); }
+  .door-plaque strong { font-size: 19px; }.door-plaque svg { height: 21px; }
+  .door-plaque small { font-size: 7px; }.door-bottom-panel { height: 23px; }
+  .door-handle { width: 13px; height: 30px; right: 3px; top: 77%; }.door-handle i { width: 22px; height: 6px; left: -12px; }
+  .nilo-door-caption { margin-top: 26px; font-size: 9px; }.nilo-door-area { padding-bottom: 5px; }
+  .nilo-home-footer { padding: 6px 15px 9px; }.nilo-home-footer p { display: none; }
+}
+@media (max-width:360px) {
+  .nilo-home-header { padding-top: 9px; padding-bottom: 9px; }
+  .nilo-home-brand .font-brand { font-size: 18px; }
+  .nilo-home-nav { gap: 4px; }.nilo-icon-button { width: 29px; height: 29px; }
+  .nilo-leave { white-space: nowrap; font-size: 10px; }
+  .nilo-home-intro { padding: 7px 16px 0; }
+  .nilo-home-intro > p:last-child { font-size: 10px; }
+  .nilo-room { min-height: 303px; margin-top: 12px; }
+  .creation-door { height: 226px; }.door-plaque { top: 86px; height: 70px; }
+  .nilo-door-note { font-size: 8px; }.nilo-door-caption { font-size: 8px; }
+  .nilo-touch-hint { font-size: 8px; padding: 4px; gap: 3px; }
+  .nilo-home-footer { padding: 10px 12px 12px; }
+  .nilo-footer-flower { margin-bottom: 3px; font-size: 17px; }
+  .nilo-home-footer p { font-size: 10px; }.nilo-guest-note { font-size: 8px; margin-top: 6px; }
+}
+@media (max-width:760px) {
+  .nilo-welcome-sign { width: min(510px,100%); min-height: 82px; padding: 19px 24px; margin-bottom: 12px; }
+  .nilo-home-intro .nilo-welcome-sign h1 { font-size: clamp(19px,4.6vw,30px); }
+  .nilo-sign-sprig { width: 45px; right: -9px; top: -14px; }
+}
+@media (max-width:540px) {
+  .nilo-welcome-sign { min-height: 70px; padding: 17px 15px; margin-bottom: 12px; }
+  .nilo-home-intro .nilo-welcome-sign h1 { font-size: clamp(18px,5.4vw,25px); letter-spacing: .01em; white-space: nowrap; }
+  .nilo-sign-sprig { width: 34px; height: 39px; right: -9px; top: -11px; }
+  .nilo-room { margin-top: 22px; }
+}
+@media (min-width:761px) and (max-height:850px) {
+  .nilo-welcome-sign { min-height: 78px; width: 520px; padding: 15px 30px; margin-bottom: 10px; }
+  .nilo-home-intro .nilo-welcome-sign h1 { font-size: 31px; }
+}
+@media (max-height:650px) and (min-width:650px) {
+  .nilo-welcome-sign { min-height: 67px; width: 460px; padding: 12px 26px; margin-bottom: 7px; }
+  .nilo-home-intro .nilo-welcome-sign h1 { font-size: 27px; }
+  .nilo-sign-sprig { width: 39px; height: 39px; right: -7px; top: -10px; }
+}
+@media (max-height:450px) and (min-width:650px) {
+  .nilo-home-intro { top: 7px; left: 25%; right: 39%; }
+  .nilo-welcome-sign { width: 100%; min-height: 39px; padding: 8px 14px; margin: 0; }
+  .nilo-home-intro .nilo-welcome-sign h1 { font-size: clamp(14px,2vw,17px); letter-spacing: 0; white-space: nowrap; }
+  .nilo-sign-sprig { width: 24px; height: 29px; top: -4px; right: -6px; }
+}
+@media (max-width:360px) {
+  .nilo-welcome-sign { min-height: 62px; padding: 15px 10px; margin-bottom: 9px; }
+  .nilo-home-intro .nilo-welcome-sign h1 { font-size: 18px; }
+  .nilo-room { margin-top: 12px; }
+  .nilo-home-footer { padding-top: 7px; padding-bottom: 9px; }
+}

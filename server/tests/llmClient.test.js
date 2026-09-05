@@ -1,7 +1,16 @@
 import { vi, test, expect, afterEach } from 'vitest'
-import { chatWithImage, LLMParseError } from '../src/services/llmClient.js'
+import { chatWithImage, llmConfig, LLMParseError } from '../src/services/llmClient.js'
 
 afterEach(() => vi.unstubAllGlobals())
+
+test('uses DeepSeek defaults when env values are absent', () => {
+  expect(llmConfig({})).toEqual({
+    baseUrl: 'https://api.deepseek.com',
+    apiKey: '',
+    visionModel: 'deepseek-v4-flash-vision-exp',
+    textModel: 'deepseek-v4-flash',
+  })
+})
 
 test('sends image and parses json content', async () => {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -15,7 +24,7 @@ test('sends image and parses json content', async () => {
 
   const body = JSON.parse(fetchMock.mock.calls[0][1].body)
   expect(body.messages[0].content[1].image_url.url).toContain('base64data')
-  // kimi-k2.5 是 reasoning 模型，max_tokens 必须给足
+  // 视觉/推理模型需要足够的输出 token 预算
   expect(body.max_tokens).toBeGreaterThanOrEqual(2000)
 })
 
@@ -30,7 +39,7 @@ test('parses fenced ```json block', async () => {
   expect(out).toEqual({ elements: ['tree'] })
 })
 
-test('falls back to reasoning_content when content is empty (kimi reasoning model)', async () => {
+test('falls back to reasoning_content when content is empty', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
     ok: true,
     json: async () => ({
