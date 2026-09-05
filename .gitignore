@@ -9,3 +9,8 @@ logs/
 backups/
 
 server/uploads/
+
+.rag-venv/
+knowledge/chroma/
+__pycache__/
+*.pyc

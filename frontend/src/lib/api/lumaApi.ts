@@ -40,6 +40,8 @@ export interface ReportResponse {
   parentAdvice: string[]
   webAdvice?: string[]
   webAdviceSource?: string
+  referenceEvidence?: { sourceFile: string; text: string; limitation: string; role: string }[]
+  referenceEvidenceSource?: string
 }
 
 export function analyzeDrawing(
