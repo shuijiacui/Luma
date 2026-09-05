@@ -34,7 +34,7 @@ test('POST /api/analyze returns features + descriptive feedback (no emotion/lead
   expect(res.body.feedbackText).toContain('房子')
   expect(res.body.feedbackText).toContain('树')
   expect(res.body.feedbackText).not.toMatch(RED_LINE) // 红线 4：禁诱导/情绪词
-  expect(res.body.followUp).toBe('想再画点什么吗？')
+  expect(res.body.followUp).toBe('还想再画点什么吗？')
 })
 
 test('POST /api/analyze merges priorFeatures (补充绘画)', async () => {

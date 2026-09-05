@@ -23,8 +23,12 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     const allowed = (req.auth.role === 'child' && req.auth.accountId === row.child_id)
       || (req.auth.role === 'parent' && req.auth.familyId === row.family_id)
     if (!allowed) return res.status(403).json({ error: 'forbidden' })
-    if (!fs.existsSync(row.image_path)) return res.status(404).json({ error: 'image not found' })
-    res.type(row.image_mime || 'image/png').sendFile(path.resolve(row.image_path))
+    // 兼容旧绝对路径与新相对文件名，保证数据库可跨机器移植
+    const imagePath = path.isAbsolute(row.image_path)
+      ? row.image_path
+      : path.join(uploadDir, row.image_path)
+    if (!fs.existsSync(imagePath)) return res.status(404).json({ error: 'image not found' })
+    res.type(row.image_mime || 'image/png').sendFile(imagePath)
   })
 
   router.post('/analyze', async (req, res) => {
@@ -50,12 +54,12 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
         if (!buffer.length || buffer.length > 10 * 1024 * 1024) throw new Error('invalid image size')
         const mime = match?.[1]?.toLowerCase() ?? 'image/png'
         fs.mkdirSync(uploadDir, { recursive: true })
-        const filePath = path.resolve(uploadDir, `${crypto.randomUUID()}.bin`)
-        fs.writeFileSync(filePath, buffer, { flag: 'wx' })
+        const fileName = `${crypto.randomUUID()}.bin`
+        fs.writeFileSync(path.join(uploadDir, fileName), buffer, { flag: 'wx' })
         analysisId = insertAnalysis(db, {
           childId: req.auth.accountId, familyId: req.auth.familyId, features,
           feedbackText: buildFeedback(features), followUp: FOLLOW_UP,
-          image: { path: filePath, mime, size: buffer.length, sha256: crypto.createHash('sha256').update(buffer).digest('hex') },
+          image: { path: fileName, mime, size: buffer.length, sha256: crypto.createHash('sha256').update(buffer).digest('hex') },
         })
       } catch (err) {
         log.error('analyze', { msg: `analysis persistence failed: ${err.message}` })
