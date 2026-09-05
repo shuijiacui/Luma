@@ -17,8 +17,12 @@ index = VectorStoreIndex.from_vector_store(
     ChromaVectorStore(chroma_collection=collection),
     embed_model=ModelScopeEmbedding(model_name=MODEL),
 )
+SCORE_THRESHOLD = 0.40
 query = " ".join(sys.argv[1:]) or "儿童绘画和单幅画解释的局限性"
-for node in index.as_retriever(similarity_top_k=5).retrieve(query):
+nodes = [n for n in index.as_retriever(similarity_top_k=5).retrieve(query) if float(n.score or 0) >= SCORE_THRESHOLD]
+if not nodes:
+    print(f"未找到足够相关文献（阈值 {SCORE_THRESHOLD}）")
+for node in nodes:
     print(f"score={node.score:.4f} source={node.node.metadata.get('source_file', 'unknown')}")
     print(node.node.get_content()[:1000].replace('\n', ' '))
     print()

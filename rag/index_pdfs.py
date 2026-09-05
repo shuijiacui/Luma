@@ -39,6 +39,10 @@ def main() -> None:
         })
 
     client = chromadb.PersistentClient(path=str(DB_DIR))
+    try:
+        client.delete_collection(COLLECTION)
+    except Exception:
+        pass  # 不存在则忽略，保证每次重跑得到全新索引
     collection = client.get_or_create_collection(COLLECTION)
     vector_store = ChromaVectorStore(chroma_collection=collection)
     storage = StorageContext.from_defaults(vector_store=vector_store)
@@ -46,7 +50,7 @@ def main() -> None:
         documents,
         storage_context=storage,
         embed_model=ModelScopeEmbedding(model_name=EMBED_MODEL),
-        transformations=[SentenceSplitter(chunk_size=800, chunk_overlap=120)],
+        transformations=[SentenceSplitter(chunk_size=300, chunk_overlap=60)],
     )
     manifest = {
         "collection": COLLECTION,

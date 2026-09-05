@@ -31,8 +31,28 @@ class ModelScopeEmbedding(BaseEmbedding):
         return self._get_text_embedding(text)
 
     def _get_text_embeddings(self, texts):
-        r = requests.post(f"{self.base_url.rstrip('/')}/embeddings",
-            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
-            json={"model": self.model_name, "input": texts, "encoding_format": "float"}, timeout=180)
-        r.raise_for_status()
-        return [x["embedding"] for x in r.json()["data"]]
+        embeddings = []
+        batch_size = 16
+        dim = None
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            r = requests.post(f"{self.base_url.rstrip('/')}/embeddings",
+                headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                json={"model": self.model_name, "input": batch, "encoding_format": "float"}, timeout=180)
+            if r.status_code == 200:
+                data = r.json()["data"]
+                embeddings.extend([x["embedding"] for x in data])
+                dim = dim or len(data[0]["embedding"])
+            else:
+                # 个别 chunk 触发内容审查：逐条降级，触发的用零向量占位（相似度≈0，检索时被阈值自然过滤）
+                for t in batch:
+                    rr = requests.post(f"{self.base_url.rstrip('/')}/embeddings",
+                        headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                        json={"model": self.model_name, "input": [t], "encoding_format": "float"}, timeout=90)
+                    if rr.status_code == 200:
+                        e = rr.json()["data"][0]["embedding"]
+                        embeddings.append(e)
+                        dim = dim or len(e)
+                    else:
+                        embeddings.append([0.0] * (dim or 2560))
+        return embeddings
