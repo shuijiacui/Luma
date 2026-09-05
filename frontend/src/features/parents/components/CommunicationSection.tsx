@@ -102,7 +102,19 @@ export function CommunicationSection({ childName, childId, token }: Props) {
 
   useEffect(() => {
     if (!isReal) return
-    listAnalyses(childId!, token!).then((res) => setAnalyses(res.analyses)).catch(() => setAnalyses([]))
+    let cancelled = false
+    listAnalyses(childId!, token!)
+      .then((res) => {
+        if (!cancelled) setAnalyses(res.analyses)
+      })
+      .catch(() => {
+        if (!cancelled) setAnalyses([])
+      })
+    // childId 切换时，effect 重新执行前会先跑这里，标记旧请求已过期，
+    // 避免旧孩子的数据在新请求之后才返回，覆盖了新孩子的数据
+    return () => {
+      cancelled = true
+    }
   }, [childId, token, isReal])
 
   const observations = useMemo(() => {

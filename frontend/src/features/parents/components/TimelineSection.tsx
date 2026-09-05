@@ -70,7 +70,18 @@ export function TimelineSection({ childName, childId, token }: Props) {
 
   useEffect(() => {
     if (!isReal) return
-    listAnalyses(childId!, token!).then((res) => setAnalyses(res.analyses)).catch(() => setAnalyses([]))
+    let cancelled = false
+    listAnalyses(childId!, token!)
+      .then((res) => {
+        if (!cancelled) setAnalyses(res.analyses)
+      })
+      .catch(() => {
+        if (!cancelled) setAnalyses([])
+      })
+    // 同上：避免切换孩子时旧请求晚回来覆盖新孩子的数据
+    return () => {
+      cancelled = true
+    }
   }, [childId, token, isReal])
 
   const months = useMemo(() => {
