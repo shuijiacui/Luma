@@ -9,7 +9,7 @@ import { childSteps } from '@/features/onboarding/steps/childSteps'
 import { NiloCharacter } from '../components/NiloCharacter'
 import { CreationDoor } from '../components/CreationDoor'
 import { useNiloSound } from '../hooks/useNiloSound'
-import '../styles/child-home.css'
+import '../styles/child-storybook.css'
 
 export function ChildHomePage() {
   const { session, logout } = useAuth()
@@ -45,49 +45,20 @@ export function ChildHomePage() {
           <button type="button" className="nilo-leave" onClick={() => { logout(); navigate('/auth?role=child&mode=login') }}>下次见 <span aria-hidden="true">↗</span></button>
         </nav>
       </header>
-      <section className="nilo-home-intro" aria-labelledby="nilo-home-title">
-        <div className="nilo-welcome-sign">
-          <svg className="nilo-welcome-wood" viewBox="0 0 640 104" preserveAspectRatio="none" fill="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="nilo-sign-wood" x1="300" y1="0" x2="330" y2="104" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#eddfbb" /><stop offset=".48" stopColor="#f2e6c9" /><stop offset="1" stopColor="#e3d1a7" />
-              </linearGradient>
-            </defs>
-            <path d="M22 10Q111 6 202 9T392 8Q509 4 616 10Q629 11 628 23L631 78Q632 92 618 94Q492 98 381 95T181 97L23 94Q10 94 11 82L8 26Q8 11 22 10Z" fill="url(#nilo-sign-wood)" stroke="#c4ac7d" strokeOpacity=".38" />
-            <path d="M22 14Q161 10 292 13T617 13" stroke="#fff8e4" strokeWidth="2" strokeOpacity=".65" />
-            <path d="M22 89Q130 94 260 91T617 90" stroke="#bfa16a" strokeOpacity=".2" />
-            <g stroke="#a88d58" strokeOpacity=".12" strokeLinecap="round">
-              <path d="M30 27Q100 20 172 25T300 25M351 23Q482 17 608 26M20 73Q98 65 152 72M453 78Q518 68 619 73M29 81Q178 76 250 83T407 81M438 32Q529 26 612 33" />
-              <path d="M31 51Q63 39 94 48T158 52M31 57Q65 44 94 55T181 58M540 57Q570 44 597 52T619 55" />
-              <ellipse cx="66" cy="50" rx="12" ry="3" /><ellipse cx="578" cy="53" rx="8" ry="2" />
-            </g>
-            <g fill="#b49a69" opacity=".45"><circle cx="28" cy="23" r="2.5" /><circle cx="611" cy="23" r="2.5" /></g>
-          </svg>
-          <svg className="nilo-sign-sprig" viewBox="0 0 68 60" fill="none" aria-hidden="true">
-            <path d="M11 55Q38 31 52 7" stroke="#8f9c75" strokeWidth="1.5" />
-            <path d="M27 39Q6 39 13 25Q29 24 27 39ZM36 29Q25 10 39 9Q49 21 36 29ZM38 27Q57 29 60 16Q44 11 38 27ZM24 43Q40 49 49 36Q34 28 24 43Z" fill="#a5b497" fillOpacity=".65" />
-          </svg>
-          <h1 id="nilo-home-title">欢迎来到 <span>Nilo</span> 的小屋</h1>
-        </div>
-        <p>嗨，{session?.displayName || '小小创作者'}。和 Nilo 打个招呼，或推开门，画一个新世界。</p>
-      </section>
+      <h1 className="sr-only">Nilo 的创作世界</h1>
       <section className="nilo-room" aria-label="Nilo 和通往画布的门">
+        <div className="nilo-tree-sign" aria-hidden="true">更大的<br />想象世界<br />在这里<span>✦</span></div>
         <div className="nilo-room-spark spark-one" aria-hidden="true">✧</div>
         <div className="nilo-room-spark spark-two" aria-hidden="true">✦</div>
         <div className="nilo-room-spark spark-three" aria-hidden="true">✧</div>
         <div className="nilo-door-area" data-onboarding="child-door">
-          <div className="nilo-door-note">你的奇妙世界，就在门后 <span aria-hidden="true">↴</span></div>
           <CreationDoor opening={opening} onOpen={openDoor} />
-          <p className="nilo-door-caption"><span aria-hidden="true">✧</span> 推开门，让想象开始</p>
         </div>
         <div className="nilo-companion-area" data-onboarding="child-hero"><NiloCharacter disabled={opening} playSound={play} /></div>
-        <div className="nilo-floor-line" aria-hidden="true" />
+        <div className="nilo-field-note note-head" aria-hidden="true">点点我的<br />脑袋吧！<svg viewBox="0 0 70 48" fill="none"><path d="M60 3C66 22 34 40 26 30S48 20 39 34C32 44 16 40 7 40m0 0 8-6m-8 6 9 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg></div>
+        <div className="nilo-field-note note-adventure" aria-hidden="true">和我<br />一起去探险！<svg viewBox="0 0 70 48" fill="none"><path d="M60 3C66 22 34 40 26 30S48 20 39 34C32 44 16 40 7 40m0 0 8-6m-8 6 9 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg></div>
+        <div className="nilo-butterfly" aria-hidden="true"><i /><i /><i /><i /></div>
       </section>
-      <footer className="nilo-home-footer">
-        <span className="nilo-footer-flower" aria-hidden="true">✳</span>
-        <p>在这里，慢慢来，画什么都可以。</p>
-        {session?.isGuest && <span className="nilo-guest-note">游客体验 · 画作可下载，刷新后草稿会清除</span>}
-      </footer>
       {opening && <motion.div className="nilo-door-transition" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: reduceMotion ? 0 : .7, duration: reduceMotion ? .1 : .4 }} aria-hidden="true" />}
     </main>
   )

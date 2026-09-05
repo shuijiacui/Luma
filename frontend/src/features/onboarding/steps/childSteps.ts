@@ -9,7 +9,7 @@ export const childSteps: OnboardingStep[] = [
   {
     target: '[data-onboarding="child-door"]',
     title: '推开门，去画画',
-    body: '点一下绿色的大门，就能进入画布。画到一半也可以回小屋玩一会儿，再开门接着画。刷新或退出前，记得下载画作哦。',
+    body: '点一下花藤里的绿色大门，就能进入画布，和 Nilo 一起画画。离开画布前，记得把喜欢的画作下载下来哦。',
   },
   {
     target: '[data-onboarding="child-avatar"]',

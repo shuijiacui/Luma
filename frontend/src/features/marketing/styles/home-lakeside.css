@@ -1,0 +1,124 @@
+.luma-landing {
+  position: relative;
+  isolation: isolate;
+  min-height: 560px;
+  height: 100svh;
+  overflow: hidden;
+  background: #f9f5eb;
+  color: #205b59;
+}
+.luma-landing-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 45% 50%;
+}
+.luma-landing-wash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, #fffdf222, transparent 20%, transparent 73%, #fbf6e990);
+}
+.luma-landing-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(24px, 3vw, 48px);
+  width: min(84%, 1200px);
+  margin: 0 auto;
+  padding-top: clamp(20px, 3.3vh, 40px);
+}
+.luma-landing-brand { border-radius: 12px; }
+.luma-landing-message {
+  position: absolute;
+  left: 57%;
+  top: 30%;
+  width: 37%;
+  color: #3b6864;
+  text-shadow: 0 2px 16px #fffdf278;
+}
+.luma-landing-message h1 {
+  margin: 0;
+  font: 500 clamp(44px, 5.2vw, 88px)/1.04 'Caveat Variable', Caveat, cursive;
+  letter-spacing: -.025em;
+}
+.luma-landing-message h1 span { display: block; }
+.luma-landing-message h1 span + span { margin-left: .62em; color: #997440; }
+.luma-landing-message p {
+  margin: 22px 0 0 .3em;
+  font: 400 clamp(14px, 1.28vw, 20px)/1.5 'Caveat Variable', Caveat, cursive;
+  letter-spacing: .055em;
+  color: #526f67;
+}
+.luma-landing-pricing {
+  min-height: 44px;
+  padding: 10px 22px;
+  border: 1px solid #47706b40;
+  border-radius: 999px;
+  background: #fffdf3a6;
+  backdrop-filter: blur(8px);
+  font-size: 14px;
+  letter-spacing: .1em;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+.luma-landing-pricing:hover { background: #fffdf3; border-color: #47706b80; }
+.luma-landing-entrances {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: clamp(28px, 4vw, 64px);
+  white-space: nowrap;
+}
+.luma-landing-entrances a {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-height: 52px;
+  padding: 8px 6px;
+  border-radius: 5px;
+  font: 500 clamp(20px, 1.65vw, 26px)/1.5 var(--font-display);
+  letter-spacing: .12em;
+  text-shadow: 0 1px 8px #fffdf0;
+}
+.luma-landing-entrances svg { width: 25px; height: 25px; transition: transform .2s; }
+.luma-landing-entrances a:hover svg { transform: translateX(5px); }
+.luma-landing-divider { width: 1px; height: 27px; background: #47706b40; }
+.luma-landing button:focus-visible, .luma-landing a:focus-visible { outline: 2px solid #94702f; outline-offset: 6px; }
+@media (max-aspect-ratio: 4/3) {
+  .luma-landing-art { object-position: 34% center; }
+  .luma-landing-message { left: 55%; width: 42%; }
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  .luma-landing-art { object-position: 32% center; }
+  .luma-landing-header { width: calc(100% - 40px); padding-top: 20px; gap: 12px; }
+  .luma-landing-brand > span { gap: 5px; }
+  .luma-landing-brand > span > span:first-child { width: 60px; height: 60px; }
+  .luma-landing-brand .font-brand { font-size: 32px; }
+  .luma-landing-message { left: 10%; top: 19%; width: 80%; }
+  .luma-landing-message h1 { font-size: 38px; }
+  .luma-landing-message p { margin-top: 8px; }
+  .luma-landing-pricing { padding: 8px 15px; font-size: 12px; }
+  .luma-landing-entrances { bottom: 7%; gap: 24px; }
+  .luma-landing-entrances a { gap: 14px; font-size: 20px; letter-spacing: .06em; }
+  .luma-landing-entrances svg { width: 22px; height: 22px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .luma-landing { min-height: 350px; }
+  .luma-landing-header { padding-top: 12px; }
+  .luma-landing-brand > span > span:first-child { width: 62px; height: 62px; }
+  .luma-landing-brand .font-brand { font-size: 33px; }
+  .luma-landing-message p { margin-top: 10px; }
+  .luma-landing-entrances { bottom: 3%; }
+  .luma-landing-entrances a { min-height: 44px; font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .luma-landing-pricing, .luma-landing-entrances svg { transition: none; }
+}

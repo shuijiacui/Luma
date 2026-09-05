@@ -21,7 +21,7 @@ const reactions: Record<Part, TargetAndTransition> = {
 export function NiloCharacter({ disabled, playSound }: { disabled: boolean; playSound: (sound: NiloSound) => void }) {
   const reduceMotion = useReducedMotion()
   const [reaction, setReaction] = useState<Part | null>(null)
-  const [message, setMessage] = useState('你好呀，我是 Nilo！')
+  const [message, setMessage] = useState('')
   const [showHints, setShowHints] = useState(false)
   const [sequence, setSequence] = useState(0)
   const actionTimer = useRef<number | undefined>(undefined)
@@ -52,10 +52,11 @@ export function NiloCharacter({ disabled, playSound }: { disabled: boolean; play
         </AnimatePresence>
       </div>
       <div className="nilo-character-stage">
-        <div className="nilo-rug" aria-hidden="true" />
+        <div className="nilo-ground-shadow" aria-hidden="true" />
         <motion.div className="nilo-character-float" animate={reduceMotion || disabled || reaction ? { y: 0 } : { y: [0, -5, 0] }} transition={{ duration: 4, repeat: reaction || disabled || reduceMotion ? 0 : Infinity, ease: 'easeInOut' }}>
           <motion.div className={`nilo-character${showHints ? ' show-hotspots' : ''}`} animate={reduceMotion || disabled || !reaction ? { rotate: 0, x: 0, y: 0, scale: 1, scaleX: 1, scaleY: 1 } : reactions[reaction]} transition={{ duration: .8, ease: 'easeInOut' }}>
             <img src={niloSprite} alt="提着星星灯、戴着青绿色围巾的 Nilo" draggable={false} className="nilo-sprite" fetchPriority="high" />
+            <div className="nilo-magic-trail" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>✧</span><span>✦</span><span>✦</span></div>
             {interactions.map(part => <button key={part.id} type="button" className={`nilo-hotspot hotspot-${part.id}`} style={{ left: `${part.x}%`, top: `${part.y}%`, width: `${part.width}%`, height: `${part.height}%` }} aria-label={part.label} disabled={disabled} onClick={() => interact(part)}><span className="nilo-hotspot-dot" /><span className="nilo-hotspot-label">{part.label.replace('Nilo 的', '').replace('和 Nilo ', '')}</span></button>)}
             {!disabled && activePart && <div key={sequence} className={`nilo-reaction-particles reaction-${reaction}`} style={{ left: `${activePart.x}%`, top: `${activePart.y}%` }} aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <span key={i} style={{ '--i': i, '--dx': `${Math.cos(i * Math.PI / 3) * 64}px`, '--dy': `${Math.sin(i * Math.PI / 3) * 55 - 35}px` } as CSSProperties}>{activePart.symbol}</span>)}</div>}
           </motion.div>

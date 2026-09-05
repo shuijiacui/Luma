@@ -33,7 +33,11 @@ export function UnifiedAuthPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  if (session) return <Navigate to={`/${session.role}/demo`} replace />
+  // An explicit role entry can open the other login form without ending
+  // the current session until the user actually signs in or starts a guest visit.
+  if (session && (!searchParams.has('role') || session.role === role)) {
+    return <Navigate to={`/${session.role}/demo`} replace />
+  }
 
   function switchPanel(nextRole: UserRole, nextMode: AuthMode = mode) {
     setError('')
