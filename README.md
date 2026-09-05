@@ -86,7 +86,7 @@ LLM 只存在于第一步，负责“看见并描述”，不直接生成情绪�
 
 - Node.js `>= 22.5`（后端使用内置 `node:sqlite`）
 - npm
-- 一个兼容 OpenAI Chat Completions 格式、支持图像输入的模型服务及 API Key
+- DeepSeek API Key（画作分析使用支持图像输入的实验视觉模型）
 - 现代浏览器
 
 ### 1. 启动后端
@@ -101,9 +101,10 @@ npm start
 Windows PowerShell 可用 `Copy-Item .env.example .env` 代替 `cp`。随后编辑 `server/.env`，至少确认以下配置：
 
 ```dotenv
-LLM_BASE_URL=https://your-openai-compatible-endpoint/v1
-LLM_API_KEY=your-api-key
-LLM_VISION_MODEL=your-vision-model
+LLM_BASE_URL=https://api.deepseek.com
+LLM_API_KEY=your-deepseek-api-key
+LLM_VISION_MODEL=deepseek-v4-flash-vision-exp
+LLM_TEXT_MODEL=deepseek-v4-flash
 PORT=3001
 ```
 
