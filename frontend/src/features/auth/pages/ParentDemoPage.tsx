@@ -401,17 +401,51 @@ export function ParentDemoPage() {
               )}
 
               {activeTab === 'themes' && (
-                <>
-                  <motion.section
-                    variants={fadeUp}
-                    id="themes"
-                    className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]"
+                <motion.section
+                  variants={fadeUp}
+                  id="themes"
+                  className="grid gap-5 lg:grid-cols-[2fr_1fr]"
+                >
+                  <Card
+                    id="conversation"
+                    eyebrow="沟通建议"
+                    title="把观察变成一次温柔的对话"
+                    description="没有标准答案，让孩子决定画面如何继续。"
+                    className="h-full"
                   >
+                    {insight && insight.suggestions.length > 0 ? (
+                      <div className="mt-2 space-y-3">
+                        {insight.suggestions.map((suggestion, index) => (
+                          <div
+                            key={suggestion.title}
+                            className="group rounded-2xl border border-luma-ivory-200 bg-luma-ivory-50 p-4 transition hover:border-luma-teal-100 hover:bg-luma-teal-50"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="flex size-6 items-center justify-center rounded-full bg-luma-gold-100 text-xs font-bold text-luma-gold-700">
+                                {index + 1}
+                              </span>
+                              <span className="text-sm font-bold text-luma-teal-900">
+                                {suggestion.title}
+                              </span>
+                            </div>
+                            <p className="mt-2.5 pl-8 font-display text-lg font-semibold leading-relaxed text-luma-teal-900">
+                              {suggestion.prompt}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-sm text-luma-muted">
+                        孩子完成更多创作后，沟通建议会出现在这里。
+                      </p>
+                    )}
+                  </Card>
+
+                  <div className="flex flex-col gap-5">
                     <Card
                       eyebrow="创作主题"
                       title={`${selectedChild?.nickname} 最近在探索什么？`}
                       description="根据近期绘画中反复出现的内容整理"
-                      className="h-full"
                     >
                       {insight && insight.themes.length > 0 ? (
                         <div className="mt-2 space-y-5">
@@ -436,7 +470,6 @@ export function ParentDemoPage() {
                       variant="soft"
                       eyebrow="近期创作"
                       title="表达的足迹"
-                      className="h-full"
                     >
                       {insight && insight.recentCreations.length > 0 ? (
                         <div className="mt-2 space-y-1">
@@ -466,47 +499,8 @@ export function ParentDemoPage() {
                         <p className="mt-4 text-sm text-luma-muted">暂无创作记录</p>
                       )}
                     </Card>
-                  </motion.section>
-
-                  <motion.section
-                    variants={fadeUp}
-                    id="conversation"
-                    className="mt-5"
-                  >
-                    <Card
-                      eyebrow="沟通建议"
-                      title="把观察变成一次温柔的对话"
-                      description="没有标准答案，让孩子决定画面如何继续。"
-                    >
-                      {insight && insight.suggestions.length > 0 ? (
-                        <div className="mt-2 space-y-3">
-                          {insight.suggestions.map((suggestion, index) => (
-                            <div
-                              key={suggestion.title}
-                              className="group rounded-2xl border border-luma-ivory-200 bg-luma-ivory-50 p-4 transition hover:border-luma-teal-100 hover:bg-luma-teal-50"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="flex size-6 items-center justify-center rounded-full bg-luma-gold-100 text-xs font-bold text-luma-gold-700">
-                                  {index + 1}
-                                </span>
-                                <span className="text-sm font-bold text-luma-teal-900">
-                                  {suggestion.title}
-                                </span>
-                              </div>
-                              <p className="mt-2.5 pl-8 font-display text-lg font-semibold leading-relaxed text-luma-teal-900">
-                                {suggestion.prompt}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-4 text-sm text-luma-muted">
-                          孩子完成更多创作后，沟通建议会出现在这里。
-                        </p>
-                      )}
-                    </Card>
-                  </motion.section>
-                </>
+                  </div>
+                </motion.section>
               )}
 
               {activeTab === 'timeline' && (
