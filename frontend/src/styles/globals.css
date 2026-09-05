@@ -1,3 +1,4 @@
+﻿@import "@fontsource-variable/caveat";
 @import "@fontsource-variable/comfortaa";
 @import "@fontsource-variable/noto-sans-sc";
 @import "@fontsource-variable/noto-serif-sc";
@@ -23,6 +24,25 @@
 
   --color-luma-ink: #20352f;
   --color-luma-muted: #64766f;
+
+  --color-luma-cream: #faf7ef;
+  --color-luma-cream-soft: #f3ecdd;
+
+  --color-luma-grass-50: #f2f7ec;
+  --color-luma-grass-100: #e5efda;
+  --color-luma-grass-200: #d2e3c0;
+  --color-luma-grass-300: #b6d19d;
+  --color-luma-grass-400: #94b976;
+  --color-luma-grass-500: #739d58;
+  --color-luma-grass-600: #5b7f47;
+  --color-luma-grass-700: #47653a;
+
+  --color-luma-clay-50: #faf4eb;
+  --color-luma-clay-100: #f1e4d1;
+  --color-luma-clay-200: #e6cfaf;
+  --color-luma-clay-300: #d5b389;
+  --color-luma-clay-500: #b98c59;
+  --color-luma-clay-700: #8a6438;
   --color-luma-white: #ffffff;
 
   --font-sans:
@@ -31,12 +51,15 @@
   --font-display:
     "Noto Serif SC Variable", "Noto Serif SC", "Source Han Serif SC",
     "Songti SC", serif;
+  --font-hand:
+    "Caveat Variable", Caveat, "Kaiti SC", "STKaiti", "KaiTi", "楷体", "Segoe Script", "Bradley Hand ITC", cursive;
   --font-brand:
     "Comfortaa Variable", Comfortaa, "SF Pro Rounded", var(--font-sans);
 
   --shadow-luma-sm: 0 1px 2px rgb(23 63 58 / 0.04), 0 8px 24px rgb(23 63 58 / 0.06);
   --shadow-luma-md: 0 2px 4px rgb(23 63 58 / 0.04), 0 18px 48px rgb(23 63 58 / 0.10);
   --shadow-luma-glow: 0 14px 40px rgb(22 138 120 / 0.20);
+  --shadow-luma-card: 0 1px 2px rgb(23 63 58 / 0.03), 0 12px 32px rgb(71 101 58 / 0.08);
 
   --radius-luma-sm: 0.75rem;
   --radius-luma-md: 1.25rem;
@@ -167,3 +190,4 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+

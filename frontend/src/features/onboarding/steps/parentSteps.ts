@@ -22,8 +22,8 @@ export const parentSteps: OnboardingStep[] = [
   },
   {
     target: '[data-onboarding="parent-tabs"]',
-    title: '四个分区，各有侧重',
-    body: '成长概览看本周整体状态，创作主题看孩子在画什么、想什么，成长时间轴追踪变化趋势，AI 沟通助手帮你找到跟孩子说话的方式。',
+    title: '六个分区，各有侧重',
+    body: '成长概览看最近的状态，创作记录收着每一幅画，主题探索看孩子在画什么、想什么，成长时间轴追踪变化趋势，AI 沟通助手帮你找到跟孩子说话的方式，家庭设置管理邀请码与家庭空间。',
   },
   {
     target: '[data-onboarding="parent-tab-communication"]',
@@ -33,6 +33,6 @@ export const parentSteps: OnboardingStep[] = [
   {
     target: '[data-onboarding="parent-archive"]',
     title: '所有作品都留在这里',
-    body: '孩子的每一幅画都留在这里。某天翻出来，也许会看见一个你当时没注意到的成长节点。',
+    body: '点进创作记录，孩子的每一幅画都留在那里。某天翻出来，也许会看见一个你当时没注意到的成长节点。',
   },
 ]
