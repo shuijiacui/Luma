@@ -64,11 +64,36 @@ export const DrawingCanvas = forwardRef<
 
     function resizeCanvas() {
       if (!canvas) return
+      const context = canvas.getContext('2d')
+      if (!context) return
+
       const rect = canvas.getBoundingClientRect()
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
-      canvas.width = Math.round(rect.width * pixelRatio)
-      canvas.height = Math.round(rect.height * pixelRatio)
-      historyRef.current = [canvas.toDataURL('image/png')]
+      const nextWidth = Math.round(rect.width * pixelRatio)
+      const nextHeight = Math.round(rect.height * pixelRatio)
+
+      // 尺寸没变就别折腾，避免同一尺寸下反复清空重绘
+      if (canvas.width === nextWidth && canvas.height === nextHeight) return
+
+      // 修改 canvas.width/height 会清空画布内容，所以先把当前画面拍成快照，
+      // 换完尺寸后再把快照画回去，避免转屏/地址栏收起/窗口拖拽时孩子的画作丢失
+      const hasContent = canvas.width > 0 && canvas.height > 0
+      const snapshot = hasContent ? canvas.toDataURL('image/png') : null
+
+      canvas.width = nextWidth
+      canvas.height = nextHeight
+
+      if (!snapshot) {
+        historyRef.current = [canvas.toDataURL('image/png')]
+        return
+      }
+
+      const image = new Image()
+      image.onload = () => {
+        context.drawImage(image, 0, 0, canvas.width, canvas.height)
+        historyRef.current = [canvas.toDataURL('image/png')]
+      }
+      image.src = snapshot
     }
 
     resizeCanvas()
