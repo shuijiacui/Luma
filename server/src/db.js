@@ -40,9 +40,22 @@ export function createDb(path = process.env.DB_PATH || DEFAULT_DB_PATH) {
       child_id TEXT NOT NULL REFERENCES accounts(id),
       family_id TEXT NOT NULL REFERENCES families(id),
       features_json TEXT NOT NULL,
+      feedback_json TEXT,
+      image_path TEXT,
+      image_mime TEXT,
+      image_size INTEGER,
+      image_sha256 TEXT,
       report_json TEXT,
       created_at TEXT NOT NULL
     );
+  `)
+  for (const column of [
+    ['feedback_json', 'TEXT'], ['image_path', 'TEXT'], ['image_mime', 'TEXT'],
+    ['image_size', 'INTEGER'], ['image_sha256', 'TEXT'],
+  ]) {
+    try { db.exec(`ALTER TABLE analyses ADD COLUMN ${column[0]} ${column[1]}`) } catch { /* 已存在 */ }
+  }
+  db.exec(`
     CREATE INDEX IF NOT EXISTS idx_analyses_child ON analyses(child_id, created_at);
   `)
   return db

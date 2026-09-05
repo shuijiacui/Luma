@@ -7,3 +7,5 @@ dist/
 *.sqlite
 logs/
 backups/
+
+server/uploads/
