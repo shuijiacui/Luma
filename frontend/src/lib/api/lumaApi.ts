@@ -33,10 +33,13 @@ export type Emotion =
   | '信息不足'
 
 export interface ReportResponse {
+  narrative?: string
   emotion: Emotion
   confidence: number
-  evidence: { entryId: string; summary: string }[]
+  evidence: { entryId: string; summary: string; clusterLabel?: string; plain?: string | null }[]
   parentAdvice: string[]
+  webAdvice?: string[]
+  webAdviceSource?: string
 }
 
 export function analyzeDrawing(

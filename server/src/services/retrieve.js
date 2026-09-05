@@ -15,6 +15,9 @@ export function matchEntry(entry, features) {
       case 'colors.dominantIncludes':
         if (!cond.some(c => features.colors?.dominant?.includes(c))) return false
         break
+      case 'colors.darkRatioMinForDominant':
+        if (!(features.colors?.darkRatio >= cond)) return false
+        break
       case 'composition.size':
       case 'composition.position':
       case 'composition.pressure': {

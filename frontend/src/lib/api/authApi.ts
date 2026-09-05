@@ -19,6 +19,9 @@ export interface MeResponse {
 export interface AnalysisSummary {
   id: string
   createdAt: string
+  imageUrl: string | null
+  rawDescription: string | null
+  feedback: { feedbackText: string; followUp: string | null } | null
   summary: {
     elements: string[]
     darkRatio: number | null
@@ -27,8 +30,11 @@ export interface AnalysisSummary {
   report: {
     emotion: string
     confidence: number
-    evidence: { entryId: string; summary: string }[]
+    evidence: { entryId: string; summary: string; clusterLabel?: string; plain?: string | null }[]
     parentAdvice: string[]
+    webAdvice?: string[]
+    webAdviceSource?: string
+    audit?: { knowledgeVersion: string; matchedEntryIds: string[]; conflicts: string[]; dropped: unknown[]; reason: string } | null
   } | null
 }
 

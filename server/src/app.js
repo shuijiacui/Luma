@@ -8,6 +8,8 @@ import { DEFAULT_CONFIG } from './services/score.js'
 import { createDb } from './db.js'
 import { authenticate } from './services/authService.js'
 import { corsMiddleware, rateLimit, defaultLimits } from './services/security.js'
+import { chatText } from './services/llmClient.js'
+import { bochaSearch } from './services/webSearch.js'
 
 const KNOWLEDGE_DIR = new URL('../../knowledge/', import.meta.url)
 
@@ -54,7 +56,7 @@ export function createApp(deps = {}) {
   // Bearer token → req.auth（可选；游客/匿名调用 analyze/report 不需要登录）
   app.use('/api', (req, _res, next) => {
     const match = /^Bearer (.+)$/.exec(req.headers.authorization ?? '')
-    req.token = match?.[1] ?? null
+    req.token = match?.[1] ?? req.query?.token ?? null
     req.auth = authenticate(db, req.token)
     next()
   })
@@ -66,11 +68,14 @@ export function createApp(deps = {}) {
   app.use('/api/analyze', rateLimit(limits.analyze)) // LLM 成本保护
   app.use('/api', createApiRouter({
     chatWithImage: deps.chatWithImage ?? undefined,
+    chatText: deps.chatText ?? (process.env.NODE_ENV === 'test' ? null : chatText),
+    webSearch: deps.webSearch ?? (process.env.NODE_ENV === 'test' ? null : bochaSearch),
     entries,
     constraints: constraints ?? {},
     scoreConfig,
     db,
     kbVersion: `entries-${entries.length}${constraints?.version ? `+constraints-${constraints.version}` : ''}`,
+    uploadDir: deps.uploadDir ?? process.env.UPLOAD_DIR ?? path.resolve('uploads'),
   }))
 
   // 生产模式：托管前端构建产物（SPA 回退到 index.html），单进程同域部署免 CORS

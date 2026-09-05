@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const KB = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
 const SIGNALS = ['乐观平稳', '焦虑倾向', '低落倾向'];
-const CONDITIONS = ['elements', 'colors.darkRatioMin', 'colors.dominantIncludes',
+const CONDITIONS = ['elements', 'colors.darkRatioMin', 'colors.dominantIncludes', 'colors.darkRatioMinForDominant',
   'composition.size', 'composition.position', 'composition.pressure', 'distortions', 'erasureMarksMin'];
 const TIER_R = { 1: [0.7, 0.9], 2: [0.4, 0.6], 3: [0.0, 0.3] };
 const TIER_SCAP = { 1: 0.6, 2: 0.2, 3: 0.2 };
