@@ -43,6 +43,17 @@ function formatTime(iso: string) {
   return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
+const ELEMENT_ZH: Record<string, string> = {
+  person: '人物', house: '房子', tree: '树', cloud: '云', rain: '雨', sun: '太阳', moon: '月亮',
+  star: '星星', flower: '花', grass: '草', animal: '小动物', mountain: '山', river: '小河', bird: '小鸟',
+  cat: '小猫', dog: '小狗', car: '汽车', rainbow: '彩虹', butterfly: '蝴蝶', fish: '小鱼', boat: '小船',
+  fence: '栅栏', road: '小路',
+}
+
+function elementLabel(value: string) {
+  return ELEMENT_ZH[value] ?? value.replaceAll('_', ' ')
+}
+
 // 趋势方向文案（描述性，不做预测、不下结论——v2 界限）
 const DIRECTION_TEXT: Record<TrendResponse['direction'], { text: string; className: string }> = {
   insufficient: { text: '解读次数还太少，趋势需更多画作积累', className: 'text-luma-muted' },
@@ -116,7 +127,7 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
       variant="glass"
       eyebrow="画面解读"
       title="最近一幅画透露的状态"
-      description="只呈现情绪倾向与置信度，不构成任何诊断结论"
+      description="只呈现情绪倾向与参考分值，不构成任何诊断结论"
       className="mt-5 border-luma-teal-100"
     >
       {!report ? (
@@ -212,13 +223,34 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
           {report.webAdvice && report.webAdvice.length > 0 && (
             <div>
               <div className="luma-eyebrow text-luma-teal-700">
-                {report.webAdviceSource ?? '延伸建议'}（网络搜索）
+                {report.webAdviceSource ?? '延伸建议'}
               </div>
               <ul className="mt-2 space-y-2">
                 {report.webAdvice.map((advice) => (
                   <li key={advice} className="flex items-start gap-2.5 text-sm leading-relaxed text-luma-muted">
                     <span className="mt-2 size-1.5 shrink-0 rounded-full bg-luma-ivory-300" />
                     {advice}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {report.referenceEvidence && report.referenceEvidence.length > 0 && (
+            <div>
+              <div className="luma-eyebrow text-luma-teal-700">
+                {report.referenceEvidenceSource ?? '文献背景'}
+              </div>
+              <ul className="mt-2 space-y-2">
+                {report.referenceEvidence.map((item, index) => (
+                  <li key={`${item.sourceFile}-${index}`} className="rounded-xl bg-luma-ivory-50 px-3.5 py-2.5 text-sm leading-relaxed text-luma-muted">
+                    <span className="text-luma-teal-900">{item.text}</span>
+                    <div className="mt-1 text-xs text-luma-muted">
+                      局限：{item.limitation}
+                    </div>
+                    <div className="mt-1 font-mono text-[11px] text-luma-teal-600">
+                      文献来源：{item.sourceFile}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -284,7 +316,7 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
                   <span className="text-luma-muted">{formatTime(item.createdAt)}</span>
                   <span className="flex-1 truncate font-semibold text-luma-teal-900">
                     {item.summary.elements.length > 0
-                      ? `画了 ${item.summary.elements.join('、')}`
+                      ? `画了 ${item.summary.elements.map(elementLabel).join('、')}`
                       : '画面元素较少'}
                   </span>
                   {item.imageUrl && token && (

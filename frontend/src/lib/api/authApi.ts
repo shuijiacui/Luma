@@ -34,6 +34,8 @@ export interface AnalysisSummary {
     parentAdvice: string[]
     webAdvice?: string[]
     webAdviceSource?: string
+    referenceEvidence?: { sourceFile: string; text: string; limitation: string; role: string }[]
+    referenceEvidenceSource?: string
     audit?: { knowledgeVersion: string; matchedEntryIds: string[]; conflicts: string[]; dropped: unknown[]; reason: string } | null
   } | null
 }
