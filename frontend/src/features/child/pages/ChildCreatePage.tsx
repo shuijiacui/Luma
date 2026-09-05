@@ -17,6 +17,10 @@ import {
 } from '../components/DrawingCanvas'
 
 const colors = ['#20352f', '#168a78', '#edcd70', '#ef7b69', '#7a82d8', '#4aa5d8']
+const niloPrompts = [
+  '咦，这里多了新东西呢～',
+  '继续画呀，Nilo 在旁边看呢！',
+] as const
 const niloSaveMessages = [
   '画作开始下载啦。',
   '下载后，就能把这幅画带走啦。',
@@ -36,6 +40,7 @@ export function ChildCreatePage() {
   const [features, setFeatures] = useState<FeatureJSON | null>(draft.features)
   const [analysis, setAnalysis] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [serverBubble, setServerBubble] = useState<string | null>(draft.bubble)
+  const [promptIndex, setPromptIndex] = useState(-1)
   const [saved, setSaved] = useState(false)
   const mountedRef = useRef(true)
   const saveTimer = useRef<number | undefined>(undefined)
@@ -49,6 +54,7 @@ export function ChildCreatePage() {
 
   function handleStrokeComplete() {
     setServerBubble(null)
+    setPromptIndex((current) => (current + 1) % niloPrompts.length)
   }
 
   function handleSave() {
@@ -88,7 +94,7 @@ export function ChildCreatePage() {
   const bubbleText =
     analysis === 'loading'
       ? 'Nilo 正在仔细看你的画…'
-      : serverBubble
+      : (serverBubble ?? (promptIndex >= 0 ? niloPrompts[promptIndex] : null))
 
   return (
     <main className="flex h-svh min-h-[420px] flex-col overflow-x-hidden bg-luma-teal-50">
