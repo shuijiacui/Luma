@@ -10,6 +10,8 @@ import { buildReport, buildFeedback, FOLLOW_UP, buildParentNarrativePrompt, vali
 import { bochaSearch, searchQueryFor } from '../services/webSearch.js'
 import { insertAnalysis, attachReport } from '../services/historyService.js'
 import { log } from '../services/logger.js'
+import { traceNode } from '../services/tracing.js'
+import { retrieveReferences, buildReferenceFilterPrompt, validateReferenceFilter } from '../services/referenceRag.js'
 
 export function createApiRouter({ chatWithImage, chatText = null, webSearch = null, entries, constraints = {}, scoreConfig, db, kbVersion = 'unknown', uploadDir = path.resolve('uploads') }) {
   const router = Router()
@@ -60,6 +62,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
         return res.status(500).json({ error: 'analysis_persistence_failed' })
       }
     }
+    traceNode('analyze_features', { elements: features.elements ?? [], darkRatio: features.colors?.darkRatio ?? null, dropped: features.droppedDimensions ?? [] })
     res.json({ features, feedbackText: buildFeedback(features), followUp: FOLLOW_UP, ...(analysisId && { analysisId }) })
   })
 
@@ -83,6 +86,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
       childAge: Number.isInteger(childAge) ? childAge : null,
     })
     const result = score(matches, features, scoreConfig)
+    traceNode('report_score', { emotion: result.emotion, confidence: result.confidence, reason: result.reason, hits: matches.map(m => m.id), conflicts, dropped, kbVersion })
     // 判定审计快照（dispatch.config.json loading.auditSnapshot）：命中条目 ID + 知识库版本 + 冲突/丢弃
     log.audit(
       {
@@ -117,6 +121,20 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
         log.error('report_evidence_plain', { msg: `evidence plain failed: ${err.message}` })
       }
     }
+    // PDF 文献 RAG：只生成研究背景，不进入确定性评分链
+    let referenceEvidence = null
+    if (chatText && matches.length > 0) {
+      try {
+        const query = `${matches.map(m => m.cluster ?? m.id).join('、')} 儿童绘画研究局限`
+        const retrieved = (await retrieveReferences(query)).results ?? []
+        if (retrieved.length) {
+          const filtered = validateReferenceFilter(await chatText(buildReferenceFilterPrompt(query, retrieved), { maxTokens: 700 }), retrieved)
+          if (filtered) referenceEvidence = filtered
+        }
+      } catch (err) {
+        log.error('report_reference_rag', { msg: `reference RAG failed: ${err.message}` })
+      }
+    }
     // 联网搜索 → 家长沟通建议（只补陪伴类内容，标注来源，失败静默降级）
     let webAdvice = null
     if (webSearch && chatText) {
@@ -137,6 +155,10 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     }
     if (evidencePlain) {
       enrichedReport.evidence = enrichedReport.evidence.map((e, i) => ({ ...e, plain: evidencePlain[i] ?? null }))
+    }
+    if (referenceEvidence) {
+      enrichedReport.referenceEvidence = referenceEvidence
+      enrichedReport.referenceEvidenceSource = 'PDF 文献检索（仅供研究背景参考）'
     }
     if (webAdvice) {
       enrichedReport.webAdvice = webAdvice
