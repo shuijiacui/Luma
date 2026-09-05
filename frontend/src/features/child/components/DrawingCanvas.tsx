@@ -5,7 +5,6 @@ import {
   useRef,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import type { CanvasDraft } from '../draft'
 
 export interface DrawingCanvasHandle {
   undo: () => void
@@ -16,7 +15,6 @@ export interface DrawingCanvasHandle {
 }
 
 interface DrawingCanvasProps {
-  draft: CanvasDraft
   color: string
   brushSize: number
   isEraser: boolean
@@ -27,13 +25,12 @@ export const DrawingCanvas = forwardRef<
   DrawingCanvasHandle,
   DrawingCanvasProps
 >(function DrawingCanvas(
-  { color, brushSize, isEraser, onStrokeComplete, draft },
+  { color, brushSize, isEraser, onStrokeComplete },
   forwardedRef,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
-  const historyRef = useRef<string[]>(draft.history)
-  const restoringRef = useRef(false)
+  const historyRef = useRef<string[]>([])
   // 撤销请求版本号：连续快速点撤销会产生多个并发的 Image.onload，
   // 解码完成顺序不保证与点击顺序一致，靠版本号在回调里丢弃过期结果
   const restoreVersionRef = useRef(0)
@@ -45,20 +42,16 @@ export const DrawingCanvas = forwardRef<
     if (!context) return
 
     const version = ++restoreVersionRef.current
-    restoringRef.current = true
 
     context.clearRect(0, 0, canvas.width, canvas.height)
-    if (!snapshot) { restoringRef.current = false; return }
+    if (!snapshot) return
 
     const image = new Image()
     image.onload = () => {
       if (restoreVersionRef.current !== version) return // 已有更新的撤销请求，丢弃这次结果
       context.clearRect(0, 0, canvas.width, canvas.height)
-      context.globalCompositeOperation = 'source-over'
       context.drawImage(image, 0, 0, canvas.width, canvas.height)
-      restoringRef.current = false
     }
-    image.onerror = () => { if (version === restoreVersionRef.current) restoringRef.current = false }
     image.src = snapshot
   }
 
@@ -69,15 +62,13 @@ export const DrawingCanvas = forwardRef<
       ...historyRef.current.slice(-19),
       canvas.toDataURL('image/png'),
     ]
-    draft.history = historyRef.current
   }
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const versionRef = restoreVersionRef
-    function resizeCanvas(forceRestore = false) {
+    function resizeCanvas() {
       if (!canvas) return
       const context = canvas.getContext('2d')
       if (!context) return
@@ -88,38 +79,34 @@ export const DrawingCanvas = forwardRef<
       const nextHeight = Math.round(rect.height * pixelRatio)
 
       // 尺寸没变就别折腾，避免同一尺寸下反复清空重绘
-      if (!forceRestore && canvas.width === nextWidth && canvas.height === nextHeight) return
+      if (canvas.width === nextWidth && canvas.height === nextHeight) return
 
       // 修改 canvas.width/height 会清空画布内容，所以先把当前画面拍成快照，
       // 换完尺寸后再把快照画回去，避免转屏/地址栏收起/窗口拖拽时孩子的画作丢失
-      if (nextWidth <= 0 || nextHeight <= 0) return
-      // Finish an in-progress stroke before a resize, and retain undo history.
-      if (isDrawingRef.current && !restoringRef.current) {
-        isDrawingRef.current = false
-        historyRef.current = [...historyRef.current.slice(-19), canvas.toDataURL('image/png')]
-        draft.history = historyRef.current
-      }
-      const snapshot = historyRef.current.at(-1) ?? ''
+      const hasContent = canvas.width > 0 && canvas.height > 0
+      const snapshot = hasContent ? canvas.toDataURL('image/png') : null
 
       canvas.width = nextWidth
       canvas.height = nextHeight
 
-      restoreSnapshot(snapshot)
+      if (!snapshot) {
+        historyRef.current = [canvas.toDataURL('image/png')]
+        return
+      }
+
+      const image = new Image()
+      image.onload = () => {
+        context.drawImage(image, 0, 0, canvas.width, canvas.height)
+        historyRef.current = [canvas.toDataURL('image/png')]
+      }
+      image.src = snapshot
     }
 
-    // StrictMode re-runs this effect after invalidating the first image decode.
-    resizeCanvas(true)
-    const observer = new ResizeObserver(() => resizeCanvas())
+    resizeCanvas()
+    const observer = new ResizeObserver(resizeCanvas)
     observer.observe(canvas)
-    return () => {
-      if (isDrawingRef.current && !restoringRef.current) {
-        historyRef.current = [...historyRef.current.slice(-19), canvas.toDataURL('image/png')]
-        draft.history = historyRef.current
-      }
-      ++versionRef.current
-      observer.disconnect()
-    }
-  }, [draft])
+    return () => observer.disconnect()
+  }, [])
 
   function flattenToCanvas() {
     const canvas = canvasRef.current
@@ -139,15 +126,12 @@ export const DrawingCanvas = forwardRef<
     undo() {
       if (historyRef.current.length <= 1) return
       historyRef.current.pop()
-      draft.history = historyRef.current
       restoreSnapshot(historyRef.current.at(-1) ?? '')
     },
     clear() {
       const canvas = canvasRef.current
       const context = canvas?.getContext('2d')
       if (!canvas || !context) return
-      ++restoreVersionRef.current
-      restoringRef.current = false
       context.clearRect(0, 0, canvas.width, canvas.height)
       saveSnapshot()
     },
@@ -161,7 +145,6 @@ export const DrawingCanvas = forwardRef<
       link.click()
     },
     exportImage() {
-      if (restoringRef.current) return null
       const exportCanvas = flattenToCanvas()
       if (!exportCanvas) return null
       return exportCanvas.toDataURL('image/png').split(',')[1] ?? null
@@ -181,7 +164,7 @@ export const DrawingCanvas = forwardRef<
   function startDrawing(event: ReactPointerEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d')
-    if (!canvas || !context || restoringRef.current || (event.pointerType === 'mouse' && event.button !== 0)) return
+    if (!canvas || !context) return
 
     canvas.setPointerCapture(event.pointerId)
     isDrawingRef.current = true
@@ -219,7 +202,7 @@ export const DrawingCanvas = forwardRef<
   return (
     <canvas
       ref={canvasRef}
-      className="block h-full w-full cursor-crosshair touch-none rounded-[1.5rem] bg-white"
+      className="h-full min-h-[440px] w-full cursor-crosshair touch-none rounded-[1.5rem] bg-white"
       aria-label="自由绘画画布"
       onPointerDown={startDrawing}
       onPointerMove={draw}
