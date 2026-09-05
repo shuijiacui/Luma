@@ -142,13 +142,19 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
                 />
               </div>
               <span className="text-sm font-bold text-luma-teal-900">
-                置信度 {Math.round(report.confidence * 100)}%
+                参考分值 {Math.round(report.confidence * 100)}%
               </span>
             </div>
             {reportSource === 'history' && (
               <span className="text-xs font-semibold text-luma-muted">（历史解读）</span>
             )}
           </div>
+
+          {report.narrative && (
+            <div className="rounded-xl border border-luma-ivory-200 bg-white px-4 py-3 text-sm leading-relaxed text-luma-teal-900">
+              {report.narrative}
+            </div>
+          )}
 
           {report.evidence.length > 0 && (
             <div>
@@ -157,12 +163,21 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
                 {report.evidence.map((item) => (
                   <li
                     key={item.entryId}
-                    className="rounded-xl bg-luma-ivory-50 px-3.5 py-2.5 text-sm leading-relaxed text-luma-muted"
+                    className="rounded-xl bg-luma-ivory-50 px-3.5 py-2.5 text-sm leading-relaxed"
                   >
-                    <span className="mr-2 font-mono text-xs font-bold text-luma-teal-700">
-                      {item.entryId}
+                    <span className={item.plain ? 'text-luma-teal-900' : 'text-luma-muted'}>
+                      {item.plain ?? item.summary}
                     </span>
-                    {item.summary}
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <span className="font-mono text-[11px] font-bold text-luma-teal-600">
+                        {item.entryId}
+                      </span>
+                      {item.clusterLabel && (
+                        <span className="rounded-full bg-luma-teal-50 px-2 py-0.5 text-[11px] font-semibold text-luma-teal-700">
+                          {item.clusterLabel}
+                        </span>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -180,6 +195,22 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
               ))}
             </ul>
           </div>
+
+          {report.webAdvice && report.webAdvice.length > 0 && (
+            <div>
+              <div className="luma-eyebrow text-luma-teal-700">
+                {report.webAdviceSource ?? '延伸建议'}（网络搜索）
+              </div>
+              <ul className="mt-2 space-y-2">
+                {report.webAdvice.map((advice) => (
+                  <li key={advice} className="flex items-start gap-2.5 text-sm leading-relaxed text-luma-muted">
+                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-luma-ivory-300" />
+                    {advice}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="rounded-xl bg-luma-teal-50 px-4 py-3 text-xs leading-relaxed text-luma-teal-700">
             以上仅为单幅画面的情绪倾向参考，置信度已按测量工具效度上限校准；请结合日常观察综合了解孩子。
@@ -243,6 +274,13 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
                       ? `画了 ${item.summary.elements.join('、')}`
                       : '画面元素较少'}
                   </span>
+                  {item.imageUrl && token && (
+                    <img
+                      src={`${item.imageUrl}?token=${encodeURIComponent(token)}`}
+                      alt="孩子的画作"
+                      className="size-12 shrink-0 rounded-lg object-cover"
+                    />
+                  )}
                   {item.report ? (
                     <span
                       className={cn(
