@@ -1,6 +1,6 @@
 // 多模态 LLM 客户端（OpenAI 兼容 chat/completions）
 // 配置走 env：LLM_BASE_URL / LLM_API_KEY / LLM_VISION_MODEL / LLM_TEXT_MODEL
-// 注意：kimi-k2.5 是 reasoning 模型，输出可能落在 reasoning_content，且 max_tokens 必须给足
+// DeepSeek Vision 使用 OpenAI-compatible image_url 输入；兼容 reasoning_content 回退
 import { traceLLM } from './tracing.js'
 
 export class LLMParseError extends Error {
@@ -13,10 +13,10 @@ export class LLMParseError extends Error {
 
 export function llmConfig(env = process.env) {
   return {
-    baseUrl: env.LLM_BASE_URL || 'https://api.openai-next.com/v1',
+    baseUrl: env.LLM_BASE_URL || 'https://api.deepseek.com',
     apiKey: env.LLM_API_KEY || '',
-    visionModel: env.LLM_VISION_MODEL || 'o3-pro',
-    textModel: env.LLM_TEXT_MODEL || 'kimi-k2.5',
+    visionModel: env.LLM_VISION_MODEL || 'deepseek-v4-flash-vision-exp',
+    textModel: env.LLM_TEXT_MODEL || 'deepseek-v4-flash',
   }
 }
 
@@ -44,7 +44,7 @@ function previewOf(messages) {
   }).join('\n')
 }
 
-const LLM_TIMEOUT_MS = 90_000   // o3-pro 视觉推理较慢，给足 90s
+const LLM_TIMEOUT_MS = 90_000   // 视觉推理可能较慢，给足 90s
 const MAX_RETRIES = 2           // 5xx/网络错误重试 2 次（指数退避），4xx 不重试
 
 async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), kind = 'text' } = {}) {

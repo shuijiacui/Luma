@@ -21,6 +21,7 @@ import {
   saveSession,
 } from './storage'
 import { clearOnboardingSession } from '@/features/onboarding/OnboardingContext'
+import { clearChildDraft } from '@/features/child/draft'
 import type { AuthResult, AuthSession, UserRole } from './types'
 
 interface ParentRegistration {
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(getStoredSession)
 
   const commitSession = useCallback((nextSession: AuthSession) => {
+    clearChildDraft()
     saveSession(nextSession)
     setSession(nextSession)
   }, [])
@@ -131,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const logout = useCallback(() => {
+    clearChildDraft()
     if (session?.token) logoutApi(session.token).catch(() => {})
     removeSession()
     clearOnboardingSession()

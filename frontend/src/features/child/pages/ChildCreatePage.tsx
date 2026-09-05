@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { niloCompanion } from '@/assets/avatars'
@@ -10,23 +10,16 @@ import { useAuth } from '@/features/auth/AuthContext'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { analyzeDrawing, type FeatureJSON } from '@/lib/api/lumaApi'
 import { cn } from '@/lib/cn'
+import { getChildDraft } from '../draft'
 import {
   DrawingCanvas,
   type DrawingCanvasHandle,
 } from '../components/DrawingCanvas'
 
 const colors = ['#20352f', '#168a78', '#edcd70', '#ef7b69', '#7a82d8', '#4aa5d8']
-const niloPrompts = [
-  'I noticed something new.',
-  'Keep going!',
-] as const
-
 const niloSaveMessages = [
-  '我会记住这幅画的。',
-  '好喜欢这里的颜色！',
-  '你今天画的这个，我会一直记着。',
-  '保存好啦，它现在是你的了。',
-  '我们一起完成了这幅画。',
+  '画作开始下载啦。',
+  '下载后，就能把这幅画带走啦。',
 ]
 
 export const LATEST_FEATURES_KEY = 'luma_latest_features'
@@ -35,18 +28,27 @@ export const LATEST_ANALYSIS_ID_KEY = 'luma_latest_analysis_id'
 export function ChildCreatePage() {
   const navigate = useNavigate()
   const { session } = useAuth()
+  const [draft] = useState(() => getChildDraft(`${session?.familyId}:${session?.id}`))
   const canvasRef = useRef<DrawingCanvasHandle>(null)
-  const [color, setColor] = useState(colors[0])
-  const [brushSize, setBrushSize] = useState(8)
-  const [isEraser, setIsEraser] = useState(false)
-  const [promptIndex, setPromptIndex] = useState(-1)
-  const [features, setFeatures] = useState<FeatureJSON | null>(null)
+  const [color, setColor] = useState(draft.color)
+  const [brushSize, setBrushSize] = useState(draft.brushSize)
+  const [isEraser, setIsEraser] = useState(draft.isEraser)
+  const [features, setFeatures] = useState<FeatureJSON | null>(draft.features)
   const [analysis, setAnalysis] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
-  const [serverBubble, setServerBubble] = useState<string | null>(null)
+  const [serverBubble, setServerBubble] = useState<string | null>(draft.bubble)
   const [saved, setSaved] = useState(false)
+  const mountedRef = useRef(true)
+  const saveTimer = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false; window.clearTimeout(saveTimer.current) }
+  }, [])
+  useEffect(() => {
+    Object.assign(draft, { color, brushSize, isEraser, features, bubble: serverBubble })
+  }, [draft, color, brushSize, isEraser, features, serverBubble])
 
   function handleStrokeComplete() {
-    setPromptIndex((current) => (current + 1) % niloPrompts.length)
+    setServerBubble(null)
   }
 
   function handleSave() {
@@ -54,7 +56,8 @@ export function ChildCreatePage() {
     const msg = niloSaveMessages[Math.floor(Math.random() * niloSaveMessages.length)]
     setServerBubble(msg)
     setSaved(true)
-    window.setTimeout(() => setSaved(false), 2200)
+    window.clearTimeout(saveTimer.current)
+    saveTimer.current = window.setTimeout(() => setSaved(false), 2200)
   }
 
   async function handleFinish() {
@@ -65,6 +68,7 @@ export function ChildCreatePage() {
       // priorFeatures 传入上一轮特征：孩子继续画 = 补充绘画，特征由 server 合并
       // 登录孩子带 token：server 落库并返回 analysisId（游客不落库）
       const result = await analyzeDrawing(imageBase64, features, session?.token)
+      if (!mountedRef.current) return
       setFeatures(result.features)
       window.sessionStorage.setItem(LATEST_FEATURES_KEY, JSON.stringify(result.features))
       if (result.analysisId) {
@@ -75,6 +79,7 @@ export function ChildCreatePage() {
       setAnalysis('done')
       setServerBubble(`${result.feedbackText}。${result.followUp}`)
     } catch {
+      if (!mountedRef.current) return
       setAnalysis('error')
       setServerBubble('哎呀，Nilo 走神了，点「完成」再试一次吧')
     }
@@ -83,17 +88,17 @@ export function ChildCreatePage() {
   const bubbleText =
     analysis === 'loading'
       ? 'Nilo 正在仔细看你的画…'
-      : (serverBubble ?? (promptIndex >= 0 ? niloPrompts[promptIndex] : null))
+      : serverBubble
 
   return (
-    <main className="flex min-h-screen flex-col overflow-x-hidden bg-luma-teal-50">
+    <main className="flex h-svh min-h-[420px] flex-col overflow-x-hidden bg-luma-teal-50">
       <header className="relative z-40 flex items-center justify-between gap-4 border-b border-white/80 bg-luma-ivory-50/85 px-4 py-3 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
           <button
             type="button"
             onClick={() => navigate('/child/demo')}
             className="inline-flex min-h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm font-bold text-luma-teal-700 outline-none transition-colors hover:bg-white hover:text-luma-teal-900 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
-            aria-label="返回儿童创作空间"
+            aria-label="回小屋"
           >
             <svg
               viewBox="0 0 20 20"
@@ -109,7 +114,7 @@ export function ChildCreatePage() {
                 strokeLinejoin="round"
               />
             </svg>
-            返回
+            回小屋
           </button>
           <button
             type="button"
@@ -122,16 +127,17 @@ export function ChildCreatePage() {
         </div>
         <div className="hidden text-center sm:block">
           <div className="font-brand text-lg font-bold text-luma-teal-900">
-            My Creative Space
+              我的创作小天地
           </div>
-          <div className="text-xs text-luma-muted">Anything can begin here</div>
+          <div className="text-xs text-luma-muted">回小屋后还能接着画 · 刷新前记得下载</div>
         </div>
         <AvatarPicker userId={session?.id ?? 'guest-child'} />
       </header>
 
       <section className="relative flex min-h-0 flex-1 p-3 pb-20 sm:p-5 sm:pb-24">
-        <div className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-luma-lg border border-white/90 bg-white p-2 shadow-luma-md sm:p-3">
+        <div className="relative mx-auto min-h-0 w-full max-w-7xl overflow-hidden rounded-luma-lg border border-white/90 bg-white p-2 shadow-luma-md sm:p-3">
           <DrawingCanvas
+            draft={draft.canvas}
             ref={canvasRef}
             color={color}
             brushSize={brushSize}
@@ -237,7 +243,7 @@ export function ChildCreatePage() {
               variant="ghost"
               onClick={handleSave}
             >
-              保存
+              下载
             </Button>
             <Button
               size="sm"
