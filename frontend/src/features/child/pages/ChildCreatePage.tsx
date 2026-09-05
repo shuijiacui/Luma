@@ -17,8 +17,8 @@ import {
 
 const colors = ['#20352f', '#168a78', '#edcd70', '#ef7b69', '#7a82d8', '#4aa5d8']
 const niloPrompts = [
-  'I noticed something new.',
-  'Keep going!',
+  '咦，这里多了新东西呢～',
+  '继续画呀，Nilo 在旁边看呢！',
 ] as const
 
 const niloSaveMessages = [

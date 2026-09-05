@@ -12,11 +12,31 @@ const ELEMENT_ZH = {
 const COLOR_ZH = {
   red: '红色', orange: '橙色', yellow: '黄色', green: '绿色', blue: '蓝色',
   purple: '紫色', pink: '粉色', brown: '棕色', black: '黑色', white: '白色',
-  gray: '灰色', grey: '灰色',
+  gray: '灰色', grey: '灰色', cyan: '青色', magenta: '洋红色', teal: '青绿色',
+  gold: '金色', silver: '银色', violet: '紫色',
+}
+
+// 颜色修饰前缀 → 中文，用于处理 darkgreen / lightblue 等复合色（vision 模型自由输出）
+const COLOR_PREFIX_ZH = {
+  dark: '深', light: '浅', deep: '深', pale: '淡', bright: '亮', dull: '暗',
+}
+
+function colorLabel(value) {
+  if (!value) return null
+  const key = String(value).toLowerCase().trim()
+  if (COLOR_ZH[key]) return COLOR_ZH[key]
+  const norm = key.replace(/[-_\s]/g, '')
+  for (const [prefix, zh] of Object.entries(COLOR_PREFIX_ZH)) {
+    if (norm.startsWith(prefix)) {
+      const base = norm.slice(prefix.length)
+      if (COLOR_ZH[base]) return zh + COLOR_ZH[base]
+    }
+  }
+  return value
 }
 
 const POSITION_ZH = { center: '中间', corner: '角落', edge: '边上' }
-const PRESSURE_ZH = { light: '笔触很轻', normal: '笔触很自然', heavy: '笔触很有力气' }
+const PRESSURE_ZH = { light: '笔触轻轻的', normal: '笔触很自然', heavy: '笔触好有力气呀' }
 
 // cluster → 画面特征中文标签（供家长侧 evidence 展示，只描述画面，不贴情绪标签）
 const CLUSTER_ZH = {
@@ -47,23 +67,23 @@ export function buildFeedback(features) {
 
   const darkRatio = features?.colors?.darkRatio
   if (typeof darkRatio === 'number') {
-    if (darkRatio >= 0.6) desc.push('用了不少深色')
-    else if (darkRatio <= 0.25) desc.push('颜色很明亮')
+    if (darkRatio >= 0.6) desc.push('用了好多深颜色')
+    else if (darkRatio <= 0.25) desc.push('颜色亮亮的')
   }
   const dominant = (features?.colors?.dominant ?? [])
-    .map(c => COLOR_ZH[c] ?? c).filter(Boolean).slice(0, 3)
-  if (dominant.length) desc.push(`主要用了${dominant.join('、')}`)
+    .map(c => colorLabel(c)).filter(Boolean).slice(0, 3)
+  if (dominant.length) desc.push(`涂了${dominant.join('、')}`)
 
   const pos = features?.composition?.position
-  if (pos === 'corner' || pos === 'edge') desc.push(`画面主要在${POSITION_ZH[pos]}`)
+  if (pos === 'corner' || pos === 'edge') desc.push(`画在${POSITION_ZH[pos]}`)
   const pressure = features?.composition?.pressure
   if (pressure && pressure !== 'normal' && PRESSURE_ZH[pressure]) desc.push(PRESSURE_ZH[pressure])
 
-  if (desc.length === 0) return '我看到你的画了'
-  return `我看到${desc.join('，')}`
+  if (desc.length === 0) return '哇，Nilo 看到你的画啦'
+  return `哇，Nilo 看到${desc.join('，')}`
 }
 
-export const FOLLOW_UP = '想再画点什么吗？'
+export const FOLLOW_UP = '还想再画点什么吗？'
 
 // 家长沟通建议（基线，按情绪给出；非干预方案）
 const PARENT_ADVICE = {
