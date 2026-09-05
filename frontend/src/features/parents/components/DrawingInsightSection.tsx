@@ -1,6 +1,6 @@
 // 画面解读（家长视角）：基于孩子画作的情绪倾向报告 + 历史解读
 // 数据源：/api/report + /api/children/:id/analyses（判定逻辑全在后端，前端只展示，不做阈值判断、不改写文案）
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Button, Card } from '@/components/ui'
 import {
@@ -63,14 +63,27 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
   const [trend, setTrend] = useState<TrendResponse | null>(null)
   const features = readLatestFeatures()
 
+  // 每次加载打一个递增的 token：childId 切换、或 handleGenerate 手动触发的重新加载，
+  // 都会产生新的 token，只有最新一次请求的结果会被采纳，避免旧孩子/旧请求的数据后到覆盖新数据
+  const loadTokenRef = useRef(0)
+
   const loadHistory = useCallback(() => {
     if (!childId || !token) return
+    const requestToken = ++loadTokenRef.current
     listAnalyses(childId, token)
-      .then((res) => setHistory(res.analyses))
-      .catch(() => setHistory([]))
+      .then((res) => {
+        if (loadTokenRef.current === requestToken) setHistory(res.analyses)
+      })
+      .catch(() => {
+        if (loadTokenRef.current === requestToken) setHistory([])
+      })
     fetchTrend(childId, token)
-      .then(setTrend)
-      .catch(() => setTrend(null))
+      .then((res) => {
+        if (loadTokenRef.current === requestToken) setTrend(res)
+      })
+      .catch(() => {
+        if (loadTokenRef.current === requestToken) setTrend(null)
+      })
   }, [childId, token])
 
   useEffect(loadHistory, [loadHistory])
