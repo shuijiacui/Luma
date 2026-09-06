@@ -81,6 +81,7 @@ export function createApp(deps = {}) {
     chatWithImage: deps.chatWithImage ?? undefined,
     chatText: deps.chatText ?? (process.env.NODE_ENV === 'test' ? null : chatText),
     webSearch: deps.webSearch ?? (process.env.NODE_ENV === 'test' ? null : bochaSearch),
+    retrieveReferences: deps.retrieveReferences ?? (process.env.NODE_ENV === 'test' ? async () => ({ results: [] }) : undefined),
     entries,
     constraints: constraints ?? {},
     scoreConfig,

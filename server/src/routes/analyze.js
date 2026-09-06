@@ -15,7 +15,7 @@ import { log } from '../services/logger.js'
 import { traceNode } from '../services/tracing.js'
 import { retrieveReferences, buildReferenceFilterPrompt, validateReferenceFilter } from '../services/referenceRag.js'
 
-export function createApiRouter({ chatWithImage, chatText = null, webSearch = null, entries, constraints = {}, scoreConfig, db, kbVersion = 'unknown', uploadDir = path.resolve('uploads') }) {
+export function createApiRouter({ chatWithImage, chatText = null, webSearch = null, retrieveReferences: retrieveReferencesImpl = retrieveReferences, entries, constraints = {}, scoreConfig, db, kbVersion = 'unknown', uploadDir = path.resolve('uploads') }) {
   uploadDir = path.resolve(uploadDir)
   const router = Router()
 
@@ -204,7 +204,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     if (chatText && matches.length > 0) {
       try {
         const query = `${matches.map(m => m.cluster ?? m.id).join('、')} 儿童绘画研究局限`
-        const retrieved = (await bounded(() => retrieveReferences(query, { signal: controller.signal }))).results ?? []
+        const retrieved = (await bounded(() => retrieveReferencesImpl(query, { signal: controller.signal }))).results ?? []
         if (retrieved.length) {
           const filtered = validateReferenceFilter(await text(buildReferenceFilterPrompt(query, retrieved), { maxTokens: 700 }), retrieved)
           if (filtered) referenceEvidence = filtered

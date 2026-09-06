@@ -369,7 +369,7 @@ export function ParentDemoPage() {
 
   function handleLogout() {
     logout()
-    navigate('/auth?role=parent&mode=login')
+    navigate('/auth?role=parent&mode=login', { replace: true })
   }
 
   async function copyInviteCode() {
@@ -887,7 +887,7 @@ export function ParentDemoPage() {
 
       <div className="mx-auto flex w-full max-w-[1560px] gap-6 px-3 py-4 sm:px-5 sm:py-5">
         {/* 桌面端固定左侧导航：悬浮于屏幕中部 */}
-        <ParentSidebar active={activeView} onSelect={selectView} />
+        <ParentSidebar active={activeView} onSelect={selectView} onLogout={handleLogout} />
         <div aria-hidden="true" className="hidden w-[264px] shrink-0 lg:block" />
 
         <div className="min-w-0 flex-1">
@@ -899,6 +899,7 @@ export function ParentDemoPage() {
                 <span className="font-brand text-xl font-bold text-[#33503a]">Luma</span>
                 <span className="hidden text-[0.62rem] text-[#9a9280] sm:block">家长空间</span>
               </a>
+              <button type="button" onClick={handleLogout} className="rounded-full px-3 py-1.5 text-xs font-bold text-luma-teal-700">退出登录</button>
               <button
                 type="button"
                 onClick={() => setActiveView('settings')}

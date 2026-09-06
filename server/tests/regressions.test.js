@@ -89,7 +89,10 @@ test('a report removed during enrichment does not return false save success', as
   let entered, release
   const started = new Promise(resolve => { entered = resolve })
   const response = new Promise(resolve => { release = resolve })
-  const { app, db, parent, add } = fixture({ chatText: () => { entered(); return response } })
+  const { app, db, parent, add } = fixture({
+    entries: [{ id: 'HTP-001', featureMatch: { elements: ['tree'] }, tier: 1, strength: .5, reliability: .7, emotionSignal: '乐观平稳', cluster: 'tree', note: '画面有树' }],
+    chatText: () => { entered(); return response },
+  })
   const id = add()
   const pending = request(app).post('/api/report').set('Authorization', `Bearer ${parent.token}`).send({ analysisId: id }).then(result => result)
   await started

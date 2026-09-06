@@ -8,10 +8,11 @@ import { NAV_ENTRIES, type ViewKey } from './parentNav'
 interface SidebarProps {
   active: ViewKey
   onSelect: (view: ViewKey) => void
+  onLogout?: () => void
   className?: string
 }
 
-export function ParentSidebar({ active, onSelect, className }: SidebarProps) {
+export function ParentSidebar({ active, onSelect, onLogout, className }: SidebarProps) {
   return (
     <aside
       data-onboarding="parent-navbar"
@@ -98,8 +99,13 @@ export function ParentSidebar({ active, onSelect, className }: SidebarProps) {
         })}
       </nav>
 
-      {/* 底部手写装饰 */}
+      {/* 底部操作 */}
       <div className="relative mt-auto shrink-0 px-6 pb-8">
+        {onLogout && (
+          <button type="button" onClick={onLogout} className="mb-4 w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-[#6e7868] transition hover:bg-[#f4f1e7]">
+            退出登录
+          </button>
+        )}
         <HangingBranch
           tone="green"
           className="pointer-events-none absolute -right-3 -bottom-3 h-32 w-24 -scale-x-100 opacity-70"
