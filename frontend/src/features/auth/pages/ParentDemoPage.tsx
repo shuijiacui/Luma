@@ -156,7 +156,7 @@ function buildRealOverview(analyses: AnalysisSummary[]): OverviewModel | null {
   const imagePath = latest.imageUrl ?? undefined
   const date = new Date(latest.createdAt)
   const dateLabel = `${date.getMonth() + 1} 月 ${date.getDate()} 日`
-  const title = elements.slice(0, 3).join('、') || '一幅小画'
+  const title = elements.slice(0, 3).map(elementLabel).join('、') || '一幅小画'
 
   const advice =
     latest.report?.parentAdvice?.slice(0, 3) ??
