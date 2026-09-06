@@ -86,7 +86,7 @@ LLM 只存在于第一步，负责“看见并描述”，不直接生成情绪�
 
 - Node.js `>= 22.5`（后端使用内置 `node:sqlite`）
 - npm
-- DeepSeek API Key（画作分析使用支持图像输入的实验视觉模型）
+- ModelScope API Key（画作分析使用 OpenAI 兼容接口的 Qwen 视觉/文本模型）
 - 现代浏览器
 
 ### 1. 启动后端
@@ -101,10 +101,10 @@ npm start
 Windows PowerShell 可用 `Copy-Item .env.example .env` 代替 `cp`。随后编辑 `server/.env`，至少确认以下配置：
 
 ```dotenv
-LLM_BASE_URL=https://api.deepseek.com
-LLM_API_KEY=your-deepseek-api-key
-LLM_VISION_MODEL=deepseek-v4-flash-vision-exp
-LLM_TEXT_MODEL=deepseek-v4-flash
+LLM_BASE_URL=https://api-inference.modelscope.cn/v1
+LLM_API_KEY=your-modelscope-api-key
+LLM_VISION_MODEL=Qwen/Qwen3-VL-8B-Instruct
+LLM_TEXT_MODEL=Qwen/Qwen3.8-Flash-Next
 PORT=3001
 ```
 
@@ -141,6 +141,19 @@ cd frontend
 npm run lint
 npm run build
 ```
+
+### 4. 文献参考检索（可选）
+
+家长报告的「文献依据」（`referenceEvidence`）可选地来自本地 PDF 向量索引；未构建时后端会安全降级为空参考，不影响判定、评分或情绪结论。如需启用，在仓库根目录执行：
+
+```bash
+python -m venv .rag-venv
+.rag-venv\Scripts\python.exe -m pip install -r rag\requirements.txt
+.rag-venv\Scripts\python.exe rag\index_pdfs.py   # 清空旧索引并重新切分/嵌入
+.rag-venv\Scripts\python.exe rag\diagnose.py      # 查看 chunk 分布与召回分数
+```
+
+索引产物写入 `knowledge/chroma/`（已 gitignore）。索引与检索需要 `LLM_API_KEY` / `LLM_BASE_URL` 指向 ModelScope（与后端 `.env` 一致）。
 
 ## 项目结构
 
