@@ -19,18 +19,21 @@ interface DrawingCanvasProps {
   brushSize: number
   isEraser: boolean
   onStrokeComplete: () => void
+  draft: { history: string[] }
+  disabled?: boolean
 }
 
 export const DrawingCanvas = forwardRef<
   DrawingCanvasHandle,
   DrawingCanvasProps
 >(function DrawingCanvas(
-  { color, brushSize, isEraser, onStrokeComplete },
+  { color, brushSize, isEraser, onStrokeComplete, draft, disabled },
   forwardedRef,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
-  const historyRef = useRef<string[]>([])
+  const historyRef = useRef<string[]>([...draft.history])
+  const restoringRef = useRef(false)
   // 撤销请求版本号：连续快速点撤销会产生多个并发的 Image.onload，
   // 解码完成顺序不保证与点击顺序一致，靠版本号在回调里丢弃过期结果
   const restoreVersionRef = useRef(0)
@@ -42,6 +45,7 @@ export const DrawingCanvas = forwardRef<
     if (!context) return
 
     const version = ++restoreVersionRef.current
+    restoringRef.current = !!snapshot
 
     context.clearRect(0, 0, canvas.width, canvas.height)
     if (!snapshot) return
@@ -50,9 +54,14 @@ export const DrawingCanvas = forwardRef<
     image.onload = () => {
       if (restoreVersionRef.current !== version) return // 已有更新的撤销请求，丢弃这次结果
       context.clearRect(0, 0, canvas.width, canvas.height)
+      context.save()
+      context.globalCompositeOperation = 'source-over'
       context.drawImage(image, 0, 0, canvas.width, canvas.height)
+      context.restore()
+      restoringRef.current = false
     }
     image.src = snapshot
+    image.onerror = () => { if (restoreVersionRef.current === version) restoringRef.current = false }
   }
 
   function saveSnapshot() {
@@ -62,6 +71,7 @@ export const DrawingCanvas = forwardRef<
       ...historyRef.current.slice(-19),
       canvas.toDataURL('image/png'),
     ]
+    draft.history = [...historyRef.current]
   }
 
   useEffect(() => {
@@ -83,34 +93,28 @@ export const DrawingCanvas = forwardRef<
 
       // 修改 canvas.width/height 会清空画布内容，所以先把当前画面拍成快照，
       // 换完尺寸后再把快照画回去，避免转屏/地址栏收起/窗口拖拽时孩子的画作丢失
-      const hasContent = canvas.width > 0 && canvas.height > 0
-      const snapshot = hasContent ? canvas.toDataURL('image/png') : null
+      const snapshot = document.createElement('canvas')
+      snapshot.width = canvas.width
+      snapshot.height = canvas.height
+      snapshot.getContext('2d')?.drawImage(canvas, 0, 0)
 
       canvas.width = nextWidth
       canvas.height = nextHeight
 
-      if (!snapshot) {
-        historyRef.current = [canvas.toDataURL('image/png')]
-        return
-      }
-
-      const image = new Image()
-      image.onload = () => {
-        context.drawImage(image, 0, 0, canvas.width, canvas.height)
-        historyRef.current = [canvas.toDataURL('image/png')]
-      }
-      image.src = snapshot
+      context.drawImage(snapshot, 0, 0, canvas.width, canvas.height)
     }
 
     resizeCanvas()
+    restoreSnapshot(historyRef.current.at(-1) ?? '')
     const observer = new ResizeObserver(resizeCanvas)
     observer.observe(canvas)
-    return () => observer.disconnect()
+    const version = restoreVersionRef
+    return () => { observer.disconnect(); version.current++ }
   }, [])
 
   function flattenToCanvas() {
     const canvas = canvasRef.current
-    if (!canvas) return null
+    if (!canvas || restoringRef.current) return null
     const exportCanvas = document.createElement('canvas')
     exportCanvas.width = canvas.width
     exportCanvas.height = canvas.height
@@ -124,16 +128,23 @@ export const DrawingCanvas = forwardRef<
 
   useImperativeHandle(forwardedRef, () => ({
     undo() {
+      if (disabled) return
       if (historyRef.current.length <= 1) return
       historyRef.current.pop()
+      draft.history = [...historyRef.current]
       restoreSnapshot(historyRef.current.at(-1) ?? '')
+      onStrokeComplete()
     },
     clear() {
+      if (disabled) return
       const canvas = canvasRef.current
       const context = canvas?.getContext('2d')
       if (!canvas || !context) return
+      restoreVersionRef.current++
+      restoringRef.current = false
       context.clearRect(0, 0, canvas.width, canvas.height)
       saveSnapshot()
+      onStrokeComplete()
     },
     download() {
       const exportCanvas = flattenToCanvas()
@@ -162,6 +173,8 @@ export const DrawingCanvas = forwardRef<
   }
 
   function startDrawing(event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (disabled || restoringRef.current || isDrawingRef.current || !event.isPrimary) return
+    restoreVersionRef.current++
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d')
     if (!canvas || !context) return

@@ -110,7 +110,7 @@ test('full flow: child analyze 落库 → report 回写 → parent 查历史', a
 
   // report 回写
   const rep = await request(app).post('/api/report')
-    .set('Authorization', `Bearer ${child.token}`)
+    .set('Authorization', `Bearer ${parent.token}`)
     .send({ features: ana.body.features, analysisId: ana.body.analysisId })
   expect(rep.status).toBe(200)
 
@@ -121,6 +121,50 @@ test('full flow: child analyze 落库 → report 回写 → parent 查历史', a
   expect(history.body.analyses).toHaveLength(1)
   expect(history.body.analyses[0].summary.elements).toEqual(['house'])
   expect(history.body.analyses[0].report.emotion).toBe('未见明显风险信号') // entries 为空 → 零命中分支
+})
+
+// 回归：narrative / webAdvice / referenceEvidence / evidence[].plain 由 attachReport 落库，
+// 历史接口必须一并投影出来，否则家长回看历史时这些区块会凭空消失（前端已按同构类型消费）。
+test('history projection: 报告扩展字段随历史一并返回', async () => {
+  const db = createDb(':memory:')
+  const app = createApp({
+    chatWithImage: async () => structuredClone(FEATURES),
+    entries: [],
+    db,
+  })
+  const { parent, child } = await setupFamily(app)
+
+  const ana = await request(app).post('/api/analyze')
+    .set('Authorization', `Bearer ${child.token}`)
+    .send({ imageBase64: 'aGVsbG8=' })
+  expect(ana.body.analysisId).toBeTruthy()
+
+  // 测试环境 chatText/webSearch 为 null，真实链路不会产出扩展字段；直接写库模拟已增强的报告
+  const enriched = {
+    emotion: '未见明显风险信号',
+    confidence: 0.6,
+    evidence: [{ entryId: 'E1', summary: '证据摘要', plain: '通俗说明' }],
+    parentAdvice: ['建议一'],
+    narrative: '这是家长可读的说明。',
+    webAdvice: ['联网建议一'],
+    webAdviceSource: '网络搜索（仅供参考）',
+    referenceEvidence: [{ sourceFile: 'a.pdf', text: '文献片段', limitation: '样本有限', role: 'reference_only' }],
+    referenceEvidenceSource: 'PDF 文献检索（仅供研究背景参考）',
+    audit: { knowledgeVersion: 'test', matchedEntryIds: [], conflicts: [], dropped: [], reason: 'test' },
+  }
+  db.prepare('UPDATE analyses SET report_json = ? WHERE id = ?')
+    .run(JSON.stringify(enriched), ana.body.analysisId)
+
+  const history = await request(app).get(`/api/children/${child.session.id}/analyses`)
+    .set('Authorization', `Bearer ${parent.token}`)
+  expect(history.status).toBe(200)
+  const report = history.body.analyses[0].report
+  expect(report.narrative).toBe('这是家长可读的说明。')
+  expect(report.webAdvice).toEqual(['联网建议一'])
+  expect(report.webAdviceSource).toBe('网络搜索（仅供参考）')
+  expect(report.referenceEvidence[0].sourceFile).toBe('a.pdf')
+  expect(report.referenceEvidenceSource).toContain('PDF')
+  expect(report.evidence[0].plain).toBe('通俗说明')
 })
 
 test('history access control: 陌生家庭家长 → 403；未登录 → 401', async () => {

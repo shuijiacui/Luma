@@ -14,5 +14,5 @@ export function ProtectedRoute({ role }: { role: UserRole }) {
     return <Navigate to={`/${session.role}/demo`} replace />
   }
 
-  return <Outlet />
+  return <Outlet key={session.id} />
 }

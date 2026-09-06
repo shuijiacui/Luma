@@ -8,6 +8,7 @@ export interface ChildDraft {
   isEraser: boolean
   features: FeatureJSON | null
   bubble: string | null
+  submission?: { image: string; key: string }
 }
 // Memory only: no artwork survives a reload, logout or switch to another account.
 let current: { owner: string; value: ChildDraft } | null = null

@@ -14,7 +14,8 @@ export interface ThemeTile {
   title: string
   count: number
   kind?: ArtworkKind
-  imageUrl?: string
+  /** 受保护的图片路径，需带 Authorization 头取用（见 AuthedArtwork），不能直接当 src */
+  imagePath?: string
 }
 
 export interface Finding {
@@ -34,7 +35,8 @@ export interface Suggestion {
 export interface ArtworkInfo {
   id: string
   kind?: ArtworkKind
-  imageUrl?: string
+  /** 受保护的图片路径，需带 Authorization 头取用（见 AuthedArtwork），不能直接当 src */
+  imagePath?: string
   title: string
   dateLabel?: string
   quote?: string

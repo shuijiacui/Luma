@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui'
 import { fadeUp } from '@/design-system'
 import { cn } from '@/lib/cn'
-import { ChildArtwork } from './artworks'
+import { AuthedArtwork } from './AuthedArtwork'
 import { OtterDeco, Squiggle } from './decor'
 import { ChevronRightIcon, HeartIcon } from './icons'
 import type { OverviewModel, OverviewStatus, ThemeTile } from './overviewModel'
@@ -26,6 +26,8 @@ const TAG_STYLES = [
 interface Props {
   model: OverviewModel
   childName: string
+  /** 取受保护画作图片用；游客演示无 token，走矢量占位画 */
+  token?: string
   readingOpen?: boolean
   onToggleReading?: () => void
   onMoreFindings?: () => void
@@ -58,32 +60,13 @@ function CardHeader({
   )
 }
 
-function ArtworkImage({ kind, imageUrl }: { kind?: ThemeTile['kind']; imageUrl?: string }) {
-  if (imageUrl) {
-    return (
-      <img
-        src={imageUrl}
-        alt="孩子的画作"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-    )
-  }
-  if (kind) {
-    return <ChildArtwork kind={kind} className="absolute inset-0 h-full w-full" />
-  }
-  return (
-    <div className="absolute inset-0 flex items-center justify-center bg-[#faf6ea] text-xs text-[#b7ab92]">
-      等待一幅新画
-    </div>
-  )
-}
-
 /** 模块 1 · 最近一幅作品（顶部大卡片） */
 function ArtworkModule({
   model,
+  token,
   readingOpen,
   onToggleReading,
-}: Pick<Props, 'model' | 'readingOpen' | 'onToggleReading'>) {
+}: Pick<Props, 'model' | 'token' | 'readingOpen' | 'onToggleReading'>) {
   const art = model.artwork
   return (
     <section
@@ -93,7 +76,7 @@ function ArtworkModule({
       <div className="grid gap-6 md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
         <div className="relative">
           <div className="relative aspect-[5/4] overflow-hidden rounded-[1.5rem] border border-[#efe8d9] bg-[#fffdf6] shadow-[0_6px_18px_rgba(71,101,58,0.06)]">
-            <ArtworkImage kind={art.kind} imageUrl={art.imageUrl} />
+            <AuthedArtwork path={art.imagePath} token={token} kind={art.kind} />
             <span className="absolute top-3 right-3 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-xs font-bold text-[#6d7b5f] shadow-sm backdrop-blur-sm">
               {art.dateLabel ?? ''}
             </span>
@@ -109,7 +92,7 @@ function ArtworkModule({
           {art.quote && (
             <p className="mt-3 border-l-[3px] border-luma-grass-300 pl-3 text-[0.95rem] leading-relaxed text-[#6b6f5f]">
               {art.quote}
-              <span className="ml-2 text-xs whitespace-nowrap text-[#a39a86]">—— 孩子原话</span>
+              <span className="ml-2 text-xs whitespace-nowrap text-[#a39a86]">—— AI 画面描述</span>
             </p>
           )}
 
@@ -174,14 +157,14 @@ function StatusModule({ statuses, hint, caption }: { statuses: OverviewStatus[];
                 {s.statusText}
               </span>
             </div>
-            <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[#f1eee4]">
+            {s.id === 'emotion' && <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[#f1eee4]">
               <motion.div
                 className={cn('h-full rounded-full', TONE_BAR[s.tone])}
                 initial={{ width: 0 }}
                 animate={{ width: `${s.value}%` }}
                 transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
               />
-            </div>
+            </div>}
           </div>
         ))}
       </div>
@@ -193,7 +176,11 @@ function StatusModule({ statuses, hint, caption }: { statuses: OverviewStatus[];
 }
 
 /** 模块 3 · 创作主题 */
-function ThemesModule({ themes, caption }: { themes: ThemeTile[]; caption: string }) {
+function ThemesModule({
+  themes,
+  caption,
+  token,
+}: { themes: ThemeTile[]; caption: string; token?: string }) {
   return (
     <section className="flex h-full flex-col rounded-[1.9rem] border border-white/70 bg-white/95 p-5 shadow-luma-card backdrop-blur-sm sm:p-6">
       <CardHeader title="创作主题" caption={caption} />
@@ -207,7 +194,7 @@ function ThemesModule({ themes, caption }: { themes: ThemeTile[]; caption: strin
             transition={{ delay: 0.05 * i, duration: 0.4 }}
           >
             <div className="relative aspect-square overflow-hidden rounded-[1.25rem] border border-[#efe8d9] bg-[#fffdf6] shadow-[0_5px_14px_rgba(71,101,58,0.05)] transition-transform duration-300 group-hover:-translate-y-1">
-              <ArtworkImage kind={theme.kind} imageUrl={theme.imageUrl} />
+              <AuthedArtwork path={theme.imagePath} token={token} kind={theme.kind} />
             </div>
             <div className="mt-2.5 text-center">
               <div className="text-sm font-bold text-[#3a463c]">{theme.title}</div>
@@ -308,6 +295,7 @@ function SuggestionsModule({ model, onSuggestion }: Pick<Props, 'model' | 'onSug
 export function OverviewDashboard({
   model,
   childName,
+  token,
   readingOpen,
   onToggleReading,
   onMoreFindings,
@@ -320,7 +308,12 @@ export function OverviewDashboard({
       animate="visible"
     >
       <motion.div variants={fadeUp} className="xl:col-start-1 xl:row-start-1">
-        <ArtworkModule model={model} readingOpen={readingOpen} onToggleReading={onToggleReading} />
+        <ArtworkModule
+          model={model}
+          token={token}
+          readingOpen={readingOpen}
+          onToggleReading={onToggleReading}
+        />
       </motion.div>
       <motion.div variants={fadeUp} className="xl:col-start-2 xl:row-start-1">
         <StatusModule
@@ -330,7 +323,7 @@ export function OverviewDashboard({
         />
       </motion.div>
       <motion.div variants={fadeUp} className="xl:col-start-1 xl:row-start-2">
-        <ThemesModule themes={model.themes} caption={model.periodLabel} />
+        <ThemesModule themes={model.themes} caption={model.periodLabel} token={token} />
       </motion.div>
       <motion.div variants={fadeUp} className="xl:col-start-2 xl:row-start-2">
         <FindingsModule model={model} onMoreFindings={onMoreFindings} />

@@ -37,12 +37,13 @@ test('POST /api/analyze returns features + descriptive feedback (no emotion/lead
   expect(res.body.followUp).toBe('还想再画点什么吗？')
 })
 
-test('POST /api/analyze merges priorFeatures (补充绘画)', async () => {
-  const prior = { ...FEATURES, elements: ['house'], erasureMarks: 1 }
+test('POST /api/analyze uses current complete image, never accumulates old features', async () => {
+  const prior = { ...FEATURES, elements: ['old_tree'], erasureMarks: 1 }
   const res = await request(makeApp()).post('/api/analyze').send({ imageBase64: 'aGVsbG8=', priorFeatures: prior })
   expect(res.status).toBe(200)
   expect(res.body.features.elements).toEqual(expect.arrayContaining(['house', 'tree']))
-  expect(res.body.features.erasureMarks).toBe(1)
+  expect(res.body.features.erasureMarks).toBe(0)
+  expect(res.body.features.elements).not.toContain('old_tree')
 })
 
 test('POST /api/analyze 400 without imageBase64', async () => {

@@ -5,8 +5,8 @@
 ```powershell
 py -3.13 -m venv .rag-venv
 .rag-venv\Scripts\python.exe -m pip install -r rag\requirements.txt
-$env:LLM_API_KEY = 'your ModelScope key'
-$env:LLM_BASE_URL = 'https://api-inference.modelscope.cn/v1'
+$env:RAG_EMBED_API_KEY = 'your ModelScope key'
+$env:RAG_EMBED_BASE_URL = 'https://api-inference.modelscope.cn/v1'
 ```
 
 ## Build index

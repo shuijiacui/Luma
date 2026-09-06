@@ -1,4 +1,8 @@
-﻿import { motion } from 'framer-motion'
+﻿import { useChildHistory } from '@/hooks/useChildHistory'
+import { ChildBirthDate } from '@/features/parents/components/ChildBirthDate'
+import { PeriodicReportsSection } from '@/features/parents/components/PeriodicReportsSection'
+import { FamilyDataSettings } from '@/features/parents/components/FamilyDataSettings'
+import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -17,13 +21,15 @@ import bgParent from '@/assets/images/bg-parent.png'
 import { Button, Card } from '@/components/ui'
 import { fadeUp, staggerContainer } from '@/design-system'
 import { CommunicationSection } from '@/features/parents/components/CommunicationSection'
+import { DrawingInsightSection } from '@/features/parents/components/DrawingInsightSection'
 import { TimelineSection } from '@/features/parents/components/TimelineSection'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
-import { fetchMe, listAnalyses, type AnalysisSummary, type MeResponse } from '@/lib/api/authApi'
+import { fetchMe, type AnalysisSummary, type MeResponse } from '@/lib/api/authApi'
 import { cn } from '@/lib/cn'
 import { useAuth } from '../AuthContext'
 import { findFamilyById, getChildrenForFamily } from '../storage'
 import { ChildArtwork, type ArtworkKind } from '@/features/parents/components/dashboard/artworks'
+import { AuthedArtwork } from '@/features/parents/components/dashboard/AuthedArtwork'
 import { Butterfly, LeafSprig, OtterDeco, SparkleDot } from '@/features/parents/components/dashboard/decor'
 import { ArrowLeftIcon, BellIcon, ChevronDownIcon, ChevronRightIcon } from '@/features/parents/components/dashboard/icons'
 import { OverviewDashboard } from '@/features/parents/components/dashboard/OverviewDashboard'
@@ -102,13 +108,18 @@ const RECENT_CUTOFF_DAYS = 28
 const SUGGESTION_FALLBACK_TITLES = ['从画面出发聊聊', '支持 ta 的好奇心', '创造共同创作的时刻']
 const EMOTION_TEXT: Record<string, string> = {
   乐观平稳: '平稳积极',
-  未见明显风险信号: '平稳积极',
+  未见明显风险信号: '未见明显风险信号',
   焦虑倾向: '需要留意',
   低落倾向: '需要留意',
   需要关注: '需要关注',
   信息不足: '观察中',
 }
 
+/**
+ * 画作图片路由要求登录，而 <img> 发不出 Authorization 头。
+ * 这里只传递后端返回的原始路径，实际取图由 AuthedArtwork 带头部 fetch 成 blob 完成，
+ * 令牌不进 URL。所以模型里存的是 imagePath（待解析），不是可直接 src 的地址。
+ */
 function firstImageForElement(analyses: AnalysisSummary[], element: string): string | null {
   for (const a of analyses) {
     if (a.imageUrl && a.summary.elements.includes(element)) return a.imageUrl
@@ -129,24 +140,20 @@ function computeThemeTiles(analyses: AnalysisSummary[]): ThemeTile[] {
       title: elementLabel(el),
       count,
       kind: kindForElements([el]),
-      imageUrl: firstImageForElement(analyses, el) ?? undefined,
+      imagePath: firstImageForElement(analyses, el) ?? undefined,
     }))
 }
 
-function buildRealOverview(analyses: AnalysisSummary[], token?: string): OverviewModel | null {
+function buildRealOverview(analyses: AnalysisSummary[]): OverviewModel | null {
   if (analyses.length === 0) return null
   const now = Date.now()
   const cutoff = now - RECENT_CUTOFF_DAYS * 24 * 60 * 60 * 1000
   const recent = analyses.filter((a) => new Date(a.createdAt).getTime() >= cutoff)
-  const window = recent.length > 0 ? recent : analyses
+  const window = recent
 
   const latest = analyses[0]
   const elements = latest.summary.elements
-  const imageUrl = latest.imageUrl
-    ? token
-      ? `${latest.imageUrl}?token=${encodeURIComponent(token)}`
-      : latest.imageUrl
-    : undefined
+  const imagePath = latest.imageUrl ?? undefined
   const date = new Date(latest.createdAt)
   const dateLabel = `${date.getMonth() + 1} 月 ${date.getDate()} 日`
   const title = elements.slice(0, 3).join('、') || '一幅小画'
@@ -168,24 +175,24 @@ function buildRealOverview(analyses: AnalysisSummary[], token?: string): Overvie
       id: 'emotion',
       emoji: '☀️',
       label: '情绪倾向',
-      value: report ? Math.round(Math.min(100, Math.max(12, report.confidence * 100))) : 10,
+      value: report ? Math.round(Math.min(100, Math.max(0, report.confidence * 100))) : 0,
       statusText: reportEmotion ?? '等待解读',
       tone: 'grass',
     },
     {
       id: 'express',
       emoji: '💬',
-      label: '表达意愿',
-      value: Math.min(94, 52 + window.length * 8),
-      statusText: window.length >= 3 ? '较主动' : '正在积累',
+      label: '近 4 周作品数',
+      value: 0,
+      statusText: `${window.length} 幅`,
       tone: 'gold',
     },
     {
       id: 'imagine',
       emoji: '✨',
-      label: '想象丰富度',
-      value: Math.min(94, 48 + window.length * 6 + (window[0]?.summary.elements.length ?? 0) * 3),
-      statusText: window.length >= 2 ? '丰富' : '慢慢展开',
+      label: '近 4 周元素种类',
+      value: 0,
+      statusText: `${new Set(window.flatMap(a => a.summary.elements)).size} 种`,
       tone: 'clay',
     },
   ]
@@ -236,14 +243,14 @@ function buildRealOverview(analyses: AnalysisSummary[], token?: string): Overvie
       quote: latest.rawDescription ? `“${latest.rawDescription}”` : undefined,
       tags: elements.slice(0, 5).map(elementLabel),
       observation,
-      imageUrl,
+      imagePath,
       kind: kindForElements(elements),
     },
     statuses,
     themes,
     findings,
     suggestions,
-    hint: `ta 最近的作品里，${themes[0] ? `“${themes[0].title}”` : '不同主题'}出现得比较多，可以顺着这些画面和孩子聊聊。`,
+    hint: window.length ? `近 4 周有 ${window.length} 幅作品，可以从这些画面和孩子聊聊。` : '过去 4 周暂无创作，顶部展示的是最近一次历史作品。',
   }
 }
 
@@ -275,7 +282,14 @@ export function ParentDemoPage() {
   const isGuest = !session || session.isGuest || !session.token
 
   const [me, setMe] = useState<MeResponse | null>(null)
-  const [analyses, setAnalyses] = useState<AnalysisSummary[] | null>(null)
+  const [meError, setMeError] = useState(false)
+  const [familyRevision, setFamilyRevision] = useState(0)
+  useEffect(() => {
+    const refresh = () => setFamilyRevision(n => n + 1)
+    window.addEventListener('focus', refresh)
+    const timer = window.setInterval(() => { if (!document.hidden) refresh() }, 30000)
+    return () => { window.removeEventListener('focus', refresh); window.clearInterval(timer) }
+  }, [])
   const [activeView, setActiveView] = useState<ViewKey>(DEFAULT_VIEW)
   const [readingOpen, setReadingOpen] = useState(false)
   const [childMenuOpen, setChildMenuOpen] = useState(false)
@@ -302,9 +316,11 @@ export function ParentDemoPage() {
 
   useEffect(() => {
     if (!session?.isGuest && session?.token) {
-      fetchMe(session.token).then(setMe).catch(() => setMe(null))
+      let active = true
+      fetchMe(session.token).then(value => { if (active) { setMe(value); setMeError(false) } }).catch(() => { if (active) setMeError(true) })
+      return () => { active = false }
     }
-  }, [session])
+  }, [session, familyRevision])
 
   const family = isGuest ? (session ? findFamilyById(session.familyId) : undefined) : me?.family
   const inviteCode = isGuest ? family?.inviteCode : me?.family.inviteCode
@@ -320,18 +336,10 @@ export function ParentDemoPage() {
 
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? children[0]
 
-  useEffect(() => {
-    if (isGuest || !selectedChild || !session?.token) {
-      setAnalyses(null)
-      return
-    }
-    listAnalyses(selectedChild.id, session.token)
-      .then((res) => setAnalyses(res.analyses))
-      .catch(() => setAnalyses([]))
-  }, [isGuest, selectedChild?.id, session?.token])
+  const { analyses, error: historyError, reload: reloadHistory } = useChildHistory(isGuest ? undefined : selectedChild?.id, isGuest ? undefined : session?.token)
 
   const insight = useMemo(() => {
-    if (isGuest || (analyses !== null && analyses.length === 0)) {
+    if (isGuest) {
       return { observation: DEMO_INSIGHT.observation, suggestions: DEMO_INSIGHT.suggestions }
     }
     if (!analyses) return null
@@ -341,14 +349,14 @@ export function ParentDemoPage() {
   const overview = useMemo<OverviewModel | null>(() => {
     if (isGuest) return DEMO_OVERVIEW
     if (analyses === null) return null
-    // 尚无真实画作时，用硬编码示例内容展示功能形态
-    return buildRealOverview(analyses, session?.token) ?? DEMO_OVERVIEW
-  }, [isGuest, analyses, session?.token])
+    // 正式家庭的空记录使用空状态。
+    return buildRealOverview(analyses)
+  }, [isGuest, analyses])
 
-  const realEmptyDemo = !isGuest && analyses !== null && analyses.length === 0
+  const realEmptyDemo = false // 正式家庭不使用示例填补空记录
 
   const childMeta = isGuest ? '5 岁 2 个月 · 小创作者' : '小创作者'
-  // 无真实创作数据时，让时间轴 / AI 助手等视图用内置示例内容展示功能
+  // 只有游客使用演示内容。
   const feedChildId = isGuest || realEmptyDemo ? undefined : selectedChild?.id
   const feedToken = isGuest || realEmptyDemo ? undefined : session?.token
 
@@ -570,7 +578,7 @@ export function ParentDemoPage() {
   )
 
   function renderRecords() {
-    if (isGuest || (analyses !== null && analyses.length === 0)) {
+    if (isGuest) {
       return (
         <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-7">
           {DEMO_RECORDS.map((group) => (
@@ -609,7 +617,7 @@ export function ParentDemoPage() {
       list.push(a)
       grouped.set(key, list)
     }
-    const groups = Array.from(grouped.entries()).sort((a, b) => b[0].localeCompare(a[0]))
+    const groups = Array.from(grouped.entries())
     return (
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-7">
         {groups.map(([month, works]) => (
@@ -623,15 +631,12 @@ export function ParentDemoPage() {
               {works.map((a) => (
                 <div key={a.id} className={cn('group overflow-hidden p-3', CARD_CLASS)}>
                   <div className="relative aspect-square overflow-hidden rounded-[1.25rem] bg-[#fffdf6]">
-                    {a.imageUrl ? (
-                      <img
-                        src={session?.token ? `${a.imageUrl}?token=${encodeURIComponent(session.token)}` : a.imageUrl}
-                        alt="孩子的画作"
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                      />
-                    ) : (
-                      <ChildArtwork kind={kindForElements(a.summary.elements)} className="absolute inset-0 h-full w-full" />
-                    )}
+                    <AuthedArtwork
+                      path={a.imageUrl}
+                      token={session?.token}
+                      kind={kindForElements(a.summary.elements)}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    />
                   </div>
                   <div className="px-1.5 pt-3 pb-1.5">
                     <div className="text-sm font-bold text-[#3a463c]">
@@ -658,7 +663,9 @@ export function ParentDemoPage() {
   }
 
   function renderThemes() {
-    const themes = isGuest || realEmptyDemo ? DEMO_OVERVIEW.themes : computeThemeTiles(analyses ?? [])
+    const themes = isGuest || realEmptyDemo
+      ? DEMO_OVERVIEW.themes
+      : computeThemeTiles(analyses ?? [])
     return (
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-5">
         <motion.section variants={fadeUp} className={CARD_CLASS}>
@@ -679,11 +686,11 @@ export function ParentDemoPage() {
                   className="group rounded-[1.4rem] border border-[#efe8d9] bg-[#fdfcf8] p-3 transition hover:-translate-y-1 hover:border-luma-grass-200 hover:shadow-luma-sm"
                 >
                   <div className="relative aspect-square overflow-hidden rounded-[1.1rem] bg-[#fffdf6]">
-                    {theme.imageUrl ? (
-                      <img src={theme.imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                    ) : (
-                      <ChildArtwork kind={theme.kind} className="absolute inset-0 h-full w-full" />
-                    )}
+                    <AuthedArtwork
+                      path={theme.imagePath}
+                      token={session?.token}
+                      kind={theme.kind}
+                    />
                   </div>
                   <div className="px-1 pt-3 pb-1 text-center">
                     <div className="text-sm font-bold text-[#3a463c]">{theme.title}</div>
@@ -759,6 +766,7 @@ export function ParentDemoPage() {
           <div className="p-6 sm:p-7">
             <div className="luma-eyebrow text-[0.66rem] tracking-[0.2em] text-[#9b8a5f]">孩子管理</div>
             <h2 className="mt-1.5 font-display text-xl font-bold text-[#2c3a33]">和 ta 们连接</h2>
+            {!isGuest && selectedChild && session?.token && <ChildBirthDate key={selectedChild.id} childId={selectedChild.id} initial={me?.children.find(c => c.id === selectedChild.id)?.birthDate} token={session.token} onSaved={() => setFamilyRevision(n => n + 1)} />}
             <div className="mt-5 space-y-2.5">
               {children.map((child, index) => {
                 const active = child.id === selectedChild?.id
@@ -825,6 +833,7 @@ export function ParentDemoPage() {
           </div>
         </motion.section>
 
+        {!isGuest && session?.token && <div className="md:col-span-2"><FamilyDataSettings token={session.token} onDeleted={handleLogout} /></div>}
         {isGuest && (
           <motion.section variants={fadeUp} className={cn(CARD_CLASS, 'md:col-span-2')}>
             <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-7">
@@ -937,7 +946,9 @@ export function ParentDemoPage() {
               </motion.div>
             )}
 
-            {children.length === 0 ? (
+            {!isGuest && (meError || historyError) ? (
+              <div role="alert" className="mt-6 rounded-2xl bg-white p-6">{historyError ?? '家庭信息加载失败。'}<Button onClick={() => { setFamilyRevision(n => n + 1); reloadHistory() }}>重试</Button></div>
+            ) : !isGuest && !me ? <p className="p-6">正在加载家庭信息…</p> : activeView === 'settings' ? <div className="mt-6">{renderSettings()}</div> : children.length === 0 ? (
               <motion.section variants={fadeUp} className="mt-8">
                 <Card
                   variant="glass"
@@ -966,6 +977,7 @@ export function ParentDemoPage() {
                         <OverviewDashboard
                           model={overview}
                           childName={selectedChild?.nickname ?? '孩子'}
+                          token={session?.token}
                           readingOpen={readingOpen}
                           onToggleReading={() => setReadingOpen((v) => !v)}
                           onMoreFindings={() => selectView('themes')}
@@ -999,7 +1011,7 @@ export function ParentDemoPage() {
                               {readingMeta.quote && (
                                 <p className="mt-4 border-l-[3px] border-luma-grass-300 pl-4 text-[0.98rem] leading-relaxed text-[#5f6a57]">
                                   {readingMeta.quote}
-                                  <span className="ml-2 text-xs text-[#a39a86]">—— 孩子原话</span>
+                                  <span className="ml-2 text-xs text-[#a39a86]">—— AI 画面描述</span>
                                 </p>
                               )}
                               <p className="mt-4 max-w-3xl text-sm leading-[1.9] text-[#6b7462]">
@@ -1049,6 +1061,9 @@ export function ParentDemoPage() {
                                 </div>
                               </div>
                             </div>
+                            {/* 报告生成入口：真实家庭才挂载（游客/无创作时 feedToken 为空，
+                                组件自身会退回提示文案，不会误把演示内容当成真实解读） */}
+                            <DrawingInsightSection key={feedChildId} childId={feedChildId} token={feedToken} onUpdated={reloadHistory} />
                           </motion.section>
                         )}
                       </>
@@ -1094,7 +1109,7 @@ export function ParentDemoPage() {
                 {activeView === 'themes' && renderThemes()}
 
                 {activeView === 'timeline' && (
-                  <TimelineSection
+                  <TimelineSection key={feedChildId}
                     childName={selectedChild?.nickname ?? '孩子'}
                     childId={feedChildId}
                     token={feedToken}
@@ -1102,14 +1117,14 @@ export function ParentDemoPage() {
                 )}
 
                 {activeView === 'communication' && (
-                  <CommunicationSection
+                  <CommunicationSection key={feedChildId}
                     childName={selectedChild?.nickname ?? '孩子'}
                     childId={feedChildId}
                     token={feedToken}
                   />
                 )}
 
-                {activeView === 'settings' && renderSettings()}
+                {activeView === 'reports' && <PeriodicReportsSection key={feedChildId} childId={feedChildId} childName={selectedChild?.nickname ?? '孩子'} token={feedToken} />}
               </div>
             )}
           </motion.div>
@@ -1118,4 +1133,3 @@ export function ParentDemoPage() {
     </main>
   )
 }
-

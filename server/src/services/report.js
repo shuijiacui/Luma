@@ -1,5 +1,5 @@
 // 报告生成：家长建议 + 儿童侧描述性反馈
-// 全部为模板化文案，不调 LLM（可控、不失真、防诱导措辞 —— 红线 4）
+// 基础文案为模板；本模块也提供可选家长文本增强的 prompt 与输出校验。
 import { RED_LINE_WORDS } from './score.js'
 
 const ELEMENT_ZH = {
@@ -76,7 +76,7 @@ export function buildFeedback(features) {
 
   const pos = features?.composition?.position
   if (pos === 'corner' || pos === 'edge') desc.push(`画在${POSITION_ZH[pos]}`)
-  const pressure = features?.composition?.pressure
+  const pressure = features?.source === 'digital_canvas' ? null : features?.composition?.pressure
   if (pressure && pressure !== 'normal' && PRESSURE_ZH[pressure]) desc.push(PRESSURE_ZH[pressure])
 
   if (desc.length === 0) return '哇，Nilo 看到你的画啦'

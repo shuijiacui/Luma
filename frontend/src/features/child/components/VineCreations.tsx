@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import vineImg from '@/assets/images/vine.png'
 import { motionTransition } from '@/design-system/motion'
 
 interface Work {
@@ -54,12 +53,10 @@ export function VineCreations({ works, onOpen }: Props) {
   return (
     // Container width = parent width; height driven by image aspect ratio (1024:1536 = 2:3)
     <div className="relative w-full" style={{ aspectRatio: '2 / 3' }}>
-      <img
-        src={vineImg}
-        alt="藤蔓"
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
-      />
+      <svg viewBox="0 0 100 150" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full text-luma-grass-400">
+        <path d="M12 140 C10 100 45 75 52 50 S70 25 68 8" fill="none" stroke="currentColor" strokeWidth="2" />
+        {[30, 55, 80, 105].map((y, i) => <ellipse key={y} cx={62 - i * 13} cy={y} rx="9" ry="4" fill="currentColor" transform={`rotate(-30 ${62 - i * 13} ${y})`} />)}
+      </svg>
 
       <AnimatePresence>
         {visibleWorks.map((work, i) => {

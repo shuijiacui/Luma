@@ -19,7 +19,7 @@ export const DEFAULT_CONFIG = {
   weakBand: 0.4,         // 弱预警带下界 / 乐观抑制线
   positiveConflict: 0.5, // 方向冲突：乐观组分值线
   closeMargin: 0.1,      // 区分度不足的最小差距
-  ceiling: 0.85,         // 效度天花板（Lin et al. 2022）
+  ceiling: 0.85,         // 默认展示上限（产品配置，不代表实证效度或准确率）
   redLineWords: RED_LINE_WORDS,
   validIds: null,        // Set<entryId>；null 表示不校验
   crossClusterDiscount: 1.0, // 预留（v2.2 已知局限），当前不生效

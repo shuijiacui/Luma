@@ -48,16 +48,17 @@ export function analyzeDrawing(
   imageBase64: string,
   priorFeatures: FeatureJSON | null = null,
   token?: string,
+  submissionKey?: string,
 ): Promise<AnalyzeResponse> {
   return authFetch<AnalyzeResponse>('/analyze', {
     method: 'POST',
     token,
-    body: { imageBase64, priorFeatures },
+    body: { imageBase64, priorFeatures, submissionKey, source: 'digital_canvas' },
   })
 }
 
 export function fetchReport(
-  features: FeatureJSON,
+  features: FeatureJSON | null,
   opts: { token?: string; analysisId?: string } = {},
 ): Promise<ReportResponse> {
   return authFetch<ReportResponse>('/report', {

@@ -104,6 +104,30 @@ test('llmClient: 5xx 重试后成功；4xx 不重试', async () => {
   expect(clientErr).toHaveBeenCalledTimes(1)
 }, 15_000)
 
+// ---- 令牌只走 Authorization 头 ----
+// 回归：曾经支持 ?token= 查询参数（为了让 <img> 能取受保护图片），
+// 但令牌会进访问日志、浏览器历史与 Referer。现已移除，前端改用 fetch + blob URL。
+test('query token: ?token= 不再被受理，仅 Authorization 头有效', async () => {
+  const db = createDb(':memory:')
+  const app = createApp({ chatWithImage: async () => ({}), entries: [], db })
+
+  const parent = (await request(app).post('/api/auth/parent/register')
+    .send({ name: 'Nilo 妈妈', email: 'mama@example.com', password: 'secret6' })).body
+
+  // 头部形式：正常
+  const withHeader = await request(app).get('/api/auth/me')
+    .set('Authorization', `Bearer ${parent.token}`)
+  expect(withHeader.status).toBe(200)
+
+  // 查询参数形式：视为未登录
+  const withQuery = await request(app).get(`/api/auth/me?token=${parent.token}`)
+  expect(withQuery.status).toBe(401)
+
+  // 图片路由同样不接受查询参数（此处 id 不存在，但鉴权在查库前先失败）
+  const image = await request(app).get(`/api/analyses/any-id/image?token=${parent.token}`)
+  expect(image.status).toBe(401)
+})
+
 // ---- 备份 ----
 test('backup: VACUUM INTO 生成快照 + 超龄备份清理', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'luma-backup-'))

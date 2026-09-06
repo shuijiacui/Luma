@@ -11,8 +11,8 @@ class ModelScopeEmbedding(BaseEmbedding):
 
     def __init__(self, model_name=None, base_url=None, api_key=None, **kwargs: Any):
         super().__init__(model_name=model_name or os.getenv("RAG_EMBED_MODEL", "Qwen/Qwen3-Embedding-4B"),
-                         base_url=base_url or os.getenv("LLM_BASE_URL", "https://api-inference.modelscope.cn/v1"),
-                         api_key=api_key or os.getenv("LLM_API_KEY", ""), **kwargs)
+                         base_url=base_url or os.getenv("RAG_EMBED_BASE_URL", "https://api-inference.modelscope.cn/v1"),
+                         api_key=api_key or os.getenv("RAG_EMBED_API_KEY", ""), **kwargs)
 
     def _get_query_embedding(self, query: str):
         return self._get_text_embedding(query)
