@@ -5,7 +5,7 @@ import { RED_LINE_WORDS } from './score.js'
 const ELEMENT_ZH = {
   house: '房子', tree: '树', person: '小人', sun: '太阳', moon: '月亮', star: '星星',
   cloud: '云', rain: '雨', flower: '花', grass: '草', animal: '小动物', mountain: '山',
-  river: '小河', bird: '小鸟', cat: '小猫', dog: '小狗', car: '汽车', rainbow: '彩虹',
+  river: '小河', water: '溪流', bird: '小鸟', cat: '小猫', dog: '小狗', car: '汽车', rainbow: '彩虹',
   butterfly: '蝴蝶', fish: '小鱼', boat: '小船', fence: '栅栏', road: '小路',
 }
 

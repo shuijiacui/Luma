@@ -119,7 +119,7 @@ export const DEMO_OVERVIEW: OverviewModel = {
 
 export const ELEMENT_ZH: Record<string, string> = {
   person: '人物', house: '房子', tree: '树', cloud: '云', rain: '雨', sun: '太阳', moon: '月亮',
-  star: '星星', flower: '花', grass: '草', animal: '小动物', mountain: '山', river: '小河', bird: '小鸟',
+  star: '星星', flower: '花', grass: '草', animal: '小动物', mountain: '山', river: '小河', water: '溪流', bird: '小鸟',
   cat: '小猫', dog: '小狗', car: '汽车', rainbow: '彩虹', butterfly: '蝴蝶', fish: '小鱼', boat: '小船',
   fence: '栅栏', road: '小路',
 }
