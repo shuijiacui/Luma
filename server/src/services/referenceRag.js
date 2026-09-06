@@ -4,11 +4,11 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../')
 const SCRIPT = path.join(ROOT, 'rag', 'retrieve_references.py')
-const PYTHON = process.env.RAG_PYTHON || path.join(ROOT, '.rag-venv', 'Scripts', 'python.exe')
+const PYTHON = process.env.RAG_PYTHON || path.join(ROOT, '.rag-venv', ...(process.platform === 'win32' ? ['Scripts', 'python.exe'] : ['bin', 'python']))
 
-export function retrieveReferences(query, { timeoutMs = 120000 } = {}) {
+export function retrieveReferences(query, { timeoutMs = 15000, signal } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(PYTHON, [SCRIPT, query], { cwd: ROOT, windowsHide: true })
+    const child = spawn(PYTHON, [SCRIPT, query], { cwd: ROOT, windowsHide: true, signal })
     let output = ''; let error = ''
     const timer = setTimeout(() => { child.kill(); reject(new Error('reference RAG timeout')) }, timeoutMs)
     child.stdout.on('data', chunk => { output += chunk })

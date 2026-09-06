@@ -113,8 +113,10 @@ export function getStoredSession(): AuthSession | null {
 
 export function saveSession(session: AuthSession) {
   window.localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  window.dispatchEvent(new Event('luma-session-change'))
 }
 
 export function removeSession() {
   window.localStorage.removeItem(SESSION_KEY)
+  window.dispatchEvent(new Event('luma-session-change'))
 }

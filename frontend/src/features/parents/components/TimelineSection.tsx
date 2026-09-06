@@ -1,9 +1,10 @@
+import { useChildHistory } from '@/hooks/useChildHistory'
 import { motion } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { Card } from '@/components/ui'
 import { fadeUp } from '@/design-system'
-import { listAnalyses, type AnalysisSummary } from '@/lib/api/authApi'
+import { type AnalysisSummary } from '@/lib/api/authApi'
 import { cn } from '@/lib/cn'
 
 const RANGES = ['30天', '90天', '180天'] as const
@@ -36,7 +37,7 @@ function groupByMonth(analyses: AnalysisSummary[], days: number): MonthGroup[] {
 
   return Array.from(map.entries())
     .map(([month, v]) => ({ month, themes: v.themes.slice(0, 4), count: v.count }))
-    .sort((a, b) => a.month.localeCompare(b.month))
+    .reverse()
 }
 
 // 游客演示数据
@@ -65,24 +66,8 @@ interface Props {
 
 export function TimelineSection({ childName, childId, token }: Props) {
   const [range, setRange] = useState<Range>('90天')
-  const [analyses, setAnalyses] = useState<AnalysisSummary[] | null>(null)
   const isReal = !!(childId && token)
-
-  useEffect(() => {
-    if (!isReal) return
-    let cancelled = false
-    listAnalyses(childId!, token!)
-      .then((res) => {
-        if (!cancelled) setAnalyses(res.analyses)
-      })
-      .catch(() => {
-        if (!cancelled) setAnalyses([])
-      })
-    // 同上：避免切换孩子时旧请求晚回来覆盖新孩子的数据
-    return () => {
-      cancelled = true
-    }
-  }, [childId, token, isReal])
+  const { analyses, error, reload } = useChildHistory(childId, token)
 
   const months = useMemo(() => {
     if (!isReal) return DEMO_DATA[range]
@@ -97,6 +82,7 @@ export function TimelineSection({ childName, childId, token }: Props) {
         title={`${childName} 的创作变化`}
         description="记录每个阶段主题与表达方式的演变"
       >
+        {error && <p role="alert">{error}<button onClick={reload}>重试</button></p>}
         <div className="mt-4 flex gap-2">
           {RANGES.map((r) => (
             <button

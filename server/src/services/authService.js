@@ -1,4 +1,4 @@
-// 账号/家庭/会话服务：scrypt 密码哈希 + Bearer token 会话（30 天）
+// 账号/家庭/会话服务：scrypt 密码哈希 + access 默认 2 小时、refresh 30 天
 import crypto from 'node:crypto'
 
 const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -24,6 +24,12 @@ function verifySecret(secret, stored) {
   const candidate = crypto.scryptSync(secret, salt, 64)
   const expected = Buffer.from(hash, 'hex')
   return candidate.length === expected.length && crypto.timingSafeEqual(candidate, expected)
+}
+
+export function verifyParentPassword(db, auth, password) {
+  if (auth?.role !== 'parent') return false
+  const account = db.prepare("SELECT password_hash FROM accounts WHERE id = ? AND family_id = ? AND role = 'parent'").get(auth.accountId, auth.familyId)
+  return !!account && typeof password === 'string' && password.length <= 1024 && verifySecret(password, account.password_hash)
 }
 
 const id = () => crypto.randomUUID()
@@ -131,12 +137,15 @@ export function logout(db, token) {
   const row = db.prepare('SELECT account_id FROM sessions WHERE token = ?').get(token)
   db.prepare('DELETE FROM sessions WHERE token = ?').run(token)
   // 同时吊销该账号全部 refresh token，彻底登出
-  if (row) db.prepare('DELETE FROM refresh_tokens WHERE account_id = ?').run(row.account_id)
+  if (row) {
+    db.prepare('DELETE FROM refresh_tokens WHERE account_id = ?').run(row.account_id)
+    db.prepare('DELETE FROM sessions WHERE account_id = ?').run(row.account_id)
+  }
 }
 
 export function getMe(db, auth) {
   const family = db.prepare('SELECT invite_code FROM families WHERE id = ?').get(auth.familyId)
-  const children = db.prepare("SELECT id, display_name AS nickname, created_at AS createdAt FROM accounts WHERE role = 'child' AND family_id = ? ORDER BY created_at")
+  const children = db.prepare("SELECT id, display_name AS nickname, birth_date AS birthDate, created_at AS createdAt FROM accounts WHERE role = 'child' AND family_id = ? ORDER BY created_at")
     .all(auth.familyId)
   return {
     session: { id: auth.accountId, role: auth.role, familyId: auth.familyId, displayName: auth.displayName, isGuest: false },

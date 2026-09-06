@@ -47,15 +47,16 @@ function previewOf(messages) {
 const LLM_TIMEOUT_MS = 90_000   // 视觉推理可能较慢，给足 90s
 const MAX_RETRIES = 2           // 5xx/网络错误重试 2 次（指数退避），4xx 不重试
 
-async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), kind = 'text' } = {}) {
+async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), kind = 'text', signal } = {}) {
   const payload = {
     model,
     messages,
-    max_tokens: Math.max(maxTokens, 2000),
+    max_tokens: maxTokens,
   }
   const started = Date.now()
   let lastError
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    signal?.throwIfAborted()
     try {
       const res = await fetch(`${config.baseUrl}/chat/completions`, {
         method: 'POST',
@@ -64,7 +65,7 @@ async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), k
           Authorization: `Bearer ${config.apiKey}`,
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
+        signal: AbortSignal.any([AbortSignal.timeout(LLM_TIMEOUT_MS), ...(signal ? [signal] : [])]),
       })
       if (!res.ok) {
         const body = await res.text()
@@ -80,6 +81,7 @@ async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), k
         return extractJson(content)
       }
     } catch (err) {
+      signal?.throwIfAborted()
       // 解析失败（模型输出格式问题）与 4xx 都是确定性错误，重试无意义
       if (err instanceof LLMParseError) throw err
       if (err.message?.startsWith('LLM request failed: 4')) throw err

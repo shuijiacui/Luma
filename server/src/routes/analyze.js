@@ -3,7 +3,9 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { Router } from 'express'
-import { extractFeatures, mergeFeatures } from '../services/extractFeatures.js'
+import { extractFeatures, validateFeatures, gateFeatures } from '../services/extractFeatures.js'
+import { asyncRoute } from '../services/http.js'
+import { managedImagePath } from '../services/media.js'
 import { dispatchEntries } from '../services/kbDispatcher.js'
 import { score } from '../services/score.js'
 import { buildReport, buildFeedback, FOLLOW_UP, buildParentNarrativePrompt, validateParentNarrative, buildWebAdvicePrompt, validateWebAdvice, buildEvidencePlainPrompt, validateEvidencePlain } from '../services/report.js'
@@ -14,7 +16,26 @@ import { traceNode } from '../services/tracing.js'
 import { retrieveReferences, buildReferenceFilterPrompt, validateReferenceFilter } from '../services/referenceRag.js'
 
 export function createApiRouter({ chatWithImage, chatText = null, webSearch = null, entries, constraints = {}, scoreConfig, db, kbVersion = 'unknown', uploadDir = path.resolve('uploads') }) {
+  uploadDir = path.resolve(uploadDir)
   const router = Router()
+
+  router.post('/analyses/:analysisId/delete', asyncRoute(async (req, res) => {
+    if (!req.auth) return res.status(401).json({ error: 'login required' })
+    const row = db.prepare('SELECT child_id, family_id, image_path FROM analyses WHERE id = ?').get(req.params.analysisId)
+    if (!row) return res.status(404).json({ error: 'analysis not found' })
+    if (req.auth.role !== 'parent' || req.auth.familyId !== row.family_id) return res.status(403).json({ error: 'forbidden' })
+    const original = row.image_path ? managedImagePath(uploadDir, row.image_path) : null
+    const staged = original && fs.existsSync(original) ? `${original}.deleting` : null
+    if (staged) fs.renameSync(original, staged)
+    db.exec('BEGIN IMMEDIATE')
+    try {
+      db.prepare('DELETE FROM period_reports WHERE child_id = ?').run(row.child_id)
+      db.prepare('DELETE FROM analyses WHERE id = ?').run(req.params.analysisId)
+      db.exec('COMMIT')
+    } catch (error) { db.exec('ROLLBACK'); if (staged) fs.renameSync(staged, original); throw error }
+    if (staged) { try { fs.rmSync(staged) } catch (error) { log.error('media_cleanup', { msg: error.message }) } }
+    res.json({ ok: true })
+  }))
 
   router.get('/analyses/:analysisId/image', (req, res) => {
     if (!req.auth) return res.status(401).json({ error: 'login required' })
@@ -24,22 +45,38 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
       || (req.auth.role === 'parent' && req.auth.familyId === row.family_id)
     if (!allowed) return res.status(403).json({ error: 'forbidden' })
     // 兼容旧绝对路径与新相对文件名，保证数据库可跨机器移植
-    const imagePath = path.isAbsolute(row.image_path)
-      ? row.image_path
-      : path.join(uploadDir, row.image_path)
+    const imagePath = managedImagePath(uploadDir, row.image_path)
     if (!fs.existsSync(imagePath)) return res.status(404).json({ error: 'image not found' })
     res.type(row.image_mime || 'image/png').sendFile(imagePath)
   })
 
-  router.post('/analyze', async (req, res) => {
-    const { imageBase64, priorFeatures = null } = req.body ?? {}
+  router.post('/analyze', asyncRoute(async (req, res) => {
+    const { imageBase64, submissionKey = null, source = null } = req.body ?? {}
     if (typeof imageBase64 !== 'string' || !imageBase64.trim()) {
       return res.status(400).json({ error: 'imageBase64 required' })
     }
+    if (submissionKey !== null && (typeof submissionKey !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(submissionKey))) {
+      return res.status(400).json({ error: 'invalid submissionKey' })
+    }
+    if (req.auth && req.auth.role !== 'child') return res.status(403).json({ error: 'child account required' })
+    const encoded = imageBase64.replace(/^data:image\/(?:png|jpeg|jpg|webp);base64,/i, '')
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded) || encoded.length % 4 !== 0) return res.status(400).json({ error: 'invalid imageBase64' })
+    const buffer = Buffer.from(encoded, 'base64')
+    if (!buffer.length || buffer.length > 10 * 1024 * 1024) return res.status(400).json({ error: 'invalid image size' })
+    const sha = crypto.createHash('sha256').update(buffer).digest('hex')
+    const existing = () => db && req.auth && submissionKey
+      ? db.prepare('SELECT * FROM analyses WHERE child_id = ? AND submission_key = ?').get(req.auth.accountId, submissionKey) : null
+    const returnExisting = row => {
+      if (row.image_sha256 !== sha) return res.status(409).json({ error: 'submission key belongs to another image' })
+      const stored = JSON.parse(row.features_json)
+      return res.json({ features: stored, feedbackText: buildFeedback(stored), followUp: FOLLOW_UP, analysisId: row.id })
+    }
+    const previous = existing()
+    if (previous) return returnExisting(previous)
     let features
     try {
-      const fresh = await extractFeatures(imageBase64, { chatWithImage })
-      features = priorFeatures ? mergeFeatures(priorFeatures, fresh) : fresh
+      features = await extractFeatures(encoded, { chatWithImage })
+      if (source === 'digital_canvas') features.source = 'digital_canvas'
     } catch (err) {
       log.error('analyze', { msg: `feature extraction failed: ${err.message}` })
       return res.status(502).json({ error: 'feature_extraction_failed' })
@@ -47,7 +84,13 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     // 登录孩子：分析落库，保存受控图片副本供家长端查看
     let analysisId = null
     if (db && req.auth?.role === 'child') {
+      if (!db.prepare("SELECT 1 FROM accounts WHERE id = ? AND family_id = ? AND role = 'child'").get(req.auth.accountId, req.auth.familyId)) {
+        return res.status(401).json({ error: 'account no longer exists' })
+      }
+      let writtenFile = null
       try {
+        const concurrent = existing()
+        if (concurrent) return returnExisting(concurrent)
         const match = imageBase64.match(/^data:(image\/(?:png|jpeg|jpg|webp));base64,(.+)$/i)
         const encoded = match ? match[2] : imageBase64
         const buffer = Buffer.from(encoded, 'base64')
@@ -56,38 +99,69 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
         fs.mkdirSync(uploadDir, { recursive: true })
         const fileName = `${crypto.randomUUID()}.bin`
         fs.writeFileSync(path.join(uploadDir, fileName), buffer, { flag: 'wx' })
+        writtenFile = path.join(uploadDir, fileName)
         analysisId = insertAnalysis(db, {
           childId: req.auth.accountId, familyId: req.auth.familyId, features,
+          submissionKey,
           feedbackText: buildFeedback(features), followUp: FOLLOW_UP,
           image: { path: fileName, mime, size: buffer.length, sha256: crypto.createHash('sha256').update(buffer).digest('hex') },
         })
       } catch (err) {
+        if (writtenFile) fs.rmSync(writtenFile, { force: true })
         log.error('analyze', { msg: `analysis persistence failed: ${err.message}` })
         return res.status(500).json({ error: 'analysis_persistence_failed' })
       }
     }
     traceNode('analyze_features', { elements: features.elements ?? [], darkRatio: features.colors?.darkRatio ?? null, dropped: features.droppedDimensions ?? [] })
     res.json({ features, feedbackText: buildFeedback(features), followUp: FOLLOW_UP, ...(analysisId && { analysisId }) })
-  })
+  }))
 
-  router.post('/report', async (req, res) => {
+  router.post('/report', asyncRoute(async (req, res) => {
     const { features: clientFeatures, analysisId = null, childAge = null } = req.body ?? {}
-    if (!clientFeatures || typeof clientFeatures !== 'object') {
+    if (req.auth?.role === 'child') return res.status(403).json({ error: 'parent account required' })
+    if (analysisId !== null && (typeof analysisId !== 'string' || analysisId.length > 100)) return res.status(400).json({ error: 'invalid analysisId' })
+    if (analysisId && !req.auth) return res.status(401).json({ error: 'login required' })
+    if (req.auth && !analysisId) return res.status(400).json({ error: 'analysisId required' })
+    if (!analysisId && !clientFeatures) {
       return res.status(400).json({ error: 'features required' })
     }
     let features = clientFeatures
+    let age = Number.isInteger(childAge) && childAge >= 0 && childAge <= 18 ? childAge : null
     if (analysisId && req.auth) {
-      const saved = db.prepare('SELECT child_id, family_id, features_json FROM analyses WHERE id = ?').get(analysisId)
+      const saved = db.prepare('SELECT a.child_id, a.family_id, a.features_json, c.birth_date FROM analyses a JOIN accounts c ON c.id = a.child_id WHERE a.id = ?').get(analysisId)
       if (!saved) return res.status(404).json({ error: 'analysis not found' })
       const allowed = (req.auth.role === 'child' && req.auth.accountId === saved.child_id)
         || (req.auth.role === 'parent' && req.auth.familyId === saved.family_id)
       if (!allowed) return res.status(403).json({ error: 'forbidden' })
       features = JSON.parse(saved.features_json)
+      if (saved.birth_date) {
+        const birth = new Date(saved.birth_date)
+        const now = new Date()
+        age = now.getUTCFullYear() - birth.getUTCFullYear()
+        if (now.getUTCMonth() < birth.getUTCMonth() || (now.getUTCMonth() === birth.getUTCMonth() && now.getUTCDate() < birth.getUTCDate())) age--
+      } else age = null
     }
+    try { validateFeatures(features, { gated: true }) } catch { return res.status(400).json({ error: 'invalid features' }) }
+    features = gateFeatures(features).features
+    const controller = new AbortController()
+    const budgetMs = Math.max(100, Math.min(30000, Number(process.env.REPORT_BUDGET_MS) || 20000))
+    const timer = setTimeout(() => controller.abort(), budgetMs)
+    res.once('close', () => { clearTimeout(timer); controller.abort() })
+    const bounded = async fn => {
+      controller.signal.throwIfAborted()
+      let abort
+      try {
+        return await Promise.race([fn(), new Promise((_, reject) => {
+          abort = () => reject(new Error('report enhancement budget exceeded'))
+          controller.signal.addEventListener('abort', abort, { once: true })
+        })])
+      } finally { if (abort) controller.signal.removeEventListener('abort', abort) }
+    }
+    const text = (prompt, opts) => bounded(() => chatText(prompt, { ...opts, signal: controller.signal }))
     // 调度器：年龄调制 → 标签匹配 → L3 共现门槛 → 冲突处置（知识库调度.md）
     const { hits: matches, conflicts, dropped } = dispatchEntries({
       features, entries, constraints,
-      childAge: Number.isInteger(childAge) ? childAge : null,
+      childAge: age,
     })
     const result = score(matches, features, scoreConfig)
     traceNode('report_score', { emotion: result.emotion, confidence: result.confidence, reason: result.reason, hits: matches.map(m => m.id), conflicts, dropped, kbVersion })
@@ -109,7 +183,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     let narrative = null
     if (chatText && report.evidence.length > 0) {
       try {
-        const raw = await chatText(buildParentNarrativePrompt(result, report), { maxTokens: 900 })
+        const raw = await text(buildParentNarrativePrompt(result, report), { maxTokens: 900 })
         narrative = validateParentNarrative(raw)
       } catch (err) {
         log.error('report_narrative', { msg: `narrative generation failed: ${err.message}` })
@@ -119,7 +193,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     let evidencePlain = null
     if (chatText && report.evidence.length > 0) {
       try {
-        const raw = await chatText(buildEvidencePlainPrompt(report.evidence), { maxTokens: 600 })
+        const raw = await text(buildEvidencePlainPrompt(report.evidence), { maxTokens: 600 })
         evidencePlain = validateEvidencePlain(raw, report.evidence.length)
       } catch (err) {
         log.error('report_evidence_plain', { msg: `evidence plain failed: ${err.message}` })
@@ -130,9 +204,9 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     if (chatText && matches.length > 0) {
       try {
         const query = `${matches.map(m => m.cluster ?? m.id).join('、')} 儿童绘画研究局限`
-        const retrieved = (await retrieveReferences(query)).results ?? []
+        const retrieved = (await bounded(() => retrieveReferences(query, { signal: controller.signal }))).results ?? []
         if (retrieved.length) {
-          const filtered = validateReferenceFilter(await chatText(buildReferenceFilterPrompt(query, retrieved), { maxTokens: 700 }), retrieved)
+          const filtered = validateReferenceFilter(await text(buildReferenceFilterPrompt(query, retrieved), { maxTokens: 700 }), retrieved)
           if (filtered) referenceEvidence = filtered
         }
       } catch (err) {
@@ -143,9 +217,9 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     let webAdvice = null
     if (webSearch && chatText) {
       try {
-        const pages = await webSearch(searchQueryFor(result.emotion))
+        const pages = await bounded(() => webSearch(searchQueryFor(result.emotion), { signal: controller.signal }))
         if (pages && pages.length > 0) {
-          const rawAdvice = await chatText(buildWebAdvicePrompt(pages), { maxTokens: 500 })
+          const rawAdvice = await text(buildWebAdvicePrompt(pages), { maxTokens: 500 })
           webAdvice = validateWebAdvice(rawAdvice)
         }
       } catch (err) {
@@ -168,18 +242,19 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
       enrichedReport.webAdvice = webAdvice
       enrichedReport.webAdviceSource = '网络搜索（仅供参考）'
     }
-    // 登录用户带 analysisId：报告回写历史记录（归属校验失败静默跳过，不影响返回）
+    // The source can be removed while optional enrichment awaits an external service.
     if (db && req.auth && analysisId) {
-      attachReport(db, analysisId, enrichedReport, req.auth, {
+      const saved = attachReport(db, analysisId, enrichedReport, req.auth, {
         knowledgeVersion: kbVersion,
         matchedEntryIds: matches.map(m => m.id),
         conflicts,
         dropped,
         reason: result.reason,
       })
+      if (!saved) return res.status(404).json({ error: 'analysis no longer exists' })
     }
     res.json(enrichedReport)
-  })
+  }))
 
   return router
 }

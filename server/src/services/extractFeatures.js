@@ -38,22 +38,24 @@ export function buildExtractionPrompt() {
 confidence 是你对每个维度提取把握的诚实自评（0-1），看不清就给低分。`
 }
 
-export function validateFeatures(obj) {
+export function validateFeatures(obj, { gated = false } = {}) {
   const fail = msg => { throw new FeatureExtractionError(`invalid features: ${msg}`, obj) }
-  if (!obj || typeof obj !== 'object') fail('not an object')
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) fail('not an object')
   if (typeof obj.rawDescription !== 'string' || !obj.rawDescription.trim()) fail('rawDescription required')
-  if (!Array.isArray(obj.elements)) fail('elements must be array')
-  if (!obj.colors || !Array.isArray(obj.colors.dominant)) fail('colors.dominant must be array')
-  if (typeof obj.colors.darkRatio !== 'number' || obj.colors.darkRatio < 0 || obj.colors.darkRatio > 1)
+  const strings = v => Array.isArray(v) && v.length <= 100 && v.every(s => typeof s === 'string' && s.length > 0 && s.length <= 100)
+  if (obj.rawDescription.length > 10000) fail('rawDescription too long')
+  if (!strings(obj.elements)) fail('elements must be string array')
+  if (!(gated && obj.colors === null) && (!obj.colors || !strings(obj.colors.dominant))) fail('colors.dominant must be string array')
+  if (!(gated && obj.colors === null) && (!Number.isFinite(obj.colors.darkRatio) || obj.colors.darkRatio < 0 || obj.colors.darkRatio > 1))
     fail('colors.darkRatio must be number in [0,1]')
   for (const [k, enums] of Object.entries(COMPOSITION_ENUMS)) {
-    if (!enums.includes(obj.composition?.[k])) fail(`composition.${k} must be one of ${enums.join('/')}`)
+    if (!(gated && obj.composition === null) && !enums.includes(obj.composition?.[k])) fail(`composition.${k} must be one of ${enums.join('/')}`)
   }
-  if (!Array.isArray(obj.distortions)) fail('distortions must be array')
+  if (!strings(obj.distortions)) fail('distortions must be string array')
   if (!Number.isInteger(obj.erasureMarks) || obj.erasureMarks < 0) fail('erasureMarks must be non-negative integer')
   for (const dim of FEATURE_DIMENSIONS) {
     const c = obj.confidence?.[dim]
-    if (typeof c !== 'number' || c < 0 || c > 1) fail(`confidence.${dim} must be number in [0,1]`)
+    if (!Number.isFinite(c) || c < 0 || c > 1) fail(`confidence.${dim} must be number in [0,1]`)
   }
   return true
 }
@@ -86,19 +88,9 @@ export function allDimensionsEmpty(features) {
     && !features.composition
 }
 
-// 补充绘画合并（P5）：元素/扭曲取并集，涂改累加，颜色/构图/置信度以新一轮为准
+// 每次上传完整画布：当前快照替代旧快照，不能把整幅图当增量累加。
 export function mergeFeatures(prior, next) {
-  if (!prior) return next
-  return {
-    rawDescription: [prior.rawDescription, next.rawDescription].filter(Boolean).join('\n'),
-    elements: [...new Set([...(prior.elements ?? []), ...(next.elements ?? [])])],
-    colors: next.colors ?? prior.colors ?? null,
-    composition: next.composition ?? prior.composition ?? null,
-    distortions: [...new Set([...(prior.distortions ?? []), ...(next.distortions ?? [])])],
-    erasureMarks: (prior.erasureMarks ?? 0) + (next.erasureMarks ?? 0),
-    confidence: next.confidence ?? prior.confidence,
-    droppedDimensions: [...new Set([...(prior.droppedDimensions ?? []), ...(next.droppedDimensions ?? [])])],
-  }
+  return next
 }
 
 export async function extractFeatures(imageBase64, { chatWithImage = defaultChatWithImage } = {}) {

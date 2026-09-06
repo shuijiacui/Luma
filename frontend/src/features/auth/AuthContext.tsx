@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useEffect,
   useState,
   type ReactNode,
 } from 'react'
@@ -64,9 +65,20 @@ async function toAuthResult(
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(getStoredSession)
+  useEffect(() => {
+    const sync = () => setSession(getStoredSession())
+    window.addEventListener('luma-session-change', sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener('luma-session-change', sync)
+      window.removeEventListener('storage', sync)
+    }
+  }, [])
 
   const commitSession = useCallback((nextSession: AuthSession) => {
     clearChildDraft()
+    window.sessionStorage.removeItem('luma_latest_features')
+    window.sessionStorage.removeItem('luma_latest_analysis_id')
     saveSession(nextSession)
     setSession(nextSession)
   }, [])
@@ -134,6 +146,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     clearChildDraft()
+    window.sessionStorage.removeItem('luma_latest_features')
+    window.sessionStorage.removeItem('luma_latest_analysis_id')
     if (session?.token) logoutApi(session.token).catch(() => {})
     removeSession()
     clearOnboardingSession()

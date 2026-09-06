@@ -140,7 +140,7 @@ test('trend: 聚合历史报告，direction 三态正确，权限隔离', async 
     const ana = await request(app).post('/api/analyze')
       .set('Authorization', `Bearer ${child.token}`).send({ imageBase64: 'aGVsbG8=' })
     await request(app).post('/api/report')
-      .set('Authorization', `Bearer ${child.token}`)
+      .set('Authorization', `Bearer ${parent.token}`)
       .send({ features: ana.body.features, analysisId: ana.body.analysisId })
   }
   trend = (await request(app).get(`/api/children/${child.session.id}/trend`)

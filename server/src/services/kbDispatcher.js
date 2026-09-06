@@ -15,6 +15,13 @@ export function dispatchEntries({ features, entries, constraints = {}, childAge 
   const conflicts = []
   const dropped = []
   let hits = entries.filter(e => matchEntry(e, features))
+  if (features.source === 'digital_canvas') {
+    hits = hits.filter(e => {
+      const unsupported = Object.keys(e.featureMatch ?? {}).some(k => k === 'composition.pressure' || k === 'erasureMarksMin')
+      if (unsupported) dropped.push({ id: e.id, reason: 'digital_canvas_has_no_measured_pressure_or_erasure_history' })
+      return !unsupported
+    })
+  }
 
   // 1. 年龄调制（L4 前置）：affectedEntries 在低龄段按 c×multiplier 重新过门控
   //    v2.2 语义：c 只做门控不入权重——年龄调制影响的是"该条目的特征证据在发育混淆年龄段是否可信"

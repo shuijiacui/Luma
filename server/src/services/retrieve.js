@@ -22,7 +22,7 @@ export function matchEntry(entry, features) {
       case 'composition.position':
       case 'composition.pressure': {
         const dim = key.split('.')[1]
-        if (features.composition?.[dim] !== cond) return false
+        if (features.composition?.[dim] !== (dim === 'pressure' && cond === 'weak' ? 'light' : cond)) return false
         break
       }
       case 'distortions':

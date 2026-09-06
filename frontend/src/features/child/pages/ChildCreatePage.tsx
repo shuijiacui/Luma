@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { getChildDraft } from '../draft'
 import { useNavigate } from 'react-router-dom'
 
 import { niloCompanion } from '@/assets/avatars'
@@ -40,12 +41,16 @@ export const LATEST_ANALYSIS_ID_KEY = 'luma_latest_analysis_id'
 export function ChildCreatePage() {
   const navigate = useNavigate()
   const { session } = useAuth()
+  const draft = getChildDraft(session?.id ?? 'guest-child')
+  const mounted = useRef(true)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const canvasRef = useRef<DrawingCanvasHandle>(null)
-  const [color, setColor] = useState(colors[0])
+  const [color, setColor] = useState(draft.color)
   const [brushSize] = useState(8)
   const [isEraser, setIsEraser] = useState(false)
   const [promptIndex, setPromptIndex] = useState(-1)
-  const [features, setFeatures] = useState<FeatureJSON | null>(null)
+  const [features, setFeatures] = useState<FeatureJSON | null>(draft.features)
+  const submission = useRef<{ image: string; key: string } | null>(draft.submission ?? null)
   const [analysis, setAnalysis] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [serverBubble, setServerBubble] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -55,9 +60,12 @@ export function ChildCreatePage() {
   const [shapeId, setShapeId] = useState<WarmupShapeId | null>(null)
 
   function handleStrokeComplete() {
+    setAnalysis('idle')
+    setFeatures(null)
     setServerBubble(null)
     setPromptIndex((current) => (current + 1) % niloPrompts.length)
   }
+  useEffect(() => { draft.color = color; draft.features = features }, [draft, color, features])
 
   function handleNextShape() {
     const baseIndex = shapeId
@@ -83,9 +91,13 @@ export function ChildCreatePage() {
     if (!imageBase64 || analysis === 'loading') return
     setAnalysis('loading')
     try {
-      // priorFeatures 传入上一轮特征：孩子继续画 = 补充绘画，特征由 server 合并
+      // 上传当前完整快照；重试同一快照复用 submissionKey，避免重复落库。
       // 登录孩子带 token：server 落库并返回 analysisId（游客不落库）
-      const result = await analyzeDrawing(imageBase64, features, session?.token)
+      if (submission.current?.image !== imageBase64) submission.current = { image: imageBase64, key: crypto.randomUUID() }
+      draft.submission = submission.current
+      const result = await analyzeDrawing(imageBase64, null, session?.token, submission.current.key)
+      if (!mounted.current) return
+      if (session?.token && !result.analysisId) throw new Error('作品尚未保存')
       setFeatures(result.features)
       window.sessionStorage.setItem(LATEST_FEATURES_KEY, JSON.stringify(result.features))
       if (result.analysisId) {
@@ -96,6 +108,7 @@ export function ChildCreatePage() {
       setAnalysis('done')
       setServerBubble(`${result.feedbackText}。${result.followUp}`)
     } catch {
+      if (!mounted.current) return
       setAnalysis('error')
       setServerBubble('哎呀，Nilo 走神了，点「完成」再试一次吧')
     }
@@ -157,6 +170,8 @@ export function ChildCreatePage() {
       <section className="relative flex min-h-0 flex-1 p-3 pb-20 sm:p-5 sm:pb-24">
         <div className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-luma-lg border border-white/90 bg-white p-2 shadow-luma-md sm:p-3">
           <DrawingCanvas
+            draft={draft.canvas}
+            disabled={analysis === 'loading'}
             ref={canvasRef}
             color={color}
             brushSize={brushSize}
@@ -243,10 +258,10 @@ export function ChildCreatePage() {
             <Button size="sm" variant={isEraser ? 'gold' : 'ghost'} onClick={() => setIsEraser((value) => !value)}>
               橡皮
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => canvasRef.current?.undo()}>
+            <Button size="sm" variant="ghost" disabled={analysis === 'loading'} onClick={() => canvasRef.current?.undo()}>
               撤销
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => canvasRef.current?.clear()}>
+            <Button size="sm" variant="ghost" disabled={analysis === 'loading'} onClick={() => { canvasRef.current?.clear(); draft.submission = undefined; submission.current = null }}>
               清空
             </Button>
           </div>

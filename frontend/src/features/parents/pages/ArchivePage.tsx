@@ -1,3 +1,5 @@
+import { useChildHistory } from '@/hooks/useChildHistory'
+import { exportArchive } from '../exportArchive'
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -8,7 +10,7 @@ import { Button, Card } from '@/components/ui'
 import { fadeUp, staggerContainer } from '@/design-system'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { useAuth } from '@/features/auth/AuthContext'
-import { fetchMe, listAnalyses, type AnalysisSummary, type MeResponse } from '@/lib/api/authApi'
+import { fetchMe, type AnalysisSummary, type MeResponse } from '@/lib/api/authApi'
 import { cn } from '@/lib/cn'
 
 type MonthData = {
@@ -32,7 +34,7 @@ function groupAnalysesByMonth(analyses: AnalysisSummary[]): MonthData[] {
   }
   return Array.from(map.entries())
     .map(([month, works]) => ({ month, works }))
-    .sort((a, b) => b.month.localeCompare(a.month))
+
 }
 
 const emotionColor: Record<string, string> = {
@@ -49,25 +51,24 @@ export function ArchivePage() {
   const { session, logout } = useAuth()
 
   const [me, setMe] = useState<MeResponse | null>(null)
-  const [analyses, setAnalyses] = useState<AnalysisSummary[] | null>(null)
+  const [meError, setMeError] = useState(false)
+  const [revision, setRevision] = useState(0)
+  const [exportBusy, setExportBusy] = useState(false)
+  const [exportStatus, setExportStatus] = useState('')
   const [selectedChildId, setSelectedChildId] = useState<string>('')
 
   useEffect(() => {
     if (session?.token && !session.isGuest) {
-      fetchMe(session.token).then(setMe).catch(() => setMe(null))
+      let active = true
+      fetchMe(session.token).then(value => { if (active) { setMe(value); setMeError(false) } }).catch(() => { if (active) setMeError(true) })
+      return () => { active = false }
     }
-  }, [session])
+  }, [session, revision])
 
   const children = me?.children ?? []
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? children[0]
 
-  useEffect(() => {
-    if (!selectedChild || !session?.token) return
-    setAnalyses(null)
-    listAnalyses(selectedChild.id, session.token)
-      .then((res) => setAnalyses(res.analyses))
-      .catch(() => setAnalyses([]))
-  }, [selectedChild?.id, session?.token])
+  const { analyses, error: historyError, reload } = useChildHistory(selectedChild?.id, session?.token)
 
   const months = useMemo(
     () => (analyses ? groupAnalysesByMonth(analyses) : null),
@@ -75,6 +76,14 @@ export function ArchivePage() {
   )
 
   const totalWorks = analyses?.length ?? 0
+
+  async function download(year?: number) {
+    if (!session?.token || !analyses || !selectedChild) return
+    setExportBusy(true); setExportStatus('正在准备原图和解读…')
+    try { await exportArchive(analyses, session.token, selectedChild.nickname, year); setExportStatus('已生成离线 HTML 文件，可打开并打印为 PDF。') }
+    catch (error) { setExportStatus(error instanceof Error ? error.message : '导出失败，请重试。') }
+    finally { setExportBusy(false) }
+  }
 
   function handleLogout() {
     logout()
@@ -148,7 +157,7 @@ export function ArchivePage() {
             </p>
           </motion.section>
 
-          {months === null ? (
+          {meError || historyError ? <p role="alert">{historyError ?? '家庭信息加载失败。'}<Button onClick={() => { setRevision(n => n + 1); reload() }}>重试</Button></p> : (!session?.isGuest && !me) || months === null ? (
             <motion.div variants={fadeUp} className="mt-16 text-center text-sm text-luma-muted">
               加载中…
             </motion.div>
@@ -213,10 +222,11 @@ export function ArchivePage() {
               className="text-center"
             >
               <div className="mt-4 flex flex-wrap justify-center gap-3">
-                <Button variant="primary">生成成长册</Button>
-                <Button variant="secondary">导出全部作品</Button>
+                <Button variant="primary" disabled={exportBusy || !totalWorks || !session?.token} onClick={() => download(new Date().getFullYear())}>生成本年成长册</Button>
+                <Button variant="secondary" disabled={exportBusy || !totalWorks || !session?.token} onClick={() => download()}>导出全部作品</Button>
               </div>
-              <p className="mt-4 text-xs text-luma-muted">成长册功能为年付会员专属</p>
+              <p role="status" className="mt-3 text-sm">{exportStatus}</p>
+              <p className="mt-4 text-xs text-luma-muted">单文件 HTML 包含原图和已有解读，可离线查看与打印。不收取费用。</p>
             </Card>
           </motion.div>
         </motion.div>

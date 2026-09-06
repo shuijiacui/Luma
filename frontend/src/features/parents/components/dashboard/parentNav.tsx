@@ -16,6 +16,7 @@ export type ViewKey =
   | 'timeline'
   | 'communication'
   | 'settings'
+  | 'reports'
 
 export interface NavEntry {
   key: ViewKey
@@ -67,6 +68,10 @@ export const NAV_ENTRIES: NavEntry[] = [
     icon: <FamilyIcon className="size-4" />,
     title: '家庭设置',
     subtitle: '管理家庭空间、邀请孩子，也照顾好你的账号',
+  },
+  {
+    key: 'reports', label: '周报与月报', icon: <RecordsIcon className="size-4" />,
+    title: '周报与月报', subtitle: '把一段时间里的创作收在一起，回看主题和陪伴建议',
   },
 ]
 

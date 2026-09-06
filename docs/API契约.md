@@ -1,230 +1,152 @@
 # API 契约
 
-> 前后端联调唯一依据。所有请求/响应均为 JSON。base: `http://localhost:3001`
+> 更新于 2026-09-06。Base URL：`http://localhost:3001/api`。除图片接口外，请求/响应为 JSON；受保护请求带 `Authorization: Bearer <token>`，不支持 URL token。
 
-## 通用类型
+## 认证与错误
 
-### FeatureJSON（画作结构化特征）
+access token 默认 120 分钟，refresh token 30 天且使用后轮换。带无效 Authorization 的业务请求返回 401，不降级游客；刷新和退出接口允许处理旧 token。通用错误为 `{"error":"提示或错误码"}`。
+
+| 状态 | 含义 |
+| --- | --- |
+| 400 | 参数、特征或分页格式错误 |
+| 401 | 未登录或会话失效 |
+| 403 | 身份/家庭权限不符；注销密码复核失败也用此状态 |
+| 404 | 作品、图片或邀请码不存在 |
+| 409 | 账号重复、幂等键图像冲突、受控媒体路径不兼容 |
+| 413 | JSON 请求体超限 |
+| 429 | 超出限流，响应含 Retry-After |
+| 500 | 内部错误或分析持久化失败 |
+| 502 | 视觉服务、输出解析或特征验证失败 |
+
+## 账号接口
+
+| 方法与路径 | 请求体 | 成功响应 |
+| --- | --- | --- |
+| POST `/auth/parent/register` | `{name,email,password}`；密码至少 6 位 | 201，认证结果 |
+| POST `/auth/parent/login` | `{email,password}` | 201，认证结果 |
+| POST `/auth/child/register` | `{nickname,creationCode,inviteCode}`；创作码 4 位数字 | 201，认证结果 |
+| POST `/auth/child/login` | `{nickname,creationCode}` | 201，认证结果 |
+| POST `/auth/refresh` | `{refreshToken}` | 200，新的 `{token,refreshToken}` |
+| POST `/auth/logout` | 无 | 200，`{ok:true}`，撤销此账号全部 access/refresh 会话 |
+| GET `/auth/me` | 无，需登录 | 200，`{session,family,children}` |
+
+认证结果包含 `token`、`refreshToken`、`session: {id,role,familyId,displayName,isGuest:false}`、`family: {inviteCode}`。`me.children` 每项为 `{id,nickname,birthDate,createdAt}`。生日可为 null。邮箱忽略大小写；儿童昵称当前全局唯一。新家长注册创建新家庭。
+
+### POST `/auth/family/delete`
+
+仅同家庭家长，需密码复核与精确确认文案：
+
+```json
+{ "password": "家长登录密码", "confirmation": "删除整个家庭" }
+```
+
+成功为 `{"ok":true,"pendingMedia":0}`。删除本家庭所有账号、会话、作品与周期报告；`pendingMedia > 0` 表示在线数据已删，但有待运维清理的媒体暂存文件。密码不正确返回 403 且不删除。数据库失败会回滚并恢复已暂存媒体。不负责即时清除历史备份或外部服务留存。
+
+## POST `/analyze`
+
+允许匿名游客或正式儿童；家长 token 返回 403。
 
 ```json
 {
-  "rawDescription": "画面中央有一座小房子，旁边一棵树，天空中有被涂黑的太阳……",
-  "elements": ["house", "tree", "person", "sun"],
-  "colors": {
-    "dominant": ["blue", "black"],
-    "darkRatio": 0.35
-  },
-  "composition": {
-    "size": "small | normal | large",
-    "position": "center | corner | edge",
-    "pressure": "light | normal | heavy"
-  },
-  "distortions": ["bent_tree", "blackened_sun"],
-  "erasureMarks": 2,
-  "confidence": {
-    "elements": 0.9,
-    "colors": 0.85,
-    "composition": 0.8,
-    "distortions": 0.6,
-    "erasureMarks": 0.5
-  }
+  "imageBase64": "完整图片的base64或支持的data:image/...;base64前缀",
+  "submissionKey": "client-generated-id",
+  "source": "digital_canvas"
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `rawDescription` | string | LLM 必须先输出的画面自然语言描述原文（防幻觉审计依据，供人工抽查比对，见 RAG设计.md「特征可信度过滤」） |
-| `elements` | string[] | 画面元素，英文枚举（house/tree/person/sun/cloud/rain/flower/animal/...） |
-| `colors.dominant` | string[] | 主色调 |
-| `colors.darkRatio` | number 0-1 | 深色占比 |
-| `composition.size` | enum | 画面主体大小 |
-| `composition.position` | enum | 主体位置 |
-| `composition.pressure` | enum | 笔触压力 |
-| `distortions` | string[] | 扭曲/异常特征 |
-| `erasureMarks` | number | 明显涂改次数 |
-| `confidence` | object | **必填**。每个特征维度的提取置信度 0-1，键为维度名（elements/colors/composition/distortions/erasureMarks）。server 端丢弃 < 0.5 的维度，不进入检索 |
+支持 PNG/JPEG/JPG/WebP 数据前缀；纯 base64 默认按 PNG 元数据保存。解码上限 10 MiB，请求 JSON 上限 15 MB。`submissionKey` 可省略，长度 1–100，限字母、数字、下划线和连字符；正式孩子同键同图像返回同一作品，不同图像返回 409。`priorFeatures` 为旧兼容字段，现忽略；每次处理完整快照。
 
-### Emotion 枚举
+成功 200：`{features,feedbackText,followUp,analysisId?}`。正式儿童必有 `analysisId` 并持久化；游客无该字段。反馈为模板化画面描述，固定开放问题为“想再画点什么吗？”。
 
-`乐观平稳 | 未见明显风险信号 | 焦虑倾向 | 低落倾向 | 需要关注 | 信息不足`
-
-（红线：禁止出现任何疾病名。"未见明显风险信号"= 知识库零命中（missing evidence），与"乐观平稳"（positive evidence）严格区分）
-
----
-
-## POST /api/analyze
-
-画作 → 特征提取 + 描述性反馈。
-
-**Request**
+### FeatureJSON
 
 ```json
 {
-  "imageBase64": "iVBORw0KGgo...",
-  "priorFeatures": null
+  "rawDescription": "画面中央有一棵树",
+  "elements": ["tree"],
+  "colors": {"dominant": ["green"], "darkRatio": 0.1},
+  "composition": {"size": "normal", "position": "center", "pressure": "normal"},
+  "distortions": [],
+  "erasureMarks": 0,
+  "confidence": {"elements": 0.9, "colors": 0.9, "composition": 0.8, "distortions": 0.6, "erasureMarks": 0.6},
+  "source": "digital_canvas"
 }
 ```
 
-- `imageBase64`: string，必填，PNG/JPEG base64（不含 data: 前缀）
-- `priorFeatures`: FeatureJSON | null，可选，补充绘画时传入上一轮特征用于合并
+`rawDescription` 最长 10000 字符；数组最多 100 项、字符串项最长 100。数值须有限，置信度及颜色比例为 0–1。构图 size 为 small/normal/large，position 为 center/corner/edge，pressure 为 light/normal/heavy。
 
-**Response 200**
+逐维置信度低于 0.5 的维度被门控：元素/异常数组可为空，颜色/构图可为 null，涂改数可清零；响应可含 `droppedDimensions`。数字画板标记使笔压/涂改次数规则不参与评分，这些估计字段不代表真实过程测量。AI 描述不是孩子原话。
 
-```json
-{
-  "features": { "rawDescription": "画面中央有一座小房子……", "elements": ["house", "tree"], "colors": {"dominant": ["green"], "darkRatio": 0.1}, "composition": {"size": "normal", "position": "center", "pressure": "normal"}, "distortions": [], "erasureMarks": 0, "confidence": {"elements": 0.9, "colors": 0.85, "composition": 0.8, "distortions": 0.4, "erasureMarks": 0.3} },
-  "feedbackText": "我看到你画了房子、树",
-  "followUp": "想再画点什么吗？"
-}
-```
+## POST `/report`
 
-- `feedbackText`: 由 features 模板拼接，**不调 LLM**（防诱导措辞），只含客观元素描述
-- `followUp`: 固定文案 "想再画点什么吗？"
-- 注：返回的 features 中，confidence < 0.5 的维度已被 server 丢弃（不进入后续判定）
-
-**Response 400** — 缺少 imageBase64 或格式非法：`{ "error": "imageBase64 required" }`
-**Response 502** — LLM 解析失败：`{ "error": "feature_extraction_failed" }`
-
----
-
-## POST /api/report
-
-特征 → 情绪判定报告（家长视角）。
-
-**Request**
+正式报告只接受同家庭家长 token，并由服务端读取作品：
 
 ```json
-{ "features": { "...": "FeatureJSON" } }
+{ "analysisId": "作品UUID" }
 ```
 
-**Response 200（高置信）**
+忽略客户端替换特征和年龄，按账户生日计算当前年龄；未填生日则不推测。匿名允许 `{features,childAge?}` 的临时演示（年龄 0–18），不保存；匿名带真实 analysisId 返回 401；儿童调用返回 403。
 
-```json
-{
-  "emotion": "低落倾向",
-  "confidence": 0.82,
-  "evidence": [
-    { "entryId": "HTP-001", "summary": "太阳涂黑仅作为弱信号，需与其他特征共现" }
-  ],
-  "parentAdvice": ["近期多安排轻松的亲子共处时间", "避免直接追问，观察为主"]
-}
-```
-
-**Response 200（低置信）**
+成功 200 的基础字段：
 
 ```json
 {
   "emotion": "信息不足",
-  "confidence": 0.45,
+  "confidence": 0,
   "evidence": [],
   "parentAdvice": ["本次画面信息不足，建议继续观察"]
 }
 ```
 
-- `confidence`: number 0-1，展示值经 0.85 天花板截断。除"信息不足"（恒 < 0.7）与"未见明显风险信号"（恒 = 0.60 基率，missing evidence 语义）外，输出态均 ≥ 0.7
-- `evidence`: 命中的知识库条目，entryId 必须存在于 knowledge/entries.jsonl
-- `parentAdvice`: 模板化建议，**非干预方案**
+`emotion`：乐观平稳 / 未见明显风险信号 / 焦虑倾向 / 低落倾向 / 需要关注 / 信息不足。`evidence` 每项有 `entryId,summary`，通俗化后可有 `plain`。`confidence` 是启发式参考值：信息不足为 0，零命中默认 0.60；“需要关注”可能来自低于主阈值的弱信号。默认展示上限 0.85，不是准确率。
 
-**Response 400** — 缺少 features：`{ "error": "features required" }`
+可选字段 `narrative`、`webAdvice`、`webAdviceSource`、`referenceEvidence`、`referenceEvidenceSource` 见前端 `ReportResponse` 类型。增强受 `REPORT_BUDGET_MS` 总预算约束；失败/超时返回基础报告。正式结果带审计落库，并使该孩子周期摘要失效以待重建。
 
----
+## 历史、图片与档案
 
-## GET /api/health
+### GET `/children/:childId/analyses?limit=50&offset=0`
 
-**Response 200**: `{ "ok": true }`
+儿童本人或同家庭家长。limit 1–100，offset 非负整数；按创作时间倒序，返回 `{analyses,total,nextOffset}`，末页 nextOffset 为 null。
 
----
+每项包含 `id,createdAt,imageUrl,rawDescription,feedback,summary,report`；summary 含元素、深色比例和异常特征。家长 report 包含完整已保存报告与 `audit`；儿童历史的 report 恒为 null。前端应读取所有需要的页，不默认只用前 30/50 条。
 
-## 账号与历史（2026-07-25 新增）
+### GET `/analyses/:analysisId/image`
 
-所有 `/api/auth/*` 响应错误格式：`{ "error": "中文提示文案" }`（直接展示给用户）。
-会话：响应中 `token` 存入前端，后续请求带 `Authorization: Bearer <token>`，30 天有效。
+同家庭家长或作品儿童本人；返回原图二进制。前端使用带头部的 fetch 转 Blob URL，禁止将 token 拼入图片地址。
 
-### POST /api/auth/parent/register
-```json
-req:  { "name": "Nilo 妈妈", "email": "mama@example.com", "password": "≥6位" }
-res 201: { "token": "hex", "session": { "id", "role": "parent", "familyId", "displayName", "isGuest": false }, "family": { "inviteCode": "S7N3SV" } }
-err: 400 参数/密码太短 · 409 邮箱已注册
-```
+### POST `/analyses/:analysisId/delete`
 
-### POST /api/auth/parent/login
-```json
-req:  { "email": "...", "password": "..." }   // 邮箱大小写不敏感
-res 201: 同 register
-err: 401 邮箱或密码不正确
-```
+仅同家庭家长；成功 `{ok:true}`，删除原图、分析和单幅报告，同时使该孩子周期摘要失效。数据库失败回滚；已提交后若媒体清理失败，日志记录待处理文件。
 
-### POST /api/auth/child/register
-```json
-req:  { "nickname": "星星船长", "creationCode": "1234", "inviteCode": "S7N3SV" }
-res 201: { "token", "session": { "role": "child", ... }, "family": { "inviteCode" } }
-err: 400 创作码非4位数字 · 404 邀请码不存在 · 409 昵称已使用
-```
+### POST `/children/:childId/profile`
 
-### POST /api/auth/child/login
-```json
-req:  { "nickname": "...", "creationCode": "1234" }
-err: 401 昵称或创作码不对
-```
+仅同家庭家长，`{"birthDate":"2020-01-01"}` 或 `{"birthDate":null}`。日期必须有效、非未来且在支持的儿童年龄范围内，成功 `{ok:true}`。影响后续生成，不自动改写既有报告。
 
-### GET /api/auth/me（需登录）
-```json
-res 200: { "session": {...}, "family": { "inviteCode" }, "children": [{ "id", "nickname", "createdAt" }] }
-err: 401 { "error": "login required" }
-```
+### GET `/children/:childId/trend`
 
-### POST /api/auth/logout — `{ "ok": true }`（使 token 失效）
+仅同家庭家长。返回 `total,withReport,direction,counts,points`。direction 为 insufficient/stable/watch：报告少于 2 份不足；最近 3 份有关注/焦虑/低落则 watch；近期全为正分值的乐观或未见风险则 stable，其余 insufficient。points 为最近 10 份报告时间正序，counts 汇总全部报告。只是历史描述，不是心理变化预测。
 
-### GET /api/children/:childId/analyses（需登录：本人或同家庭家长）
-```json
-res 200: { "analyses": [{
-  "id": "uuid", "createdAt": "ISO",
-  "summary": { "elements": ["house"], "darkRatio": 0.15, "distortions": [] },
-  "report": { "emotion", "confidence", "evidence", "parentAdvice" } | null
-}] }
-err: 401 未登录 · 403 非本家庭
-```
+## GET `/children/:childId/digests?kind=weekly&limit=12&offset=0`
 
-### 既有端点的登录态扩展（向后兼容，游客可无登录调用）
+仅同家庭家长；kind 为 weekly/monthly，limit 1–100，offset 非负整数。权限通过后补齐已结束周期，返回 `{reports,timeZone:"Asia/Shanghai",total,nextOffset}`。
 
-- `POST /api/analyze`：登录孩子带 Bearer 调用时，分析落库且响应多一个 `analysisId` 字段
-- `POST /api/report`：请求体新增可选 `analysisId`，登录用户调用时报告回写对应历史记录
+每份报告包含 `id,kind,periodStart,periodEnd,generatedAt,summary`，时间为 UTC ISO，区间左闭右开；边界按北京时间自然周/月计算。summary 字段：
 
-### POST /api/auth/refresh（token 轮换，2026-07-25 新增）
-```json
-req:  { "refreshToken": "hex" }
-res 200: { "token": "新access(2h)", "refreshToken": "新refresh(30d)" }
-err: 401 无效/过期/已轮换
-```
-- access token 有效期 2 小时（`ACCESS_TOKEN_TTL_MIN`），refresh token 30 天、**旋转式**（每次使用旧 refresh 即作废，重放返回 401）
-- refresh token 服务端只存 SHA-256 哈希
-- `POST /api/auth/logout` 同时吊销该账号全部 refresh token
+| 字段 | 含义 |
+| --- | --- |
+| periodLabel | 可读的起止日期 |
+| artworkCount / activeDays | 本期作品数与本地创作日期数 |
+| previousArtworkCount / artworkCountChange | 上一个相邻自然周期数量及差值；无记录为 0 |
+| withReport / insufficientReports | 已有单幅报告数与其中信息不足数 |
+| elements | 最多 12 个 `{name,count}`，同作品同元素只计一次 |
+| parentAdvice | 最多 6 条去重的既有建议，未调用模型补写 |
+| sources | `{analysisId,createdAt,hasReport}` 来源作品列表 |
+| note | 描述性汇总的范围说明 |
 
-### 限流（429）
+无作品和进行中周期不生成；有作品但无单幅解读仍生成数量摘要。没有独立 PDF 或邮件发送接口。成长册 HTML 和周期 JSON 由前端下载生成。
 
-| 档位 | 窗口 | 默认上限 | env |
-|------|------|---------|-----|
-| 全局 /api | 15 分钟 | 600 | `RATE_LIMIT_GLOBAL` |
-| /api/auth/* | 15 分钟 | 20 | `RATE_LIMIT_AUTH` |
-| /api/analyze | 1 小时 | 60 | `RATE_LIMIT_ANALYZE` |
+## 健康与请求边界
 
-超限响应：`429 { "error": "…" }` + `Retry-After` 头。
+GET `/health` → `{ok:true}`，只说明进程响应，不验证模型或文献索引。
 
-### CORS
-
-白名单制（`CORS_ORIGINS`，默认 `http://localhost:5173`）；非白名单来源不发许可头。生产同域部署（`FRONTEND_DIST` 静态托管）不依赖 CORS。
-
-### GET /api/children/:childId/trend（需登录：本人或同家庭家长，2026-07-25 新增）
-```json
-res 200: {
-  "total": 3, "withReport": 2,
-  "direction": "insufficient | stable | watch",
-  "counts": { "未见明显风险信号": 2 },
-  "points": [{ "createdAt": "ISO", "emotion": "未见明显风险信号", "confidence": 0.6 }]
-}
-```
-- 描述性纵向聚合，**不是新判定类型**：不下诊断、不做预测；direction 仅三态
-- direction 规则：报告 <2 份 → insufficient；近 3 份含 需要关注/焦虑倾向/低落倾向 → watch；否则 stable
-
-### POST /api/report 请求体新增可选字段（2026-07-25）
-- `childAge`: number | null — 儿童年龄（4-12）。命中发育混淆条目（constraints.ageMods.affectedEntries）时按年龄段做 c×multiplier 门控；不传 = 默认 1.0 无调制
+默认限流按客户端 IP：`/api` 600 次/15 分钟，`/api/auth/*` 20 次/15 分钟，analyze 和 report 各 60 次/小时，可通过环境变量调整。CORS 白名单默认 localhost:5173，同域生产不依赖跨域许可。限流为进程内实现。

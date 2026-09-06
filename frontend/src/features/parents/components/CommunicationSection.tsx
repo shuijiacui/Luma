@@ -1,9 +1,10 @@
+import { useChildHistory } from '@/hooks/useChildHistory'
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 
 import { Card } from '@/components/ui'
 import { fadeUp } from '@/design-system'
-import { listAnalyses, type AnalysisSummary } from '@/lib/api/authApi'
+import { type AnalysisSummary } from '@/lib/api/authApi'
 import { cn } from '@/lib/cn'
 
 type Tone = 'teal' | 'gold' | 'violet'
@@ -97,25 +98,8 @@ interface Props {
 }
 
 export function CommunicationSection({ childName, childId, token }: Props) {
-  const [analyses, setAnalyses] = useState<AnalysisSummary[] | null>(null)
   const isReal = !!(childId && token)
-
-  useEffect(() => {
-    if (!isReal) return
-    let cancelled = false
-    listAnalyses(childId!, token!)
-      .then((res) => {
-        if (!cancelled) setAnalyses(res.analyses)
-      })
-      .catch(() => {
-        if (!cancelled) setAnalyses([])
-      })
-    // childId 切换时，effect 重新执行前会先跑这里，标记旧请求已过期，
-    // 避免旧孩子的数据在新请求之后才返回，覆盖了新孩子的数据
-    return () => {
-      cancelled = true
-    }
-  }, [childId, token, isReal])
+  const { analyses, error, reload } = useChildHistory(childId, token)
 
   const observations = useMemo(() => {
     if (!isReal) return DEMO_OBS
@@ -136,6 +120,7 @@ export function CommunicationSection({ childName, childId, token }: Props) {
         title={`和 ${childName} 聊什么？`}
         description="从创作观察出发，给你一个和孩子开口的理由"
       >
+        {error && <p role="alert">{error}<button onClick={reload}>重试</button></p>}
         {observations === null ? (
           <p className="py-6 text-center text-sm text-luma-muted">
             {analyses === null ? '加载中…' : '孩子完成更多创作并生成报告后，沟通建议会出现在这里。'}

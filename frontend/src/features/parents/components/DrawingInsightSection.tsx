@@ -6,14 +6,11 @@ import { Button, Card } from '@/components/ui'
 import {
   fetchReport,
   type Emotion,
-  type FeatureJSON,
   type ReportResponse,
 } from '@/lib/api/lumaApi'
 import { listAnalyses, fetchTrend, type AnalysisSummary, type TrendResponse } from '@/lib/api/authApi'
-import {
-  LATEST_ANALYSIS_ID_KEY,
-  LATEST_FEATURES_KEY,
-} from '@/features/child/pages/ChildCreatePage'
+import { authFetch } from '@/lib/api/authFetch'
+import { useAuthedImage } from '@/hooks/useAuthedImage'
 import { cn } from '@/lib/cn'
 
 const EMOTION_STYLE: Record<Emotion, { label: string; className: string }> = {
@@ -29,13 +26,21 @@ function emotionStyle(emotion: string) {
   return EMOTION_STYLE[emotion as Emotion] ?? EMOTION_STYLE.信息不足
 }
 
-function readLatestFeatures(): FeatureJSON | null {
-  try {
-    const raw = window.sessionStorage.getItem(LATEST_FEATURES_KEY)
-    return raw ? (JSON.parse(raw) as FeatureJSON) : null
-  } catch {
-    return null
-  }
+
+/**
+ * 历史缩略图：图片路由要求 Authorization 头，<img> 发不出，
+ * 所以经 useAuthedImage 取 blob 再渲染，令牌不进 URL。
+ */
+function HistoryThumb({ path, token }: { path: string; token: string }) {
+  const objectUrl = useAuthedImage(path, token)
+  if (!objectUrl) return null
+  return (
+    <img
+      src={objectUrl}
+      alt="孩子的画作"
+      className="size-12 shrink-0 rounded-lg object-cover"
+    />
+  )
 }
 
 function formatTime(iso: string) {
@@ -57,36 +62,46 @@ function elementLabel(value: string) {
 // 趋势方向文案（描述性，不做预测、不下结论——v2 界限）
 const DIRECTION_TEXT: Record<TrendResponse['direction'], { text: string; className: string }> = {
   insufficient: { text: '解读次数还太少，趋势需更多画作积累', className: 'text-luma-muted' },
-  stable: { text: '近期解读未见预警信号，状态平稳', className: 'text-luma-teal-700' },
+  stable: { text: '近期有效解读未见预警信号，请继续结合日常观察', className: 'text-luma-teal-700' },
   watch: { text: '近期解读中出现了需要留意的信号，建议持续观察', className: 'text-[#c4533f]' },
 }
 
 interface DrawingInsightSectionProps {
   childId?: string
   token?: string
+  onUpdated?: () => void
 }
 
-export function DrawingInsightSection({ childId, token }: DrawingInsightSectionProps) {
+export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsightSectionProps) {
   const [report, setReport] = useState<ReportResponse | null>(null)
   const [reportSource, setReportSource] = useState<'latest' | 'history'>('latest')
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [history, setHistory] = useState<AnalysisSummary[]>([])
   const [trend, setTrend] = useState<TrendResponse | null>(null)
-  const features = readLatestFeatures()
+  const [selectedId, setSelectedId] = useState('')
+  const [loadError, setLoadError] = useState(false)
+  const features = !!(token && childId && history.length)
+  const activeId = history.some(a => a.id === selectedId) ? selectedId : history[0]?.id
 
   // 每次加载打一个递增的 token：childId 切换、或 handleGenerate 手动触发的重新加载，
   // 都会产生新的 token，只有最新一次请求的结果会被采纳，避免旧孩子/旧请求的数据后到覆盖新数据
   const loadTokenRef = useRef(0)
+  const generationRef = useRef(0)
+  useEffect(() => {
+    const lifetime = generationRef
+    return () => { lifetime.current++ }
+  }, [])
 
   const loadHistory = useCallback(() => {
     if (!childId || !token) return
+    setLoadError(false)
     const requestToken = ++loadTokenRef.current
     listAnalyses(childId, token)
       .then((res) => {
         if (loadTokenRef.current === requestToken) setHistory(res.analyses)
       })
       .catch(() => {
-        if (loadTokenRef.current === requestToken) setHistory([])
+        if (loadTokenRef.current === requestToken) setLoadError(true)
       })
     fetchTrend(childId, token)
       .then((res) => {
@@ -97,26 +112,45 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
       })
   }, [childId, token])
 
-  useEffect(loadHistory, [loadHistory])
+  useEffect(() => {
+    loadHistory()
+    const counter = loadTokenRef
+    return () => { counter.current++ }
+  }, [loadHistory])
 
   async function handleGenerate() {
-    const latest = readLatestFeatures()
-    if (!latest || status === 'loading') return
+    if (!activeId || !token || status === 'loading') return
+    const generation = ++generationRef.current
     setStatus('loading')
     try {
-      const analysisId = window.sessionStorage.getItem(LATEST_ANALYSIS_ID_KEY) ?? undefined
-      setReport(await fetchReport(latest, { token, analysisId }))
+      const result = await fetchReport(null, { token, analysisId: activeId })
+      if (generation !== generationRef.current) return
+      setReport(result)
       setReportSource('latest')
       setStatus('idle')
       loadHistory() // report 回写后刷新历史
+      onUpdated?.()
     } catch {
-      setStatus('error')
+      if (generation === generationRef.current) setStatus('error')
     }
   }
 
+  async function deleteSelected() {
+    if (!activeId || !token || status === 'loading') return
+    if (!window.confirm('删除这幅画及其解读？该操作无法撤销。')) return
+    const generation = ++generationRef.current
+    setStatus('loading')
+    try {
+      await authFetch('/analyses/' + activeId + '/delete', { method: 'POST', token })
+      if (generation !== generationRef.current) return
+      setReport(null); setSelectedId(''); setStatus('idle'); loadHistory(); onUpdated?.()
+    } catch { if (generation === generationRef.current) setStatus('error') }
+  }
+
   function handleSelectHistory(item: AnalysisSummary) {
-    if (!item.report) return
-    setReport(item.report as ReportResponse)
+    if (status === 'loading') return
+    setSelectedId(item.id)
+    setReport(item.report)
     setReportSource('history')
   }
 
@@ -126,10 +160,21 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
     <Card
       variant="glass"
       eyebrow="画面解读"
-      title="最近一幅画透露的状态"
+      title="所选画作的观察与解读"
       description="只呈现情绪倾向与参考分值，不构成任何诊断结论"
       className="mt-5 border-luma-teal-100"
     >
+      {loadError && <p role="alert" className="text-sm text-red-700">作品加载失败。<button onClick={loadHistory}>重试</button></p>}
+      {features && <Button variant="ghost" size="sm" disabled={status === 'loading'} onClick={deleteSelected}>删除所选画作</Button>}
+      {report && status === 'error' && <p role="alert">操作失败，请稍后重试。</p>}
+      {features && <label className="mb-3 block text-sm">选择画作
+        <select className="ml-2 rounded-lg border p-2" value={activeId ?? ''} disabled={status === 'loading'} onChange={e => {
+          const item = history.find(a => a.id === e.target.value)
+          if (item) handleSelectHistory(item)
+        }}>
+          {history.map(a => <option key={a.id} value={a.id}>{formatTime(a.createdAt)} · {a.summary.elements.map(elementLabel).join('、') || '小画'}{a.report ? '' : '（未解读）'}</option>)}
+        </select>
+      </label>}
       {!report ? (
         <div className="mt-2 flex flex-wrap items-center gap-3">
           {features ? (
@@ -138,7 +183,7 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
             </Button>
           ) : (
             <p className="text-sm text-luma-muted">
-              孩子在创作空间完成一幅画后，这里会出现基于画面特征的情绪倾向与沟通建议。
+              {token ? '正在读取家庭画作；完成创作后可在任意设备生成解读。' : '演示内容不生成真实家庭报告。'}
             </p>
           )}
           {status === 'error' && (
@@ -258,12 +303,12 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
           )}
 
           <div className="rounded-xl bg-luma-teal-50 px-4 py-3 text-xs leading-relaxed text-luma-teal-700">
-            以上仅为单幅画面的情绪倾向参考，置信度已按测量工具效度上限校准；请结合日常观察综合了解孩子。
+            以上仅为单幅画面的观察参考，分值是规则计算结果，未经真实样本概率校准；请结合日常观察了解孩子。
           </div>
 
           {features && (
             <Button variant="ghost" size="sm" onClick={handleGenerate} disabled={status === 'loading'}>
-              {status === 'loading' ? '正在解读…' : '重新解读最新画作'}
+              {status === 'loading' ? '正在解读…' : '重新解读所选画作'}
             </Button>
           )}
         </div>
@@ -305,7 +350,7 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
                 <button
                   type="button"
                   onClick={() => handleSelectHistory(item)}
-                  disabled={!item.report}
+                  disabled={status === 'loading'}
                   className={cn(
                     'flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm transition',
                     item.report
@@ -320,11 +365,7 @@ export function DrawingInsightSection({ childId, token }: DrawingInsightSectionP
                       : '画面元素较少'}
                   </span>
                   {item.imageUrl && token && (
-                    <img
-                      src={`${item.imageUrl}?token=${encodeURIComponent(token)}`}
-                      alt="孩子的画作"
-                      className="size-12 shrink-0 rounded-lg object-cover"
-                    />
+                    <HistoryThumb path={item.imageUrl} token={token} />
                   )}
                   {item.report ? (
                     <span

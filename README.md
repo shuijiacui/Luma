@@ -1,211 +1,173 @@
-# Luma — 让孩子的想象被温柔地听见
+# Luma · 让孩子的想象，被温柔地听见
+
+**孩子和 Nilo 自由画画，家长从真实作品中找到更具体的陪伴方式。**
+
+Luma 是面向家庭的 AI 创作陪伴与成长观察项目，将儿童绘画、作品保存、可追溯解读、亲子沟通建议与周期回顾连成一条完整体验。
 
 <p align="center">
-  <img src="frontend/src/assets/images/home-hero.png" alt="Luma 的 AI 伙伴 Nilo 与儿童画作" width="100%" />
+  <img src="frontend/src/assets/images/home-lakeside-v2.png" alt="Nilo 在湖畔陪伴孩子的创作" width="100%" />
 </p>
 
-Luma 是一个面向儿童与家长的创意表达与情绪观察原型。孩子可以在不被打扰、不被评判的空间里自由绘画，AI 伙伴 Nilo 只对画面做克制、客观的回应；家长则可以在独立空间查看创作主题、情绪倾向、置信度、文献依据和沟通建议。
+**当前阶段：可运行的家庭创作 MVP。** 支持真实家庭账号、多个孩子、跨设备查看作品、历史解读、周报/月报和档案导出。支付订阅按当前产品决定暂不实现。模型服务需自行配置；本项目没有经过临床有效性验证，报告分值是启发式参考值，不是心理健康概率。
 
-> **重要说明**：Luma 是情绪观察与早期提醒工具，不是心理测评、医疗器械或诊断工具。单幅画不能代表孩子的心理状态，任何结果都应结合日常行为、家庭环境和专业意见综合理解。
+[项目优势](#项目优势) · [功能与体验](#功能与体验) · [快速启动](#快速启动) · [架构](#技术架构) · [验证与边界](#验证与边界) · [文档导航](docs/README.md)
 
-## Luma 能做什么
+## 项目优势
 
-| 面向孩子 | 面向家长 | 面向团队 |
+### 1. 从孩子的创作出发，让家长有内容可聊
+
+Luma 围绕同一幅真实作品连接两端：儿童端以 Nilo 互动、自由画板和画面描述支持表达；家长端提供作品、主题、已有解读与沟通建议。家长可以从“这棵树有什么故事”这样的具体内容开始交流。
+
+水彩场景、角色触摸反馈与画布组成连续的儿童体验。儿童侧使用克制的描述模板，不呈现家长报告；服务端也限制儿童账号访问报告与趋势，角色分工落实到接口权限。
+
+### 2. 解读过程可复核，结果有来源
+
+视觉模型负责提取画面特征；知识库检索和评分由代码执行；文本模型只补充说明。每份正式报告保存知识库版本、命中条目 ID、丢弃原因与冲突记录，便于回看依据、调整规则及复现回归。
+
+仓库包含 **31 条结构化知识条目（26 条实证层、3 条体系层、2 条经验层）**，另有年龄、冲突与输出约束。条目数量代表仓库规模，不等于独立验证样本量。数字画板会排除未实际测量的笔压和擦除次数证据；年龄由家长填写的生日计算。
+
+代码：[特征门控](server/src/services/extractFeatures.js) · [分层调度](server/src/services/kbDispatcher.js) · [评分](server/src/services/score.js) · [知识库校验](knowledge/scripts/validate.mjs)
+
+### 3. 从一次绘画延伸到长期回顾
+
+正式家庭的作品、原图、描述和解读保存在服务端。家长只凭作品编号就能在另一台设备生成或回看历史报告，不依赖儿童设备的临时缓存。一个家庭可以关联多个孩子，切换孩子时请求和页面状态保持隔离。
+
+周报/月报自动汇总已结束周期的作品数、创作天数、常见元素和已有建议，保留来源作品编号。周期回顾不增加模型调用，也不根据数量变化推断心理变化。成长档案可导出为内嵌原图的独立 HTML，离线打开后可用浏览器打印成 PDF；周期摘要另支持 JSON 下载。
+
+代码：[历史](server/src/services/historyService.js) · [周期报告](server/src/services/periodReports.js) · [档案导出](frontend/src/features/parents/exportArchive.ts)
+
+### 4. 核心结果与外部增强分开，故障时有明确反馈
+
+基础报告由本地知识库和确定性规则产生。可选文本说明、文献检索和联网建议受整体等待预算控制，默认 20 秒、最多 30 秒；增强超时或校验失败会保留基础结果。文献与联网内容不会修改评分。
+
+视觉识别失败时会明确报错。过期登录不会悄悄退回游客导致作品漏存；同一图像提交通过幂等键避免重试生成重复记录；正式家庭的空数据、请求失败与游客示例分别显示。
+
+### 5. 部署简单，也考虑作品如何带走和恢复
+
+主服务使用 **Node.js + SQLite + 受控图片目录**，可由一个进程同时托管 API 和前端静态产物。基础评分不要求向量数据库；需要文献背景时再启用独立的 Python / Chroma 检索服务与 embedding 配置。
+
+项目提供内嵌原图与 SHA-256 的备份包、校验后恢复到新目录的恢复脚本、缺图与孤儿文件审计，以及单幅删除和家庭注销。既有备份按保留周期清理，恢复不会覆盖当前数据。
+
+代码：[备份](server/scripts/backup.mjs) · [恢复](server/scripts/restore.mjs) · [家庭数据删除](server/src/services/familyDeletion.js) · [部署指南](docs/部署.md)
+
+## 功能与体验
+
+| 场景 | 当前能力 | 使用边界 |
 | --- | --- | --- |
-| 自由画板：颜色、笔触、橡皮、撤销、清空和 PNG 下载 | 查看创作主题、画面解读、历史记录和描述性趋势 | 结构化视觉特征提取与可审计判定链路 |
-| Nilo 陪伴创作，只描述可见内容，不追问或诱导情绪 | 查看情绪倾向、置信度、知识库条目和沟通建议 | JSONL 知识库、分层证据调度、红线校验和自动化测试 |
-| 儿童端不展示任何心理判断 | 在同一家庭下切换孩子并查看各自记录 | SQLite 持久化、令牌轮换、限流、审计日志和备份脚本 |
+| 儿童创作 | Nilo 互动、自由绘画、图形热身、画笔/橡皮/撤销/清空、PNG 下载 | 当前会话保留草稿；刷新、退出后不保证草稿恢复 |
+| 家庭连接 | 家长邮箱账号、孩子昵称与 4 位创作码、家庭邀请码、多孩子切换 | 当前注册模式每个家庭由一个家长创建；未提供第二位家长加入流程 |
+| 作品保存 | 完整快照分析、幂等提交、受保护原图、分页历史 | 需儿童正式账号；游客识别不进入家庭档案 |
+| 家长解读 | 历史作品选择、生成/回看、证据、建议、审计 | 需同家庭家长权限；视觉特征依赖模型输出质量 |
+| 长期观察 | 主题、时间轴、描述性趋势、周报/月报 | 北京时间自然周期；无作品或未结束周期不生成摘要 |
+| 数据带走 | 成长册 HTML、浏览器打印 PDF、周期 JSON | HTML 包含已有解读；不会替未解读作品批量调用模型 |
+| 数据管理 | 出生日期、单幅删除、密码复核后注销整个家庭 | 注销不立即抹除历史备份、外部服务留存或用户下载件 |
+| 文献增强 | PDF 索引、Chroma 检索、引用过滤 | 可选配置，尚需真实模型与索引环境验收 |
+| 订阅计划 | 当前开放体验，计划页说明后续安排 | 支付、订单、权益控制未实现，本轮不接入 |
 
-产品坚持三个原则：
+### 三分钟了解产品
 
-- **儿童侧不贴标签**：作画过程零问卷、零诊断，反馈仅限“我看到你画了……”和开放式邀请。
-- **家长侧不下结论**：结果使用“倾向”“需要关注”“信息不足”等表述，并始终显示置信度。
-- **判定依据可追溯**：模型只负责提取客观特征，真正的检索、评分和报告由确定性代码完成，每条有效依据都指向知识库条目。
+1. 从首页进入儿童游客体验，触摸 Nilo、打开画布，试试画笔与图形热身。
+2. 配好视觉服务后完成一幅小画，查看画面描述与“想再画点什么吗”的开放反馈。
+3. 进入家长游客空间，了解作品、主题和陪伴建议的呈现方式；这里明确使用示例数据。
 
-## 用户如何体验
+### 验证真实家庭流程
 
-### 游客体验
+家长注册并复制邀请码 → 孩子在另一浏览器注册加入 → 完成画作 → 家长打开成长概览的完整解读 → 选择作品生成报告 → 查看创作记录、导出成长档案。
 
-打开首页后进入统一登录页，选择“家长”或“儿童”，再选择游客体验即可。游客模式适合快速查看界面和交互：家长端展示示例家庭数据，游客创作和内容不会保存。
+周报/月报只生成已结束周期，不会把刚注册当天的数据伪造成历史摘要。时间边界和补生成行为已通过自动化测试；详细步骤见 [联调说明](docs/联调说明.md)。
 
-实际的画作识别仍需要后端和视觉模型服务可用；仅启动前端时，可以浏览首页、认证页和家长端示例界面，但无法完成真实分析。
+## 技术架构
 
-### 正式家庭流程
+```mermaid
+flowchart TD
+  Child[儿童画布与 Nilo] --> Analyze[视觉提取与逐维门控]
+  Analyze --> Feedback[儿童描述性反馈]
+  Analyze --> Store[SQLite 与受控原图]
+  Parent[同家庭家长] --> Report[按作品编号生成解读]
+  Store --> Report
+  KB[JSONL 知识库与约束] --> Report
+  Report --> Score[簇内去重与确定性评分]
+  Score --> Baseline[基础报告与审计]
+  Baseline --> Enrich[可选文本说明]
+  Literature[PDF 与 Chroma] -. 文献背景 .-> Enrich
+  Search[可选联网搜索] -. 沟通建议 .-> Enrich
+  Baseline --> Store
+  Enrich --> Store
+  Store --> History[历史与时间轴]
+  Store --> Digests[周报与月报]
+  Store --> Export[档案导出与备份恢复]
+```
 
-1. 家长注册账号，进入家长空间后复制家庭邀请码。
-2. 孩子选择注册，填写昵称、4 位创作码和家庭邀请码，加入家庭。
-3. 孩子进入创作空间自由绘画，点击“完成”后由 Nilo 返回客观画面描述；也可以继续补充绘画。
-4. 在同一浏览器会话切换至家长空间，在“成长概览”为最近一次创作生成画面解读，并查看历史解读、创作主题和沟通建议。
-
-建议使用桌面浏览器、平板或横屏手机，以获得更完整的画板操作空间。
-
-## 隐私与安全边界
-
-| 数据/能力 | 当前处理方式 |
+| 层 | 技术 |
 | --- | --- |
-| 画作原图 | 经后端发送给所配置的多模态模型服务做当次特征提取；Luma 服务端不落库。孩子可主动在本地下载 PNG |
-| 分析记录 | 登录孩子仅保存结构化特征和报告 JSON；游客不保存 |
-| 账号密码 | 家长密码和儿童创作码使用 `scrypt` 哈希，不保存明文 |
-| 会话 | 2 小时 access token + 30 天轮换式 refresh token；退出后服务端吊销 |
-| 输出内容 | 疾病词、无效知识库 ID 或低质量特征会触发拦截或降级为“信息不足” |
-| 权限隔离 | 情绪解读仅在家长空间展示；历史记录按家庭校验访问权限 |
+| 前端 | React 19、TypeScript、Vite 7、Tailwind CSS 4、Framer Motion |
+| API / 数据 | Express 4、Node.js 内置 SQLite、scrypt、Bearer 会话与 refresh 轮换 |
+| 规则知识 | JSONL、声明式约束、逐维门控、簇内 max、簇间 noisy-OR |
+| 可选增强 | 兼容 Chat Completions 的视觉/文本服务、Bocha、Python / LlamaIndex / Chroma |
+| 验证 | Vitest、Supertest、Testing Library、jsdom、TypeScript、ESLint |
 
-当前版本仍是 MVP/研究原型：
+评分采用启发式公式：`w = min(strength × reliability, 0.9)`，同簇取最大值，再合成 `E = 1 − ∏(1 − w_cluster)`，最后由配置参数映射为参考分值。默认展示上限为 `0.85`，不代表准确率。模型自报置信度只参与特征门控。详见 [RAG 设计](docs/RAG设计.md) 和 [输出标准](docs/情绪判定标准.md)。
 
-- 它不能替代专业评估，不提供治疗或干预方案。
-- 最新画作的完整特征暂存在当前浏览器 `sessionStorage`；跨设备的家长能看到分析记录，但暂时不能为一条“尚未生成解读”的远端记录补生成报告。
-- 头像等少量个性化设置仍保存在浏览器本地，不会跨设备同步。
-- 在用于生产环境前，必须补齐隐私政策、监护人同意、模型服务商数据处理说明和本地合规评估。
+## 快速启动
 
-## 判定是怎样产生的
-
-```text
-儿童画作
-   │
-   ▼
-多模态模型提取 FeatureJSON
-（元素、颜色、构图、笔触、涂改及逐维置信度）
-   │  低于 0.5 的特征维度被丢弃
-   ▼
-知识库标签检索与分层调度
-   │  31 条带来源条目；经验性证据不能单独定案
-   ▼
-确定性评分
-（簇内 max → 簇间 noisy-OR → Bayesian-inspired 校准）
-   │
-   ▼
-安全校验与模板报告
-（情绪倾向 + 置信度 + 条目 ID + 家长沟通建议）
-```
-
-LLM 只存在于第一步，负责“看见并描述”，不直接生成情绪判断或家长建议。展示置信度最高限制为 `0.85`，用于体现绘画投射方法本身的效度边界。评分原理、证据分层和已知争议见 [RAG 设计](docs/RAG设计.md) 与 [知识库调度](docs/知识库调度.md)。
-
-## 本地开发
-
-### 环境要求
-
-- Node.js `>= 22.5`（后端使用内置 `node:sqlite`）
-- npm
-- DeepSeek API Key（画作分析使用支持图像输入的实验视觉模型）
-- 现代浏览器
-
-### 1. 启动后端
+要求 **Node.js 24**；Python 仅为可选文献检索所需。以下命令从仓库根目录执行，Windows PowerShell、macOS / Linux 均可使用 npm 命令。
 
 ```bash
-cd server
-cp .env.example .env
-npm ci
-npm start
+npm --prefix server ci
+npm --prefix frontend ci
 ```
 
-Windows PowerShell 可用 `Copy-Item .env.example .env` 代替 `cp`。随后编辑 `server/.env`，至少确认以下配置：
+复制 `server/.env.example` 为 `server/.env`，填写服务商提供的 `LLM_BASE_URL`、`LLM_API_KEY` 与实际可用的 `LLM_VISION_MODEL`。示例模型名只是配置占位，不保证账号可用；`LLM_TEXT_MODEL` 用于可选说明增强。密钥只放服务端。
 
-```dotenv
-LLM_BASE_URL=https://api.deepseek.com
-LLM_API_KEY=your-deepseek-api-key
-LLM_VISION_MODEL=deepseek-v4-flash-vision-exp
-LLM_TEXT_MODEL=deepseek-v4-flash
-PORT=3001
-```
-
-不要提交 `server/.env`。服务启动后可访问 `http://localhost:3001/api/health`，预期返回：
-
-```json
-{"ok":true}
-```
-
-### 2. 启动前端
-
-另开一个终端：
+两个终端分别运行：
 
 ```bash
-cd frontend
-npm ci
-npm run dev
+npm --prefix server start
 ```
 
-打开 `http://localhost:5173`。开发服务器已将 `/api` 代理到 `http://localhost:3001`，通常不需要额外配置。若前后端不在默认地址，可复制 `frontend/.env.example` 并修改 `VITE_API_BASE_URL`。
+```bash
+npm --prefix frontend run dev
+```
 
-### 3. 验证项目
+前端默认 `http://localhost:5173`，通过 Vite 将 `/api` 转发到 `http://localhost:3001`。不配置模型也可以验证认证、界面和游客示例；真实画作识别需要视觉服务。后端图片默认位置相对于运行工作目录，生产建议显式配置绝对 `UPLOAD_DIR`。
 
 ```bash
-# 后端 API、认证、评分、安全和数据链路
-cd server
-npm test
-
-# 知识库 schema、来源与约束校验（在仓库根目录执行）
+npm --prefix server test
+npm --prefix frontend test
+npm --prefix frontend run build
+npm --prefix frontend run lint
 node knowledge/scripts/validate.mjs
-
-# 前端 lint、类型检查与生产构建
-cd frontend
-npm run lint
-npm run build
 ```
 
-## 项目结构
+常用运维命令：
+
+```bash
+npm --prefix server run reports
+npm --prefix server run backup
+node server/scripts/media-audit.mjs
+node server/scripts/restore.mjs /备份文件.sqlite /不存在的恢复目录
+```
+
+更多配置：[部署](docs/部署.md) · [文献 RAG](rag/README.md) · [API 契约](docs/API契约.md)
+
+## 验证与边界
+
+本轮覆盖账号隔离、幂等提交、异常请求、历史回看、年龄门控、跨孩子响应、周期边界、注销回滚和备份恢复等路径。测试使用临时数据库与服务替身，没有改动真实家庭数据。最新数量和执行环境见 [功能完成度](docs/功能完成度.md)。
+
+尚未完成真实设备触控、旋转与打印版式验收，也未实测视觉/文本模型、搜索、embedding 和生产部署。当前构建仍有较大资源体积提示；既有依赖安全通告尚未全部修补。工程测试不能证明模型识别准确率、临床有效性或商业转化率。
+
+项目的长期价值方向是家庭持续陪伴与可回看的创作档案。Family / Premium 属于后续商业规划；当前不把价格、付费转化、长期记忆或多轮推理作为已交付能力宣传。
+
+## 文档与目录
 
 ```text
-.
-├── frontend/          # React 19 + TypeScript + Vite + Tailwind CSS 4
-│   └── src/
-│       ├── features/  # marketing、auth、child、parents、onboarding
-│       ├── lib/api/   # API 请求、Bearer 认证与自动 token 轮换
-│       └── design-system/
-├── server/            # Express API 与 SQLite 数据层
-│   ├── src/routes/    # analyze、report、auth、history、trend
-│   ├── src/services/  # 特征提取、检索、调度、评分、报告与安全
-│   └── tests/         # Vitest + Supertest
-├── knowledge/         # entries.jsonl、分层调度和安全约束
-├── docs/              # 产品、交互、架构、API、研究与部署文档
-└── deploy/            # Caddy、systemd 和 cron 示例
+frontend/     双端界面、账号状态、画布、报告与档案导出
+server/       API、认证、知识库评分、周期报告、备份与恢复
+knowledge/    结构化条目、约束和校验工具
+rag/          可选 PDF 索引与检索
+scripts/      本地启动辅助
+ deploy/      Caddy、systemd、备份计划示例
+ docs/        当前说明、设计记录与研究草稿
 ```
 
-## 技术栈
-
-| 层 | 主要技术 |
-| --- | --- |
-| Web | React 19、TypeScript、React Router 7、Framer Motion |
-| UI | Tailwind CSS 4、自建 Luma Design System |
-| API | Node.js、Express 4 |
-| 数据 | SQLite（`node:sqlite`），单文件、无额外数据库服务 |
-| AI | OpenAI-compatible 多模态 Chat Completions 接口 |
-| 测试 | Vitest、Supertest；前端 ESLint 与 TypeScript 构建检查 |
-| 部署 | 单机 Node 进程 + Caddy HTTPS + systemd + cron 备份 |
-
-## 核心 API
-
-| 方法 | 路径 | 用途 |
-| --- | --- | --- |
-| `GET` | `/api/health` | 服务健康检查 |
-| `POST` | `/api/analyze` | 画作转结构化特征，并返回儿童侧描述性反馈 |
-| `POST` | `/api/report` | 特征转家长侧解读；可关联一次已保存的分析 |
-| `POST` | `/api/auth/parent/*` | 家长注册与登录 |
-| `POST` | `/api/auth/child/*` | 儿童注册与登录 |
-| `POST` | `/api/auth/refresh` | 轮换 access/refresh token |
-| `GET` | `/api/children/:childId/analyses` | 获取家庭内孩子的历史分析 |
-| `GET` | `/api/children/:childId/trend` | 获取描述性历史聚合，不做预测 |
-
-完整请求和响应结构见 [API 契约](docs/API契约.md)。
-
-## 开发约束
-
-这些规则是产品安全边界，也是提交代码时需要守住的架构约束：
-
-- 儿童端不得出现情绪判定、成长报告、疾病名或“父母监督”等表达。
-- `/api/analyze` 的反馈只能描述画面；`/api/report` 只允许在家长语境中调用。
-- `feedbackText`、`followUp` 和 `parentAdvice` 由后端模板生成，前端不得自行改写。
-- 检索、评分、报告阶段不得引入 LLM；判定必须引用真实存在的知识库条目 ID。
-- 修改 `knowledge/` 后必须运行 `node knowledge/scripts/validate.mjs`。
-- API Key、数据库、日志和备份文件都不得提交到仓库。
-
-## 文档导航
-
-- 想了解产品范围与不能做什么：[项目边界](docs/项目边界.md)、[交互流程](docs/交互流程.md)
-- 想理解系统与算法：[架构设计](docs/架构设计.md)、[RAG 设计](docs/RAG设计.md)、[情绪判定标准](docs/情绪判定标准.md)
-- 想开发或联调：[API 契约](docs/API契约.md)、[前端联调说明](docs/联调说明.md)、[前端说明](frontend/README.md)
-- 想维护知识库：[知识库调度](docs/知识库调度.md)、`docs/文献提取-*.md`
-- 想部署上线：[生产部署指南](docs/部署.md)
-
-## 生产部署
-
-仓库提供单台 Ubuntu VPS 的参考方案：Caddy 负责 HTTPS，Node 同时提供 `/api/*` 与前端静态资源，systemd 守护进程，cron 每日备份 SQLite。部署前请阅读 [生产部署指南](docs/部署.md)，并根据实际地区补齐隐私政策、监护人同意、数据保留与安全审查流程。
+从 [文档导航](docs/README.md) 开始。当前功能以 [功能完成度](docs/功能完成度.md)、[交互流程](docs/交互流程.md)、[项目边界](docs/项目边界.md) 和代码为准；历史计划与文献摘录保留研究过程，不作为当前功能承诺。

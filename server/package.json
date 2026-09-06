@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "vitest run",
-    "backup": "node scripts/backup.mjs"
+    "backup": "node scripts/backup.mjs",
+    "reports": "node scripts/reports.mjs"
   },
   "dependencies": {
     "express": "^4.21.2"

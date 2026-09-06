@@ -30,7 +30,7 @@ export function searchQueryFor(emotion) {
   return SEARCH_TOPICS[emotion] ?? '儿童绘画 亲子沟通 陪伴建议'
 }
 
-export async function bochaSearch(query, { count = 5, config = webSearchConfig() } = {}) {
+export async function bochaSearch(query, { count = 5, config = webSearchConfig(), signal } = {}) {
   if (!config.apiKey) return null
   const res = await fetch(config.endpoint, {
     method: 'POST',
@@ -39,7 +39,7 @@ export async function bochaSearch(query, { count = 5, config = webSearchConfig()
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ query, summary: true, count }),
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.any([AbortSignal.timeout(15_000), ...(signal ? [signal] : [])]),
   })
   if (!res.ok) throw new WebSearchError(`search failed: ${res.status}`)
   const payload = await res.json()
