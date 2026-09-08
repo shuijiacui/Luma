@@ -1,4 +1,5 @@
-﻿import { motion } from 'framer-motion'
+import { lt, t, useLocale } from '@/i18n'
+import { motion } from 'framer-motion'
 
 import { lumaLogo } from '@/assets/brand'
 import { cn } from '@/lib/cn'
@@ -13,6 +14,7 @@ interface SidebarProps {
 }
 
 export function ParentSidebar({ active, onSelect, onLogout, className }: SidebarProps) {
+  useLocale()
   return (
     <aside
       data-onboarding="parent-navbar"
@@ -26,7 +28,7 @@ export function ParentSidebar({ active, onSelect, onLogout, className }: Sidebar
       <div className="px-7 pt-7">
         <a
           href="/"
-          aria-label="Luma 首页"
+          aria-label={t("Luma 首页")}
           className="group inline-flex items-center gap-2.5 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
         >
           <span className="relative grid size-11 shrink-0 place-items-center">
@@ -47,16 +49,14 @@ export function ParentSidebar({ active, onSelect, onLogout, className }: Sidebar
         <div className="mt-3 flex items-start gap-1.5 pl-0.5">
           <LeafSprig className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-80" tone="green" />
           <p className="text-[0.7rem] leading-[1.7] text-[#8a816b]">
-            看见每个孩子
-            <br />
-            独一无二的想象力
-          </p>
+            {t("看见每个孩子")}<br />
+            {t("独一无二的想象力")}</p>
         </div>
       </div>
 
       {/* 导航菜单 */}
       <nav
-        aria-label="家长端导航"
+        aria-label={t("家长端导航")}
         data-onboarding="parent-tabs"
         className="mt-6 flex-1 space-y-1 overflow-y-auto px-4 pb-4"
       >
@@ -84,9 +84,9 @@ export function ParentSidebar({ active, onSelect, onLogout, className }: Sidebar
                     : 'bg-[#f6f2e7] text-[#98a08c] group-hover:bg-white group-hover:text-luma-grass-500',
                 )}
               >
-                {entry.icon}
+                {lt(entry.icon)}
               </span>
-              <span className="text-[0.92rem] font-bold tracking-wide">{entry.label}</span>
+              <span className="text-[0.92rem] font-bold tracking-wide">{lt(entry.label)}</span>
               {isActive && (
                 <motion.span
                   layoutId="parent-nav-dot"
@@ -103,7 +103,7 @@ export function ParentSidebar({ active, onSelect, onLogout, className }: Sidebar
       <div className="relative mt-auto shrink-0 px-6 pb-8">
         {onLogout && (
           <button type="button" onClick={onLogout} className="mb-4 w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-[#6e7868] transition hover:bg-[#f4f1e7]">
-            退出登录
+            {t('退出登录')}
           </button>
         )}
         <HangingBranch
@@ -131,6 +131,7 @@ export function ParentMobileNav({
   onSelect,
   className,
 }: SidebarProps) {
+  useLocale()
   return (
     <div
       data-onboarding="parent-tabs"
@@ -155,8 +156,8 @@ export function ParentMobileNav({
                 : 'bg-white/80 text-[#6e7868] backdrop-blur-sm hover:bg-white',
             )}
           >
-            {entry.icon}
-            {entry.label}
+            {lt(entry.icon)}
+            {lt(entry.label)}
           </button>
         )
       })}

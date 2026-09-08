@@ -1,5 +1,6 @@
 // Luma 判定服务 API（docs/API契约.md，base 默认 /api，由 vite proxy 转发到 localhost:3001）
 import { authFetch } from '@/lib/api/authFetch'
+import { getLocale } from '@/i18n/store'
 
 export interface FeatureJSON {
   rawDescription: string
@@ -20,6 +21,8 @@ export interface AnalyzeResponse {
   features: FeatureJSON
   feedbackText: string
   followUp: string
+  feedbackTextEn?: string
+  followUpEn?: string
   /** 登录孩子时返回：本次分析已落库，report 凭此回写历史 */
   analysisId?: string
 }
@@ -33,6 +36,7 @@ export type Emotion =
   | '信息不足'
 
 export interface ReportResponse {
+  language?: 'zh' | 'en'
   narrative?: string
   emotion: Emotion
   confidence: number
@@ -64,6 +68,6 @@ export function fetchReport(
   return authFetch<ReportResponse>('/report', {
     method: 'POST',
     token: opts.token,
-    body: { features, analysisId: opts.analysisId ?? null },
+    body: { features, analysisId: opts.analysisId ?? null, locale: getLocale() },
   })
 }

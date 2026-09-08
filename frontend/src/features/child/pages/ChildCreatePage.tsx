@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { getChildDraft } from '../draft'
@@ -39,6 +40,7 @@ export const LATEST_FEATURES_KEY = 'luma_latest_features'
 export const LATEST_ANALYSIS_ID_KEY = 'luma_latest_analysis_id'
 
 export function ChildCreatePage() {
+  const locale = useLocale()
   const navigate = useNavigate()
   const { session } = useAuth()
   const draft = getChildDraft(session?.id ?? 'guest-child')
@@ -53,6 +55,7 @@ export function ChildCreatePage() {
   const submission = useRef<{ image: string; key: string } | null>(draft.submission ?? null)
   const [analysis, setAnalysis] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [serverBubble, setServerBubble] = useState<string | null>(null)
+  const [serverBubbleEn, setServerBubbleEn] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   // 进入画板后先显示欢迎蒙版，蒙版盖在 My Creative Space 之上
   const [showWelcome, setShowWelcome] = useState(true)
@@ -63,6 +66,7 @@ export function ChildCreatePage() {
     setAnalysis('idle')
     setFeatures(null)
     setServerBubble(null)
+    setServerBubbleEn(null)
     setPromptIndex((current) => (current + 1) % niloPrompts.length)
   }
   useEffect(() => { draft.color = color; draft.features = features }, [draft, color, features])
@@ -79,6 +83,7 @@ export function ChildCreatePage() {
   }
 
   function handleSave() {
+    setServerBubbleEn(null)
     canvasRef.current?.download()
     const msg = niloSaveMessages[Math.floor(Math.random() * niloSaveMessages.length)]
     setServerBubble(msg)
@@ -107,9 +112,11 @@ export function ChildCreatePage() {
       }
       setAnalysis('done')
       setServerBubble(`${result.feedbackText}。${result.followUp}`)
+      setServerBubbleEn(result.feedbackTextEn ? `${result.feedbackTextEn} ${result.followUpEn ?? ''}` : null)
     } catch {
       if (!mounted.current) return
       setAnalysis('error')
+      setServerBubbleEn(null)
       setServerBubble('哎呀，Nilo 走神了，点「完成」再试一次吧')
     }
   }
@@ -121,7 +128,7 @@ export function ChildCreatePage() {
   const bubbleText =
     analysis === 'loading'
       ? 'Nilo 正在仔细看你的画…'
-      : (serverBubble ?? (promptIndex >= 0 ? niloPrompts[promptIndex] : null))
+      : ((locale === 'en' && serverBubbleEn ? serverBubbleEn : serverBubble) ?? (promptIndex >= 0 ? niloPrompts[promptIndex] : null))
 
   return (
     <main className="relative flex min-h-screen flex-col overflow-x-hidden bg-luma-teal-50">
@@ -131,7 +138,7 @@ export function ChildCreatePage() {
             type="button"
             onClick={() => navigate('/child/demo')}
             className="inline-flex min-h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm font-bold text-luma-teal-700 outline-none transition-colors hover:bg-white hover:text-luma-teal-900 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
-            aria-label="返回儿童创作空间"
+            aria-label={t("返回儿童创作空间")}
           >
             <svg
               viewBox="0 0 20 20"
@@ -147,13 +154,12 @@ export function ChildCreatePage() {
                 strokeLinejoin="round"
               />
             </svg>
-            返回
-          </button>
+            {t("返回")}</button>
           <button
             type="button"
             onClick={() => navigate('/child/demo')}
             className="hidden rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-luma-gold-300/60 sm:block"
-            aria-label="返回儿童空间"
+            aria-label={t("返回儿童空间")}
           >
             <Brand size="sm" />
           </button>
@@ -192,7 +198,7 @@ export function ChildCreatePage() {
                   className="mb-16 max-w-52 rounded-[1.4rem] rounded-br-md border border-luma-teal-100 bg-white/95 px-4 py-3 text-sm font-semibold leading-relaxed text-luma-teal-900 shadow-luma-md backdrop-blur"
                   role="status"
                 >
-                  {bubbleText}
+                  {lt(bubbleText)}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -203,7 +209,7 @@ export function ChildCreatePage() {
                 : { duration: 3, repeat: Infinity, ease: 'easeInOut' }
               }
               className="size-20 overflow-hidden rounded-full border-4 border-white bg-luma-gold-100 shadow-luma-md sm:size-24"
-              aria-label="Nilo 正陪你创作"
+              aria-label={t("Nilo 正陪你创作")}
             >
               <img
                 src={niloCompanion}
@@ -221,14 +227,12 @@ export function ChildCreatePage() {
           <div className="flex shrink-0 items-center gap-1 border-r border-luma-ivory-200 pr-2 sm:gap-1.5 sm:pr-3">
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-luma-gold-200 bg-luma-gold-100/80 px-2.5 py-1 text-xs font-bold text-luma-teal-800">
               <span aria-hidden="true">✏️</span>
-              {currentShapeLabel}
+              {lt(currentShapeLabel)}
             </span>
             <Button size="sm" variant="secondary" onClick={handleNextShape}>
-              换图形
-            </Button>
+              {t("换图形")}</Button>
             <Button size="sm" variant="ghost" onClick={handleClearShape}>
-              清除图形
-            </Button>
+              {t("清除图形")}</Button>
           </div>
 
           {/* 颜色 */}
@@ -248,7 +252,7 @@ export function ChildCreatePage() {
                     : '',
                 )}
                 style={{ backgroundColor: item }}
-                aria-label={'选择颜色 ' + item}
+                aria-label={t('选择颜色 ' + item)}
               />
             ))}
           </div>
@@ -256,22 +260,18 @@ export function ChildCreatePage() {
           {/* 画笔工具 */}
           <div className="flex shrink-0 items-center gap-1">
             <Button size="sm" variant={isEraser ? 'gold' : 'ghost'} onClick={() => setIsEraser((value) => !value)}>
-              橡皮
-            </Button>
+              {t("橡皮")}</Button>
             <Button size="sm" variant="ghost" disabled={analysis === 'loading'} onClick={() => canvasRef.current?.undo()}>
-              撤销
-            </Button>
+              {t("撤销")}</Button>
             <Button size="sm" variant="ghost" disabled={analysis === 'loading'} onClick={() => { canvasRef.current?.clear(); draft.submission = undefined; submission.current = null }}>
-              清空
-            </Button>
+              {t("清空")}</Button>
           </div>
 
           <div className="flex shrink-0 items-center gap-1 border-l border-luma-ivory-200 pl-2 sm:pl-3">
             <Button size="sm" variant="ghost" onClick={handleSave}>
-              保存
-            </Button>
+              {t("保存")}</Button>
             <Button size="sm" variant="primary" onClick={handleFinish} disabled={analysis === 'loading'}>
-              {analysis === 'loading' ? 'Nilo 在看…' : '完成'}
+              {lt(analysis === 'loading' ? 'Nilo 在看…' : '完成')}
             </Button>
           </div>
         </div>

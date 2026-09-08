@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { motionTransition } from '@/design-system/motion'
@@ -44,6 +45,7 @@ const tooltipVariants = {
 }
 
 export function VineCreations({ works, onOpen }: Props) {
+  useLocale()
   const [expanded, setExpanded] = useState(false)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
@@ -70,7 +72,7 @@ export function VineCreations({ works, onOpen }: Props) {
               animate="visible"
               exit="exit"
               type="button"
-              aria-label={`打开作品：${work.title}`}
+              aria-label={t(`打开作品：${work.title}`)}
               className="absolute flex -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-luma-teal-400"
               style={{ left: `${pos.left}%`, top: `${pos.top}%`, width: '14%', aspectRatio: '1' }}
               onClick={() => onOpen(work.id)}
@@ -81,7 +83,7 @@ export function VineCreations({ works, onOpen }: Props) {
               transition={motionTransition.expressive}
             >
               <span className="text-[clamp(1rem,3vw,1.5rem)] leading-none" aria-hidden="true">
-                {work.emoji}
+                {lt(work.emoji)}
               </span>
 
               <AnimatePresence>
@@ -93,8 +95,8 @@ export function VineCreations({ works, onOpen }: Props) {
                     exit="exit"
                     className="pointer-events-none absolute bottom-[115%] left-1/2 z-10 w-max max-w-[130px] -translate-x-1/2 rounded-xl border border-white/60 bg-white/85 px-2.5 py-1.5 text-center shadow-luma-sm backdrop-blur-sm"
                   >
-                    <div className="truncate text-xs font-bold text-luma-teal-900">{work.title}</div>
-                    <div className="mt-0.5 text-[10px] text-luma-muted">{work.date}</div>
+                    <div className="truncate text-xs font-bold text-luma-teal-900">{lt(work.title)}</div>
+                    <div className="mt-0.5 text-[10px] text-luma-muted">{lt(work.date)}</div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -111,7 +113,7 @@ export function VineCreations({ works, onOpen }: Props) {
             animate="visible"
             exit="exit"
             type="button"
-            aria-label={`展开更多 ${hiddenCount} 个作品`}
+            aria-label={t(`展开更多 ${hiddenCount} 个作品`)}
             className="absolute flex -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-luma-teal-300/70 bg-white/50 text-xs font-bold text-luma-teal-700 backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-luma-teal-400"
             style={{
               left: `${FRUIT_POSITIONS[VISIBLE_COUNT].left}%`,
@@ -124,7 +126,7 @@ export function VineCreations({ works, onOpen }: Props) {
             whileTap={{ scale: 0.92 }}
             transition={motionTransition.expressive}
           >
-            +{hiddenCount}
+            +{lt(hiddenCount)}
           </motion.button>
         )}
 
@@ -138,8 +140,7 @@ export function VineCreations({ works, onOpen }: Props) {
             className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-white/60 px-3 py-1 text-[10px] text-luma-muted backdrop-blur-sm transition hover:bg-white/80"
             onClick={() => setExpanded(false)}
           >
-            收起
-          </motion.button>
+            {t("收起")}</motion.button>
         )}
       </AnimatePresence>
     </div>

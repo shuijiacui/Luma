@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
@@ -24,6 +25,7 @@ export function NiloStand({
   /** true = 完全静止：无浮动、无姿势切换动画（欢迎蒙版用） */
   motionless?: boolean
 }) {
+  useLocale()
   const pose = NILO_POSES[poseKey]
   const imageSrc = src ?? pose.src
 
@@ -31,11 +33,11 @@ export function NiloStand({
     return (
       <div
         className={cn('relative flex shrink-0 items-end justify-center', className)}
-        aria-label={ariaLabel ?? pose.alt}
+        aria-label={t(ariaLabel ?? pose.alt)}
       >
         <img
           src={imageSrc}
-          alt={pose.alt}
+          alt={t(pose.alt)}
           className="h-full w-full object-contain drop-shadow-[0_8px_12px_rgba(32,53,47,0.16)] select-none"
           draggable={false}
         />
@@ -48,13 +50,13 @@ export function NiloStand({
       animate={{ y: [0, -6, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
       className={cn('relative flex shrink-0 items-end justify-center', className)}
-      aria-label={ariaLabel ?? pose.alt}
+      aria-label={t(ariaLabel ?? pose.alt)}
     >
       <AnimatePresence mode="wait">
         <motion.img
           key={poseKey}
           src={imageSrc}
-          alt={pose.alt}
+          alt={t(pose.alt)}
           initial={{ opacity: 0, scale: 0.88, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 8 }}
@@ -77,6 +79,7 @@ export function SpeechBubble({
   tail?: 'left' | 'right' | 'top'
   className?: string
 }) {
+  useLocale()
   return (
     <div
       className={cn(
@@ -98,7 +101,7 @@ export function SpeechBubble({
           tail === 'top' && 'top-[-7px] left-8 border-t border-l border-luma-teal-100',
         )}
       />
-      {children}
+      {lt(children)}
     </div>
   )
 }

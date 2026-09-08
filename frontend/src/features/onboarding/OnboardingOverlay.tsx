@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
@@ -27,6 +28,7 @@ function getTargetRect(selector: string): Rect | null {
 }
 
 export function OnboardingOverlay() {
+  useLocale()
   const { active, steps, currentIndex, next, skip } = useOnboarding()
   const step = steps[currentIndex]
   const isLast = currentIndex === steps.length - 1
@@ -84,19 +86,18 @@ export function OnboardingOverlay() {
     <>
       <div className="mb-3 flex items-center justify-between">
         <span className="text-xs font-semibold text-luma-muted">
-          {currentIndex + 1} / {steps.length}
+          {lt(currentIndex + 1)} / {lt(steps.length)}
         </span>
         <button
           type="button"
           onClick={skip}
           className="text-xs text-luma-muted underline-offset-2 hover:text-luma-teal-700 hover:underline"
         >
-          跳过引导
-        </button>
+          {t("跳过引导")}</button>
       </div>
 
-      <h3 className="text-base font-bold text-luma-teal-900">{step.title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-luma-muted">{step.body}</p>
+      <h3 className="text-base font-bold text-luma-teal-900">{lt(step.title)}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-luma-muted">{lt(step.body)}</p>
 
       <div className="mt-4 flex items-center justify-between gap-3">
         <div className="flex gap-1">
@@ -116,7 +117,7 @@ export function OnboardingOverlay() {
           onClick={next}
           className="rounded-full bg-luma-teal-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-luma-teal-600 active:scale-95"
         >
-          {isLast ? '完成' : '下一步'}
+          {lt(isLast ? '完成' : '下一步')}
         </button>
       </div>
     </>
@@ -184,7 +185,7 @@ export function OnboardingOverlay() {
             exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.22 }}
           >
-            {bubbleContent}
+            {lt(bubbleContent)}
           </motion.div>
         ) : (
           <motion.div
@@ -196,7 +197,7 @@ export function OnboardingOverlay() {
             exit={{ opacity: 0, y: bubbleBelow ? -8 : 8 }}
             transition={{ duration: 0.2 }}
           >
-            {bubbleContent}
+            {lt(bubbleContent)}
           </motion.div>
         )}
       </AnimatePresence>

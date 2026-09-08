@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
@@ -34,6 +35,7 @@ export function Navbar({
   className,
   ariaLabel = '主导航',
 }: NavbarProps) {
+  useLocale()
   return (
     <motion.header
       className={cn(
@@ -48,13 +50,13 @@ export function Navbar({
         <a
           href="/"
           className="shrink-0 text-luma-teal-900 outline-none focus-visible:rounded-lg focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
-          aria-label="Luma 首页"
+          aria-label={t("Luma 首页")}
         >
-          {brand}
+          {lt(brand)}
         </a>
 
         {items.length > 0 && (
-          <nav aria-label={ariaLabel} className="hidden items-center gap-1 md:flex">
+          <nav aria-label={t(ariaLabel)} className="hidden items-center gap-1 md:flex">
             {items.map((item) => {
               const itemClass = cn(
                 'rounded-xl px-4 py-2 text-sm font-medium text-luma-muted outline-none transition-colors',
@@ -69,7 +71,7 @@ export function Navbar({
                   aria-current={item.isActive ? 'page' : undefined}
                   className={itemClass}
                 >
-                  {item.label}
+                  {lt(item.label)}
                 </button>
               ) : (
                 <a
@@ -78,7 +80,7 @@ export function Navbar({
                   aria-current={item.isActive ? 'page' : undefined}
                   className={itemClass}
                 >
-                  {item.label}
+                  {lt(item.label)}
                 </a>
               )
             })}
@@ -86,13 +88,13 @@ export function Navbar({
         )}
 
         {actions && (
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="flex shrink-0 items-center gap-2">{lt(actions)}</div>
         )}
       </div>
 
       {secondaryRow && (
         <div className="border-t border-luma-ivory-200/80 py-2">
-          {secondaryRow}
+          {lt(secondaryRow)}
         </div>
       )}
     </motion.header>

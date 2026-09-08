@@ -1,3 +1,5 @@
+> 历史研究草稿：保留早期摘录，不代表本项目的实测准确率、概率校准或临床有效性；当前能力与分值语义见 [文档导航](README.md)。
+
 # 文献提取：FBANet（Entropy 2023, 25, 1350）
 
 > 原文存档：[references/FBANet-Entropy2023.pdf](references/FBANet-Entropy2023.pdf)（开放获取 CC-BY）

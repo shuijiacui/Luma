@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { useEffect, useState } from 'react'
 
 function isPortraitMobile(): boolean {
@@ -5,6 +6,7 @@ function isPortraitMobile(): boolean {
 }
 
 export function LandscapeGuard() {
+  useLocale()
   const [show, setShow] = useState(isPortraitMobile)
 
   useEffect(() => {
@@ -24,17 +26,16 @@ export function LandscapeGuard() {
       <div className="text-6xl" style={{ animation: 'spin-once 1.2s ease-in-out forwards' }}>
         📱
       </div>
-      <h2 className="font-display text-2xl font-bold text-white">请旋转屏幕</h2>
+      <h2 className="font-display text-2xl font-bold text-white">{t("请旋转屏幕")}</h2>
       <p className="text-sm leading-relaxed text-luma-teal-200">
-        横屏体验更好，请将手机旋转为横屏后继续。
-      </p>
-      <style>{`
+        {t("横屏体验更好，请将手机旋转为横屏后继续。")}</p>
+      <style>{lt(`
         @keyframes spin-once {
           0%   { transform: rotate(0deg); }
           60%  { transform: rotate(90deg); }
           100% { transform: rotate(90deg); }
         }
-      `}</style>
+      `)}</style>
     </div>
   )
 }

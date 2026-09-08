@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 
@@ -35,23 +36,24 @@ export function WelcomeOverlay({
   onSkip,
   onBack,
 }: WelcomeOverlayProps) {
+  useLocale()
   const shortName =
     displayName.length > 8 ? displayName.slice(0, 8) + '…' : displayName
 
   const allLines: readonly WelcomeLine[] = [
-    { poseKey: 'wave', text: '嗨～' + shortName + '，我是 Nilo！我一直在等你哦。' },
+    { poseKey: 'wave', text: t('嗨～') + shortName + t('，我是 Nilo！我一直在等你哦。') },
     { poseKey: 'cheer', text: '你想跟我一起完成一幅画吗？' },
   ]
   const [isSecondShown, setIsSecondShown] = useState(false)
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-luma-teal-50/45 backdrop-blur-[3px]">
+    <div className="fixed inset-x-0 bottom-0 top-[var(--language-bar-height)] z-50 overflow-y-auto bg-luma-teal-50/45 backdrop-blur-[3px]">
       {/* 右上角：回小屋 */}
       <button
         type="button"
         onClick={onBack}
         className="absolute top-4 right-4 inline-flex min-h-9 items-center gap-1 rounded-xl px-3 text-sm font-bold text-luma-teal-700 outline-none transition-colors hover:bg-white/80 hover:text-luma-teal-900 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60 sm:top-5 sm:right-6"
-        aria-label="返回小屋"
+        aria-label={t("返回小屋")}
       >
         <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
           <path
@@ -62,8 +64,7 @@ export function WelcomeOverlay({
             strokeLinejoin="round"
           />
         </svg>
-        回小屋
-      </button>
+        {t("回小屋")}</button>
 
       {/* 整体内容垂直、水平居中在屏幕中间 */}
       <div className="flex min-h-full items-center justify-center px-5 py-8">
@@ -93,10 +94,10 @@ export function WelcomeOverlay({
               <div className="w-full max-w-lg sm:w-auto">
                 <SpeechBubble tail="left" className="w-full sm:w-auto">
                   <p
-                    className="luma-body-lg font-semibold whitespace-normal text-luma-teal-900 sm:whitespace-nowrap"
+                    className="luma-body-lg font-semibold whitespace-normal text-luma-teal-900"
                     role="status"
                   >
-                    {allLines[0].text}
+                    {lt(allLines[0].text)}
                   </p>
                 </SpeechBubble>
               </div>
@@ -114,7 +115,7 @@ export function WelcomeOverlay({
                       className="luma-body-lg font-semibold whitespace-normal text-luma-teal-900 sm:whitespace-nowrap"
                       role="status"
                     >
-                      {allLines[1].text}
+                      {lt(allLines[1].text)}
                     </p>
                   </SpeechBubble>
                 </motion.div>
@@ -123,7 +124,7 @@ export function WelcomeOverlay({
                 <div className="invisible w-full max-w-lg sm:w-auto" aria-hidden="true">
                   <SpeechBubble tail="left" className="w-full sm:w-auto">
                     <p className="luma-body-lg font-semibold whitespace-normal sm:whitespace-nowrap">
-                      {allLines[1].text}
+                      {lt(allLines[1].text)}
                     </p>
                   </SpeechBubble>
                 </div>
@@ -135,11 +136,9 @@ export function WelcomeOverlay({
               {isSecondShown ? (
                 <>
                   <Button variant="primary" size="lg" onClick={onEnter}>
-                    好呀，一起画！
-                  </Button>
+                    {t("好呀，一起画！")}</Button>
                   <Button variant="ghost" size="lg" onClick={onSkip}>
-                    跳过，直接去画板
-                  </Button>
+                    {t("跳过，直接去画板")}</Button>
                 </>
               ) : (
                 <Button
@@ -147,8 +146,7 @@ export function WelcomeOverlay({
                   size="lg"
                   onClick={() => setIsSecondShown(true)}
                 >
-                  继续听～
-                </Button>
+                  {t("继续听～")}</Button>
               )}
             </div>
           </div>

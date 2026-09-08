@@ -1,3 +1,4 @@
+import { t, useLocale } from '@/i18n'
 import {
   forwardRef,
   useEffect,
@@ -30,6 +31,7 @@ export const DrawingCanvas = forwardRef<
   { color, brushSize, isEraser, onStrokeComplete, draft, disabled },
   forwardedRef,
 ) {
+  useLocale()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
   const historyRef = useRef<string[]>([...draft.history])
@@ -216,7 +218,7 @@ export const DrawingCanvas = forwardRef<
     <canvas
       ref={canvasRef}
       className="h-full min-h-[440px] w-full cursor-crosshair touch-none rounded-[1.5rem] bg-white"
-      aria-label="自由绘画画布"
+      aria-label={t("自由绘画画布")}
       onPointerDown={startDrawing}
       onPointerMove={draw}
       onPointerUp={finishDrawing}

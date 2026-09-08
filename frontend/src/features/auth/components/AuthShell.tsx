@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -25,6 +26,7 @@ export function AuthShell({
   description,
   children,
 }: AuthShellProps) {
+  useLocale()
   return (
     <main
       className={cn(
@@ -79,7 +81,7 @@ export function AuthShell({
               <Link
                 to="/"
                 className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/55 bg-white/45 px-3 text-sm font-semibold text-luma-teal-700 shadow-sm outline-none backdrop-blur-md transition-colors hover:bg-white/75 hover:text-luma-teal-900 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
-                aria-label="返回 Luma 首页"
+                aria-label={t("返回 Luma 首页")}
               >
                 <svg
                   viewBox="0 0 20 20"
@@ -95,8 +97,7 @@ export function AuthShell({
                     strokeLinejoin="round"
                   />
                 </svg>
-                返回首页
-              </Link>
+                {t("返回首页")}</Link>
             </motion.div>
           )}
 
@@ -107,16 +108,16 @@ export function AuthShell({
             >
               <Brand size="lg" />
             </Link>
-            <div className="luma-eyebrow mb-3 text-luma-gold-700">{eyebrow}</div>
-            <h1 className="luma-heading-2 text-luma-teal-900">{title}</h1>
-            <p className="luma-body mt-3 text-luma-muted">{description}</p>
+            <div className="luma-eyebrow mb-3 text-luma-gold-700">{lt(eyebrow)}</div>
+            <h1 className="luma-heading-2 text-luma-teal-900">{lt(title)}</h1>
+            <p className="luma-body mt-3 text-luma-muted">{lt(description)}</p>
           </motion.div>
 
           <motion.section
             variants={fadeUp}
             className="rounded-luma-lg border border-white/85 bg-white/82 p-6 shadow-[0_24px_70px_rgba(23,63,58,0.14)] backdrop-blur-xl sm:p-8"
           >
-            {children}
+            {lt(children)}
           </motion.section>
         </motion.div>
       </div>

@@ -1,3 +1,4 @@
+import { lt, useLocale } from '@/i18n'
 import { useId, type InputHTMLAttributes } from 'react'
 
 import { cn } from '@/lib/cn'
@@ -16,6 +17,7 @@ export function FormField({
   id,
   ...props
 }: FormFieldProps) {
+  useLocale()
   const generatedId = useId()
   const inputId = id ?? generatedId
   const hintId = `${inputId}-hint`
@@ -24,7 +26,7 @@ export function FormField({
   return (
     <label htmlFor={inputId} className="block">
       <span className="mb-2 block text-sm font-semibold text-luma-teal-900">
-        {label}
+        {lt(label)}
       </span>
       <input
         id={inputId}
@@ -40,11 +42,11 @@ export function FormField({
       />
       {error ? (
         <span id={errorId} className="mt-1.5 block text-sm text-red-600">
-          {error}
+          {lt(error)}
         </span>
       ) : hint ? (
         <span id={hintId} className="mt-1.5 block text-xs text-luma-muted">
-          {hint}
+          {lt(hint)}
         </span>
       ) : null}
     </label>

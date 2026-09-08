@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { useChildHistory } from '@/hooks/useChildHistory'
 import { exportArchive } from '../exportArchive'
 import { motion } from 'framer-motion'
@@ -47,6 +48,7 @@ const emotionColor: Record<string, string> = {
 }
 
 export function ArchivePage() {
+  useLocale()
   const navigate = useNavigate()
   const { session, logout } = useAuth()
 
@@ -127,12 +129,11 @@ export function ArchivePage() {
               )}
               <div className="hidden text-right lg:block">
                 <div className="text-sm font-bold text-luma-teal-900">{session?.displayName}</div>
-                <div className="text-xs text-luma-muted">家长账号</div>
+                <div className="text-xs text-luma-muted">{t("家长账号")}</div>
               </div>
               <AvatarPicker userId={session?.id ?? 'guest-parent'} compact />
               <Button variant="ghost" size="sm" onClick={handleLogout}>
-                退出
-              </Button>
+                {t("退出")}</Button>
             </>
           }
         />
@@ -144,27 +145,25 @@ export function ArchivePage() {
           animate="visible"
         >
           <motion.section variants={fadeUp} id="archive">
-            <div className="luma-eyebrow text-luma-gold-700">家庭成长档案</div>
+            <div className="luma-eyebrow text-luma-gold-700">{t("家庭成长档案")}</div>
             <h1 className="luma-heading-1 mt-3 text-luma-teal-900">
-              {selectedChild ? `${selectedChild.nickname} 的创作旅程` : '成长档案'}
+              {lt(selectedChild ? `${selectedChild.nickname} 的创作旅程` : '成长档案')}
             </h1>
             <p className="luma-body-lg mt-4 max-w-2xl text-luma-muted">
-              {analyses === null
+              {lt(analyses === null
                 ? '加载中…'
                 : totalWorks > 0
                   ? `共 ${totalWorks} 件作品 · 每一件都是孩子留下的印记`
-                  : '孩子完成第一次创作后，档案会出现在这里。'}
+                  : '孩子完成第一次创作后，档案会出现在这里。')}
             </p>
           </motion.section>
 
-          {meError || historyError ? <p role="alert">{historyError ?? '家庭信息加载失败。'}<Button onClick={() => { setRevision(n => n + 1); reload() }}>重试</Button></p> : (!session?.isGuest && !me) || months === null ? (
+          {meError || historyError ? <p role="alert">{lt(historyError ?? '家庭信息加载失败。')}<Button onClick={() => { setRevision(n => n + 1); reload() }}>{t("重试")}</Button></p> : (!session?.isGuest && !me) || months === null ? (
             <motion.div variants={fadeUp} className="mt-16 text-center text-sm text-luma-muted">
-              加载中…
-            </motion.div>
+              {t("加载中…")}</motion.div>
           ) : months.length === 0 ? (
             <motion.div variants={fadeUp} className="mt-16 text-center text-sm text-luma-muted">
-              暂无创作记录
-            </motion.div>
+              {t("暂无创作记录")}</motion.div>
           ) : (
             <motion.div
               variants={staggerContainer}
@@ -175,9 +174,9 @@ export function ArchivePage() {
               {months.map((m) => (
                 <motion.div key={m.month} variants={fadeUp}>
                   <div className="mb-4 flex items-center gap-4">
-                    <span className="font-brand text-lg font-bold text-luma-teal-900">{m.month}</span>
+                    <span className="font-brand text-lg font-bold text-luma-teal-900">{lt(m.month)}</span>
                     <div className="h-px flex-1 bg-luma-teal-100" />
-                    <span className="text-xs text-luma-muted">{m.works.length} 件</span>
+                    <span className="text-xs text-luma-muted">{lt(m.works.length)} {t("件")}</span>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -186,7 +185,7 @@ export function ArchivePage() {
                         key={work.id}
                         className="rounded-2xl border border-luma-ivory-200 bg-white p-4 shadow-luma-sm transition hover:border-luma-teal-100"
                       >
-                        <div className="font-bold text-luma-teal-900">{work.title}</div>
+                        <div className="font-bold text-luma-teal-900">{lt(work.title)}</div>
                         <div className="mt-2 flex items-center gap-2">
                           {work.emotion && (
                             <span
@@ -195,14 +194,14 @@ export function ArchivePage() {
                                 emotionColor[work.emotion] ?? 'bg-luma-ivory-100 text-luma-muted',
                               )}
                             >
-                              {work.emotion}
+                              {lt(work.emotion)}
                             </span>
                           )}
                           <span className="text-xs text-luma-muted">
-                            {new Date(work.createdAt).toLocaleDateString('zh-CN', {
+                            {lt(new Date(work.createdAt).toLocaleDateString('zh-CN', {
                               month: 'numeric',
                               day: 'numeric',
-                            })}
+                            }))}
                           </span>
                         </div>
                       </div>
@@ -217,16 +216,16 @@ export function ArchivePage() {
             <Card
               variant="glass"
               eyebrow="年度回顾"
-              title="生成完整成长报告"
+              title={t("生成完整成长报告")}
               description="将一年的创作轨迹整理成可保存、可分享的成长册。"
               className="text-center"
             >
               <div className="mt-4 flex flex-wrap justify-center gap-3">
-                <Button variant="primary" disabled={exportBusy || !totalWorks || !session?.token} onClick={() => download(new Date().getFullYear())}>生成本年成长册</Button>
-                <Button variant="secondary" disabled={exportBusy || !totalWorks || !session?.token} onClick={() => download()}>导出全部作品</Button>
+                <Button variant="primary" disabled={exportBusy || !totalWorks || !session?.token} onClick={() => download(new Date().getFullYear())}>{t("生成本年成长册")}</Button>
+                <Button variant="secondary" disabled={exportBusy || !totalWorks || !session?.token} onClick={() => download()}>{t("导出全部作品")}</Button>
               </div>
-              <p role="status" className="mt-3 text-sm">{exportStatus}</p>
-              <p className="mt-4 text-xs text-luma-muted">单文件 HTML 包含原图和已有解读，可离线查看与打印。不收取费用。</p>
+              <p role="status" className="mt-3 text-sm">{lt(exportStatus)}</p>
+              <p className="mt-4 text-xs text-luma-muted">{t("单文件 HTML 包含原图和已有解读，可离线查看与打印。不收取费用。")}</p>
             </Card>
           </motion.div>
         </motion.div>

@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { useChildHistory } from '@/hooks/useChildHistory'
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
@@ -98,6 +99,7 @@ interface Props {
 }
 
 export function CommunicationSection({ childName, childId, token }: Props) {
+  useLocale()
   const isReal = !!(childId && token)
   const { analyses, error, reload } = useChildHistory(childId, token)
 
@@ -117,13 +119,13 @@ export function CommunicationSection({ childName, childId, token }: Props) {
     <motion.section variants={fadeUp} id="communication" className="mt-5">
       <Card
         eyebrow="AI 沟通助手"
-        title={`和 ${childName} 聊什么？`}
+        title={t(`和 ${childName} 聊什么？`)}
         description="从创作观察出发，给你一个和孩子开口的理由"
       >
-        {error && <p role="alert">{error}<button onClick={reload}>重试</button></p>}
+        {error && <p role="alert">{lt(error)}<button onClick={reload}>{t("重试")}</button></p>}
         {observations === null ? (
           <p className="py-6 text-center text-sm text-luma-muted">
-            {analyses === null ? '加载中…' : '孩子完成更多创作并生成报告后，沟通建议会出现在这里。'}
+            {lt(analyses === null ? '加载中…' : '孩子完成更多创作并生成报告后，沟通建议会出现在这里。')}
           </p>
         ) : (
           <div className="mt-4 space-y-3">
@@ -152,10 +154,10 @@ export function CommunicationSection({ childName, childId, token }: Props) {
                         obs.tone === 'violet' && 'bg-[#eeeffe] text-[#5a62c0]',
                       )}
                     >
-                      {obs.tag}
+                      {lt(obs.tag)}
                     </span>
                     <span className="flex-1 text-sm font-semibold text-luma-teal-900 line-clamp-1">
-                      {obs.detail}
+                      {lt(obs.detail)}
                     </span>
                     <span className={cn('shrink-0 text-luma-muted transition-transform', isOpen && 'rotate-180')}>
                       ▾
@@ -165,24 +167,23 @@ export function CommunicationSection({ childName, childId, token }: Props) {
                   {isOpen && (
                     <div className="border-t border-luma-ivory-200 px-5 pb-5 pt-4">
                       <p className="text-sm leading-relaxed text-luma-muted">
-                        <span className="font-bold text-luma-teal-900">观察：</span>
-                        {obs.detail}
+                        <span className="font-bold text-luma-teal-900">{t("观察：")}</span>
+                        {lt(obs.detail)}
                       </p>
                       <div className="mt-4 space-y-3">
                         {obs.suggestions.map((s) => (
                           <div key={s.prompt} className="rounded-xl bg-luma-ivory-50 p-4">
                             <div className="text-xs font-bold uppercase tracking-wider text-luma-gold-700">
-                              {s.intent}
+                              {lt(s.intent)}
                             </div>
                             <p className="mt-2 font-display text-lg font-semibold leading-relaxed text-luma-teal-900">
-                              {s.prompt}
+                              {lt(s.prompt)}
                             </p>
                           </div>
                         ))}
                       </div>
                       <div className="mt-4 text-xs text-luma-muted">
-                        这些问题没有标准答案，孩子可以选择不回答。
-                      </div>
+                        {t("这些问题没有标准答案，孩子可以选择不回答。")}</div>
                     </div>
                   )}
                 </div>

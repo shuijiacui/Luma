@@ -1,6 +1,7 @@
 // 报告生成：家长建议 + 儿童侧描述性反馈
 // 基础文案为模板；本模块也提供可选家长文本增强的 prompt 与输出校验。
 import { RED_LINE_WORDS } from './score.js'
+import { unsafeEnglish } from './localization.js'
 
 const ELEMENT_ZH = {
   house: '房子', tree: '树', person: '小人', sun: '太阳', moon: '月亮', star: '星星',
@@ -182,7 +183,7 @@ export function validateParentNarrative(value) {
     || value.advice.some(item => typeof item !== 'string' || item.length < 2)) return null
   const text = [value.summary, ...value.advice].join('')
   const redLine = new RegExp(RED_LINE_WORDS.join('|'))
-  if (redLine.test(text) || text.length < 40 || text.length > 900) return null
+  if (redLine.test(text) || unsafeEnglish(text) || text.length < 40 || text.length > 900) return null
   return { summary: value.summary.trim(), advice: value.advice.map(item => item.trim()) }
 }
 
@@ -205,7 +206,7 @@ export function validateWebAdvice(value) {
     || value.advice.some(item => typeof item !== 'string' || item.trim().length < 2)) return null
   const advice = value.advice.map(item => item.trim()).filter(Boolean)
   const redLine = new RegExp(RED_LINE_WORDS.join('|'))
-  if (redLine.test(advice.join(''))) return null
+  if (redLine.test(advice.join('')) || unsafeEnglish(advice.join(' '))) return null
   return advice
 }
 
@@ -229,6 +230,6 @@ export function validateEvidencePlain(value, count) {
   const items = value.items.map(s => (typeof s === 'string' ? s.trim() : '')).filter(Boolean)
   if (items.length !== count) return null
   const redLine = new RegExp(RED_LINE_WORDS.join('|'))
-  if (redLine.test(items.join(''))) return null
+  if (redLine.test(items.join('')) || unsafeEnglish(items.join(' '))) return null
   return items
 }

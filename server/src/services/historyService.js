@@ -54,6 +54,7 @@ export function listAnalyses(db, childId, auth, { limit = 50, offset = 0 } = {})
           ? {
             emotion: report.emotion,
             confidence: report.confidence,
+            language: report.language ?? 'zh',
             evidence: report.evidence,
             parentAdvice: report.parentAdvice,
             narrative: report.narrative,

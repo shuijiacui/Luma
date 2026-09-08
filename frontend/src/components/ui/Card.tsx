@@ -1,3 +1,4 @@
+import { lt, useLocale } from '@/i18n'
 import { motion } from 'framer-motion'
 import type { ComponentProps, ReactNode } from 'react'
 
@@ -38,6 +39,7 @@ export function Card({
   footer,
   ...props
 }: CardProps) {
+  useLocale()
   return (
     <motion.article
       className={cn(
@@ -52,17 +54,17 @@ export function Card({
       {...props}
     >
       {eyebrow && (
-        <div className="luma-eyebrow mb-3 text-luma-gold-700">{eyebrow}</div>
+        <div className="luma-eyebrow mb-3 text-luma-gold-700">{lt(eyebrow)}</div>
       )}
       {title && (
-        <h3 className="luma-heading-3 text-luma-teal-900">{title}</h3>
+        <h3 className="luma-heading-3 text-luma-teal-900">{lt(title)}</h3>
       )}
       {description && (
-        <p className="luma-body mt-2 text-luma-muted">{description}</p>
+        <p className="luma-body mt-2 text-luma-muted">{lt(description)}</p>
       )}
-      {children && <div className="mt-5">{children}</div>}
+      {children && <div className="mt-5">{lt(children)}</div>}
       {footer && (
-        <div className="mt-6 border-t border-luma-ivory-200 pt-5">{footer}</div>
+        <div className="mt-6 border-t border-luma-ivory-200 pt-5">{lt(footer)}</div>
       )}
     </motion.article>
   )

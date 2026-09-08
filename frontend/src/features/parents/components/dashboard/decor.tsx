@@ -1,4 +1,5 @@
-﻿import type { ImgHTMLAttributes, SVGProps } from 'react'
+import { t, useLocale } from '@/i18n'
+import type { ImgHTMLAttributes, SVGProps } from 'react'
 
 import niloCutout from '@/assets/images/nilo-cutout.png'
 import { cn } from '@/lib/cn'
@@ -7,6 +8,7 @@ type DecoProps = SVGProps<SVGSVGElement> & { tone?: 'green' | 'clay' | 'gold' | 
 
 /** 手绘风格的小枝桠（水彩叶片） */
 export function LeafSprig({ tone = 'green', className, ...props }: DecoProps) {
+  useLocale()
   const palette = {
     green: { stem: '#7a9a5e', leaf: '#a9c68a', wash: '#d9e8c8' },
     clay: { stem: '#b08a5c', leaf: '#c9a878', wash: '#eedfc6' },
@@ -29,6 +31,7 @@ export function LeafSprig({ tone = 'green', className, ...props }: DecoProps) {
 
 /** 细长垂坠枝条：适合页面边角与侧栏底部 */
 export function HangingBranch({ tone = 'green', className, ...props }: DecoProps) {
+  useLocale()
   const palette = {
     green: { stem: '#7a9a5e', leaf: '#b3cd96', wash: '#e2eed4', dot: '#94b976' },
     clay: { stem: '#b08a5c', leaf: '#cfae82', wash: '#f0e2cd', dot: '#c9a878' },
@@ -56,6 +59,7 @@ export function HangingBranch({ tone = 'green', className, ...props }: DecoProps
 
 /** 手绘小蝴蝶 */
 export function Butterfly({ className, ...props }: SVGProps<SVGSVGElement>) {
+  useLocale()
   return (
     <svg viewBox="0 0 48 40" fill="none" className={cn('h-7 w-8', className)} aria-hidden="true" {...props}>
       <ellipse cx="24" cy="24" rx="3.2" ry="12" fill="#d9b1c8" opacity=".55" />
@@ -74,6 +78,7 @@ export function Butterfly({ className, ...props }: SVGProps<SVGSVGElement>) {
 
 /** 柔和四芒星光点 */
 export function SparkleDot({ className, ...props }: SVGProps<SVGSVGElement>) {
+  useLocale()
   return (
     <svg viewBox="0 0 24 24" fill="none" className={cn('h-4 w-4', className)} aria-hidden="true" {...props}>
       <path
@@ -92,6 +97,7 @@ export function SparkleDot({ className, ...props }: SVGProps<SVGSVGElement>) {
 
 /** 手写感波浪下划线 */
 export function Squiggle({ className, ...props }: SVGProps<SVGSVGElement>) {
+  useLocale()
   return (
     <svg viewBox="0 0 120 12" fill="none" className={cn('h-3 w-28', className)} aria-hidden="true" {...props}>
       <path
@@ -111,10 +117,11 @@ export function OtterDeco({
   alt = 'Nilo 水獭',
   ...props
 }: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'alt' | 'draggable'> & { alt?: string }) {
+  useLocale()
   return (
     <img
       src={niloCutout}
-      alt={alt}
+      alt={t(alt)}
       draggable={false}
       className={cn('select-none object-contain', className)}
       {...props}

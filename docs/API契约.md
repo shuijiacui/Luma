@@ -1,6 +1,6 @@
 # API 契约
 
-> 更新于 2026-09-06。Base URL：`http://localhost:3001/api`。除图片接口外，请求/响应为 JSON；受保护请求带 `Authorization: Bearer <token>`，不支持 URL token。
+> 更新于 2026-09-08。Base URL：`http://localhost:3001/api`。除图片接口外，请求/响应为 JSON；受保护请求带 `Authorization: Bearer <token>`，不支持 URL token。
 
 ## 认证与错误
 

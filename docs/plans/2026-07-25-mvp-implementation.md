@@ -1,3 +1,5 @@
+> 历史实施计划：版本、范围与任务状态可能过时，当前启动和验收见 [文档导航](../README.md)。
+
 # 儿童绘画心理探索产品 MVP Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.

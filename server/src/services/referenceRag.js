@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { unsafeEnglish } from './localization.js'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -36,6 +37,6 @@ export function validateReferenceFilter(value, retrieved) {
   const items = value.items.filter(x => x && allowed.has(x.sourceFile) && typeof x.text === 'string' && typeof x.limitation === 'string')
   if (!items.length || items.length > 5) return null
   const forbidden = /(诊断|疾病|患病|概率|确定|说明孩子|心理测评)/
-  if (items.some(x => forbidden.test(`${x.text}${x.limitation}`))) return null
+  if (items.some(x => forbidden.test(`${x.text}${x.limitation}`) || unsafeEnglish(`${x.text} ${x.limitation}`))) return null
   return items.map(x => ({ ...x, role: 'reference_only' }))
 }

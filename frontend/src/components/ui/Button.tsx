@@ -1,3 +1,4 @@
+import { lt, useLocale } from '@/i18n'
 import { motion } from 'framer-motion'
 import type { ComponentProps, ReactNode } from 'react'
 
@@ -48,6 +49,7 @@ export function Button({
   type = 'button',
   ...props
 }: ButtonProps) {
+  useLocale()
   const isDisabled = disabled || isLoading
 
   return (
@@ -76,8 +78,8 @@ export function Button({
       ) : (
         leadingIcon
       )}
-      <span>{children}</span>
-      {!isLoading && trailingIcon}
+      <span>{lt(children)}</span>
+      {lt(!isLoading && trailingIcon)}
     </motion.button>
   )
 }

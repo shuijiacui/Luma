@@ -1,3 +1,4 @@
+import { lt, useLocale } from '@/i18n'
 import {
   createContext,
   useCallback,
@@ -64,6 +65,7 @@ async function toAuthResult(
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  useLocale()
   const [session, setSession] = useState<AuthSession | null>(getStoredSession)
   useEffect(() => {
     const sync = () => setSession(getStoredSession())
@@ -175,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ],
   )
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={value}>{lt(children)}</AuthContext.Provider>
 }
 
 // The provider and its colocated hook intentionally share this module.

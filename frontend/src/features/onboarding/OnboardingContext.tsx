@@ -1,3 +1,4 @@
+import { lt, useLocale } from '@/i18n'
 import {
   createContext,
   useCallback,
@@ -66,6 +67,7 @@ export function clearOnboardingSession(): void {
 }
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
+  useLocale()
   const [active, setActive] = useState(false)
   const [steps, setSteps] = useState<OnboardingStep[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -101,7 +103,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     [active, steps, currentIndex, start, next, skip],
   )
 
-  return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>
+  return <OnboardingContext.Provider value={value}>{lt(children)}</OnboardingContext.Provider>
 }
 
 export function useOnboarding() {

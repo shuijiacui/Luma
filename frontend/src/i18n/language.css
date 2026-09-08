@@ -1,0 +1,18 @@
+:root { --language-bar-height: 44px; }
+.luma-language-bar { position: fixed; z-index: 100000; inset: 0 0 auto; height: var(--language-bar-height); display: flex; justify-content: flex-end; padding-inline: max(20px, calc((100vw - 1200px) / 2)); background: #fbf8ef; border-bottom: 1px solid #476d5914; }
+.luma-language-switch { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 6px; color: #75877d; font: 12px/1.2 var(--font-sans); cursor: pointer; }
+.luma-language-switch svg { width: 17px; height: 17px; margin-right: 3px; }
+.luma-language-switch .is-current { color: #285b50; font-weight: 700; }
+.luma-language-switch:focus-visible { outline: 2px solid #ab843c; outline-offset: -3px; border-radius: 5px; }
+.luma-localized-app { padding-top: var(--language-bar-height); }
+.luma-localized-app .luma-landing, .luma-localized-app .nilo-home { height: calc(100svh - var(--language-bar-height)); }
+.luma-localized-app .min-h-screen { min-height: calc(100svh - var(--language-bar-height)); }
+html[lang=en] .nilo-home-brand > span + span { letter-spacing: .025em; }
+html[lang=en] .nilo-tree-sign { font-size: .85cqw; letter-spacing: .03em; }
+html[lang=en] .door-plaque-lettering strong { font-size: 1.6cqw; letter-spacing: .025em; }
+html[lang=en] .nilo-field-note { letter-spacing: 0; font-size: .9cqw; }
+html[lang=en] .nilo-touch-hint { letter-spacing: 0; }
+html[lang=en] .nilo-leave { letter-spacing: 0; }
+html[lang=en] .luma-landing-entrances a { letter-spacing: .025em; }
+@media (max-width: 1100px) { html[lang=en] .nilo-home-brand > span + span { display: none; } }
+@media (max-width: 600px) { html[lang=en] .nilo-leave { max-width: 48px; font-size: 10px; white-space: normal; } }

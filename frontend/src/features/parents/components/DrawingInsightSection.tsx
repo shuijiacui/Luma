@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 // 画面解读（家长视角）：基于孩子画作的情绪倾向报告 + 历史解读
 // 数据源：/api/report + /api/children/:id/analyses（判定逻辑全在后端，前端只展示，不做阈值判断、不改写文案）
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -32,12 +33,13 @@ function emotionStyle(emotion: string) {
  * 所以经 useAuthedImage 取 blob 再渲染，令牌不进 URL。
  */
 function HistoryThumb({ path, token }: { path: string; token: string }) {
+  useLocale()
   const objectUrl = useAuthedImage(path, token)
   if (!objectUrl) return null
   return (
     <img
       src={objectUrl}
-      alt="孩子的画作"
+      alt={t("孩子的画作")}
       className="size-12 shrink-0 rounded-lg object-cover"
     />
   )
@@ -73,6 +75,7 @@ interface DrawingInsightSectionProps {
 }
 
 export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsightSectionProps) {
+  useLocale()
   const [report, setReport] = useState<ReportResponse | null>(null)
   const [reportSource, setReportSource] = useState<'latest' | 'history'>('latest')
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
@@ -137,7 +140,7 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
 
   async function deleteSelected() {
     if (!activeId || !token || status === 'loading') return
-    if (!window.confirm('删除这幅画及其解读？该操作无法撤销。')) return
+    if (!window.confirm(t('删除这幅画及其解读？该操作无法撤销。'))) return
     const generation = ++generationRef.current
     setStatus('loading')
     try {
@@ -160,36 +163,35 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
     <Card
       variant="glass"
       eyebrow="画面解读"
-      title="所选画作的观察与解读"
+      title={t("所选画作的观察与解读")}
       description="只呈现情绪倾向与参考分值，不构成任何诊断结论"
       className="mt-5 border-luma-teal-100"
     >
-      {loadError && <p role="alert" className="text-sm text-red-700">作品加载失败。<button onClick={loadHistory}>重试</button></p>}
-      {features && <Button variant="ghost" size="sm" disabled={status === 'loading'} onClick={deleteSelected}>删除所选画作</Button>}
-      {report && status === 'error' && <p role="alert">操作失败，请稍后重试。</p>}
-      {features && <label className="mb-3 block text-sm">选择画作
-        <select className="ml-2 rounded-lg border p-2" value={activeId ?? ''} disabled={status === 'loading'} onChange={e => {
+      <p className="mb-3 text-xs leading-relaxed text-luma-muted">{t('新解读将使用当前语言；已有自由文本保留生成时的语言。')}</p>
+      {loadError && <p role="alert" className="text-sm text-red-700">{t("作品加载失败。")}<button onClick={loadHistory}>{t("重试")}</button></p>}
+      {features && <Button variant="ghost" size="sm" disabled={status === 'loading'} onClick={deleteSelected}>{t("删除所选画作")}</Button>}
+      {report && status === 'error' && <p role="alert">{t("操作失败，请稍后重试。")}</p>}
+      {features && <label className="mb-3 block text-sm">{t("选择画作")}<select className="ml-2 rounded-lg border p-2" value={activeId ?? ''} disabled={status === 'loading'} onChange={e => {
           const item = history.find(a => a.id === e.target.value)
           if (item) handleSelectHistory(item)
         }}>
-          {history.map(a => <option key={a.id} value={a.id}>{formatTime(a.createdAt)} · {a.summary.elements.map(elementLabel).join('、') || '小画'}{a.report ? '' : '（未解读）'}</option>)}
+          {history.map(a => <option key={a.id} value={a.id}>{lt(formatTime(a.createdAt))} · {lt(a.summary.elements.map(elementLabel).join('、') || '小画')}{lt(a.report ? '' : '（未解读）')}</option>)}
         </select>
       </label>}
       {!report ? (
         <div className="mt-2 flex flex-wrap items-center gap-3">
           {features ? (
             <Button variant="secondary" onClick={handleGenerate} disabled={status === 'loading'}>
-              {status === 'loading' ? '正在解读…' : '生成画面解读'}
+              {lt(status === 'loading' ? '正在解读…' : '生成画面解读')}
             </Button>
           ) : (
             <p className="text-sm text-luma-muted">
-              {token ? '正在读取家庭画作；完成创作后可在任意设备生成解读。' : '演示内容不生成真实家庭报告。'}
+              {lt(token ? '正在读取家庭画作；完成创作后可在任意设备生成解读。' : '演示内容不生成真实家庭报告。')}
             </p>
           )}
           {status === 'error' && (
             <span className="text-sm font-semibold text-[#c4533f]">
-              解读服务暂时不可用，请确认后端已启动后重试
-            </span>
+              {t("解读服务暂时不可用，请确认后端已启动后重试")}</span>
           )}
         </div>
       ) : (
@@ -201,7 +203,7 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
                 style?.className,
               )}
             >
-              {style?.label}
+              {lt(style?.label)}
             </span>
             <div className="flex items-center gap-2">
               <div className="h-2 w-36 overflow-hidden rounded-full bg-luma-ivory-200">
@@ -211,11 +213,11 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
                 />
               </div>
               <span className="text-sm font-bold text-luma-teal-900">
-                参考分值 {Math.round(report.confidence * 100)}%
+                {t("参考分值")}{lt(Math.round(report.confidence * 100))}%
               </span>
             </div>
             {reportSource === 'history' && (
-              <span className="text-xs font-semibold text-luma-muted">（历史解读）</span>
+              <span className="text-xs font-semibold text-luma-muted">{t("（历史解读）")}</span>
             )}
           </div>
 
@@ -227,7 +229,7 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
 
           {report.evidence.length > 0 && (
             <div>
-              <div className="luma-eyebrow text-luma-gold-700">判定依据（可追溯文献条目）</div>
+              <div className="luma-eyebrow text-luma-gold-700">{t("判定依据（可追溯文献条目）")}</div>
               <ul className="mt-2 space-y-2">
                 {report.evidence.map((item) => (
                   <li
@@ -235,15 +237,15 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
                     className="rounded-xl bg-luma-ivory-50 px-3.5 py-2.5 text-sm leading-relaxed"
                   >
                     <span className={item.plain ? 'text-luma-teal-900' : 'text-luma-muted'}>
-                      {item.plain ?? item.summary}
+                      {lt(item.plain ?? item.summary)}
                     </span>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       <span className="font-mono text-[11px] font-bold text-luma-teal-600">
-                        {item.entryId}
+                        {lt(item.entryId)}
                       </span>
                       {item.clusterLabel && (
                         <span className="rounded-full bg-luma-teal-50 px-2 py-0.5 text-[11px] font-semibold text-luma-teal-700">
-                          {item.clusterLabel}
+                          {lt(item.clusterLabel)}
                         </span>
                       )}
                     </div>
@@ -254,12 +256,12 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
           )}
 
           <div>
-            <div className="luma-eyebrow text-luma-gold-700">沟通建议</div>
+            <div className="luma-eyebrow text-luma-gold-700">{t("沟通建议")}</div>
             <ul className="mt-2 space-y-2">
               {report.parentAdvice.map((advice) => (
                 <li key={advice} className="flex items-start gap-2.5 text-sm leading-relaxed text-luma-teal-900">
                   <span className="mt-2 size-1.5 shrink-0 rounded-full bg-luma-gold-300" />
-                  {advice}
+                  {lt(advice)}
                 </li>
               ))}
             </ul>
@@ -268,13 +270,13 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
           {report.webAdvice && report.webAdvice.length > 0 && (
             <div>
               <div className="luma-eyebrow text-luma-teal-700">
-                {report.webAdviceSource ?? '延伸建议'}
+                {lt(report.webAdviceSource ?? '延伸建议')}
               </div>
               <ul className="mt-2 space-y-2">
                 {report.webAdvice.map((advice) => (
                   <li key={advice} className="flex items-start gap-2.5 text-sm leading-relaxed text-luma-muted">
                     <span className="mt-2 size-1.5 shrink-0 rounded-full bg-luma-ivory-300" />
-                    {advice}
+                    {lt(advice)}
                   </li>
                 ))}
               </ul>
@@ -284,17 +286,17 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
           {report.referenceEvidence && report.referenceEvidence.length > 0 && (
             <div>
               <div className="luma-eyebrow text-luma-teal-700">
-                {report.referenceEvidenceSource ?? '文献背景'}
+                {lt(report.referenceEvidenceSource ?? '文献背景')}
               </div>
               <ul className="mt-2 space-y-2">
                 {report.referenceEvidence.map((item, index) => (
                   <li key={`${item.sourceFile}-${index}`} className="rounded-xl bg-luma-ivory-50 px-3.5 py-2.5 text-sm leading-relaxed text-luma-muted">
-                    <span className="text-luma-teal-900">{item.text}</span>
+                    <span className="text-luma-teal-900">{lt(item.text)}</span>
                     <div className="mt-1 text-xs text-luma-muted">
-                      局限：{item.limitation}
+                      {t("局限：")}{lt(item.limitation)}
                     </div>
                     <div className="mt-1 font-mono text-[11px] text-luma-teal-600">
-                      文献来源：{item.sourceFile}
+                      {t("文献来源：")}{item.sourceFile}
                     </div>
                   </li>
                 ))}
@@ -303,12 +305,11 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
           )}
 
           <div className="rounded-xl bg-luma-teal-50 px-4 py-3 text-xs leading-relaxed text-luma-teal-700">
-            以上仅为单幅画面的观察参考，分值是规则计算结果，未经真实样本概率校准；请结合日常观察了解孩子。
-          </div>
+            {t("以上仅为单幅画面的观察参考，分值是规则计算结果，未经真实样本概率校准；请结合日常观察了解孩子。")}</div>
 
           {features && (
             <Button variant="ghost" size="sm" onClick={handleGenerate} disabled={status === 'loading'}>
-              {status === 'loading' ? '正在解读…' : '重新解读所选画作'}
+              {lt(status === 'loading' ? '正在解读…' : '重新解读所选画作')}
             </Button>
           )}
         </div>
@@ -317,12 +318,12 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
       {token && trend && trend.withReport > 0 && (
         <div className="mt-4 rounded-xl bg-luma-ivory-50 px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="luma-eyebrow text-luma-gold-700">近期趋势</span>
-            <span className="flex items-center gap-1" aria-label="历次解读结果">
+            <span className="luma-eyebrow text-luma-gold-700">{t("近期趋势")}</span>
+            <span className="flex items-center gap-1" aria-label={t("历次解读结果")}>
               {trend.points.map((p) => (
                 <span
                   key={p.createdAt}
-                  title={`${formatTime(p.createdAt)} ${p.emotion} ${Math.round(p.confidence * 100)}%`}
+                  title={t(`${formatTime(p.createdAt)} ${p.emotion} ${Math.round(p.confidence * 100)}%`)}
                   className={cn(
                     'inline-block size-2.5 rounded-full',
                     p.emotion === '需要关注' && 'bg-[#ef7b69]',
@@ -335,15 +336,15 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
             </span>
           </div>
           <p className={cn('mt-1.5 text-xs font-semibold', DIRECTION_TEXT[trend.direction].className)}>
-            {DIRECTION_TEXT[trend.direction].text}
-            <span className="ml-2 font-normal text-luma-muted">（基于最近 {trend.withReport} 次解读，仅为历史呈现，不构成预测）</span>
+            {lt(DIRECTION_TEXT[trend.direction].text)}
+            <span className="ml-2 font-normal text-luma-muted">{t("（基于最近")}{lt(trend.withReport)} {t("次解读，仅为历史呈现，不构成预测）")}</span>
           </p>
         </div>
       )}
 
       {token && history.length > 0 && (
         <div className="mt-6 border-t border-luma-ivory-200 pt-5">
-          <div className="luma-eyebrow text-luma-gold-700">历史解读</div>
+          <div className="luma-eyebrow text-luma-gold-700">{t("历史解读")}</div>
           <ul className="mt-3 space-y-2">
             {history.map((item) => (
               <li key={item.id}>
@@ -358,11 +359,11 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
                       : 'cursor-default border-luma-ivory-200 bg-luma-ivory-50 text-luma-muted',
                   )}
                 >
-                  <span className="text-luma-muted">{formatTime(item.createdAt)}</span>
+                  <span className="text-luma-muted">{lt(formatTime(item.createdAt))}</span>
                   <span className="flex-1 truncate font-semibold text-luma-teal-900">
-                    {item.summary.elements.length > 0
+                    {lt(item.summary.elements.length > 0
                       ? `画了 ${item.summary.elements.map(elementLabel).join('、')}`
-                      : '画面元素较少'}
+                      : '画面元素较少')}
                   </span>
                   {item.imageUrl && token && (
                     <HistoryThumb path={item.imageUrl} token={token} />
@@ -374,10 +375,10 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
                         emotionStyle(item.report.emotion).className,
                       )}
                     >
-                      {item.report.emotion} {Math.round(item.report.confidence * 100)}%
+                      {lt(item.report.emotion)} {lt(Math.round(item.report.confidence * 100))}%
                     </span>
                   ) : (
-                    <span className="shrink-0 text-xs">未生成解读</span>
+                    <span className="shrink-0 text-xs">{t("未生成解读")}</span>
                   )}
                 </button>
               </li>

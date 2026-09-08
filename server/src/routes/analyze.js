@@ -13,6 +13,7 @@ import { bochaSearch, searchQueryFor } from '../services/webSearch.js'
 import { insertAnalysis, attachReport } from '../services/historyService.js'
 import { log } from '../services/logger.js'
 import { traceNode } from '../services/tracing.js'
+import { localeOf, localizeReport, englishFeedback, ENGLISH_FOLLOW_UP, ENGLISH_PROMPT } from '../services/localization.js'
 import { retrieveReferences, buildReferenceFilterPrompt, validateReferenceFilter } from '../services/referenceRag.js'
 
 export function createApiRouter({ chatWithImage, chatText = null, webSearch = null, retrieveReferences: retrieveReferencesImpl = retrieveReferences, entries, constraints = {}, scoreConfig, db, kbVersion = 'unknown', uploadDir = path.resolve('uploads') }) {
@@ -69,7 +70,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     const returnExisting = row => {
       if (row.image_sha256 !== sha) return res.status(409).json({ error: 'submission key belongs to another image' })
       const stored = JSON.parse(row.features_json)
-      return res.json({ features: stored, feedbackText: buildFeedback(stored), followUp: FOLLOW_UP, analysisId: row.id })
+      return res.json({ features: stored, feedbackText: buildFeedback(stored), followUp: FOLLOW_UP, feedbackTextEn: englishFeedback(stored), followUpEn: ENGLISH_FOLLOW_UP, analysisId: row.id })
     }
     const previous = existing()
     if (previous) return returnExisting(previous)
@@ -113,11 +114,12 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
       }
     }
     traceNode('analyze_features', { elements: features.elements ?? [], darkRatio: features.colors?.darkRatio ?? null, dropped: features.droppedDimensions ?? [] })
-    res.json({ features, feedbackText: buildFeedback(features), followUp: FOLLOW_UP, ...(analysisId && { analysisId }) })
+    res.json({ features, feedbackText: buildFeedback(features), followUp: FOLLOW_UP, feedbackTextEn: englishFeedback(features), followUpEn: ENGLISH_FOLLOW_UP, ...(analysisId && { analysisId }) })
   }))
 
   router.post('/report', asyncRoute(async (req, res) => {
     const { features: clientFeatures, analysisId = null, childAge = null } = req.body ?? {}
+    const locale = localeOf(req.body?.locale)
     if (req.auth?.role === 'child') return res.status(403).json({ error: 'parent account required' })
     if (analysisId !== null && (typeof analysisId !== 'string' || analysisId.length > 100)) return res.status(400).json({ error: 'invalid analysisId' })
     if (analysisId && !req.auth) return res.status(401).json({ error: 'login required' })
@@ -157,7 +159,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
         })])
       } finally { if (abort) controller.signal.removeEventListener('abort', abort) }
     }
-    const text = (prompt, opts) => bounded(() => chatText(prompt, { ...opts, signal: controller.signal }))
+    const text = (prompt, opts) => bounded(() => chatText(prompt + (locale === 'en' ? ENGLISH_PROMPT : ''), { ...opts, signal: controller.signal }))
     // 调度器：年龄调制 → 标签匹配 → L3 共现门槛 → 冲突处置（知识库调度.md）
     const { hits: matches, conflicts, dropped } = dispatchEntries({
       features, entries, constraints,
@@ -179,7 +181,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
       { accountId: req.auth?.accountId ?? null, analysisId },
     )
     log.info('report', { msg: `emotion=${result.emotion} confidence=${result.confidence} reason=${result.reason} hits=${matches.map(m => m.id).join(',') || '-'}` })
-    const report = buildReport(result)
+    const report = localizeReport(buildReport(result), locale)
     let narrative = null
     if (chatText && report.evidence.length > 0) {
       try {

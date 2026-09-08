@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { useChildHistory } from '@/hooks/useChildHistory'
 import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
@@ -65,6 +66,7 @@ interface Props {
 }
 
 export function TimelineSection({ childName, childId, token }: Props) {
+  useLocale()
   const [range, setRange] = useState<Range>('90天')
   const isReal = !!(childId && token)
   const { analyses, error, reload } = useChildHistory(childId, token)
@@ -79,10 +81,10 @@ export function TimelineSection({ childName, childId, token }: Props) {
     <motion.section variants={fadeUp} id="timeline" className="mt-5">
       <Card
         eyebrow="成长时间轴"
-        title={`${childName} 的创作变化`}
+        title={t(`${childName} 的创作变化`)}
         description="记录每个阶段主题与表达方式的演变"
       >
-        {error && <p role="alert">{error}<button onClick={reload}>重试</button></p>}
+        {error && <p role="alert">{lt(error)}<button onClick={reload}>{t("重试")}</button></p>}
         <div className="mt-4 flex gap-2">
           {RANGES.map((r) => (
             <button
@@ -96,18 +98,17 @@ export function TimelineSection({ childName, childId, token }: Props) {
                   : 'bg-luma-ivory-100 text-luma-muted hover:bg-luma-teal-50',
               )}
             >
-              {r}
+              {lt(r)}
             </button>
           ))}
         </div>
 
         <div className="mt-7">
           {months === null ? (
-            <p className="py-6 text-center text-sm text-luma-muted">加载中…</p>
+            <p className="py-6 text-center text-sm text-luma-muted">{t("加载中…")}</p>
           ) : months.length === 0 ? (
             <p className="py-6 text-center text-sm text-luma-muted">
-              该时间段内暂无创作记录
-            </p>
+              {t("该时间段内暂无创作记录")}</p>
           ) : (
             months.map((m, i) => (
               <div key={m.month} className="relative flex gap-5">
@@ -128,9 +129,9 @@ export function TimelineSection({ childName, childId, token }: Props) {
                 <div className={cn('pb-7', i === months.length - 1 && 'pb-0')}>
                   <div className="flex items-center gap-3">
                     <span className="font-brand text-base font-bold text-luma-teal-900">
-                      {m.month}
+                      {lt(m.month)}
                     </span>
-                    <span className="text-xs text-luma-muted">{m.count} 件作品</span>
+                    <span className="text-xs text-luma-muted">{lt(m.count)} {t("件作品")}</span>
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -139,7 +140,7 @@ export function TimelineSection({ childName, childId, token }: Props) {
                         key={t}
                         className="rounded-full bg-luma-ivory-100 px-3 py-0.5 text-xs font-semibold text-luma-teal-700"
                       >
-                        {t}
+                        {lt(t)}
                       </span>
                     ))}
                   </div>
@@ -150,8 +151,7 @@ export function TimelineSection({ childName, childId, token }: Props) {
         </div>
 
         <div className="mt-4 rounded-xl bg-luma-ivory-100 px-4 py-2.5 text-xs text-luma-muted">
-          时间轴只记录创作中可见的变化趋势，不作心理诊断。
-        </div>
+          {t("时间轴只记录创作中可见的变化趋势，不作心理诊断。")}</div>
       </Card>
     </motion.section>
   )

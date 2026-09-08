@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { useAuthedImage } from '@/hooks/useAuthedImage'
 import { ChildArtwork, type ArtworkKind } from './artworks'
 
@@ -24,13 +25,14 @@ export function AuthedArtwork({
   className = 'absolute inset-0 h-full w-full object-cover',
   emptyText = '等待一幅新画',
 }: Props) {
+  useLocale()
   const objectUrl = useAuthedImage(path, token)
 
-  if (objectUrl) return <img src={objectUrl} alt={alt} className={className} />
+  if (objectUrl) return <img src={objectUrl} alt={t(alt)} className={className} />
   if (kind) return <ChildArtwork kind={kind} className="absolute inset-0 h-full w-full" />
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[#faf6ea] text-xs text-[#b7ab92]">
-      {emptyText}
+      {lt(emptyText)}
     </div>
   )
 }

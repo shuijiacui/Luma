@@ -166,8 +166,8 @@ server/       API、认证、知识库评分、周期报告、备份与恢复
 knowledge/    结构化条目、约束和校验工具
 rag/          可选 PDF 索引与检索
 scripts/      本地启动辅助
- deploy/      Caddy、systemd、备份计划示例
- docs/        当前说明、设计记录与研究草稿
+deploy/      Caddy、systemd、备份计划示例
+docs/        当前说明、设计记录与研究草稿
 ```
 
 从 [文档导航](docs/README.md) 开始。当前功能以 [功能完成度](docs/功能完成度.md)、[交互流程](docs/交互流程.md)、[项目边界](docs/项目边界.md) 和代码为准；历史计划与文献摘录保留研究过程，不作为当前功能承诺。

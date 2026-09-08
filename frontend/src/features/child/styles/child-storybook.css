@@ -148,7 +148,7 @@
   .nilo-home-brand .font-brand { font-size: 25px; }
   .nilo-home-nav { gap: 8px; }.nilo-icon-button { width: 34px; height: 34px; font-size: 21px; }
   .nilo-icon-button svg { width: 17px; height: 17px; }
-  .nilo-home-nav [aria-label="打开头像设置"] > span { width: 46px; height: 46px; }
+  .nilo-home-nav .luma-avatar-trigger > span { width: 46px; height: 46px; }
   .nilo-leave { font-size: 11px; letter-spacing: 0; }.nilo-leave span { display: none; }
   .nilo-home-intro { left: 6%; right: 6%; top: 14%; }
   .nilo-home-intro h1 { font-size: clamp(25px,6.9vw,41px); letter-spacing: .025em; line-height: 1.5; }
@@ -183,7 +183,7 @@
   .nilo-home-brand > span + span { display: none; }
   .nilo-home-brand > span:first-child > span:first-child { width: 33px; height: 33px; }.nilo-home-brand .font-brand { font-size: 24px; }
   .nilo-home-nav { gap: 10px; }.nilo-icon-button { width: 31px; height: 31px; font-size: 20px; }.nilo-icon-button svg { width: 17px; }
-  .nilo-home-nav [aria-label="打开头像设置"] > span { width: 39px; height: 39px; }.nilo-leave { font-size: 12px; }
+  .nilo-home-nav .luma-avatar-trigger > span { width: 39px; height: 39px; }.nilo-leave { font-size: 12px; }
   .nilo-home-intro { top: 11%; left: 20%; right: 16%; }.nilo-home-intro h1 { font-size: 27px; letter-spacing: .04em; }.nilo-home-intro p { font-size: 10px; margin-top: 0; }
   .nilo-heading-comet { width: 80px; bottom: calc(100% - 3px); }
   .nilo-home-footer { bottom: 2%; }.nilo-home-footer p { font-size: 12px; }.nilo-footer-flower { display: none; }.nilo-guest-note { font-size: 7px; margin-top: 2px; }

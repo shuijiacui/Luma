@@ -1,76 +1,38 @@
 # Luma Frontend
 
-Luma 是一个儿童创意表达 AI 平台。儿童通过绘画和故事表达自己，AI
-伙伴 Nilo（一只水獭）陪伴创作。前端通过 API 与仓库内 Express 后端连接。最新功能与边界见 [修复说明](../docs/功能修复说明-2026-09-06.md)。
+React 19 + TypeScript + Vite 7，使用 Tailwind CSS、Framer Motion 和 React Router。当前功能见 [完成度](../docs/功能完成度.md)，新设备方向见 [平板与手机方案](../docs/平板儿童端与手机家长端优化方案.md)（提案，未实施）。
 
-## 技术栈
-
-- React + TypeScript
-- Vite
-- Tailwind CSS
-- Framer Motion
-- React Router
-
-## 目录约定
-
-```text
-src/
-├── app/                # 应用入口与路由
-├── assets/             # 图片、图标等静态资源
-├── components/
-│   ├── layout/         # 通用布局组件
-│   └── ui/             # 基础 UI 组件
-├── config/             # 环境及应用配置
-├── design-system/      # 设计规范与动画预设
-├── features/
-│   ├── child/          # 儿童创作体验，仅包含创作与陪伴语境
-│   ├── marketing/      # 产品官网
-│   └── parents/        # 家长端与成长洞察
-├── hooks/              # 通用 Hooks
-├── lib/api/            # 后端 API 请求层
-├── mocks/              # 前后端联调前的模拟数据
-├── styles/             # 全局样式
-├── types/              # 共享 TypeScript 类型
-└── utils/              # 通用工具
-```
-
-UI 规范与组件用法见 [`src/design-system/README.md`](src/design-system/README.md)。
-
-## 边界原则
-
-- 儿童端不得出现心理分析、成长报告、父母监督等概念。
-- 家长洞察能力只存在于 `features/parents` 业务域。
-- 页面通过 `lib/api` 访问数据，不直接绑定后端实现。
-- 游客页面展示明确标记的示例；正式家庭的空记录与请求错误分别处理。
-
-## 本地开发
+## 开发与验证
 
 ```bash
-npm install
+npm ci
 npm run dev
+npm test
+npm run build
+npm run lint
 ```
 
-## 前端认证演示
+默认 /api 通过 Vite 代理到 localhost:3001，需另启 server。真实识别需要视觉服务；认证、空状态与游客示例不依赖真实模型。
 
-- 品牌首页：`/`，使用 `src/assets/images/home-lakeside-v2.png` 作为主视觉背景，并保留一个主认证入口。
-- 统一认证入口：`/auth`，默认只显示登录；点击“立即注册”后进入注册表单。
-- 家长认证使用 `auth-parent.png` 背景并将表单置于右侧；儿童认证使用 `auth-child.png` 并将表单置于左侧。
-- 旧的家长、儿童登录注册地址会自动跳转到统一入口。
-- 账号和家庭在服务端 SQLite 保存；浏览器存储令牌，会话刷新同步 React 状态。
-- 家长注册会创建唯一 `familyId` 与家庭邀请码；儿童必须通过邀请码加入。
-- 家长端只读取与当前会话 `familyId` 相同的儿童账号，游客双方固定使用同一演示家庭。
-- 已连接后端认证与密码哈希；报告只面向家长。运行 `npm test` 验证关键组件与请求逻辑。
+## 页面与组织
 
-## 儿童创作空间
+- `/auth`：统一注册/登录；正式账号在服务端，游客仅体验。
+- `/child/demo`、`/child/create`：儿童小屋、Nilo、画布与当前会话草稿。
+- `/parent/demo`：多孩子概览、记录、主题、时间轴、建议、设置、周报/月报。
+- `/parent/archive`：完整成长档案及内嵌原图 HTML 导出。
 
-- 路由：`/child/create`，仅儿童身份可访问。
-- 支持画笔颜色、粗细、橡皮擦、撤销、清空和 PNG 下载。
-- 头像属于账号设置：登录后在家长端、儿童端和画布顶部显示同一个头像。
-- 支持从 `u1–u5` 选择头像，或上传最大 3MB 的本地图片。
-- Nilo 仅使用观察、开放式问题和故事探索语言，不进行心理判断。
+`features/auth` 管理身份与当前双端入口，`features/child` 管理创作，`features/parents` 管理解读和档案，`lib/api` 与 `hooks` 管理请求/状态，`design-system` 提供 UI 规范。设计系统见 [说明](src/design-system/README.md)。
 
-## 家长成长洞察
+## 数据约束
 
-- 家长端按当前 `familyId` 读取已绑定儿童，不展示其他家庭的数据。
-- 内容结构包含创作主题、孩子原话、AI 观察、沟通建议与近期创作。
-- AI 观察仅描述创作中可见的主题和变化，不为孩子贴标签。
+正式家庭空数据和错误分开，禁止以游客示例补位。AI 描述不标成孩子原话。参考分值不代表心理概率；概览采用可核对的作品数/元素数，信息不足保留 0。
+
+报告按服务端 analysisId 生成/回看；图片带 Authorization 读取后转 Blob URL。孩子切换和会话轮换时忽略旧响应，退出后旧 refresh 不得恢复登录。
+
+周报/月报按已结束周期汇总，支持 JSON 下载；成长档案导出 HTML，可由浏览器打印 PDF。家庭注销需要密码与精确确认文本，即使无孩子也能访问设置。
+
+草稿当前仅内存会话内，头像本机存储；尚未实施 IndexedDB 离线草稿、PWA、原生 App 或手机导航改造。现有家长横屏限制是后续设备适配的首要改动，不能将提案写成完成状态。
+
+## 本轮验证环境
+
+前端 16 项测试通过。受限 Windows 工作区若已有 `.vite-temp`/dist 不可写，可使用 `npm test -- --configLoader runner` 以及 `npm run build -- --configLoader runner --outDir ../.tmp/frontend-build-period` 验证，默认开发环境无需改命令。真实触控、旋转与打印仍需设备验收。

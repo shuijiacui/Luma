@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -12,6 +13,7 @@ import type { UserRole } from '../types'
 type AuthMode = 'login' | 'register'
 
 export function UnifiedAuthPage() {
+  useLocale()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { session, loginParent, registerParent, loginChild, registerChild, continueAsGuest } =
@@ -104,7 +106,7 @@ export function UnifiedAuthPage() {
     <AuthShell
       role={role}
       eyebrow="一个入口 · 两个专属空间"
-      title={isLogin ? '欢迎回到 Luma' : '开启 Luma 旅程'}
+      title={t(isLogin ? '欢迎回到 Luma' : '开启 Luma 旅程')}
       description={
         isParent
           ? '进入家长空间，温柔地陪伴每一次成长。'
@@ -113,7 +115,7 @@ export function UnifiedAuthPage() {
     >
       <div
         className="mb-5 grid grid-cols-2 rounded-2xl bg-luma-ivory-100 p-1"
-        aria-label="选择使用身份"
+        aria-label={t("选择使用身份")}
       >
         <button
           type="button"
@@ -126,8 +128,7 @@ export function UnifiedAuthPage() {
               : 'text-luma-muted hover:text-luma-teal-700',
           )}
         >
-          家长
-        </button>
+          {t("家长")}</button>
         <button
           type="button"
           onClick={() => switchPanel('child')}
@@ -139,8 +140,7 @@ export function UnifiedAuthPage() {
               : 'text-luma-muted hover:text-luma-teal-700',
           )}
         >
-          小小创作者
-        </button>
+          {t("小小创作者")}</button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -150,7 +150,7 @@ export function UnifiedAuthPage() {
               <FormField
                 label="你的称呼"
                 autoComplete="name"
-                placeholder="例如：Nilo 妈妈"
+                placeholder={t("例如：Nilo 妈妈")}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 required
@@ -169,7 +169,7 @@ export function UnifiedAuthPage() {
               label={isLogin ? '密码' : '设置密码'}
               type="password"
               autoComplete={isLogin ? 'current-password' : 'new-password'}
-              placeholder={isLogin ? '输入密码' : '至少 6 位'}
+              placeholder={t(isLogin ? '输入密码' : '至少 6 位')}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
@@ -180,7 +180,7 @@ export function UnifiedAuthPage() {
                 label="确认密码"
                 type="password"
                 autoComplete="new-password"
-                placeholder="再次输入密码"
+                placeholder={t("再次输入密码")}
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 required
@@ -194,7 +194,7 @@ export function UnifiedAuthPage() {
               <FormField
                 label="家庭邀请码"
                 autoComplete="off"
-                placeholder="输入你的小钥匙"
+                placeholder={t("输入你的小钥匙")}
                 value={inviteCode}
                 onChange={(event) =>
                   setInviteCode(event.target.value.toUpperCase().slice(0, 9))
@@ -209,7 +209,7 @@ export function UnifiedAuthPage() {
             <FormField
               label="我的昵称"
               autoComplete="username"
-              placeholder={isLogin ? '你喜欢的名字' : '例如：星星船长'}
+              placeholder={t(isLogin ? '你喜欢的名字' : '例如：星星船长')}
               value={nickname}
               onChange={(event) => setNickname(event.target.value)}
               required
@@ -256,7 +256,7 @@ export function UnifiedAuthPage() {
             role="alert"
             className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
           >
-            {error}
+            {lt(error)}
           </div>
         )}
 
@@ -267,7 +267,7 @@ export function UnifiedAuthPage() {
           className="w-full"
           disabled={submitting}
         >
-          {submitting
+          {lt(submitting
             ? '请稍候…'
             : isLogin
               ? isParent
@@ -275,18 +275,18 @@ export function UnifiedAuthPage() {
                 : '去找 Nilo'
               : isParent
                 ? '创建并进入'
-                : '开启我的小天地'}
+                : '开启我的小天地')}
         </Button>
       </form>
 
       <p className="mt-5 text-center text-sm text-luma-muted">
-        {isLogin ? '还没有账号？' : '已经有账号？'}{' '}
+        {lt(isLogin ? '还没有账号？' : '已经有账号？')}{lt(' ')}
         <button
           type="button"
           onClick={() => switchPanel(role, isLogin ? 'register' : 'login')}
           className="font-semibold text-luma-teal-700 hover:underline"
         >
-          {isLogin ? '立即注册' : '返回登录'}
+          {lt(isLogin ? '立即注册' : '返回登录')}
         </button>
       </p>
 
@@ -299,11 +299,10 @@ export function UnifiedAuthPage() {
             className="w-full"
             onClick={handleGuest}
           >
-            {isParent ? '游客体验家长端' : '先去逛一逛'}
+            {lt(isParent ? '游客体验家长端' : '先去逛一逛')}
           </Button>
           <p className="mt-3 text-center text-xs text-luma-muted">
-            游客模式中的内容不会保存
-          </p>
+            {t("游客模式中的内容不会保存")}</p>
         </>
       )}
     </AuthShell>

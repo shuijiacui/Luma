@@ -1,3 +1,4 @@
+import { lt, t, useLocale } from '@/i18n'
 import { AnimatePresence, motion, useReducedMotion, type TargetAndTransition } from 'framer-motion'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import niloSprite from '@/assets/images/nilo-companion-v1.png'
@@ -19,6 +20,7 @@ const reactions: Record<Part, TargetAndTransition> = {
   tail: { rotate: [0, 4, -4, 3, -2, 0], x: [0, 5, -5, 3, 0] },
 }
 export function NiloCharacter({ disabled, playSound }: { disabled: boolean; playSound: (sound: NiloSound) => void }) {
+  useLocale()
   const reduceMotion = useReducedMotion()
   const [reaction, setReaction] = useState<Part | null>(null)
   const [message, setMessage] = useState('')
@@ -48,22 +50,22 @@ export function NiloCharacter({ disabled, playSound }: { disabled: boolean; play
     <div className="nilo-companion">
       <div className="nilo-speech-slot" role="status" aria-live="polite" aria-atomic="true">
         <AnimatePresence mode="wait">
-          {!disabled && message && <motion.div className="nilo-speech" key={message} initial={{ opacity: 0, y: reduceMotion ? 0 : 7 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}><span aria-hidden="true">✦</span> {message}</motion.div>}
+          {!disabled && message && <motion.div className="nilo-speech" key={message} initial={{ opacity: 0, y: reduceMotion ? 0 : 7 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}><span aria-hidden="true">✦</span> {lt(message)}</motion.div>}
         </AnimatePresence>
       </div>
       <div className="nilo-character-stage">
         <div className="nilo-ground-shadow" aria-hidden="true" />
         <motion.div className="nilo-character-float" animate={reduceMotion || disabled || reaction ? { y: 0 } : { y: [0, -5, 0] }} transition={{ duration: 4, repeat: reaction || disabled || reduceMotion ? 0 : Infinity, ease: 'easeInOut' }}>
           <motion.div className={`nilo-character${showHints ? ' show-hotspots' : ''}`} animate={reduceMotion || disabled || !reaction ? { rotate: 0, x: 0, y: 0, scale: 1, scaleX: 1, scaleY: 1 } : reactions[reaction]} transition={{ duration: .8, ease: 'easeInOut' }}>
-            <img src={niloSprite} alt="提着星星灯、戴着青绿色围巾的 Nilo" draggable={false} className="nilo-sprite" fetchPriority="high" />
+            <img src={niloSprite} alt={t("提着星星灯、戴着青绿色围巾的 Nilo")} draggable={false} className="nilo-sprite" fetchPriority="high" />
             <div className="nilo-magic-trail" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>✧</span><span>✦</span><span>✦</span></div>
-            {interactions.map(part => <button key={part.id} type="button" className={`nilo-hotspot hotspot-${part.id}`} style={{ left: `${part.x}%`, top: `${part.y}%`, width: `${part.width}%`, height: `${part.height}%` }} aria-label={part.label} disabled={disabled} onClick={() => interact(part)}><span className="nilo-hotspot-dot" /><span className="nilo-hotspot-label">{part.label.replace('Nilo 的', '').replace('和 Nilo ', '')}</span></button>)}
-            {!disabled && activePart && <div key={sequence} className={`nilo-reaction-particles reaction-${reaction}`} style={{ left: `${activePart.x}%`, top: `${activePart.y}%` }} aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <span key={i} style={{ '--i': i, '--dx': `${Math.cos(i * Math.PI / 3) * 64}px`, '--dy': `${Math.sin(i * Math.PI / 3) * 55 - 35}px` } as CSSProperties}>{activePart.symbol}</span>)}</div>}
+            {interactions.map(part => <button key={part.id} type="button" className={`nilo-hotspot hotspot-${part.id}`} style={{ left: `${part.x}%`, top: `${part.y}%`, width: `${part.width}%`, height: `${part.height}%` }} aria-label={t(part.label)} disabled={disabled} onClick={() => interact(part)}><span className="nilo-hotspot-dot" /><span className="nilo-hotspot-label">{lt(part.label.replace('Nilo 的', '').replace('和 Nilo ', ''))}</span></button>)}
+            {!disabled && activePart && <div key={sequence} className={`nilo-reaction-particles reaction-${reaction}`} style={{ left: `${activePart.x}%`, top: `${activePart.y}%` }} aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <span key={i} style={{ '--i': i, '--dx': `${Math.cos(i * Math.PI / 3) * 64}px`, '--dy': `${Math.sin(i * Math.PI / 3) * 55 - 35}px` } as CSSProperties}>{lt(activePart.symbol)}</span>)}</div>}
           </motion.div>
         </motion.div>
       </div>
-      <div className="nilo-companion-caption"><span className="nilo-name">Nilo</span><span className="nilo-caption-dot">·</span>你的想象力伙伴</div>
-      <button type="button" className="nilo-touch-hint" aria-pressed={showHints} disabled={disabled} onClick={() => setShowHints(value => !value)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M8 13V6a2 2 0 0 1 4 0v6-2a2 2 0 0 1 4 0v2a2 2 0 0 1 4 0v4c0 4-3 6-6 6-2 0-4-1-5-3l-4-5a2 2 0 0 1 3-2l2 2" /></svg>{showHints ? '点点亮起的地方，看看我的反应' : '试着摸摸我，会有小惊喜哦'}</button>
+      <div className="nilo-companion-caption"><span className="nilo-name">Nilo</span><span className="nilo-caption-dot">·</span>{t("你的想象力伙伴")}</div>
+      <button type="button" className="nilo-touch-hint" aria-pressed={showHints} disabled={disabled} onClick={() => setShowHints(value => !value)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M8 13V6a2 2 0 0 1 4 0v6-2a2 2 0 0 1 4 0v2a2 2 0 0 1 4 0v4c0 4-3 6-6 6-2 0-4-1-5-3l-4-5a2 2 0 0 1 3-2l2 2" /></svg>{lt(showHints ? '点点亮起的地方，看看我的反应' : '试着摸摸我，会有小惊喜哦')}</button>
     </div>
   )
 }
