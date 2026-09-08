@@ -35,9 +35,9 @@
 .luma-landing-brand { border-radius: 12px; }
 .luma-landing-message {
   position: absolute;
-  left: 57%;
-  top: 30%;
-  width: 37%;
+  left: 6%;
+  top: 6%;
+  width: 46%;
   color: #3b6864;
   text-shadow: 0 2px 16px #fffdf278;
 }
@@ -102,8 +102,8 @@
   .luma-landing-brand > span { gap: 5px; }
   .luma-landing-brand > span > span:first-child { width: 60px; height: 60px; }
   .luma-landing-brand .font-brand { font-size: 32px; }
-  .luma-landing-message { left: 10%; top: 19%; width: 80%; }
-  .luma-landing-message h1 { font-size: 38px; }
+  .luma-landing-message { left: 6%; top: 10%; width: 56%; }
+  .luma-landing-message h1 { font-size: 30px; }
   .luma-landing-message p { margin-top: 8px; }
   .luma-landing-pricing { padding: 8px 15px; font-size: 12px; }
   .luma-landing-entrances { bottom: 7%; gap: 24px; }

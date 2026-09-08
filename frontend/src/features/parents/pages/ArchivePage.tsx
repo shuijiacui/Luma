@@ -92,6 +92,11 @@ export function ArchivePage() {
     navigate('/auth?role=parent&mode=login')
   }
 
+  function handleBack() {
+    if (window.history.length > 1) navigate(-1)
+    else navigate('/parent/demo')
+  }
+
   return (
     <main className="relative z-0 min-h-screen bg-luma-ivory-50 px-4 py-4 sm:px-5 sm:py-5">
       <img
@@ -137,6 +142,19 @@ export function ArchivePage() {
             </>
           }
         />
+
+        <div className="mx-auto max-w-4xl px-1 pt-5 sm:pt-6">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/80 bg-white/85 px-4 text-sm font-bold text-luma-teal-700 shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
+          >
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="size-4">
+              <path d="M16 10H4m0 0 5-5m-5 5 5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {t("返回创作记录")}
+          </button>
+        </div>
 
         <motion.div
           className="mx-auto max-w-4xl py-10 sm:py-14"

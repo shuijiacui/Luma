@@ -27,32 +27,32 @@ export function AuthShell({
   children,
 }: AuthShellProps) {
   useLocale()
+  const background =
+    role === 'child' ? authChildBackground : authParentBackground
+
   return (
     <main
       className={cn(
-        'relative flex min-h-screen items-center overflow-y-auto px-5 py-6 sm:px-8 sm:py-10',
+        'relative min-h-screen overflow-y-auto',
         role === 'child' ? 'bg-luma-teal-50' : 'bg-luma-ivory-50',
       )}
     >
+      {/* 桌面/平板宽屏：整幅背景插画 + 渐变，保持原版式 */}
       <motion.img
-        key={role}
-        src={
-          role === 'child' ? authChildBackground : authParentBackground
-        }
+        key={`lg-${role ?? 'none'}`}
+        src={background}
         alt=""
         initial={{ opacity: 0, scale: 1.015 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.55, ease: 'easeOut' }}
         className={cn(
-          'absolute inset-0 size-full object-cover',
-          role === 'child'
-            ? 'object-[62%_center] lg:object-center'
-            : 'object-[38%_center] lg:object-center',
+          'pointer-events-none absolute inset-0 hidden size-full object-cover lg:block',
+          role === 'child' ? 'object-center' : 'object-center',
         )}
       />
       <div
         className={cn(
-          'pointer-events-none absolute inset-0',
+          'pointer-events-none absolute inset-0 hidden lg:block',
           role === 'child'
             ? 'bg-gradient-to-r from-luma-ivory-50/94 via-luma-ivory-50/60 to-luma-ivory-50/8'
             : 'bg-gradient-to-l from-luma-ivory-50/94 via-luma-ivory-50/60 to-luma-ivory-50/8',
@@ -60,13 +60,26 @@ export function AuthShell({
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-luma-ivory-50/28 lg:bg-transparent"
+        className="pointer-events-none absolute inset-0 hidden bg-luma-ivory-50/28 lg:block lg:bg-transparent"
         aria-hidden="true"
       />
 
+      {/* 手机竖屏：整幅插画完整显示在页面顶部，不被裁切 */}
+      <div className="lg:hidden">
+        <motion.img
+          key={`sm-${role ?? 'none'}`}
+          src={background}
+          alt=""
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="block h-auto w-full object-contain"
+        />
+      </div>
+
       <div
         className={cn(
-          'relative z-10 mx-auto flex w-full max-w-7xl justify-center lg:px-24 xl:px-36 2xl:px-40',
+          'relative z-10 mx-auto flex w-full max-w-7xl justify-center px-5 py-6 sm:px-8 sm:py-8 lg:min-h-screen lg:items-center lg:px-24 lg:py-10 xl:px-36 2xl:px-40',
           role === 'child' ? 'lg:justify-start' : 'lg:justify-end',
         )}
       >

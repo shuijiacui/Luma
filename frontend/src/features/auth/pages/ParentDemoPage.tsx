@@ -531,7 +531,7 @@ export function ParentDemoPage() {
           <span className="absolute top-2 right-2.5 size-1.5 rounded-full bg-luma-clay-300" />
         </button>
         {bellOpen && (
-          <div className="absolute top-[calc(100%+0.6rem)] right-0 z-40 w-64 rounded-3xl border border-white/90 bg-white/95 p-4 shadow-luma-md backdrop-blur-xl">
+          <div className="absolute top-[calc(100%+0.6rem)] right-0 z-50 w-72 rounded-3xl border border-white/90 bg-white/95 p-4 shadow-luma-md backdrop-blur-xl">
             <div className="text-sm font-bold text-[#334038]">{t("通知")}</div>
             <p className="mt-2 rounded-2xl bg-[#faf7ef] px-3.5 py-2.5 text-xs leading-relaxed text-[#8b8371]">
               {t("暂时没有新消息。孩子完成新的创作后，我们会在这里轻轻提醒你 🍃")}</p>
@@ -549,8 +549,8 @@ export function ParentDemoPage() {
   )
 
   const renderHeader = (
-    <motion.div variants={fadeUp} className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-      <div className="min-w-0">
+    <motion.div variants={fadeUp} className="flex items-start justify-between gap-x-4 gap-y-3">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-[#9a8a5f]">
           <SparkleDot className="size-3.5 text-luma-gold-300" />
           <span className="luma-eyebrow text-[0.66rem] tracking-[0.22em] text-[#a0906b]">{t("Luma · 家长空间")}</span>
@@ -884,7 +884,7 @@ export function ParentDemoPage() {
 
         <div className="min-w-0 flex-1">
           {/* 移动端导航条 */}
-          <div className="sticky top-3 z-40 mb-4 lg:hidden" data-onboarding="parent-navbar">
+          <div className="mb-4 lg:hidden" data-onboarding="parent-navbar">
             <div className="flex items-center justify-between rounded-[1.7rem] border border-white/70 bg-white/85 px-4 py-3 shadow-luma-card backdrop-blur-xl">
               <a href="/" aria-label={t("Luma 首页")} className="flex items-center gap-2">
                 <img src={lumaLogo} alt="" className="h-9 w-9 object-contain" />
