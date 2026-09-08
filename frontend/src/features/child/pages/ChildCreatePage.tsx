@@ -1,4 +1,5 @@
 import { lt, t, useLocale } from '@/i18n'
+import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { getChildDraft } from '../draft'
@@ -6,12 +7,12 @@ import { useNavigate } from 'react-router-dom'
 
 import { niloCompanion } from '@/assets/avatars'
 import { Brand } from '@/components/brand'
-import { Button } from '@/components/ui'
 import { motionTransition } from '@/design-system'
 import { useAuth } from '@/features/auth/AuthContext'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { analyzeDrawing, type FeatureJSON } from '@/lib/api/lumaApi'
-import { cn } from '@/lib/cn'
+import { DrawingTools } from '../components/DrawingTools'
+import type { BrushKind } from '../brushes'
 import {
   DrawingCanvas,
   type DrawingCanvasHandle,
@@ -23,7 +24,6 @@ import {
   type WarmupShapeId,
 } from '../components/warmupShapes'
 
-const colors = ['#20352f', '#168a78', '#edcd70', '#ef7b69', '#7a82d8', '#4aa5d8']
 const niloPrompts = [
   '咦，这里多了新东西呢～',
   '继续画呀，Nilo 在旁边看呢！',
@@ -48,8 +48,9 @@ export function ChildCreatePage() {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const canvasRef = useRef<DrawingCanvasHandle>(null)
   const [color, setColor] = useState(draft.color)
-  const [brushSize] = useState(8)
-  const [isEraser, setIsEraser] = useState(false)
+  const [brushSize, setBrushSize] = useState(draft.brushSize)
+  const [brushKind, setBrushKind] = useState<BrushKind>(draft.brushKind)
+  const [isEraser, setIsEraser] = useState(draft.isEraser)
   const [promptIndex, setPromptIndex] = useState(-1)
   const [features, setFeatures] = useState<FeatureJSON | null>(draft.features)
   const submission = useRef<{ image: string; key: string } | null>(draft.submission ?? null)
@@ -69,7 +70,10 @@ export function ChildCreatePage() {
     setServerBubbleEn(null)
     setPromptIndex((current) => (current + 1) % niloPrompts.length)
   }
-  useEffect(() => { draft.color = color; draft.features = features }, [draft, color, features])
+  useEffect(() => {
+    draft.color = color; draft.features = features; draft.brushSize = brushSize
+    draft.brushKind = brushKind; draft.isEraser = isEraser
+  }, [draft, color, features, brushSize, brushKind, isEraser])
 
   function handleNextShape() {
     const baseIndex = shapeId
@@ -131,7 +135,7 @@ export function ChildCreatePage() {
       : ((locale === 'en' && serverBubbleEn ? serverBubbleEn : serverBubble) ?? (promptIndex >= 0 ? niloPrompts[promptIndex] : null))
 
   return (
-    <main className="relative flex min-h-screen flex-col overflow-x-hidden bg-luma-teal-50">
+    <main className="luma-child-create-shell relative flex min-h-screen flex-col overflow-hidden bg-luma-teal-50">
       <header className="relative z-40 flex items-center justify-between gap-4 border-b border-white/80 bg-luma-ivory-50/85 px-4 py-3 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
           <button
@@ -164,16 +168,30 @@ export function ChildCreatePage() {
             <Brand size="sm" />
           </button>
         </div>
-        <div className="hidden text-center sm:block">
+        <div className="hidden text-center lg:block">
           <div className="font-brand text-lg font-bold text-luma-teal-900">
             My Creative Space
           </div>
           <div className="text-xs text-luma-muted">Anything can begin here</div>
         </div>
-        <AvatarPicker userId={session?.id ?? 'guest-child'} />
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <LanguageSwitcher />
+          <AvatarPicker userId={session?.id ?? 'guest-child'} compact />
+        </div>
       </header>
 
-      <section className="relative flex min-h-0 flex-1 p-3 pb-20 sm:p-5 sm:pb-24">
+      <DrawingTools
+        color={color} brushKind={brushKind} brushSize={brushSize} isEraser={isEraser}
+        disabled={analysis === 'loading'} shapeLabel={currentShapeLabel}
+        onColor={value => { setColor(value); setIsEraser(false) }}
+        onBrush={value => { setBrushKind(value); setIsEraser(false) }}
+        onSize={setBrushSize} onEraser={() => setIsEraser(value => !value)}
+        onNextShape={handleNextShape} onClearShape={handleClearShape}
+        onUndo={() => canvasRef.current?.undo()}
+        onClear={() => { canvasRef.current?.clear(); draft.submission = undefined; submission.current = null }}
+        onSave={handleSave} onFinish={handleFinish}
+      >
+      <section className="relative flex min-h-0 flex-1">
         <div className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-luma-lg border border-white/90 bg-white p-2 shadow-luma-md sm:p-3">
           <DrawingCanvas
             draft={draft.canvas}
@@ -181,6 +199,7 @@ export function ChildCreatePage() {
             ref={canvasRef}
             color={color}
             brushSize={brushSize}
+            brushKind={brushKind}
             isEraser={isEraser}
             onStrokeComplete={handleStrokeComplete}
           />
@@ -220,62 +239,8 @@ export function ChildCreatePage() {
           </div>
         </div>
       </section>
+      </DrawingTools>
 
-            <div className="fixed inset-x-0 bottom-3 z-30 flex justify-center px-2 sm:bottom-4 sm:px-3">
-        <div className="flex max-w-full items-center gap-2 overflow-x-auto rounded-[1.4rem] border border-white/90 bg-luma-ivory-50/92 p-2 shadow-luma-md backdrop-blur-xl sm:gap-3 sm:px-3">
-          {/* 引导图形工具 */}
-          <div className="flex shrink-0 items-center gap-1 border-r border-luma-ivory-200 pr-2 sm:gap-1.5 sm:pr-3">
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-luma-gold-200 bg-luma-gold-100/80 px-2.5 py-1 text-xs font-bold text-luma-teal-800">
-              <span aria-hidden="true">✏️</span>
-              {lt(currentShapeLabel)}
-            </span>
-            <Button size="sm" variant="secondary" onClick={handleNextShape}>
-              {t("换图形")}</Button>
-            <Button size="sm" variant="ghost" onClick={handleClearShape}>
-              {t("清除图形")}</Button>
-          </div>
-
-          {/* 颜色 */}
-          <div className="flex shrink-0 items-center gap-1 border-r border-luma-ivory-200 pr-2 sm:gap-1.5 sm:pr-3">
-            {colors.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => {
-                  setColor(item)
-                  setIsEraser(false)
-                }}
-                className={cn(
-                  'size-7 shrink-0 rounded-full border-2 border-white shadow-sm outline-none transition hover:scale-110 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60 sm:size-8',
-                  color === item && !isEraser
-                    ? 'ring-2 ring-luma-teal-500 ring-offset-2'
-                    : '',
-                )}
-                style={{ backgroundColor: item }}
-                aria-label={t('选择颜色 ' + item)}
-              />
-            ))}
-          </div>
-
-          {/* 画笔工具 */}
-          <div className="flex shrink-0 items-center gap-1">
-            <Button size="sm" variant={isEraser ? 'gold' : 'ghost'} onClick={() => setIsEraser((value) => !value)}>
-              {t("橡皮")}</Button>
-            <Button size="sm" variant="ghost" disabled={analysis === 'loading'} onClick={() => canvasRef.current?.undo()}>
-              {t("撤销")}</Button>
-            <Button size="sm" variant="ghost" disabled={analysis === 'loading'} onClick={() => { canvasRef.current?.clear(); draft.submission = undefined; submission.current = null }}>
-              {t("清空")}</Button>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-1 border-l border-luma-ivory-200 pl-2 sm:pl-3">
-            <Button size="sm" variant="ghost" onClick={handleSave}>
-              {t("保存")}</Button>
-            <Button size="sm" variant="primary" onClick={handleFinish} disabled={analysis === 'loading'}>
-              {lt(analysis === 'loading' ? 'Nilo 在看…' : '完成')}
-            </Button>
-          </div>
-        </div>
-      </div>
       {/* 欢迎蒙版：盖在 My Creative Space 上，左侧水獭 + 右侧气泡与按钮 */}
       <AnimatePresence>
         {showWelcome && (
@@ -292,6 +257,7 @@ export function ChildCreatePage() {
             onBack={() => navigate('/child/demo')}
           />
         )}
-      </AnimatePresence>    </main>
+      </AnimatePresence>
+    </main>
   )
 }

@@ -1,12 +1,87 @@
-:root { --language-bar-height: 44px; }
-.luma-language-bar { position: fixed; z-index: 100000; inset: 0 0 auto; height: var(--language-bar-height); display: flex; justify-content: flex-end; padding-inline: max(20px, calc((100vw - 1200px) / 2)); background: #fbf8ef; border-bottom: 1px solid #476d5914; }
-.luma-language-switch { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0 6px; color: #75877d; font: 12px/1.2 var(--font-sans); cursor: pointer; }
-.luma-language-switch svg { width: 17px; height: 17px; margin-right: 3px; }
+.luma-language-switch { display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 7px; min-width: 44px; min-height: 44px; padding: 0 9px; border-radius: 999px; color: #64766f; background: #fffdf34d; font: 12px/1.2 var(--font-sans); white-space: nowrap; cursor: pointer; transition: background .2s; }
+.luma-language-switch:hover { background: #fffdf3b3; }
+.luma-language-switch svg { flex: none; width: 16px; height: 16px; }
+.luma-language-labels { display: inline-flex; align-items: center; gap: 5px; }
+.luma-language-short { display: none; }
 .luma-language-switch .is-current { color: #285b50; font-weight: 700; }
-.luma-language-switch:focus-visible { outline: 2px solid #ab843c; outline-offset: -3px; border-radius: 5px; }
-.luma-localized-app { padding-top: var(--language-bar-height); }
-.luma-localized-app .luma-landing, .luma-localized-app .nilo-home { height: calc(100svh - var(--language-bar-height)); }
-.luma-localized-app .min-h-screen { min-height: calc(100svh - var(--language-bar-height)); }
+.luma-language-switch:focus-visible { outline: 2px solid #ab843c; outline-offset: 2px; }
+.luma-localized-app { min-height: 100svh; }
+.luma-auth-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.luma-page-home { position: relative; height: 100svh; overflow: hidden; }
+.luma-page-home .luma-safety-disclaimer {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.luma-page-home .luma-landing-entrances { bottom: calc(6% + 34px); }
+
+@media (min-width: 1024px) {
+  html, body, #root { height: 100%; overflow: hidden; }
+  .luma-localized-app { height: 100svh; min-height: 0; overflow: hidden; }
+  .luma-auth-shell,
+  .luma-parent-shell,
+  .luma-archive-shell,
+  .luma-child-create-shell {
+    height: 100svh;
+    min-height: 0 !important;
+    overflow: hidden;
+  }
+  .luma-auth-shell-content,
+  .luma-parent-layout { height: 100%; min-height: 0 !important; }
+  .luma-parent-content,
+  .luma-archive-scroll {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .luma-parent-content::-webkit-scrollbar,
+  .luma-archive-scroll::-webkit-scrollbar { display: none; }
+}
+
+@media (min-width: 1024px) and (max-height: 800px) {
+  .luma-auth-shell-content { padding-block: 12px !important; }
+  .luma-auth-panel > div:first-child {
+    position: fixed;
+    z-index: 2;
+    top: 12px;
+    left: max(18px, calc((100vw - 1200px) / 2));
+    margin: 0;
+  }
+  .luma-auth-heading { margin-bottom: 10px; }
+  .luma-auth-heading .luma-auth-brand-row { margin-bottom: 5px; }
+  .luma-auth-heading > div { margin-bottom: 4px; }
+  .luma-auth-heading > p { margin-top: 5px; }
+  .luma-auth-card { padding: 18px !important; }
+  .luma-auth-card form > * + * { margin-top: 9px; }
+  .luma-auth-card form label > span:first-child { margin-bottom: 4px; }
+  .luma-auth-card form input { min-height: 42px; }
+  .luma-auth-card form .my-6 { margin-block: 11px; }
+}
+
+@media (max-width: 1023px) {
+  .luma-page-home .luma-safety-disclaimer {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 8px;
+    text-align: left;
+  }
+  .luma-page-home .luma-safety-disclaimer p:first-child { grid-row: 1 / 3; }
+  .luma-page-home .luma-landing-entrances { bottom: calc(7% + 64px); }
+}
+@media (max-width: 600px) {
+  .luma-language-switch { padding-inline: 8px; }
+  .luma-language-switch svg, .luma-language-labels { display: none; }
+  .luma-language-short { display: inline; color: #285b50; font-weight: 700; }
+  .luma-navbar-brand > span > span + span { display: none; }
+}
 html[lang=en] .nilo-home-brand > span + span { letter-spacing: .025em; }
 html[lang=en] .nilo-tree-sign { font-size: .85cqw; letter-spacing: .03em; }
 html[lang=en] .door-plaque-lettering strong { font-size: 1.6cqw; letter-spacing: .025em; }

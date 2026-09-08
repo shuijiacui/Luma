@@ -1,4 +1,5 @@
 import { lt, t, useLocale } from '@/i18n'
+import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 
@@ -47,24 +48,27 @@ export function WelcomeOverlay({
   const [isSecondShown, setIsSecondShown] = useState(false)
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[var(--language-bar-height)] z-50 overflow-y-auto bg-luma-teal-50/45 backdrop-blur-[3px]">
-      {/* 右上角：回小屋 */}
-      <button
-        type="button"
-        onClick={onBack}
-        className="absolute top-4 right-4 inline-flex min-h-9 items-center gap-1 rounded-xl px-3 text-sm font-bold text-luma-teal-700 outline-none transition-colors hover:bg-white/80 hover:text-luma-teal-900 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60 sm:top-5 sm:right-6"
-        aria-label={t("返回小屋")}
-      >
-        <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
-          <path
-            d="M16 10H4m0 0 5-5m-5 5 5 5"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        {t("回小屋")}</button>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-luma-teal-50/45 backdrop-blur-[3px]">
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-2 sm:top-5 sm:right-6">
+        <LanguageSwitcher />
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-bold text-luma-teal-700 outline-none transition-colors hover:bg-white/80 hover:text-luma-teal-900 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
+          aria-label={t("返回小屋")}
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
+            <path
+              d="M16 10H4m0 0 5-5m-5 5 5 5"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          {t("回小屋")}
+        </button>
+      </div>
 
       {/* 整体内容垂直、水平居中在屏幕中间 */}
       <div className="flex min-h-full items-center justify-center px-5 py-8">

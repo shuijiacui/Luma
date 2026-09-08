@@ -1,0 +1,94 @@
+.luma-child-create-shell { height: 100svh; min-height: 0 !important; }
+.luma-child-create-shell > header { flex-shrink: 0; }
+.drawing-workspace {
+  display: grid;
+  grid-template-columns: 156px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: "tools canvas" "tools actions";
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  gap: 12px;
+  width: min(1600px, 100%);
+  margin-inline: auto;
+  padding: 16px;
+  color: #105a51;
+}
+.drawing-canvas-region { grid-area: canvas; display: flex; min-width: 0; min-height: 0; }
+.drawing-tools { position: relative; z-index: 30; padding: 10px; border: 1px solid #fff; border-radius: 24px; background: #fffdf8f5; box-shadow: 0 6px 30px #173f3a12; }
+.drawing-tool-rail { grid-area: tools; align-self: center; display: grid; align-content: start; gap: 8px; padding: 10px 8px; border-radius: 20px; }
+.drawing-color-section { min-width: 0; }
+.drawing-brush-section { display: flex; min-width: 0; flex-direction: column; gap: 4px; border-top: 1px solid #e7ece4; padding-top: 8px; }
+.drawing-rail-title { display: block; margin: 0 4px 4px; font-size: 11px; line-height: 18px; font-weight: 600; text-align: left; color: #64766f; }
+.drawing-colors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); justify-items: center; gap: 0; }
+.drawing-brushes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.drawing-sizes { display: flex; flex-direction: column; gap: 0; margin-top: 4px; padding: 8px 4px 0; border-top: 1px solid #e7ece4; }
+.drawing-size-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: 11px; color: #64766f; }
+.drawing-size-heading output { min-width: 26px; border-radius: 6px; background: #eaf2ec; color: #105a51; font-size: 12px; font-weight: 700; line-height: 22px; text-align: center; font-variant-numeric: tabular-nums; }
+.drawing-size-control { display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.drawing-size-slider { appearance: none; -webkit-appearance: none; flex: 1; min-width: 0; width: 100%; height: 44px; margin: 0; border: 0; background-color: transparent; background-size: 100% 4px; background-position: center; background-repeat: no-repeat; cursor: pointer; }
+.drawing-size-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: transparent; }
+.drawing-size-slider::-moz-range-track { height: 4px; border-radius: 4px; background: transparent; }
+.drawing-size-slider::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border: 3px solid #fffdf8; border-radius: 50%; background: #168a78; box-shadow: 0 1px 5px #173f3a40; }
+.drawing-size-slider::-moz-range-thumb { box-sizing: border-box; width: 20px; height: 20px; border: 3px solid #fffdf8; border-radius: 50%; background: #168a78; box-shadow: 0 1px 5px #173f3a40; }
+.drawing-size-slider:focus-visible { outline: 2px solid #c99a2e; outline-offset: 2px; border-radius: 8px; }
+.drawing-size-slider:disabled { opacity: .45; cursor: default; }
+.drawing-size-preview { display: grid; place-items: center; flex: 0 0 34px; height: 34px; border-radius: 8px; background: #f0f4ed; }
+.drawing-swatch { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; }
+.drawing-swatch > span { display: grid; place-items: center; width: 29px; height: 29px; border: 1px solid #20352f26; border-radius: 50%; }
+.drawing-swatch[aria-pressed=true] > span { outline: 2px solid #168a78; outline-offset: 3px; }
+.drawing-color-check { display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; color: #173f3a; background: #ffffffed; font-size: 12px; }
+.drawing-tool-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 44px; min-height: 44px; padding: 6px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.drawing-tool-button[aria-pressed=true], .drawing-brush[aria-pressed=true] { background: #e5f2e9; box-shadow: inset 0 0 0 1px #a2ccba; }
+.drawing-brush { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; min-width: 0; min-height: 48px; padding: 4px; border: 1px solid #e9eee5; border-radius: 10px; background: #f7f8f2; font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; }
+.drawing-brush svg { width: 42px; flex: none; }
+.drawing-tools button:hover { background-color: #edf8f5; }
+.drawing-tools button:focus-visible, .drawing-custom-color input:focus-visible { outline: 3px solid #c99a2e; outline-offset: 2px; }
+.drawing-tools button:disabled { opacity: .45; cursor: default; }
+.drawing-active-color { width: 21px; height: 21px; border: 1px solid #20352f30; border-radius: 50%; flex: none; }
+.drawing-palette-trigger { gap: 6px; width: 100%; margin-top: 4px; padding-inline: 0; border: 1px solid #e9eee5; border-radius: 10px; background: #f7f8f2; white-space: normal; font-size: 11px; }
+.drawing-size-dot { display: inline-block; border-radius: 50%; background: currentColor; }
+.drawing-tools-bottom { grid-area: actions; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 20px; justify-self: center; max-width: 100%; padding: 6px 14px; }
+.drawing-actions, .drawing-shapes { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; min-width: 0; }
+.drawing-shape-name { font-size: 11px; color: #8d6719; padding: 5px 8px; background: #fbefca70; border-radius: 12px; }
+.drawing-tools .drawing-finish { background: #0f7163; color: white; padding-inline: 20px; }
+.drawing-tools .drawing-finish:hover { background: #105a51; }
+.drawing-palette { position: absolute; top: 50%; left: calc(100% + 10px); transform: translateY(-50%); width: min(344px, calc(100vw - 24px)); max-height: calc(100svh - 24px); overflow-y: auto; padding: 14px; border: 1px solid #e0eadf; border-radius: 22px; background: #fffdf8; box-shadow: 0 12px 40px #173f3a26; }
+.drawing-tool-rail:has(.drawing-palette) { z-index: 35; }
+.drawing-palette-heading { display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
+.drawing-palette-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.drawing-palette-grid .drawing-swatch { width: 100%; }
+.drawing-custom-color { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e7ece4; font-size: 12px; }
+.drawing-custom-color label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.drawing-custom-color input { width: 44px; height: 44px; padding: 3px; border: 1px solid #d4eee7; border-radius: 12px; background: white; cursor: pointer; }
+
+/* Keep the same slim rail on laptops, using its full height instead of widening it. */
+@media (max-height: 800px) and (min-width: 761px) {
+  .drawing-workspace { gap: 8px; padding-block: 8px; }
+  .drawing-tool-rail { gap: 8px; }
+  .drawing-brush { min-height: 44px; padding: 2px; font-size: 10px; }
+  .drawing-rail-title { margin-bottom: 4px; }
+  .drawing-sizes { padding-top: 4px; }
+}
+@media (max-height: 650px) and (min-width: 761px) {
+  .drawing-tool-rail { gap: 4px; padding-block: 6px; }
+  .drawing-tool-rail .drawing-rail-title { display: none; }
+  .drawing-colors > .drawing-swatch:nth-child(n+7) { display: none; }
+  .drawing-brush-section { padding-top: 4px; gap: 2px; }
+}
+@media (max-width: 760px) {
+  .drawing-workspace { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; grid-template-areas: "canvas" "tools" "actions"; gap: 6px; padding: 6px; }
+  .drawing-tools { border-radius: 18px; padding: 6px; }
+  .drawing-tool-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); align-self: stretch; gap: 6px; }
+  .drawing-brush-section { border-top: 0; border-left: 1px solid #e7ece4; padding: 0 0 0 6px; }
+  .drawing-colors { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .drawing-colors .drawing-swatch { width: 100%; }
+  .drawing-brushes { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
+  .drawing-brush { min-height: 44px; padding: 2px; font-size: 10px; }
+  .drawing-brush svg { width: 32px; }
+  .drawing-rail-title { display: none; }
+  .drawing-sizes { padding-top: 3px; }
+  .drawing-palette { top: auto; bottom: calc(100% + 8px); left: 0; transform: none; }
+  .drawing-tools-bottom { width: 100%; gap: 0 8px; }
+  .drawing-tool-button { padding-inline: 8px; }
+}

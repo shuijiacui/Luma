@@ -1,8 +1,10 @@
 import { lt, t, useLocale } from '@/i18n'
+import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
 import { Brand } from '@/components/brand'
+import { portalUrl } from '@/config/appMode'
 import { motionTransition } from '@/design-system'
 import { cn } from '@/lib/cn'
 
@@ -39,18 +41,18 @@ export function Navbar({
   return (
     <motion.header
       className={cn(
-        'mx-auto w-full max-w-7xl rounded-luma-md border border-white/70 bg-luma-ivory-50/80 px-5 shadow-luma-sm backdrop-blur-xl md:px-7',
+        'luma-navbar mx-auto w-full max-w-7xl rounded-luma-md border border-white/70 bg-luma-ivory-50/80 px-3 shadow-luma-sm backdrop-blur-xl sm:px-5 md:px-7',
         className,
       )}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={motionTransition.gentle}
     >
-      <div className="flex min-h-18 items-center justify-between gap-6">
+      <div className="flex min-h-18 items-center justify-between gap-2 sm:gap-6">
         <a
-          href="/"
-          className="shrink-0 text-luma-teal-900 outline-none focus-visible:rounded-lg focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
-          aria-label={t("Luma 首页")}
+          href={portalUrl}
+          className="luma-navbar-brand shrink-0 text-luma-teal-900 outline-none focus-visible:rounded-lg focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
+          aria-label={t("返回 Luma 官网")}
         >
           {lt(brand)}
         </a>
@@ -87,9 +89,10 @@ export function Navbar({
           </nav>
         )}
 
-        {actions && (
-          <div className="flex shrink-0 items-center gap-2">{lt(actions)}</div>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          <LanguageSwitcher />
+          {lt(actions)}
+        </div>
       </div>
 
       {secondaryRow && (

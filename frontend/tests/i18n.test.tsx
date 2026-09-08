@@ -18,10 +18,13 @@ beforeEach(() => { localStorage.clear(); act(() => setLocale('zh')) })
 afterEach(() => { cleanup(); act(() => setLocale('zh')); vi.clearAllMocks() })
 
 test('switches the live homepage, document language and saved preference without remounting', async () => {
-  render(<AuthProvider><MemoryRouter><LanguageSwitcher /><HomePage /></MemoryRouter></AuthProvider>)
+  render(<AuthProvider><MemoryRouter><HomePage /></MemoryRouter></AuthProvider>)
   const home = document.querySelector('main')
-  fireEvent.click(screen.getByRole('button', { name: 'Switch to English' }))
-  expect(screen.getByRole('link', { name: "Enter children's space" }).getAttribute('href')).toBe(childAppUrl)
+  const languageSwitch = screen.getByRole('button', { name: 'Switch to English' })
+  expect(languageSwitch.closest('header')).toBeTruthy()
+  expect(document.querySelector('.luma-language-bar')).toBeNull()
+  fireEvent.click(languageSwitch)
+  expect(screen.getByRole('link', { name: "Open children's sign-in" }).getAttribute('href')).toBe(`${childAppUrl}/auth?role=child&mode=login`)
   expect(document.documentElement.lang).toBe('en')
   expect(localStorage.getItem('luma_locale')).toBe('en')
   expect(document.querySelector('main')).toBe(home)
@@ -32,7 +35,7 @@ test('switches the live homepage, document language and saved preference without
 })
 
 test('switching preserves typed registration values and the form element', async () => {
-  render(<AuthProvider><MemoryRouter initialEntries={['/auth?role=parent&mode=register']}><LanguageSwitcher /><UnifiedAuthPage /></MemoryRouter></AuthProvider>)
+  render(<AuthProvider><MemoryRouter initialEntries={['/auth?role=parent&mode=register']}><UnifiedAuthPage /></MemoryRouter></AuthProvider>)
   const email = document.querySelector('input[type=email]') as HTMLInputElement
   await userEvent.type(email, 'judge@example.com')
   fireEvent.click(screen.getByRole('button', { name: 'Switch to English' }))
@@ -59,8 +62,10 @@ test('storage events update the selected locale', () => {
   expect(getLocale()).toBe('zh')
 })
 
-test.each(['/', '/child/demo'])('merged app keeps the language switch and scopes the disclaimer on %s', path => {
-  render(<MemoryRouter initialEntries={[path]}><Routes><Route element={<App />}><Route path="*" element={<main>Test page</main>} /></Route></Routes></MemoryRouter>)
+test.each(['/', '/child/demo'])('app uses the page language switch and scopes the disclaimer on %s', path => {
+  render(<MemoryRouter initialEntries={[path]}><Routes><Route element={<App />}><Route path="*" element={<main><header><LanguageSwitcher /></header>Test page</main>} /></Route></Routes></MemoryRouter>)
+  expect(screen.getAllByRole('button', { name: 'Switch to English' })).toHaveLength(1)
+  expect(document.querySelector('.luma-language-bar')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Switch to English' }))
   expect(document.documentElement.lang).toBe('en')
   const notice = screen.queryByRole('complementary', { name: 'Important disclaimer' })

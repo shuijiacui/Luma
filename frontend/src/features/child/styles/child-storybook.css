@@ -1,9 +1,10 @@
 .nilo-home {
-  --world-width: max(100vw, 175svh);
+  /* The door and character share one illustrated coordinate system. */
+  --world-width: max(100vw, 175dvh);
   position: relative;
   isolation: isolate;
-  height: 100svh;
-  min-height: 540px;
+  height: 100dvh;
+  min-height: min(540px, 100dvh);
   overflow: hidden;
   background: #fbf5e8;
   color: #395b50;
@@ -12,24 +13,27 @@
 .nilo-home button:disabled { cursor: default; }
 .nilo-home button:focus-visible { outline: 3px solid #b17c2d; outline-offset: 5px; }
 .nilo-home-header {
-  position: absolute; z-index: 20; top: 1.6%; left: 19%; right: 19%;
-  max-width: 1000px; margin-inline: auto;
+  position: absolute; z-index: 20;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(24px, 6vw, env(safe-area-inset-left));
+  right: max(24px, 6vw, env(safe-area-inset-right));
+  max-width: 1120px; min-height: 56px; margin-inline: auto;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
 }
-.nilo-home-brand { display: flex; align-items: center; gap: 18px; }
+.nilo-home-brand { display: flex; align-items: center; gap: 18px; white-space: nowrap; }
 .nilo-home-brand > span + span { font-family: var(--font-display); font-size: clamp(11px,1.1vw,17px); letter-spacing: .16em; }
 .nilo-home-brand .font-brand { font-family: var(--font-display); font-size: clamp(25px,2.25vw,37px); font-weight: 650; }
 .nilo-home-brand > span:first-child { gap: 7px; }
-.nilo-home-nav { display: flex; align-items: center; gap: 17px; }
+.nilo-home-nav { display: flex; flex-shrink: 0; align-items: center; gap: 17px; }
 .nilo-icon-button {
-  display: grid; place-items: center; width: 43px; height: 43px;
+  display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0;
   background: #fffdf333; border: 1px solid #64745933; border-radius: 50%;
   color: #3f5c51; font: 24px var(--font-display); transition: background .2s, transform .2s;
 }
 .nilo-icon-button:hover { background: #fffdf3cc; transform: translateY(-2px); }
 .nilo-icon-button svg { width: 21px; height: 21px; }
 .nilo-nav-divider { display: none; }
-.nilo-leave { white-space: nowrap; font: 16px var(--font-display); letter-spacing: .13em; }
+.nilo-leave { min-height: 44px; padding-inline: 4px; white-space: nowrap; font: 16px var(--font-display); letter-spacing: .13em; }
 .nilo-leave span { margin-left: 7px; font: 15px var(--font-sans); }
 .nilo-home-intro { position: absolute; z-index: 4; top: 10.7%; left: 16%; right: 12%; text-align: center; pointer-events: none; }
 .nilo-heading-comet { position: absolute; bottom: calc(100% - 6px); left: 50%; transform: translateX(-50%); width: clamp(130px,13vw,210px); height: auto; }
@@ -43,6 +47,9 @@
   container-type: inline-size;
   position: absolute; width: var(--world-width); aspect-ratio: 7 / 4;
   left: 50%; top: 50%; transform: translate(-50%,-50%);
+}
+.nilo-room::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
   background: url('../../../assets/images/nilo-storybook-world-v2.png') center / 100% 100% no-repeat;
 }
 .nilo-tree-sign { position: absolute; left: 3.8%; top: 40%; width: 10%; text-align: center; transform: rotate(-8deg); font: 1.14cqw/1.6 var(--font-display); letter-spacing: .17em; color: #747157; pointer-events: none; }
@@ -74,7 +81,7 @@
 .creation-door:hover .door-light-seam,.creation-door:focus-visible .door-light-seam { opacity: .8; }
 .creation-door.is-open .door-leaf { transform: rotateY(-104deg); }
 .creation-door.is-open .door-light-seam { opacity: 1; box-shadow: 0 0 55px 12px #ffecac99,inset 0 0 40px #fff7c8; }
-.nilo-companion-area { position: absolute; z-index: 3; left: 47.5%; top: 28.5%; width: 35%; aspect-ratio: 1; mix-blend-mode: multiply; }
+.nilo-companion-area { position: absolute; z-index: 3; left: 47.5%; top: 28.5%; width: 35%; aspect-ratio: 1; }
 .nilo-companion { position: relative; width: 100%; height: 100%; }
 .nilo-character-stage,.nilo-character-float,.nilo-character { position: relative; width: 100%; height: 100%; }
 .nilo-character-float { mix-blend-mode: multiply; }
@@ -119,76 +126,49 @@
 .nilo-door-transition { position: fixed; z-index: 100; inset: 0; background: radial-gradient(ellipse at 37% 57%,#fff7c9,#fffaf0); pointer-events: all; }
 .is-entering .nilo-magic-trail,.is-entering .nilo-room-spark { opacity: 0; }
 @media (min-aspect-ratio: 2/1) {
-  .nilo-home { --world-width: 100vw; }
-  .nilo-room { top: 55%; }
+  .nilo-home { --world-width: min(100vw, 200dvh); }
+  .nilo-room::before {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+  }
   .nilo-home-intro { top: 13%; }
 }
 @media (max-width:1100px) {
-  .nilo-home-header { left: 14%; right: 14%; }
-  .nilo-home-brand > span + span { font-size: 11px; letter-spacing: .06em; }
+  .nilo-home-header { gap: 12px; }
+  .nilo-home-brand { gap: 12px; }
+  .nilo-home-brand > span + span { display: none; }
   .nilo-home-nav { gap: 10px; }
   .nilo-home-intro { left: 10%; right: 8%; }
   .nilo-home-intro h1 { font-size: clamp(31px,4.2vw,48px); }
 }
-@media (max-aspect-ratio: 4/3) and (min-width:761px) {
-  .nilo-home { --world-width: 137vw; }
-  .nilo-room { top: 53%; }
-  .nilo-home-intro { top: 14%; }
-  .nilo-home-footer { bottom: 6%; }
-  .nilo-tree-sign { display: none; }
+@media (max-width:600px) {
+  .nilo-home-header { left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); gap: 8px; }
+  .nilo-home-brand > span:first-child > span + span { display: none; }
+  .nilo-home-brand > span:first-child > span:first-child { width: 44px; height: 44px; }
+  .nilo-home-nav { gap: 4px; }
+  .nilo-home-nav .luma-avatar-trigger > span { width: 44px; height: 44px; }
+  .nilo-leave { font-size: 11px; letter-spacing: 0; }
+  .nilo-leave span { display: none; }
 }
-@media (max-width:760px) and (orientation:portrait) {
-  .nilo-home { --world-width: 183vw; min-height: 620px; }
-  .nilo-room { left: 42%; top: 54%; }
-  .nilo-home::before { content: ''; position: absolute; inset: 0; background: url('../../../assets/images/bg-child.png') center / cover; opacity: .45; }
-  .nilo-room::after { content: ''; position: absolute; inset: -1px; background: linear-gradient(#fbf5e8,transparent 17%,transparent 88%,#fbf5e8); pointer-events: none; }
-  .nilo-home-header { top: 13px; left: 20px; right: 20px; gap: 8px; }
-  .nilo-home-brand > span + span { display: none; }
-  .nilo-home-brand > span:first-child > span:first-child { width: 38px; height: 38px; }
-  .nilo-home-brand .font-brand { font-size: 25px; }
-  .nilo-home-nav { gap: 8px; }.nilo-icon-button { width: 34px; height: 34px; font-size: 21px; }
-  .nilo-icon-button svg { width: 17px; height: 17px; }
-  .nilo-home-nav .luma-avatar-trigger > span { width: 46px; height: 46px; }
-  .nilo-leave { font-size: 11px; letter-spacing: 0; }.nilo-leave span { display: none; }
-  .nilo-home-intro { left: 6%; right: 6%; top: 14%; }
-  .nilo-home-intro h1 { font-size: clamp(25px,6.9vw,41px); letter-spacing: .025em; line-height: 1.5; }
-  .nilo-home-intro p { max-width: 290px; margin: 9px auto 0; font-size: 12px; line-height: 1.9; letter-spacing: .05em; }
-  .nilo-heading-comet { width: 130px; bottom: calc(100% - 3px); }
-  .nilo-tree-sign,.nilo-field-note,.nilo-butterfly { display: none; }
-  .nilo-companion-area { top: 31%; width: 37%; left: 47.5%; }
-  .nilo-speech-slot { top: -22%; left: 2%; right: 0; }
-  .nilo-speech { padding: 7px 11px; font-size: 11px; }
-  .nilo-touch-hint { top: -7%; left: 7%; width: 90%; font: 10px/1.5 var(--font-display); background: #fff8e9b3; padding: 6px; border-color: #d4bd882e; }
-  .nilo-touch-hint svg { width: 13px; height: 13px; }
-  .nilo-home-footer { left: 8%; right: 8%; bottom: 6%; }
-  .nilo-home-footer p { font-size: 16px; letter-spacing: .09em; }.nilo-home-footer p span { margin: 0 8px; }
-  .nilo-guest-note { font-size: 8px; margin-top: 12px; }
-  .nilo-magic-trail span { font-size: 15px; }.nilo-hotspot-label { font-size: 9px; }
+/* Portrait tablets keep the landscape illustration scale, with a camera
+   reframe that leaves the complete tail and door inside the viewport. */
+@media (max-aspect-ratio: 1/1) {
+  .nilo-home { --world-width: 175vw; }
+  .nilo-room { left: 47%; }
+  .nilo-room::before {
+    -webkit-mask-image: linear-gradient(transparent, #000 12%, #000 90%, transparent);
+    mask-image: linear-gradient(transparent, #000 12%, #000 90%, transparent);
+  }
+  .nilo-companion-area { left: 44%; }
+  .nilo-tree-sign, .note-adventure { display: none; }
+  .note-head { left: 72%; top: 28%; }
+  .nilo-butterfly { left: 74.5%; top: 49%; }
 }
-@media (max-width:360px) and (orientation:portrait) {
-  .nilo-home { min-height: 580px; }
-  .nilo-home-header { left: 16px; right: 16px; }.nilo-home-nav { gap: 5px; }
-  .nilo-home-brand > span:first-child > span:first-child { width: 29px; height: 29px; }.nilo-home-brand .font-brand { font-size: 22px; }
-  .nilo-icon-button { width: 30px; height: 30px; }
-  .nilo-home-intro { top: 15%; }.nilo-home-intro h1 { font-size: 23px; }.nilo-home-intro p { font-size: 10px; max-width: 240px; }
-  .nilo-room { top: 55%; }
-  .nilo-touch-hint { font-size: 9px; gap: 3px; }.nilo-touch-hint svg { width: 11px; }
-  .nilo-speech { font-size: 10px; padding: 6px 8px; }
-  .nilo-home-footer { bottom: 5%; }.nilo-home-footer p { font-size: 14px; }.nilo-guest-note { font-size: 7px; }
-}
-@media (max-height:540px) and (orientation:landscape) {
-  .nilo-home { min-height: 350px; --world-width: 100vw; }
-  .nilo-room { top: 52%; }
-  .nilo-home-header { top: 8px; left: 16%; right: 16%; }
-  .nilo-home-brand > span + span { display: none; }
-  .nilo-home-brand > span:first-child > span:first-child { width: 33px; height: 33px; }.nilo-home-brand .font-brand { font-size: 24px; }
-  .nilo-home-nav { gap: 10px; }.nilo-icon-button { width: 31px; height: 31px; font-size: 20px; }.nilo-icon-button svg { width: 17px; }
-  .nilo-home-nav .luma-avatar-trigger > span { width: 39px; height: 39px; }.nilo-leave { font-size: 12px; }
-  .nilo-home-intro { top: 11%; left: 20%; right: 16%; }.nilo-home-intro h1 { font-size: 27px; letter-spacing: .04em; }.nilo-home-intro p { font-size: 10px; margin-top: 0; }
-  .nilo-heading-comet { width: 80px; bottom: calc(100% - 3px); }
-  .nilo-home-footer { bottom: 2%; }.nilo-home-footer p { font-size: 12px; }.nilo-footer-flower { display: none; }.nilo-guest-note { font-size: 7px; margin-top: 2px; }
-  .nilo-touch-hint { font-size: 8px; padding: 3px 6px; }.nilo-touch-hint svg { width: 12px; height: 12px; }
-  .nilo-field-note { font-size: 10px; }
+/* A short desktop window keeps a compact header and full-size controls. */
+@media (max-height:640px) and (min-aspect-ratio: 3/2) {
+  .nilo-home-header { top: max(8px, env(safe-area-inset-top)); }
+  .nilo-home-nav .luma-avatar-trigger > span { width: 52px; height: 52px; }
+  .nilo-home-brand > span:first-child > span:first-child { width: 48px; height: 48px; }
 }
 @media (prefers-reduced-motion:reduce) {
   .nilo-home *,.nilo-home *::before,.nilo-home *::after { animation: none !important; transition: none !important; }

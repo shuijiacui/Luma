@@ -1,11 +1,12 @@
 import { lt, t, useLocale } from '@/i18n'
+import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 
 import authChildBackground from '@/assets/images/auth-child.png'
 import authParentBackground from '@/assets/images/auth-parent.png'
 import { Brand } from '@/components/brand'
+import { portalUrl } from '@/config/appMode'
 import { fadeUp, staggerContainer } from '@/design-system'
 import { cn } from '@/lib/cn'
 
@@ -33,7 +34,7 @@ export function AuthShell({
   return (
     <main
       className={cn(
-        'relative min-h-screen overflow-y-auto',
+        'luma-auth-shell relative min-h-screen overflow-y-auto',
         role === 'child' ? 'bg-luma-teal-50' : 'bg-luma-ivory-50',
       )}
     >
@@ -79,22 +80,22 @@ export function AuthShell({
 
       <div
         className={cn(
-          'relative z-10 mx-auto flex w-full max-w-7xl justify-center px-5 py-6 sm:px-8 sm:py-8 lg:min-h-screen lg:items-center lg:px-24 lg:py-10 xl:px-36 2xl:px-40',
+          'luma-auth-shell-content relative z-10 mx-auto flex w-full max-w-7xl justify-center px-5 py-6 sm:px-8 sm:py-8 lg:min-h-screen lg:items-center lg:px-24 lg:py-10 xl:px-36 2xl:px-40',
           role === 'child' ? 'lg:justify-start' : 'lg:justify-end',
         )}
       >
         <motion.div
-          className="w-full max-w-md"
+          className="luma-auth-panel w-full max-w-md"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
         >
           {showBack && (
             <motion.div variants={fadeUp} className="mb-4">
-              <Link
-                to="/"
+              <a
+                href={portalUrl}
                 className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/55 bg-white/45 px-3 text-sm font-semibold text-luma-teal-700 shadow-sm outline-none backdrop-blur-md transition-colors hover:bg-white/75 hover:text-luma-teal-900 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
-                aria-label={t("返回 Luma 首页")}
+                aria-label={t("返回 Luma 官网")}
               >
                 <svg
                   viewBox="0 0 20 20"
@@ -110,17 +111,21 @@ export function AuthShell({
                     strokeLinejoin="round"
                   />
                 </svg>
-                {t("返回首页")}</Link>
+                {t("返回官网")}</a>
             </motion.div>
           )}
 
-          <motion.div variants={fadeUp} className="mb-7 text-center">
-            <Link
-              to="/"
-              className="mx-auto mb-5 inline-flex items-center gap-2 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
-            >
-              <Brand size="lg" />
-            </Link>
+          <motion.div variants={fadeUp} className="luma-auth-heading mb-7 text-center">
+            <div className="luma-auth-brand-row">
+              <a
+                href={portalUrl}
+                className="inline-flex items-center gap-2 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
+                aria-label={t("返回 Luma 官网")}
+              >
+                <Brand size="md" />
+              </a>
+              <LanguageSwitcher />
+            </div>
             <div className="luma-eyebrow mb-3 text-luma-gold-700">{lt(eyebrow)}</div>
             <h1 className="luma-heading-2 text-luma-teal-900">{lt(title)}</h1>
             <p className="luma-body mt-3 text-luma-muted">{lt(description)}</p>
@@ -128,7 +133,7 @@ export function AuthShell({
 
           <motion.section
             variants={fadeUp}
-            className="rounded-luma-lg border border-white/85 bg-white/82 p-6 shadow-[0_24px_70px_rgba(23,63,58,0.14)] backdrop-blur-xl sm:p-8"
+            className="luma-auth-card rounded-luma-lg border border-white/85 bg-white/82 p-6 shadow-[0_24px_70px_rgba(23,63,58,0.14)] backdrop-blur-xl sm:p-8"
           >
             {lt(children)}
           </motion.section>

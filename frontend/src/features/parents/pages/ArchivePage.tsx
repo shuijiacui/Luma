@@ -98,14 +98,14 @@ export function ArchivePage() {
   }
 
   return (
-    <main className="relative z-0 min-h-screen bg-luma-ivory-50 px-4 py-4 sm:px-5 sm:py-5">
+    <main className="luma-archive-shell relative z-0 min-h-screen overflow-x-hidden bg-luma-ivory-50 px-4 py-4 sm:px-5 sm:py-5">
       <img
         src={bgParent}
         alt=""
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-40 select-none"
       />
-      <div className="relative z-0">
+      <div className="luma-archive-scroll relative z-0">
         <Navbar
           items={[
             { label: '成长概览', href: '/parent/demo' },

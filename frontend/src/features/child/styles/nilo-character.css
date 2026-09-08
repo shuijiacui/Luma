@@ -1,0 +1,69 @@
+/* Scene-relative puppet; touch targets belong to their moving body parts. */
+.nilo-companion-area { mix-blend-mode: normal; }
+.nilo-puppet { isolation: isolate; -webkit-tap-highlight-color: transparent; }
+.nilo-puppet .nilo-character-stage { overflow: visible; user-select: none; }
+.nilo-painted-part { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.nilo-rig-body,.nilo-rig-tail,.nilo-rig-head,.nilo-rig-holding,.nilo-rig-hand,.nilo-rig-scarf { position: absolute; }
+.nilo-body-breathe { position: absolute; inset: 0; transform-origin: 53% 89%; animation: nilo-breathe 5.2s ease-in-out infinite; pointer-events: none; }
+.nilo-rig-body { left: 34%; top: 43%; width: 40%; height: 45.24%; transform-origin: 50% 99%; z-index: 2; }
+.nilo-rig-tail { left: 62%; top: 72%; width: 31%; height: 15.87%; transform-origin: 12% 62%; }
+.nilo-rig-head { left: 26%; top: 8%; width: 52%; height: 42.67%; transform-origin: 51% 93%; z-index: 5; }
+.nilo-head-look,.nilo-faces { position: absolute; inset: 0; }
+.nilo-head-look { transform-origin: 50% 90%; }
+.nilo-face { position: absolute; inset: 0; opacity: 0; }
+.nilo-faces[data-expression=open] .face-open,.nilo-faces[data-expression=closed] .face-closed,.nilo-faces[data-expression=delighted] .face-delighted { opacity: 1; }
+.nilo-rig-holding { left: 20%; top: 41%; width: 24%; height: 24.88%; transform-origin: 82% 84%; z-index: 1; }
+.nilo-rig-lantern-swing { position: absolute; left: -18%; top: 8%; width: 75%; height: 133%; transform-origin: 50% 3%; animation: nilo-lantern-sway 4.7s ease-in-out infinite; }
+.nilo-rig-lantern { position: relative; width: 100%; height: 100%; }
+.nilo-rig-holding > .nilo-painted-part { position: relative; z-index: 2; }
+.nilo-rig-lantern-swing { z-index: 1; }
+.nilo-rig-hand { left: 59%; top: 49%; width: 24%; height: 17.84%; transform-origin: 19% 23%; z-index: 4; }
+.nilo-rig-scarf { left: 65%; top: 44%; width: 16%; height: 11.79%; transform-origin: 32% 36%; z-index: 3; }
+.nilo-puppet .nilo-ground-shadow { left: 35%; right: 23%; bottom: 10%; height: 3.5%; filter: blur(5px); background: #70512b35; }
+.nilo-lantern-spill { position: absolute; left: 9%; top: 77%; width: 30%; height: 6%; border-radius: 50%; background: radial-gradient(ellipse,#ffcd6966,transparent 70%); opacity: .45; transition: opacity .7s,transform .7s; }
+.nilo-lantern-halo { position: absolute; inset: 17% -45% -10%; border-radius: 50%; background: radial-gradient(ellipse,#ffdb8855 8%,#ffcb5722 37%,transparent 69%); opacity: .5; transition: opacity .6s,transform .8s; pointer-events: none; }
+.nilo-star-light { position: absolute; top: 54%; left: 29%; width: 43%; aspect-ratio: 1; color: #fff6cc; filter: drop-shadow(0 0 8px #ffd362); opacity: .25; transition: opacity .3s,filter .5s; pointer-events: none; }
+.nilo-star-light svg { width: 100%; height: 100%; }
+.nilo-puppet[data-reaction=lantern][data-phase=respond] .nilo-lantern-halo { opacity: 1; transform: scale(1.35); }
+.nilo-puppet[data-reaction=lantern][data-phase=respond] .nilo-star-light { opacity: .95; filter: drop-shadow(0 0 13px #ffd263); }
+.nilo-puppet[data-reaction=lantern][data-phase=respond] .nilo-lantern-spill { opacity: 1; transform: scale(1.3); }
+.nilo-cheek { position: absolute; top: 66%; width: 15%; height: 11%; border-radius: 50%; background: radial-gradient(ellipse,#e69a6c88,transparent 70%); opacity: 0; transition: opacity .4s; pointer-events: none; }
+.cheek-left { left: 16%; }.cheek-right { left: 62%; }
+.nilo-puppet[data-reaction=head] .nilo-cheek,.nilo-puppet[data-reaction=belly] .nilo-cheek { opacity: .8; }
+.nilo-face-light { position: absolute; left: 10%; top: 60%; width: 45%; height: 28%; border-radius: 50%; background: radial-gradient(ellipse,#ffe3a366,transparent 70%); opacity: 0; transition: opacity .7s; pointer-events: none; }
+.nilo-puppet[data-reaction=lantern][data-phase=respond] .nilo-face-light { opacity: 1; }
+.nilo-touch-target { position: absolute; z-index: 6; min-width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; touch-action: manipulation; transform: translate(-50%,-50%); pointer-events: auto; }
+.nilo-touch-target:focus-visible { outline: 2px solid #916c36; outline-offset: 3px; background: #fff4bb22; }
+.nilo-touch-target:disabled { cursor: default; }
+.nilo-target-aura { position: absolute; inset: 0; border: 1px solid #fff0b2aa; border-radius: 50%; box-shadow: 0 0 15px #fbe5a955,inset 0 0 12px #fff4bb44; opacity: 0; transition: opacity .25s; pointer-events: none; }
+.nilo-target-dot { position: absolute; top: 50%; left: 50%; width: 7px; height: 7px; transform: translate(-50%,-50%); border-radius: 50%; background: #ffefb0; box-shadow: 0 0 0 5px #fff0ae33,0 0 13px #ffe690; opacity: 0; transition: opacity .25s; pointer-events: none; }
+.show-hotspots .nilo-target-dot,.nilo-touch-target:focus-visible .nilo-target-dot { opacity: 1; }
+.show-hotspots .nilo-target-aura { opacity: .65; }
+.nilo-target-label { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); color: #5b6649; background: #fff9e9ed; border: 1px solid #bca17455; border-radius: 20px; padding: 5px 10px; font: 12px/1.4 var(--font-display); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s; }
+.nilo-touch-target:focus-visible .nilo-target-label { opacity: 1; }
+@media (hover: hover) and (pointer: fine) { .nilo-touch-target:hover .nilo-target-aura,.nilo-touch-target:hover .nilo-target-label { opacity: 1; } }
+.nilo-rig-head .hotspot-head { left: 50%; top: 22%; width: 49%; height: 31%; }
+.nilo-rig-head .hotspot-nose { left: 41%; top: 62%; width: 19%; height: 19%; z-index: 7; }
+.nilo-rig-body .hotspot-belly { left: 31%; top: 47%; width: 39%; height: 35%; }
+.nilo-rig-tail .hotspot-tail { left: 72%; top: 47%; width: 39%; height: 70%; }
+.nilo-rig-hand .hotspot-hand { left: 85%; top: 81%; width: 31%; height: 45%; }
+.nilo-rig-lantern .hotspot-lantern { left: 50%; top: 66%; width: 76%; height: 48%; }
+.nilo-puppet .nilo-speech-slot { top: -8%; left: 15%; right: 0; min-height: 44px; align-items: flex-end; }
+.nilo-puppet .nilo-speech { position: relative; display: flex; align-items: center; gap: 8px; padding: 10px 17px; color: #59644c; font: clamp(12px,1.05cqw,17px)/1.65 var(--font-display); background: #fffbedf5; border: 1px solid #bca57377; border-radius: 20px 20px 20px 5px; box-shadow: 0 4px 18px #75633d0d; }
+.nilo-puppet .nilo-speech > span:last-child { color: inherit; }
+.nilo-speech-star { color: #c7a153; flex: 0 0 auto; }
+.nilo-puppet .nilo-touch-hint { top: auto; bottom: -1%; left: 23%; width: 66%; min-height: 44px; padding: 8px 12px; gap: 8px; color: #52604a; background: #fff9e8b8; border: 1px solid #b9a57844; box-shadow: 0 2px 8px #75633d07; font: clamp(11px,.9cqw,14px)/1.6 var(--font-display); letter-spacing: .04em; }
+.nilo-puppet .nilo-touch-hint svg { width: 17px; height: 17px; }
+.nilo-puppet .nilo-touch-hint:hover,.nilo-puppet .nilo-touch-hint[aria-pressed=true] { background: #fffaecf2; border-color: #ab94667a; }
+.nilo-particles { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 10; color: #e8b957; }
+.nilo-particles > span { position: absolute; width: 20px; height: 20px; margin: -10px; filter: drop-shadow(0 1px 3px #fff9d7); }
+.nilo-particles svg { display: block; width: 100%; height: 100%; }
+.particles-head { color: #d59b7f; }.particles-nose { color: #82aea6; }.particles-belly { color: #d9a087; }
+.nilo-ambient-motes { position: absolute; inset: 0; pointer-events: none; }
+.nilo-ambient-motes i { position: absolute; left: 13%; top: 48%; width: 3px; height: 3px; border-radius: 50%; background: #fff2bd; box-shadow: 0 0 6px 2px #ffd66e66; animation: nilo-mote 5.6s ease-in-out infinite; }
+.nilo-ambient-motes i:nth-child(2) { left: 30%; top: 59%; animation-delay: -2s; }.nilo-ambient-motes i:nth-child(3) { left: 19%; top: 75%; animation-delay: -3.5s; }
+.nilo-puppet[data-paused=true] *, .nilo-puppet:not([data-reaction=idle]) .nilo-body-breathe { animation-play-state: paused; }
+@keyframes nilo-breathe { 0%,100% { transform: scaleY(1) scaleX(1); } 50% { transform: scaleY(1.008) scaleX(1.002); } }
+@keyframes nilo-lantern-sway { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(2.5deg); } }
+@keyframes nilo-mote { 0%,100% { opacity: 0; transform: translate(0,5px); } 35% { opacity: .8; } 80% { opacity: 0; transform: translate(6px,-23px); } }
+@media (prefers-reduced-motion: reduce) { .nilo-puppet *, .nilo-puppet *::before, .nilo-puppet *::after { animation: none !important; transition: none !important; } }

@@ -1,8 +1,10 @@
 import { t, useLocale } from '@/i18n'
+import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Brand } from '@/components/brand'
+import { portalUrl } from '@/config/appMode'
 import { useAuth } from '@/features/auth/AuthContext'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { useOnboarding } from '@/features/onboarding/OnboardingContext'
@@ -36,8 +38,9 @@ export function ChildHomePage() {
   return (
     <main className={`nilo-home${opening ? ' is-entering' : ''}`}>
       <header className="nilo-home-header">
-        <div className="nilo-home-brand"><Brand size="md" /><span>{t("想象力在这里发芽")}</span></div>
+        <a href={portalUrl} className="nilo-home-brand" aria-label={t("返回 Luma 官网")}><Brand size="md" /><span>{t("想象力在这里发芽")}</span></a>
         <nav className="nilo-home-nav" aria-label={t("小屋设置")}>
+          <LanguageSwitcher />
           <button type="button" className="nilo-icon-button" aria-label={t(soundOn ? '关闭声音' : '打开声音')} aria-pressed={soundOn} onClick={toggleSound}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z" strokeLinejoin="round" />{soundOn ? <path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14" strokeLinecap="round" /> : <path d="m16 9 5 6m0-6-5 6" strokeLinecap="round" />}</svg>
           </button>

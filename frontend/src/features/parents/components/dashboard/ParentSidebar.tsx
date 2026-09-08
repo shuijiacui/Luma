@@ -2,6 +2,7 @@ import { lt, t, useLocale } from '@/i18n'
 import { motion } from 'framer-motion'
 
 import { lumaLogo } from '@/assets/brand'
+import { portalUrl } from '@/config/appMode'
 import { cn } from '@/lib/cn'
 import { HangingBranch, LeafSprig } from './decor'
 import { NAV_ENTRIES, type ViewKey } from './parentNav'
@@ -22,13 +23,15 @@ export function ParentSidebar({ active, onSelect, onLogout, className }: Sidebar
         'fixed top-1/2 left-[max(20px,calc((100vw-1560px)/2+20px))] z-30 hidden w-[264px] -translate-y-1/2 flex-col overflow-hidden rounded-[2rem] border border-white/70 bg-white/85 shadow-luma-card backdrop-blur-xl lg:flex',
         className,
       )}
-      style={{ maxHeight: 'calc(100vh - 48px)' }}
+      style={{
+        maxHeight: 'calc(100svh - 40px)',
+      }}
     >
       {/* 品牌 */}
       <div className="px-7 pt-7">
         <a
-          href="/"
-          aria-label={t("Luma 首页")}
+          href={portalUrl}
+          aria-label={t("返回 Luma 官网")}
           className="group inline-flex items-center gap-2.5 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
         >
           <span className="relative grid size-11 shrink-0 place-items-center">

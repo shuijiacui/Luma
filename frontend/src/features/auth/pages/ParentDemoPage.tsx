@@ -1,4 +1,5 @@
 import { lt, t, useLocale } from '@/i18n'
+import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { useChildHistory } from '@/hooks/useChildHistory'
 import { ChildBirthDate } from '@/features/parents/components/ChildBirthDate'
 import { PeriodicReportsSection } from '@/features/parents/components/PeriodicReportsSection'
@@ -18,6 +19,7 @@ import { parentSteps } from '@/features/onboarding/steps/parentSteps'
 
 import { defaultAvatars } from '@/assets/avatars'
 import { lumaLogo } from '@/assets/brand'
+import { portalUrl } from '@/config/appMode'
 import bgParent from '@/assets/images/bg-parent.png'
 import { Button, Card } from '@/components/ui'
 import { fadeUp, staggerContainer } from '@/design-system'
@@ -518,6 +520,7 @@ export function ParentDemoPage() {
 
   const headerActions = (
     <div className="flex items-center gap-2.5">
+      <div className="hidden lg:flex"><LanguageSwitcher /></div>
       {lt(invitePill)}
       {lt(childDropdown)}
       <div className="relative">
@@ -531,7 +534,7 @@ export function ParentDemoPage() {
           <span className="absolute top-2 right-2.5 size-1.5 rounded-full bg-luma-clay-300" />
         </button>
         {bellOpen && (
-          <div className="absolute top-[calc(100%+0.6rem)] right-0 z-50 w-72 rounded-3xl border border-white/90 bg-white/95 p-4 shadow-luma-md backdrop-blur-xl">
+          <div className="absolute top-[calc(100%+0.6rem)] right-0 z-50 w-72 rounded-3xl border border-white/90 bg-white/95 p-4 shadow-luma-md backdrop-blur-xl lg:z-40 lg:w-64">
             <div className="text-sm font-bold text-[#334038]">{t("通知")}</div>
             <p className="mt-2 rounded-2xl bg-[#faf7ef] px-3.5 py-2.5 text-xs leading-relaxed text-[#8b8371]">
               {t("暂时没有新消息。孩子完成新的创作后，我们会在这里轻轻提醒你 🍃")}</p>
@@ -549,8 +552,8 @@ export function ParentDemoPage() {
   )
 
   const renderHeader = (
-    <motion.div variants={fadeUp} className="flex items-start justify-between gap-x-4 gap-y-3">
-      <div className="min-w-0 flex-1">
+    <motion.div variants={fadeUp} className="flex items-start justify-between gap-x-4 gap-y-3 lg:flex-wrap lg:gap-x-6">
+      <div className="min-w-0 flex-1 lg:flex-initial">
         <div className="flex items-center gap-2 text-[#9a8a5f]">
           <SparkleDot className="size-3.5 text-luma-gold-300" />
           <span className="luma-eyebrow text-[0.66rem] tracking-[0.22em] text-[#a0906b]">{t("Luma · 家长空间")}</span>
@@ -864,7 +867,7 @@ export function ParentDemoPage() {
       : null
 
   return (
-    <main className="relative min-h-screen overflow-x-clip text-[#3a463c]">
+    <main className="luma-parent-shell relative min-h-screen overflow-x-clip text-[#3a463c]">
       {/* 背景：保留原图，叠加奶油色让卡片透气 */}
       <img
         src={bgParent}
@@ -877,21 +880,22 @@ export function ParentDemoPage() {
         className="pointer-events-none fixed inset-0 -z-10 bg-[#faf7ef]/55"
       />
 
-      <div className="mx-auto flex w-full max-w-[1560px] gap-6 px-3 py-4 sm:px-5 sm:py-5">
+      <div className="luma-parent-layout mx-auto flex w-full max-w-[1560px] gap-6 px-3 py-4 sm:px-5 sm:py-5">
         {/* 桌面端固定左侧导航：悬浮于屏幕中部 */}
         <ParentSidebar active={activeView} onSelect={selectView} onLogout={handleLogout} />
         <div aria-hidden="true" className="hidden w-[264px] shrink-0 lg:block" />
 
-        <div className="min-w-0 flex-1">
+        <div className="luma-parent-content min-w-0 flex-1">
           {/* 移动端导航条 */}
           <div className="mb-4 lg:hidden" data-onboarding="parent-navbar">
             <div className="flex items-center justify-between rounded-[1.7rem] border border-white/70 bg-white/85 px-4 py-3 shadow-luma-card backdrop-blur-xl">
-              <a href="/" aria-label={t("Luma 首页")} className="flex items-center gap-2">
+              <a href={portalUrl} aria-label={t("返回 Luma 官网")} className="flex items-center gap-2">
                 <img src={lumaLogo} alt="" className="h-9 w-9 object-contain" />
                 <span className="font-brand text-xl font-bold text-[#33503a]">Luma</span>
                 <span className="hidden text-[0.62rem] text-[#9a9280] sm:block">{t("家长空间")}</span>
               </a>
-              <button type="button" onClick={handleLogout} className="rounded-full px-3 py-1.5 text-xs font-bold text-luma-teal-700">{t('退出登录')}</button>
+              <LanguageSwitcher />
+              <button type="button" onClick={handleLogout} className="rounded-full px-2 py-1.5 text-xs font-bold text-luma-teal-700">{t('退出登录')}</button>
               <button
                 type="button"
                 onClick={() => setActiveView('settings')}

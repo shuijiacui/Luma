@@ -48,7 +48,7 @@ const portalChildren = [
 
 /** parent App：只有家长登录与家长页面 */
 const parentChildren = [
-  { index: true, element: <HomePage singleEntry /> },
+  { index: true, element: <Navigate to="/auth?role=parent&mode=login" replace /> },
   { path: 'auth', Component: UnifiedAuthPage },
   {
     path: 'parent/login',
@@ -69,7 +69,7 @@ const parentChildren = [
 
 /** child App：只有儿童登录与儿童页面 */
 const childChildren = [
-  { index: true, element: <HomePage singleEntry /> },
+  { index: true, element: <Navigate to="/auth?role=child&mode=login" replace /> },
   { path: 'auth', Component: UnifiedAuthPage },
   {
     path: 'child/login',

@@ -119,7 +119,7 @@ npm --prefix frontend ci
 
 复制 `server/.env.example` 为 `server/.env`，填写服务商提供的 `LLM_BASE_URL`、`LLM_API_KEY` 与实际可用的 `LLM_VISION_MODEL`。示例模型名只是配置占位，不保证账号可用；`LLM_TEXT_MODEL` 用于可选说明增强。密钥只放服务端。
 
-两个终端分别运行：
+两个终端分别运行；前端命令会同时启动官网、家长端和儿童端：
 
 ```bash
 npm --prefix server start
@@ -129,7 +129,7 @@ npm --prefix server start
 npm --prefix frontend run dev
 ```
 
-前端默认 `http://localhost:5173`，通过 Vite 将 `/api` 转发到 `http://localhost:3001`。不配置模型也可以验证认证、界面和游客示例；真实画作识别需要视觉服务。后端图片默认位置相对于运行工作目录，生产建议显式配置绝对 `UPLOAD_DIR`。
+官网默认 `http://localhost:5173`，家长端为 `http://localhost:5174`，儿童端为 `http://localhost:5175`；三个前端均通过 Vite 将 `/api` 转发到 `http://localhost:3001`。如只需调试单端，可分别运行 `dev:portal`、`dev:parent` 或 `dev:child`。不配置模型也可以验证认证、界面和游客示例；真实画作识别需要视觉服务。后端图片默认位置相对于运行工作目录，生产建议显式配置绝对 `UPLOAD_DIR`。
 
 ```bash
 npm --prefix server test

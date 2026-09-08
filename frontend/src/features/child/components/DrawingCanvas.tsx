@@ -1,4 +1,5 @@
 import { t, useLocale } from '@/i18n'
+import { createStrokePainter, type BrushKind } from '../brushes'
 import {
   forwardRef,
   useEffect,
@@ -18,6 +19,7 @@ export interface DrawingCanvasHandle {
 interface DrawingCanvasProps {
   color: string
   brushSize: number
+  brushKind?: BrushKind
   isEraser: boolean
   onStrokeComplete: () => void
   draft: { history: string[] }
@@ -28,12 +30,14 @@ export const DrawingCanvas = forwardRef<
   DrawingCanvasHandle,
   DrawingCanvasProps
 >(function DrawingCanvas(
-  { color, brushSize, isEraser, onStrokeComplete, draft, disabled },
+  { color, brushSize, brushKind = 'round', isEraser, onStrokeComplete, draft, disabled },
   forwardedRef,
 ) {
   useLocale()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
+  const pointerRef = useRef<number | null>(null)
+  const painterRef = useRef<ReturnType<typeof createStrokePainter> | null>(null)
   const historyRef = useRef<string[]>([...draft.history])
   const restoringRef = useRef(false)
   // 撤销请求版本号：连续快速点撤销会产生多个并发的 Image.onload，
@@ -89,6 +93,7 @@ export const DrawingCanvas = forwardRef<
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
       const nextWidth = Math.round(rect.width * pixelRatio)
       const nextHeight = Math.round(rect.height * pixelRatio)
+      if (nextWidth < 1 || nextHeight < 1) return
 
       // 尺寸没变就别折腾，避免同一尺寸下反复清空重绘
       if (canvas.width === nextWidth && canvas.height === nextHeight) return
@@ -130,7 +135,7 @@ export const DrawingCanvas = forwardRef<
 
   useImperativeHandle(forwardedRef, () => ({
     undo() {
-      if (disabled) return
+      if (disabled || isDrawingRef.current) return
       if (historyRef.current.length <= 1) return
       historyRef.current.pop()
       draft.history = [...historyRef.current]
@@ -138,7 +143,7 @@ export const DrawingCanvas = forwardRef<
       onStrokeComplete()
     },
     clear() {
-      if (disabled) return
+      if (disabled || isDrawingRef.current) return
       const canvas = canvasRef.current
       const context = canvas?.getContext('2d')
       if (!canvas || !context) return
@@ -175,7 +180,7 @@ export const DrawingCanvas = forwardRef<
   }
 
   function startDrawing(event: ReactPointerEvent<HTMLCanvasElement>) {
-    if (disabled || restoringRef.current || isDrawingRef.current || !event.isPrimary) return
+    if (disabled || restoringRef.current || isDrawingRef.current || !event.isPrimary || event.button !== 0) return
     restoreVersionRef.current++
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d')
@@ -183,33 +188,26 @@ export const DrawingCanvas = forwardRef<
 
     canvas.setPointerCapture(event.pointerId)
     isDrawingRef.current = true
+    pointerRef.current = event.pointerId
     const point = getPoint(event)
     const scale = canvas.width / canvas.getBoundingClientRect().width
 
-    context.beginPath()
-    context.moveTo(point.x, point.y)
-    context.lineCap = 'round'
-    context.lineJoin = 'round'
-    context.lineWidth = brushSize * scale
-    context.strokeStyle = color
-    context.globalCompositeOperation = isEraser
-      ? 'destination-out'
-      : 'source-over'
+    painterRef.current = createStrokePainter(context, { kind: brushKind, color, size: brushSize * scale, eraser: isEraser }, point)
   }
 
   function draw(event: ReactPointerEvent<HTMLCanvasElement>) {
-    if (!isDrawingRef.current) return
-    const context = canvasRef.current?.getContext('2d')
-    if (!context) return
+    if (!isDrawingRef.current || pointerRef.current !== event.pointerId) return
     const point = getPoint(event)
-    context.lineTo(point.x, point.y)
-    context.stroke()
+    painterRef.current?.moveTo(point)
   }
 
-  function finishDrawing() {
-    if (!isDrawingRef.current) return
+  function finishDrawing(event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (!isDrawingRef.current || pointerRef.current !== event.pointerId) return
+    if (event.type === 'pointerup') painterRef.current?.moveTo(getPoint(event))
     isDrawingRef.current = false
-    canvasRef.current?.getContext('2d')?.closePath()
+    painterRef.current = null
+    pointerRef.current = null
+    if (canvasRef.current?.hasPointerCapture(event.pointerId)) canvasRef.current.releasePointerCapture(event.pointerId)
     saveSnapshot()
     onStrokeComplete()
   }
@@ -217,13 +215,13 @@ export const DrawingCanvas = forwardRef<
   return (
     <canvas
       ref={canvasRef}
-      className="h-full min-h-[440px] w-full cursor-crosshair touch-none rounded-[1.5rem] bg-white"
+      className="block h-full min-h-0 w-full cursor-crosshair touch-none rounded-[1.5rem] bg-white"
       aria-label={t("自由绘画画布")}
       onPointerDown={startDrawing}
       onPointerMove={draw}
       onPointerUp={finishDrawing}
       onPointerCancel={finishDrawing}
-      onPointerLeave={finishDrawing}
+      onLostPointerCapture={finishDrawing}
     />
   )
 })
