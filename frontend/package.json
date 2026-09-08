@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:parent": "vite --config vite.config.parent.ts",
+    "dev:child": "vite --config vite.config.child.ts",
     "build": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && vite build",
+    "build:parent": "tsc --noEmit -p tsconfig.app.json && vite build --config vite.config.parent.ts",
+    "build:child": "tsc --noEmit -p tsconfig.app.json && vite build --config vite.config.child.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run"

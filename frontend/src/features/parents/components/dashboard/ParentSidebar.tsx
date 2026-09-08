@@ -150,7 +150,7 @@ export function ParentMobileNav({
             aria-current={isActive ? 'page' : undefined}
             data-onboarding={entry.key === 'communication' ? 'parent-tab-communication' : entry.key === 'records' ? 'parent-archive' : undefined}
             className={cn(
-              'flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold whitespace-nowrap transition',
+              'flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold whitespace-nowrap transition',
               isActive
                 ? 'bg-luma-grass-600 text-white shadow-luma-sm'
                 : 'bg-white/80 text-[#6e7868] backdrop-blur-sm hover:bg-white',

@@ -884,7 +884,7 @@ export function ParentDemoPage() {
 
         <div className="min-w-0 flex-1">
           {/* 移动端导航条 */}
-          <div className="mb-4 lg:hidden" data-onboarding="parent-navbar">
+          <div className="sticky top-3 z-40 mb-4 lg:hidden" data-onboarding="parent-navbar">
             <div className="flex items-center justify-between rounded-[1.7rem] border border-white/70 bg-white/85 px-4 py-3 shadow-luma-card backdrop-blur-xl">
               <a href="/" aria-label={t("Luma 首页")} className="flex items-center gap-2">
                 <img src={lumaLogo} alt="" className="h-9 w-9 object-contain" />

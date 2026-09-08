@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { App } from '@/app/App'
+import { childAppUrl } from '@/config/appMode'
 import { ParentSidebar } from '@/features/parents/components/dashboard/ParentSidebar'
 import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { getLocale, setLocale, t } from '@/i18n'
@@ -20,7 +21,7 @@ test('switches the live homepage, document language and saved preference without
   render(<AuthProvider><MemoryRouter><LanguageSwitcher /><HomePage /></MemoryRouter></AuthProvider>)
   const home = document.querySelector('main')
   fireEvent.click(screen.getByRole('button', { name: 'Switch to English' }))
-  expect(screen.getByRole('link', { name: "Enter children's space" }).getAttribute('href')).toContain('role=child')
+  expect(screen.getByRole('link', { name: "Enter children's space" }).getAttribute('href')).toBe(childAppUrl)
   expect(document.documentElement.lang).toBe('en')
   expect(localStorage.getItem('luma_locale')).toBe('en')
   expect(document.querySelector('main')).toBe(home)

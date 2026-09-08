@@ -5,16 +5,27 @@ import '@fontsource-variable/caveat'
 
 import homeLakeside from '@/assets/images/home-lakeside-v2.png'
 import { Brand } from '@/components/brand'
+import { childAppUrl, fixedRole, parentAppUrl } from '@/config/appMode'
 import { useAuth } from '@/features/auth/AuthContext'
 import { PricingModal } from '@/features/marketing/components/PricingModal'
 import '../styles/home-lakeside.css'
 
-export function HomePage() {
+interface HomePageProps {
+  /** 独立 App（家长端 / 儿童端）的欢迎页：只保留一个"欢迎来到 Luma"入口 */
+  singleEntry?: boolean
+}
+
+export function HomePage({ singleEntry = false }: HomePageProps) {
   useLocale()
   const { session } = useAuth()
   const [pricingOpen, setPricingOpen] = useState(false)
-  const destination = (role: 'child' | 'parent') =>
-    session?.role === role ? `/${role}/demo` : `/auth?role=${role}&mode=login`
+
+  const role = fixedRole ?? 'parent'
+  const entryHref = singleEntry
+    ? session?.role === role
+      ? `/${role}/demo`
+      : `/auth?role=${role}&mode=login`
+    : undefined
 
   return (
     <main className="luma-landing">
@@ -31,10 +42,19 @@ export function HomePage() {
         <h1><span>Small Ideas,</span><span>Big World.</span></h1>
         <p>Let your imagination wander.</p>
       </section>
-      <nav className="luma-landing-entrances" aria-label={t("选择进入儿童端或家长端")}>
-        <Link to={destination('child')} aria-label={t("进入儿童端")}><span>{t("儿童端")}</span><ArrowIcon /></Link>
-        <span className="luma-landing-divider" aria-hidden="true" />
-        <Link to={destination('parent')} aria-label={t("进入家长端")}><span>{t("家长端")}</span><ArrowIcon /></Link>
+      <nav className="luma-landing-entrances" aria-label={t(singleEntry ? '欢迎来到 Luma' : '选择进入儿童端或家长端')}>
+        {singleEntry ? (
+          <Link to={entryHref ?? '/auth?role=parent&mode=login'} aria-label={t('欢迎来到 Luma')}>
+            <span>{t('欢迎来到 Luma')}</span>
+            <ArrowIcon />
+          </Link>
+        ) : (
+          <>
+            <a href={childAppUrl} aria-label={t("进入儿童端")}><span>{t("儿童端")}</span><ArrowIcon /></a>
+            <span className="luma-landing-divider" aria-hidden="true" />
+            <a href={parentAppUrl} aria-label={t("进入家长端")}><span>{t("家长端")}</span><ArrowIcon /></a>
+          </>
+        )}
       </nav>
       <PricingModal open={pricingOpen} onClose={() => setPricingOpen(false)} />
     </main>

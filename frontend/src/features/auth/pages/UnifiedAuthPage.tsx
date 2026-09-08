@@ -2,6 +2,7 @@ import { lt, t, useLocale } from '@/i18n'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 
+import { fixedRole } from '@/config/appMode'
 import { Button } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import { useAuth } from '../AuthContext'
@@ -20,7 +21,7 @@ export function UnifiedAuthPage() {
     useAuth()
 
   const role: UserRole =
-    searchParams.get('role') === 'child' ? 'child' : 'parent'
+    fixedRole ?? (searchParams.get('role') === 'child' ? 'child' : 'parent')
   const mode: AuthMode =
     searchParams.get('mode') === 'register' ? 'register' : 'login'
 
@@ -37,7 +38,7 @@ export function UnifiedAuthPage() {
 
   // An explicit role entry can open the other login form without ending
   // the current session until the user actually signs in or starts a guest visit.
-  if (session && (!searchParams.has('role') || session.role === role)) {
+  if (session && session.role === role) {
     return <Navigate to={`/${session.role}/demo`} replace />
   }
 
@@ -105,7 +106,13 @@ export function UnifiedAuthPage() {
   return (
     <AuthShell
       role={role}
-      eyebrow="一个入口 · 两个专属空间"
+      eyebrow={
+        fixedRole === 'parent'
+          ? '家长专属空间'
+          : fixedRole === 'child'
+            ? '儿童创作空间'
+            : '一个入口 · 两个专属空间'
+      }
       title={t(isLogin ? '欢迎回到 Luma' : '开启 Luma 旅程')}
       description={
         isParent
@@ -113,6 +120,7 @@ export function UnifiedAuthPage() {
           : '进入你的创作空间，Nilo 已经准备好啦。'
       }
     >
+      {fixedRole === undefined && (
       <div
         className="mb-5 grid grid-cols-2 rounded-2xl bg-luma-ivory-100 p-1"
         aria-label={t("选择使用身份")}
@@ -142,6 +150,7 @@ export function UnifiedAuthPage() {
         >
           {t("小小创作者")}</button>
       </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {isParent ? (
