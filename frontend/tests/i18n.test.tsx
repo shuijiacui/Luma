@@ -9,6 +9,7 @@ import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { getLocale, setLocale, t } from '@/i18n'
 import { AuthProvider } from '@/features/auth/AuthContext'
 import { UnifiedAuthPage } from '@/features/auth/pages/UnifiedAuthPage'
+import { saveSession } from '@/features/auth/storage'
 import { HomePage } from '@/features/marketing/pages/HomePage'
 import { FamilyDataSettings } from '@/features/parents/components/FamilyDataSettings'
 import { authFetch } from '@/lib/api/authFetch'
@@ -24,7 +25,7 @@ test('switches the live homepage, document language and saved preference without
   expect(languageSwitch.closest('header')).toBeTruthy()
   expect(document.querySelector('.luma-language-bar')).toBeNull()
   fireEvent.click(languageSwitch)
-  expect(screen.getByRole('link', { name: "Open children's sign-in" }).getAttribute('href')).toBe(`${childAppUrl}/auth?role=child&mode=login`)
+  expect(screen.getByRole('link', { name: "Open children's sign-in" }).getAttribute('href')).toBe(`${childAppUrl}/auth?role=child&mode=login&force=1`)
   expect(document.documentElement.lang).toBe('en')
   expect(localStorage.getItem('luma_locale')).toBe('en')
   expect(document.querySelector('main')).toBe(home)
@@ -32,6 +33,24 @@ test('switches the live homepage, document language and saved preference without
   expect(await screen.findByText('Begin with a little creative time')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '切换为中文' }))
   expect(screen.getByText('先开始一段创作时光')).toBeTruthy()
+})
+
+test('homepage login entry stays visible with a cached session', () => {
+  saveSession({
+    id: 'guest-child',
+    role: 'child',
+    familyId: 'demo-family',
+    displayName: '小小创作者',
+    isGuest: true,
+  })
+  render(
+    <AuthProvider>
+      <MemoryRouter initialEntries={['/auth?role=child&mode=login&force=1']}>
+        <UnifiedAuthPage />
+      </MemoryRouter>
+    </AuthProvider>,
+  )
+  expect(screen.getByRole('button', { name: '去找 Nilo' })).toBeTruthy()
 })
 
 test('switching preserves typed registration values and the form element', async () => {

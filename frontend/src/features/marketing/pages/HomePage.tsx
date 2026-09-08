@@ -11,7 +11,7 @@ import { PricingModal } from '@/features/marketing/components/PricingModal'
 import '../styles/home-lakeside.css'
 
 function loginUrl(baseUrl: string, role: 'parent' | 'child') {
-  return `${baseUrl.replace(/\/$/, '')}/auth?role=${role}&mode=login`
+  return `${baseUrl.replace(/\/$/, '')}/auth?role=${role}&mode=login&force=1`
 }
 
 export function HomePage() {

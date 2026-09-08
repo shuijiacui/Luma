@@ -24,6 +24,7 @@ export function UnifiedAuthPage() {
     fixedRole ?? (searchParams.get('role') === 'child' ? 'child' : 'parent')
   const mode: AuthMode =
     searchParams.get('mode') === 'register' ? 'register' : 'login'
+  const forceLogin = searchParams.get('force') === '1'
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -38,13 +39,17 @@ export function UnifiedAuthPage() {
 
   // An explicit role entry can open the other login form without ending
   // the current session until the user actually signs in or starts a guest visit.
-  if (session && session.role === role) {
+  if (session && session.role === role && !forceLogin) {
     return <Navigate to={`/${session.role}/demo`} replace />
   }
 
   function switchPanel(nextRole: UserRole, nextMode: AuthMode = mode) {
     setError('')
-    setSearchParams({ role: nextRole, mode: nextMode })
+    setSearchParams({
+      role: nextRole,
+      mode: nextMode,
+      ...(forceLogin ? { force: '1' } : {}),
+    })
   }
 
   function updateCreationCode(value: string, target: 'main' | 'confirm') {

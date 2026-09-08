@@ -11,13 +11,15 @@ export const appMode: AppMode =
 
 export const isStandaloneApp = appMode !== 'portal'
 
-// 三个形态的本地默认地址；部署时可分别用 VITE_* 覆盖。
+// 开发时默认打开三个本地入口；生产构建默认回到当前站点，避免误跳 localhost。
 const readUrl = (value: string | undefined, fallback: string) =>
   value && value.trim().length > 0 ? value.trim() : fallback
 
-export const portalUrl = readUrl(import.meta.env.VITE_PORTAL_URL, 'http://localhost:5173')
-export const parentAppUrl = readUrl(import.meta.env.VITE_PARENT_APP_URL, 'http://localhost:5174')
-export const childAppUrl = readUrl(import.meta.env.VITE_CHILD_APP_URL, 'http://localhost:5175')
+const defaultUrl = (port: number) => import.meta.env.DEV ? `http://localhost:${port}` : '/'
+
+export const portalUrl = readUrl(import.meta.env.VITE_PORTAL_URL, defaultUrl(5173))
+export const parentAppUrl = readUrl(import.meta.env.VITE_PARENT_APP_URL, defaultUrl(5174))
+export const childAppUrl = readUrl(import.meta.env.VITE_CHILD_APP_URL, defaultUrl(5175))
 
 /** 当前形态固定绑定的角色（parent/child App 各自只有一种身份；portal 为 undefined） */
 export const fixedRole: 'parent' | 'child' | undefined =
