@@ -2,8 +2,9 @@ import { lt, t, useLocale } from '@/i18n'
 import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
-import { getChildDraft } from '../draft'
-import { useNavigate } from 'react-router-dom'
+import { getChildDraft, restoreChildArtwork } from '../draft'
+import { readArtwork, saveArtwork } from '../artworks'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { niloCompanion } from '@/assets/avatars'
 import { Brand } from '@/components/brand'
@@ -11,6 +12,7 @@ import { motionTransition } from '@/design-system'
 import { useAuth } from '@/features/auth/AuthContext'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { analyzeDrawing, type FeatureJSON } from '@/lib/api/lumaApi'
+import { ApiError } from '@/lib/api/client'
 import { DrawingTools } from '../components/DrawingTools'
 import type { BrushKind } from '../brushes'
 import {
@@ -36,10 +38,49 @@ const niloSaveMessages = [
   '我们一起完成了这幅画。',
 ]
 
+function saveErrorMessage(error: unknown) {
+  if (error instanceof Error && /^(浏览器空间不足|这幅画已|画布还在准备|请先登录)/.test(error.message)) return error.message
+  if (error instanceof ApiError) {
+    if (error.status === 404 || error.status === 405 || error.status >= 500) return '保存服务暂时不可用，请保留画布，稍后再试或先下载。'
+    if (error.status === 401) return '登录已过期，请先下载这幅画，再重新登录。'
+    if (error.status === 413) return '这幅画太大了，请先下载保存。'
+  }
+  return '还没保存成功，请再试一次。'
+}
+
 export const LATEST_FEATURES_KEY = 'luma_latest_features'
 export const LATEST_ANALYSIS_ID_KEY = 'luma_latest_analysis_id'
 
 export function ChildCreatePage() {
+  const { session } = useAuth()
+  const [params] = useSearchParams()
+  const artworkId = params.get('artwork')
+  return <ArtworkLoader key={`${session?.id}:${artworkId ?? 'new'}`} artworkId={artworkId} />
+}
+
+function ArtworkLoader({ artworkId }: { artworkId: string | null }) {
+  useLocale()
+  const { session } = useAuth()
+  const navigate = useNavigate()
+  const [ready, setReady] = useState(!artworkId)
+  const [error, setError] = useState(false)
+  const [retry, setRetry] = useState(0)
+  useEffect(() => {
+    if (!artworkId || ready) return
+    let cancelled = false
+    setError(false)
+    readArtwork(session, artworkId).then(artwork => {
+      if (cancelled) return
+      restoreChildArtwork(session?.id ?? 'guest-child', artwork)
+      setReady(true)
+    }).catch(() => { if (!cancelled) setError(true) })
+    return () => { cancelled = true }
+  }, [artworkId, session, retry, ready])
+  if (!ready) return <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-luma-ivory-50 text-luma-teal-900"><p role={error ? 'alert' : 'status'}>{t(error ? '这幅画暂时没打开，再试一次吧。' : '正在打开你的画…')}</p>{error && <button type="button" className="min-h-12 rounded-xl bg-white px-6" onClick={() => setRetry(value => value + 1)}>{t('重试')}</button>}<button type="button" className="min-h-12 rounded-xl bg-white px-6" onClick={() => navigate('/child/history')}>{t('返回小画册')}</button></main>
+  return <ChildDrawingEditor />
+}
+
+function ChildDrawingEditor() {
   const locale = useLocale()
   const navigate = useNavigate()
   const { session } = useAuth()
@@ -58,12 +99,16 @@ export function ChildCreatePage() {
   const [serverBubble, setServerBubble] = useState<string | null>(null)
   const [serverBubbleEn, setServerBubbleEn] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
   // 进入画板后先显示欢迎蒙版，蒙版盖在 My Creative Space 之上
-  const [showWelcome, setShowWelcome] = useState(true)
+  const [showWelcome, setShowWelcome] = useState(!draft.artworkId)
   // 欢迎询问阶段画板保持「清除图形」状态；点「好呀一起画」后才出现半圆
   const [shapeId, setShapeId] = useState<WarmupShapeId | null>(null)
 
   function handleStrokeComplete() {
+    setSaveMessage(null)
     setAnalysis('idle')
     setFeatures(null)
     setServerBubble(null)
@@ -86,18 +131,40 @@ export function ChildCreatePage() {
     setShapeId(null)
   }
 
-  function handleSave() {
-    setServerBubbleEn(null)
-    canvasRef.current?.download()
-    const msg = niloSaveMessages[Math.floor(Math.random() * niloSaveMessages.length)]
-    setServerBubble(msg)
-    setSaved(true)
-    window.setTimeout(() => setSaved(false), 2200)
+  async function persistDrawing() {
+    const snapshot = canvasRef.current?.exportSnapshot()
+    if (!snapshot) throw new Error('画布还在准备，请稍后再点保存。')
+    draft.artworkId ??= crypto.randomUUID()
+    const result = await saveArtwork(session, draft.artworkId, draft.artworkRevision ?? 0, snapshot)
+    draft.artworkRevision = result.revision
+    draft.savedSnapshot = snapshot
+    if (mounted.current) setSaveMessage('已保存到历史图画，下次还能继续画')
+  }
+
+  async function handleSave() {
+    if (savingRef.current || analysis === 'loading') return
+    savingRef.current = true; setSaving(true); setSaveMessage(null)
+    try {
+      await persistDrawing()
+      if (!mounted.current) return
+      setServerBubbleEn(null)
+      setServerBubble(niloSaveMessages[Math.floor(Math.random() * niloSaveMessages.length)])
+      setSaved(true)
+    } catch (error) {
+      if (mounted.current) setSaveMessage(saveErrorMessage(error))
+    } finally { savingRef.current = false; if (mounted.current) setSaving(false) }
   }
 
   async function handleFinish() {
     const imageBase64 = canvasRef.current?.exportImage()
-    if (!imageBase64 || analysis === 'loading') return
+    if (!imageBase64 || analysis === 'loading' || savingRef.current) return
+    savingRef.current = true; setSaving(true); setSaveMessage(null)
+    try { await persistDrawing() }
+    catch (error) {
+      if (mounted.current) setSaveMessage(saveErrorMessage(error))
+      return
+    } finally { savingRef.current = false; if (mounted.current) setSaving(false) }
+    if (!mounted.current) return
     setAnalysis('loading')
     try {
       // 上传当前完整快照；重试同一快照复用 submissionKey，避免重复落库。
@@ -121,7 +188,7 @@ export function ChildCreatePage() {
       if (!mounted.current) return
       setAnalysis('error')
       setServerBubbleEn(null)
-      setServerBubble('哎呀，Nilo 走神了，点「完成」再试一次吧')
+      setServerBubble('画已经保存好啦！Nilo 暂时没法回应，之后再来聊聊吧。')
     }
   }
 
@@ -136,7 +203,7 @@ export function ChildCreatePage() {
 
   return (
     <main className="luma-child-create-shell relative flex min-h-screen flex-col overflow-hidden bg-luma-teal-50">
-      <header className="relative z-40 flex items-center justify-between gap-4 border-b border-white/80 bg-luma-ivory-50/85 px-4 py-3 backdrop-blur-xl sm:px-6">
+      <header className="relative z-40 flex flex-wrap items-center justify-between gap-2 border-b border-white/80 bg-luma-ivory-50/85 px-4 py-3 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
           <button
             type="button"
@@ -170,11 +237,13 @@ export function ChildCreatePage() {
         </div>
         <div className="hidden text-center lg:block">
           <div className="font-brand text-lg font-bold text-luma-teal-900">
-            My Creative Space
+            {t('我的创作空间')}
           </div>
-          <div className="text-xs text-luma-muted">Anything can begin here</div>
+          <div className="text-xs text-luma-muted">{t('让想象从这里开始')}</div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <button type="button" disabled={saving} onClick={() => navigate('/child/history')} className="min-h-10 rounded-xl px-3 text-sm font-bold text-luma-teal-700">{t('历史图画')}</button>
+          <button type="button" disabled={saving} onClick={() => canvasRef.current?.download()} className="min-h-10 rounded-xl px-3 text-sm text-luma-teal-700">{t('下载')}</button>
           <LanguageSwitcher />
           <AvatarPicker userId={session?.id ?? 'guest-child'} compact />
         </div>
@@ -182,7 +251,7 @@ export function ChildCreatePage() {
 
       <DrawingTools
         color={color} brushKind={brushKind} brushSize={brushSize} isEraser={isEraser}
-        disabled={analysis === 'loading'} shapeLabel={currentShapeLabel}
+        disabled={saving || analysis === 'loading'} shapeLabel={currentShapeLabel}
         onColor={value => { setColor(value); setIsEraser(false) }}
         onBrush={value => { setBrushKind(value); setIsEraser(false) }}
         onSize={setBrushSize} onEraser={() => setIsEraser(value => !value)}
@@ -192,10 +261,11 @@ export function ChildCreatePage() {
         onSave={handleSave} onFinish={handleFinish}
       >
       <section className="relative flex min-h-0 flex-1">
+        {(saving || saveMessage) && <p role="status" className="pointer-events-none absolute top-3 right-3 left-3 z-30 mx-auto w-fit max-w-[90%] rounded-2xl bg-luma-teal-50/95 px-4 py-2 text-center text-sm font-bold text-luma-teal-800 shadow-luma-sm">{t(saving ? '正在保存图画…' : saveMessage!)}</p>}
         <div className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-luma-lg border border-white/90 bg-white p-2 shadow-luma-md sm:p-3">
           <DrawingCanvas
             draft={draft.canvas}
-            disabled={analysis === 'loading'}
+            disabled={saving || analysis === 'loading'}
             ref={canvasRef}
             color={color}
             brushSize={brushSize}

@@ -102,6 +102,17 @@ access token 默认 120 分钟，refresh token 30 天且使用后轮换。带无
 
 可选字段 `narrative`、`webAdvice`、`webAdviceSource`、`referenceEvidence`、`referenceEvidenceSource` 见前端 `ReportResponse` 类型。增强受 `REPORT_BUDGET_MS` 总预算约束；失败/超时返回基础报告。正式结果带审计落库，并使该孩子周期摘要失效以待重建。
 
+## 儿童可继续绘画的小画册
+
+小画册与分析记录分开保存，点「保存」或「完成」先保存透明 PNG；「完成」随后调用分析，分析失败不影响继续绘画。登录儿童仅可访问自己的图画，家长返回 403、未登录返回 401、其他儿童的作品返回 404。游客在当前浏览器保存，不调用此接口。
+
+- `GET /api/artworks?offset=0`：每页最多 24 幅，按更新时间倒序；返回 `{artworks,nextOffset}`，每项含 `id,revision,createdAt,updatedAt,imageUrl`。
+- `GET /api/artworks/:id`：返回上述字段和 `image`（透明 PNG data URL），用于恢复画布。
+- `GET /api/artworks/:id/image`：返回 PNG 图片，使用 Authorization 头取图；所有小画册响应均为 `Cache-Control: no-store`。
+- `PUT /api/artworks/:id`：`:id` 为客户端生成的 UUID，请求 `{image,revision}`；新画 revision 为 0，续画携带上次返回的 revision。返回更新后的摘要。相同图像重试不增加版本，不新增作品；版本冲突返回 409，前端保留当前画布并提示下载后重新打开。仅接受 PNG，解码上限 10 MiB、像素上限 3200 万。
+
+图画存于 SQLite `artworks` 表，随数据库备份；注销家庭时一并删除。重新打开保留已保存的画面作为撤销起点，可以继续绘画、擦除及撤销本次新增笔画。旧的分析历史仍使用下节接口，不自动转换为可编辑画册记录。
+
 ## 历史、图片与档案
 
 ### GET `/children/:childId/analyses?limit=50&offset=0`

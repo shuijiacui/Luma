@@ -11,6 +11,10 @@
 }
 .nilo-home button { touch-action: manipulation; cursor: pointer; }
 .nilo-home button:disabled { cursor: default; }
+.nilo-history-button { position: absolute; z-index: 21; bottom: max(24px, env(safe-area-inset-bottom)); right: max(24px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 14px; min-height: 70px; padding: 14px 22px; border: 1px solid #d7dfc9; border-radius: 24px; background: #fffdf5f2; box-shadow: 0 6px 24px #395b5018; color: #395b50; }
+.nilo-history-button strong, .nilo-history-button small { display: block; text-align: left; }
+.nilo-history-button strong { font-size: 18px; }
+.nilo-history-button small { margin-top: 3px; font-size: 12px; }
 .nilo-home button:focus-visible { outline: 3px solid #b17c2d; outline-offset: 5px; }
 .nilo-home-header {
   position: absolute; z-index: 20;

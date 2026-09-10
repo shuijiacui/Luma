@@ -51,6 +51,7 @@ export function ChildHomePage() {
         </nav>
       </header>
       <h1 className="sr-only">{t("Nilo 的创作世界")}</h1>
+      <button type="button" className="nilo-history-button" disabled={opening} onClick={() => navigate('/child/history')}><span aria-hidden="true">🎨</span><span><strong>{t('历史图画')}</strong><small>{t('打开小画册，继续画')}</small></span><span aria-hidden="true">→</span></button>
       <section className="nilo-room" aria-label={t("Nilo 和通往画布的门")}>
         <div className="nilo-tree-sign" aria-hidden="true">{t("更大的")}<br />{t("想象世界")}<br />{t("在这里")}<span>✦</span></div>
         <div className="nilo-room-spark spark-one" aria-hidden="true">✧</div>

@@ -316,7 +316,7 @@ export function UnifiedAuthPage() {
             {lt(isParent ? '游客体验家长端' : '先去逛一逛')}
           </Button>
           <p className="mt-3 text-center text-xs text-luma-muted">
-            {t("游客模式中的内容不会保存")}</p>
+            {t(isParent ? '游客模式中的内容不会保存' : '游客图画保存在当前浏览器，清除浏览器数据后会消失。')}</p>
         </>
       )}
     </AuthShell>
