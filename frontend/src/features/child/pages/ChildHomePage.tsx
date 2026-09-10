@@ -51,9 +51,27 @@ export function ChildHomePage() {
         </nav>
       </header>
       <h1 className="sr-only">{t("Nilo 的创作世界")}</h1>
-      <button type="button" className="nilo-history-button" disabled={opening} onClick={() => navigate('/child/history')}><span aria-hidden="true">🎨</span><span><strong>{t('历史图画')}</strong><small>{t('打开小画册，继续画')}</small></span><span aria-hidden="true">→</span></button>
       <section className="nilo-room" aria-label={t("Nilo 和通往画布的门")}>
-        <div className="nilo-tree-sign" aria-hidden="true">{t("更大的")}<br />{t("想象世界")}<br />{t("在这里")}<span>✦</span></div>
+        <button
+          type="button"
+          className="nilo-tree-sign"
+          disabled={opening}
+          onClick={() => navigate('/child/history')}
+          aria-label={t('打开小画册，继续画')}
+        >
+          <span className="nilo-tree-sign-icon" aria-hidden="true">
+            <svg viewBox="0 0 42 36" fill="none">
+              <path d="m8 8 25-3 3 23-25 3L8 8Z" fill="#fff8e7" stroke="currentColor" strokeWidth="1.4" />
+              <path d="m5 11 25 2-2 20-25-2 2-20Z" fill="#fffdf3" stroke="currentColor" strokeWidth="1.4" />
+              <circle cx="12" cy="18" r="3" fill="#dfad50" />
+              <path d="m7 27 7-6 5 5 4-4 6 6" stroke="#75a08a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <strong className="nilo-tree-sign-title">{t('历史图画')}</strong>
+          <span className="nilo-tree-sign-subtitle">
+            {t('我的小画册')}<span aria-hidden="true">→</span>
+          </span>
+        </button>
         <div className="nilo-room-spark spark-one" aria-hidden="true">✧</div>
         <div className="nilo-room-spark spark-two" aria-hidden="true">✦</div>
         <div className="nilo-room-spark spark-three" aria-hidden="true">✧</div>

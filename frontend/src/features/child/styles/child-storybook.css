@@ -11,10 +11,6 @@
 }
 .nilo-home button { touch-action: manipulation; cursor: pointer; }
 .nilo-home button:disabled { cursor: default; }
-.nilo-history-button { position: absolute; z-index: 21; bottom: max(24px, env(safe-area-inset-bottom)); right: max(24px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 14px; min-height: 70px; padding: 14px 22px; border: 1px solid #d7dfc9; border-radius: 24px; background: #fffdf5f2; box-shadow: 0 6px 24px #395b5018; color: #395b50; }
-.nilo-history-button strong, .nilo-history-button small { display: block; text-align: left; }
-.nilo-history-button strong { font-size: 18px; }
-.nilo-history-button small { margin-top: 3px; font-size: 12px; }
 .nilo-home button:focus-visible { outline: 3px solid #b17c2d; outline-offset: 5px; }
 .nilo-home-header {
   position: absolute; z-index: 20;
@@ -56,8 +52,23 @@
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background: url('../../../assets/images/nilo-storybook-world-v2.png') center / 100% 100% no-repeat;
 }
-.nilo-tree-sign { position: absolute; left: 3.8%; top: 40%; width: 10%; text-align: center; transform: rotate(-8deg); font: 1.14cqw/1.6 var(--font-display); letter-spacing: .17em; color: #747157; pointer-events: none; }
-.nilo-tree-sign span { display: block; margin-top: .2em; color: #c39645; font-size: 1.7em; }
+.nilo-tree-sign {
+  position: absolute; z-index: 4; left: 3.25%; top: 35.5%; width: 11.2%; height: 21%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .22cqw;
+  padding: .4cqw .55cqw .65cqw; border: 0; background: transparent; text-align: center;
+  transform: rotate(-8deg); color: #747157;
+  transition: transform .2s ease, filter .2s ease;
+}
+.nilo-tree-sign-icon { width: 2.25cqw; height: 1.9cqw; color: #967443; transition: transform .2s ease; }
+.nilo-tree-sign-icon svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 .08cqw .08cqw #80663b24); }
+.nilo-tree-sign-title { position: relative; color: #536052; font: 650 1.24cqw/1.35 var(--font-display); letter-spacing: .11em; text-shadow: 0 1px 0 #fff7df99; white-space: nowrap; }
+.nilo-tree-sign-title::after { content: ''; position: absolute; left: 7%; right: 7%; bottom: -.12cqw; height: .08cqw; border-radius: 50%; background: #b78d4d80; transform: rotate(-2deg); }
+.nilo-tree-sign-subtitle { display: inline-flex; align-items: center; justify-content: center; gap: .28cqw; color: #857459; font: 600 .66cqw/1.4 var(--font-sans); letter-spacing: .05em; white-space: nowrap; }
+.nilo-tree-sign-subtitle span { color: #b28139; font-size: 1.25em; transition: transform .2s ease; }
+.nilo-tree-sign:hover:not(:disabled) { transform: rotate(-6deg) scale(1.035); filter: brightness(1.04); }
+.nilo-tree-sign:hover:not(:disabled) .nilo-tree-sign-icon { transform: translateY(-.12cqw) rotate(2deg); }
+.nilo-tree-sign:hover:not(:disabled) .nilo-tree-sign-subtitle span { transform: translateX(.18cqw); }
+.nilo-tree-sign:disabled { opacity: .62; }
 .nilo-door-area { position: absolute; left: 29.05%; top: 31.6%; width: 16.2%; height: 44.5%; z-index: 2; }
 .creation-door { position: relative; display: block; width: 100%; height: 100%; padding: 0; background: transparent; border: 0; perspective: 1200px; border-radius: 50% 50% 1% 1% / 33% 33% 1% 1%; }
 .door-leaf {
@@ -164,7 +175,16 @@
     mask-image: linear-gradient(transparent, #000 12%, #000 90%, transparent);
   }
   .nilo-companion-area { left: 44%; }
-  .nilo-tree-sign, .note-adventure { display: none; }
+  .nilo-tree-sign {
+    left: 24.4%; top: 17%; width: 14.5%; height: 22%; padding: 1cqw .7cqw;
+    border: .18cqw solid #c9a97080; border-radius: .7cqw;
+    background: linear-gradient(96deg, #ead6aee8, #f3e3c2ed 48%, #dfc394e8);
+    box-shadow: inset 0 0 0 .16cqw #fff4d068, 0 .5cqw 1.2cqw #68542f24;
+  }
+  .nilo-tree-sign-icon { width: 3.2cqw; height: 2.7cqw; }
+  .nilo-tree-sign-title { font-size: 1.65cqw; }
+  .nilo-tree-sign-subtitle { font-size: .95cqw; }
+  .note-adventure { display: none; }
   .note-head { left: 72%; top: 28%; }
   .nilo-butterfly { left: 74.5%; top: 49%; }
 }
