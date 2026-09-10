@@ -13,8 +13,31 @@ import { saveSession } from '@/features/auth/storage'
 import { HomePage } from '@/features/marketing/pages/HomePage'
 import { FamilyDataSettings } from '@/features/parents/components/FamilyDataSettings'
 import { authFetch } from '@/lib/api/authFetch'
+import { ChildCreatePage } from '@/features/child/pages/ChildCreatePage'
+import { clearChildDraft, getChildDraft } from '@/features/child/draft'
 
 vi.mock('@/lib/api/authFetch', () => ({ authFetch: vi.fn() }))
+test('drawing header follows the language without replacing the active canvas', () => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
+  const context = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+  try {
+    saveSession({ id: 'guest-child', role: 'child', familyId: 'demo-family', displayName: '小朋友', isGuest: true })
+    clearChildDraft()
+    getChildDraft('guest-child').artworkId = 'already-open-drawing'
+    render(<AuthProvider><MemoryRouter><ChildCreatePage /></MemoryRouter></AuthProvider>)
+    const canvas = screen.getByLabelText('自由绘画画布')
+    expect(screen.getByText('我的创作空间')).toBeTruthy()
+    expect(screen.getByText('让想象从这里开始')).toBeTruthy()
+    expect(screen.queryByText('My Creative Space')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to English' }))
+    expect(screen.getByText('My Creative Space')).toBeTruthy()
+    expect(screen.getByText('Anything can begin here')).toBeTruthy()
+    expect(document.querySelector('canvas')).toBe(canvas)
+    fireEvent.click(screen.getByRole('button', { name: '切换为中文' }))
+    expect(screen.getByText('我的创作空间')).toBeTruthy()
+    expect(document.querySelector('canvas')).toBe(canvas)
+  } finally { cleanup(); clearChildDraft(); context.mockRestore(); vi.unstubAllGlobals() }
+})
 beforeEach(() => { localStorage.clear(); act(() => setLocale('zh')) })
 afterEach(() => { cleanup(); act(() => setLocale('zh')); vi.clearAllMocks() })
 

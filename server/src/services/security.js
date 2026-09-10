@@ -9,7 +9,7 @@ export function corsMiddleware(allowedOrigins) {
       res.set('Access-Control-Allow-Origin', origin)
       res.set('Vary', 'Origin')
       res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-      res.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+      res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,OPTIONS')
     }
     // 不允许的来源：不发 CORS 头，浏览器自行拦截（预检直接 204 但不带许可头）
     if (req.method === 'OPTIONS') return res.sendStatus(204)

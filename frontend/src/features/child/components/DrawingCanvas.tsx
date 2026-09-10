@@ -14,6 +14,7 @@ export interface DrawingCanvasHandle {
   download: () => void
   /** 导出白底 PNG 的 base64（不含 data: 前缀），供 /api/analyze 使用 */
   exportImage: () => string | null
+  exportSnapshot: () => string | null
 }
 
 interface DrawingCanvasProps {
@@ -62,7 +63,9 @@ export const DrawingCanvas = forwardRef<
       context.clearRect(0, 0, canvas.width, canvas.height)
       context.save()
       context.globalCompositeOperation = 'source-over'
-      context.drawImage(image, 0, 0, canvas.width, canvas.height)
+      const scale = Math.min(canvas.width / image.width, canvas.height / image.height)
+      const width = image.width * scale, height = image.height * scale
+      context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height)
       context.restore()
       restoringRef.current = false
     }
@@ -121,7 +124,7 @@ export const DrawingCanvas = forwardRef<
 
   function flattenToCanvas() {
     const canvas = canvasRef.current
-    if (!canvas || restoringRef.current) return null
+    if (!canvas || restoringRef.current || isDrawingRef.current) return null
     const exportCanvas = document.createElement('canvas')
     exportCanvas.width = canvas.width
     exportCanvas.height = canvas.height
@@ -166,6 +169,10 @@ export const DrawingCanvas = forwardRef<
       const exportCanvas = flattenToCanvas()
       if (!exportCanvas) return null
       return exportCanvas.toDataURL('image/png').split(',')[1] ?? null
+    },
+    exportSnapshot() {
+      if (!canvasRef.current || restoringRef.current || isDrawingRef.current) return null
+      return canvasRef.current.toDataURL('image/png')
     },
   }))
 

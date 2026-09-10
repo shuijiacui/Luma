@@ -7,6 +7,7 @@ import { ChildDemoPage } from '@/features/auth/pages/ChildDemoPage'
 import { ParentDemoPage } from '@/features/auth/pages/ParentDemoPage'
 import { UnifiedAuthPage } from '@/features/auth/pages/UnifiedAuthPage'
 import { ChildCreatePage } from '@/features/child/pages/ChildCreatePage'
+import { ChildHistoryPage } from '@/features/child/pages/ChildHistoryPage'
 import { HomePage } from '@/features/marketing/pages/HomePage'
 import { ArchivePage } from '@/features/parents/pages/ArchivePage'
 
@@ -42,6 +43,7 @@ const portalChildren = [
     children: [
       { path: 'child/demo', Component: ChildDemoPage },
       { path: 'child/create', Component: ChildCreatePage },
+      { path: 'child/history', Component: ChildHistoryPage },
     ],
   },
 ]
@@ -84,6 +86,7 @@ const childChildren = [
     children: [
       { path: 'child/demo', Component: ChildDemoPage },
       { path: 'child/create', Component: ChildCreatePage },
+      { path: 'child/history', Component: ChildHistoryPage },
     ],
   },
 ]

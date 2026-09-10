@@ -75,5 +75,14 @@ export function createDb(path = process.env.DB_PATH || DEFAULT_DB_PATH) {
     generated_at TEXT NOT NULL,
     UNIQUE(child_id, kind, period_start)
   )`)
+  db.exec(`CREATE TABLE IF NOT EXISTS artworks (
+    id TEXT PRIMARY KEY,
+    child_id TEXT NOT NULL REFERENCES accounts(id),
+    image_base64 TEXT NOT NULL,
+    revision INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_artworks_child ON artworks(child_id, updated_at);`)
   return db
 }

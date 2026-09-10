@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { createApiRouter } from './routes/analyze.js'
 import { createAuthRouter } from './routes/auth.js'
+import { createArtworkRouter } from './routes/artworks.js'
 import { loadEntries } from './services/retrieve.js'
 import { DEFAULT_CONFIG } from './services/score.js'
 import { createDb } from './db.js'
@@ -75,6 +76,7 @@ export function createApp(deps = {}) {
   // 登录/注册是撞库与暴力破解目标，限流最严
   app.use('/api/auth', rateLimit(limits.auth))
   app.use('/api', createAuthRouter({ db, uploadDir }))
+  app.use('/api/artworks', createArtworkRouter({ db }))
   app.use('/api/analyze', rateLimit(limits.analyze)) // LLM 成本保护
   app.use('/api/report', rateLimit(limits.analyze))
   app.use('/api', createApiRouter({
