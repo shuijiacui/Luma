@@ -91,3 +91,58 @@ html[lang=en] .nilo-leave { letter-spacing: 0; }
 html[lang=en] .luma-landing-entrances a { letter-spacing: .025em; }
 @media (max-width: 1100px) { html[lang=en] .nilo-home-brand > span + span { display: none; } }
 @media (max-width: 600px) { html[lang=en] .nilo-leave { max-width: 48px; font-size: 10px; white-space: normal; } }
+
+
+/* ===== 家长端登录：与登录后一致的竖屏手机外框（自适应，桌面居中） ===== */
+.luma-auth-role-parent {
+  background:
+    radial-gradient(1200px 500px at 12% -6%, #e9f2e1 0%, rgba(233, 242, 225, 0) 55%),
+    radial-gradient(1000px 520px at 108% 4%, #dcecf1 0%, rgba(220, 236, 241, 0) 52%),
+    #efe9dc;
+  overflow-y: auto;
+}
+.luma-auth-portrait-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 540px;
+  min-height: 100svh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #fffdf8 0%, #fdf8ec 58%, #f6efdf 100%);
+}
+@media (min-width: 1024px) {
+  .luma-auth-portrait-stage {
+    min-height: 100svh;
+    box-shadow: 0 0 0 1px rgba(71, 101, 58, 0.06), 0 30px 90px rgba(71, 101, 58, 0.16);
+  }
+}
+
+/* 矮窗口下，取消桌面版对登录表单的固定定位/紧凑覆盖，保持竖屏外框完整可滚动 */
+@media (min-width: 1024px) and (max-height: 800px) {
+  .luma-auth-role-parent .luma-auth-panel > div:first-child {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    margin-bottom: 1rem !important;
+  }
+  .luma-auth-role-parent .luma-auth-heading {
+    margin-bottom: 18px !important;
+  }
+  .luma-auth-role-parent .luma-auth-card {
+    padding: 20px !important;
+  }}
+.luma-auth-role-parent .luma-auth-shell-content,
+.luma-auth-role-parent .luma-auth-stage-content {
+  height: auto !important;
+  min-height: 0 !important;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
+}
+
+/* 底部重要提示：融入竖屏外框的圆角卡片 */
+.luma-auth-role-parent .luma-safety-disclaimer {
+  border-top-width: 0;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(71, 101, 58, 0.06);
+}

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { App } from '@/app/App'
 import { childAppUrl } from '@/config/appMode'
-import { ParentSidebar } from '@/features/parents/components/dashboard/ParentSidebar'
+import { ParentTabBar } from '@/features/parents/components/dashboard/ParentSidebar'
 import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { getLocale, setLocale, t } from '@/i18n'
 import { AuthProvider } from '@/features/auth/AuthContext'
@@ -115,13 +115,14 @@ test.each(['/', '/child/demo'])('app uses the page language switch and scopes th
   if (notice) expect(notice.textContent).toContain('AI-generated content may be inaccurate.')
 })
 
-test('merged parent sidebar keeps logout functional in both languages', () => {
-  const logout = vi.fn()
-  render(<><LanguageSwitcher /><ParentSidebar active="overview" onSelect={vi.fn()} onLogout={logout} /></>)
-  fireEvent.click(screen.getByRole('button', { name: '退出登录' }))
+test('parent bottom tab bar switches language and reports selection', () => {
+  const onSelect = vi.fn()
+  render(<><LanguageSwitcher /><ParentTabBar active="overview" onSelect={onSelect} /></>)
+  fireEvent.click(screen.getByRole('button', { name: '创作记录' }))
+  expect(onSelect).toHaveBeenCalledWith('records')
   fireEvent.click(screen.getByRole('button', { name: 'Switch to English' }))
-  fireEvent.click(screen.getByRole('button', { name: t('退出登录') }))
-  expect(logout).toHaveBeenCalledTimes(2)
+  expect(screen.getByRole('button', { name: 'Artwork' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Overview' })).toBeTruthy()
   expect(t('溪流')).toBe('Stream')
 })
 

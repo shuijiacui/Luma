@@ -18,7 +18,6 @@ import {
 import { parentSteps } from '@/features/onboarding/steps/parentSteps'
 
 import { defaultAvatars } from '@/assets/avatars'
-import { lumaLogo } from '@/assets/brand'
 import { portalUrl } from '@/config/appMode'
 import bgParent from '@/assets/images/bg-parent.png'
 import { Button, Card } from '@/components/ui'
@@ -34,8 +33,8 @@ import { findFamilyById, getChildrenForFamily } from '../storage'
 import { ChildArtwork, type ArtworkKind } from '@/features/parents/components/dashboard/artworks'
 import { AuthedArtwork } from '@/features/parents/components/dashboard/AuthedArtwork'
 import { Butterfly, LeafSprig, OtterDeco, SparkleDot } from '@/features/parents/components/dashboard/decor'
-import { ArrowLeftIcon, BellIcon, ChevronDownIcon, ChevronRightIcon } from '@/features/parents/components/dashboard/icons'
-import { OverviewDashboard } from '@/features/parents/components/dashboard/OverviewDashboard'
+import { ArrowLeftIcon, BellIcon, ChevronRightIcon } from '@/features/parents/components/dashboard/icons'
+import { OverviewDashboard, type OverviewStats } from '@/features/parents/components/dashboard/OverviewDashboard'
 import {
   DEMO_OVERVIEW,
   elementLabel,
@@ -47,7 +46,8 @@ import {
   type ThemeTile,
 } from '@/features/parents/components/dashboard/overviewModel'
 import { DEFAULT_VIEW, NAV_ENTRIES, type ViewKey } from '@/features/parents/components/dashboard/parentNav'
-import { ParentMobileNav, ParentSidebar } from '@/features/parents/components/dashboard/ParentSidebar'
+import { ParentTabBar } from '@/features/parents/components/dashboard/ParentSidebar'
+import '@/features/parents/styles/parent-app.css'
 
 // 游客演示 insight（无真实数据时展示）
 const DEMO_INSIGHT = {
@@ -359,6 +359,51 @@ export function ParentDemoPage() {
 
   const realEmptyDemo = false // 正式家庭不使用示例填补空记录
 
+  const overviewStats = useMemo<OverviewStats>(() => {
+    if (isGuest) {
+      return {
+        weeklyCount: 3,
+        weeklyDelta: 1,
+        recentCount: 5,
+        emotionText: '稳定',
+        emotionHint: '近期情绪较为平稳',
+        highlight: '想象力',
+        highlightHint: '在故事表达中有进步',
+      }
+    }
+    const list = analyses ?? []
+    const now = new Date()
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const mondayOffset = (midnight.getDay() + 6) % 7
+    const weekStart = new Date(midnight)
+    weekStart.setDate(midnight.getDate() - mondayOffset)
+    const nextWeekStart = new Date(weekStart)
+    nextWeekStart.setDate(weekStart.getDate() + 7)
+    const lastWeekStart = new Date(weekStart)
+    lastWeekStart.setDate(weekStart.getDate() - 7)
+    const fourWeeksAgo = new Date(weekStart)
+    fourWeeksAgo.setDate(weekStart.getDate() - 21)
+    const inRange = (value: string, from: Date, to: Date) => {
+      const date = new Date(value)
+      return date >= from && date < to
+    }
+    const weeklyCount = list.filter((a) => inRange(a.createdAt, weekStart, nextWeekStart)).length
+    const lastCount = list.filter((a) => inRange(a.createdAt, lastWeekStart, weekStart)).length
+    const recentCount = list.filter((a) => inRange(a.createdAt, fourWeeksAgo, nextWeekStart)).length
+    const emotion = overview?.statuses.find((s) => s.id === 'emotion')?.statusText ?? '观察中'
+    const theme = overview?.themes[0]?.title
+    const finding = overview?.findings[0]?.title
+    return {
+      weeklyCount,
+      weeklyDelta: weeklyCount - lastCount,
+      recentCount,
+      emotionText: emotion,
+      emotionHint: emotion === '观察中' ? '数据还在积累中' : '近期状态较为平稳',
+      highlight: theme ?? '想象力',
+      highlightHint: finding ?? '在故事表达中有进步',
+    }
+  }, [analyses, isGuest, overview])
+
   const childMeta = isGuest ? '5 岁 2 个月 · 小创作者' : '小创作者'
   // 只有游客使用演示内容。
   const feedChildId = isGuest || realEmptyDemo ? undefined : selectedChild?.id
@@ -393,193 +438,6 @@ export function ParentDemoPage() {
 
   const meta = NAV_ENTRIES.find((e) => e.key === activeView) ?? NAV_ENTRIES[0]
 
-  const childDropdown = children.length > 0 && (
-    <div className="relative hidden lg:block" data-onboarding="parent-child-switcher">
-      <button
-        type="button"
-        onClick={() => setChildMenuOpen((v) => !v)}
-        aria-expanded={childMenuOpen}
-        aria-haspopup="listbox"
-        className="flex items-center gap-2.5 rounded-full border border-white/80 bg-white/90 py-1.5 pr-3 pl-1.5 shadow-luma-sm backdrop-blur-sm transition hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
-      >
-        <img
-          src={childAvatar(
-            selectedChild ?? { id: 'none' },
-            Math.max(0, children.findIndex((c) => c.id === selectedChild?.id)),
-          )}
-          alt=""
-          className="size-9 rounded-full object-contain"
-        />
-        <span className="text-left leading-tight">
-          <span className="block text-sm font-bold text-[#334038]">
-            {lt(selectedChild?.nickname ?? '小创作者')}
-          </span>
-          <span className="block text-[0.65rem] font-medium text-[#9a9280]">{lt(childMeta)}</span>
-        </span>
-        <ChevronDownIcon
-          className={cn('size-4 text-[#9a9280] transition-transform', childMenuOpen && 'rotate-180')}
-        />
-      </button>
-
-      {childMenuOpen && (
-        <div
-          role="listbox"
-          aria-label={t("选择孩子")}
-          className="absolute top-[calc(100%+0.6rem)] right-0 z-40 w-64 overflow-hidden rounded-3xl border border-white/90 bg-white/95 p-2 shadow-luma-md backdrop-blur-xl"
-        >
-          {children.map((child, index) => {
-            const active = child.id === selectedChild?.id
-            return (
-              <button
-                key={child.id}
-                type="button"
-                role="option"
-                aria-selected={active}
-                onClick={() => {
-                  setSelectedChildId(child.id)
-                  setChildMenuOpen(false)
-                }}
-                className={cn(
-                  'flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left transition',
-                  active ? 'bg-luma-grass-50' : 'hover:bg-[#faf7ef]',
-                )}
-              >
-                <img src={childAvatar(child, index)} alt="" className="size-8 rounded-full object-contain" />
-                <span className="flex-1 text-sm font-bold text-[#334038]">{child.nickname}</span>
-                {active && <span className="size-1.5 rounded-full bg-luma-grass-500" />}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-
-  const mobileChildChips = children.length > 0 && (
-    <div data-onboarding="parent-child-switcher-mobile" className="flex flex-wrap items-center gap-1.5 lg:hidden">
-      {children.map((child, index) => {
-        const active = child.id === selectedChild?.id
-        return (
-          <button
-            key={child.id}
-            type="button"
-            onClick={() => setSelectedChildId(child.id)}
-            aria-pressed={active}
-            className={cn(
-              'flex items-center gap-1.5 rounded-full border py-0.5 pr-3 pl-0.5 text-xs font-bold transition',
-              active
-                ? 'border-luma-grass-200 bg-white text-luma-grass-700 shadow-luma-sm'
-                : 'border-transparent bg-white/70 text-[#8b9285]',
-            )}
-          >
-            <img src={childAvatar(child, index)} alt="" className="size-7 rounded-full object-contain" />
-            {child.nickname}
-          </button>
-        )
-      })}
-    </div>
-  )
-
-  const invitePill = (
-    <div
-      data-onboarding="parent-invite"
-      className="hidden shrink-0 items-center gap-2 rounded-full border border-white/80 bg-white/85 py-1 pr-1 pl-3 shadow-luma-sm backdrop-blur-sm xl:flex"
-    >
-      <span className="text-xs font-semibold text-[#9a9280]">{t("邀请码")}</span>
-      <strong className="font-brand text-sm tracking-[0.1em] text-luma-grass-700">
-        {inviteCode ?? '—'}
-      </strong>
-      <button
-        type="button"
-        onClick={copyInviteCode}
-        className="rounded-full bg-luma-grass-100 px-2.5 py-1 text-xs font-bold text-luma-grass-700 transition hover:bg-luma-grass-200"
-      >
-        {lt(copied ? '已复制' : '复制')}
-      </button>
-    </div>
-  )
-
-  const mobileInvitePill = (
-    <div
-      data-onboarding="parent-invite-mobile"
-      className="flex items-center gap-1.5 rounded-full border border-white/80 bg-white/85 px-2.5 py-1 text-xs shadow-sm backdrop-blur-sm lg:hidden"
-    >
-      <span className="text-[#9a9280]">{t("邀请码")}</span>
-      <strong className="font-brand text-[0.8rem] tracking-[0.08em] text-luma-grass-700">
-        {inviteCode ?? '—'}
-      </strong>
-      <button
-        type="button"
-        onClick={copyInviteCode}
-        className="rounded-full bg-luma-grass-100 px-2 py-0.5 text-[0.68rem] font-bold text-luma-grass-700"
-      >
-        {lt(copied ? '已复制' : '复制')}
-      </button>
-    </div>
-  )
-
-  const headerActions = (
-    <div className="flex items-center gap-2.5">
-      <div className="hidden lg:flex"><LanguageSwitcher /></div>
-      {lt(invitePill)}
-      {lt(childDropdown)}
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setBellOpen((v) => !v)}
-          aria-label={t("通知")}
-          className="relative grid size-10 place-items-center rounded-full border border-white/80 bg-white/90 text-[#8b9285] shadow-luma-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:text-luma-grass-600 focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
-        >
-          <BellIcon className="size-[1.15rem]" />
-          <span className="absolute top-2 right-2.5 size-1.5 rounded-full bg-luma-clay-300" />
-        </button>
-        {bellOpen && (
-          <div className="absolute top-[calc(100%+0.6rem)] right-0 z-50 w-72 rounded-3xl border border-white/90 bg-white/95 p-4 shadow-luma-md backdrop-blur-xl lg:z-40 lg:w-64">
-            <div className="text-sm font-bold text-[#334038]">{t("通知")}</div>
-            <p className="mt-2 rounded-2xl bg-[#faf7ef] px-3.5 py-2.5 text-xs leading-relaxed text-[#8b8371]">
-              {t("暂时没有新消息。孩子完成新的创作后，我们会在这里轻轻提醒你 🍃")}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-
-  const mobileQuickRow = (
-    <div className="mt-3 flex items-center justify-between gap-2 lg:hidden">
-      {lt(mobileChildChips)}
-      {lt(mobileInvitePill)}
-    </div>
-  )
-
-  const renderHeader = (
-    <motion.div variants={fadeUp} className="flex items-start justify-between gap-x-4 gap-y-3 lg:flex-wrap lg:gap-x-6">
-      <div className="min-w-0 flex-1 lg:flex-initial">
-        <div className="flex items-center gap-2 text-[#9a8a5f]">
-          <SparkleDot className="size-3.5 text-luma-gold-300" />
-          <span className="luma-eyebrow text-[0.66rem] tracking-[0.22em] text-[#a0906b]">{t("Luma · 家长空间")}</span>
-        </div>
-        <h1 className="mt-1.5 font-display text-[2rem] font-bold tracking-tight text-[#2c3a33] sm:text-[2.5rem]">
-          {lt(meta.title)}
-        </h1>
-        <p className="mt-2 max-w-xl text-[0.9rem] leading-relaxed text-[#7d8777]">{lt(meta.subtitle)}</p>
-        {lt(activeView === 'overview' && mobileQuickRow)}
-      </div>
-
-      <div className="flex shrink-0 flex-col items-end gap-1.5">
-        {lt(headerActions)}
-        {activeView === 'overview' && (
-          <div className="hidden items-center gap-1 lg:flex" aria-hidden="true">
-            <OtterDeco className="h-10 w-auto" alt="Nilo" />
-            <Butterfly className="h-5 w-6 -translate-y-1 -rotate-6" />
-            <LeafSprig className="h-4 w-4 -translate-y-2 rotate-12 opacity-80" tone="green" />
-            <span className="font-hand ml-1 text-[0.95rem] text-[#8fa180] [text-shadow:0_1px_0_rgba(255,255,255,0.8)]">
-              {t("每一幅画都是 ta 看向世界的方式。")}</span>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  )
-
   function renderRecords() {
     if (isGuest) {
       return (
@@ -591,7 +449,7 @@ export function ParentDemoPage() {
                 <div className="h-px flex-1 bg-[#e2ddca]" />
                 <span className="text-xs text-[#9a9280]">{lt(group.works.length)} {t("件")}</span>
               </div>
-              <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3.5">
                 {group.works.map((work) => (
                   <div key={work.id} className={cn('group overflow-hidden p-3', CARD_CLASS)}>
                     <div className="relative aspect-square overflow-hidden rounded-[1.25rem] bg-[#fffdf6]">
@@ -630,7 +488,7 @@ export function ParentDemoPage() {
               <div className="h-px flex-1 bg-[#e2ddca]" />
               <span className="text-xs text-[#9a9280]">{lt(works.length)} {t("件")}</span>
             </div>
-            <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3.5">
               {works.map((a) => (
                 <div key={a.id} className={cn('group overflow-hidden p-3', CARD_CLASS)}>
                   <div className="relative aspect-square overflow-hidden rounded-[1.25rem] bg-[#fffdf6]">
@@ -681,7 +539,7 @@ export function ParentDemoPage() {
               </div>
               <span className="rounded-full bg-[#f6f1e6] px-3 py-1 text-xs text-[#9a8f7a]">{t("过去 4 周")}</span>
             </div>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-6 grid grid-cols-2 gap-3.5">
               {themes.map((theme, i) => (
                 <div
                   key={theme.id}
@@ -717,7 +575,7 @@ export function ParentDemoPage() {
                 “{lt(insight.observation)}”
               </p>
               {isGuest && (
-                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <div className="mt-5 grid gap-3">
                   {DEMO_INSIGHT.observations.map((obs, index) => (
                     <div key={obs} className="rounded-2xl bg-[#faf7ef] p-4">
                       <span className="luma-eyebrow text-[#9b8a5f]">0{lt(index + 1)}</span>
@@ -739,7 +597,7 @@ export function ParentDemoPage() {
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className="grid gap-5 md:grid-cols-2"
+        className="grid gap-5"
       >
         <motion.section variants={fadeUp} className={CARD_CLASS}>
           <div className="p-6 sm:p-7">
@@ -802,7 +660,7 @@ export function ParentDemoPage() {
           </div>
         </motion.section>
 
-        <motion.section variants={fadeUp} className={cn(CARD_CLASS, 'md:col-span-2')}>
+        <motion.section variants={fadeUp} className={cn(CARD_CLASS)}>
           <div className="flex flex-wrap items-center justify-between gap-5 p-6 sm:p-7">
             <div className="flex items-center gap-4">
               <AvatarPicker userId={session?.id ?? 'guest-parent'} compact />
@@ -832,7 +690,7 @@ export function ParentDemoPage() {
 
         {!isGuest && session?.token && <div className="md:col-span-2"><FamilyDataSettings token={session.token} onDeleted={handleLogout} /></div>}
         {isGuest && (
-          <motion.section variants={fadeUp} className={cn(CARD_CLASS, 'md:col-span-2')}>
+          <motion.section variants={fadeUp} className={cn(CARD_CLASS)}>
             <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-7">
               <div>
                 <div className="text-sm font-bold text-[#334038]">{t("创建一个正式账号？")}</div>
@@ -867,48 +725,157 @@ export function ParentDemoPage() {
       : null
 
   return (
-    <main className="luma-parent-shell relative min-h-screen overflow-x-clip text-[#3a463c]">
-      {/* 背景：保留原图，叠加奶油色让卡片透气 */}
-      <img
-        src={bgParent}
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-20 h-full w-full object-cover select-none"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 bg-[#faf7ef]/55"
-      />
+    <main className="luma-parent-app luma-parent-shell text-[#3a463c]">
+      <div className="luma-parent-stage">
+        {/* 背景：柔和水彩底图 + 奶油色叠加，营造治愈氛围 */}
+        <div className="luma-stage-bg" aria-hidden="true">
+          <img src={bgParent} alt="" className="select-none" />
+        </div>
+        <div className="luma-stage-tint" aria-hidden="true" />
 
-      <div className="luma-parent-layout mx-auto flex w-full max-w-[1560px] gap-6 px-3 py-4 sm:px-5 sm:py-5">
-        {/* 桌面端固定左侧导航：悬浮于屏幕中部 */}
-        <ParentSidebar active={activeView} onSelect={selectView} onLogout={handleLogout} />
-        <div aria-hidden="true" className="hidden w-[264px] shrink-0 lg:block" />
-
-        <div className="luma-parent-content min-w-0 flex-1">
-          {/* 移动端导航条 */}
-          <div className="mb-4 lg:hidden" data-onboarding="parent-navbar">
-            <div className="flex items-center justify-between rounded-[1.7rem] border border-white/70 bg-white/85 px-4 py-3 shadow-luma-card backdrop-blur-xl">
-              <a href={portalUrl} aria-label={t("返回 Luma 官网")} className="flex items-center gap-2">
-                <img src={lumaLogo} alt="" className="h-9 w-9 object-contain" />
-                <span className="font-brand text-xl font-bold text-[#33503a]">Luma</span>
-                <span className="hidden text-[0.62rem] text-[#9a9280] sm:block">{t("家长空间")}</span>
-              </a>
+        {/* ===== 顶部固定外框 ===== */}
+        <header data-onboarding="parent-navbar" className="luma-app-top">
+          <div className="flex items-center gap-2">
+            <a
+              href={portalUrl}
+              aria-label={t("返回 Luma 官网")}
+              className="inline-flex items-center gap-2 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-full border border-white/85 bg-white/90 shadow-luma-sm">
+                <OtterDeco className="h-8 w-8" alt={t('陪伴的水獭 Nilo')} />
+              </span>
+              <span className="leading-tight">
+                <span className="block font-brand text-[1.35rem] font-bold tracking-[-0.03em] text-[#33503a]">Luma</span>
+                <span className="block text-[0.6rem] font-medium text-[#9a9280]">{t('看见创作，也看见成长。')}</span>
+              </span>
+            </a>
+            <div className="ml-auto flex items-center gap-1.5">
               <LanguageSwitcher />
-              <button type="button" onClick={handleLogout} className="rounded-full px-2 py-1.5 text-xs font-bold text-luma-teal-700">{t('退出登录')}</button>
-              <button
-                type="button"
-                onClick={() => setActiveView('settings')}
-                className="flex items-center gap-1.5 rounded-full bg-luma-grass-100 px-3 py-1.5 text-xs font-bold text-luma-grass-700"
-              >
-                {lt(NAV_ENTRIES[5].icon)} {t("设置")}</button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBellOpen((v) => !v)}
+                  aria-label={t("通知")}
+                  aria-expanded={bellOpen}
+                  className="relative grid size-10 place-items-center rounded-full border border-white/80 bg-white/90 text-[#8b9285] shadow-luma-sm transition hover:text-luma-grass-600 focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
+                >
+                  <BellIcon className="size-[1.15rem]" />
+                  <span className="absolute top-2 right-2.5 size-1.5 rounded-full bg-luma-clay-300" />
+                </button>
+                {bellOpen && (
+                  <div className="absolute top-[calc(100%+0.55rem)] right-0 z-50 w-72 rounded-3xl border border-white/90 bg-white/95 p-4 shadow-luma-md backdrop-blur-xl">
+                    <div className="text-sm font-bold text-[#334038]">{t("通知")}</div>
+                    <p className="mt-2 rounded-2xl bg-[#faf7ef] px-3.5 py-2.5 text-xs leading-relaxed text-[#8b8371]">
+                      {t("暂时没有新消息。孩子完成新的创作后，我们会在这里轻轻提醒你 🍃")}</p>
+                  </div>
+                )}
+              </div>
             </div>
-            <ParentMobileNav active={activeView} onSelect={selectView} className="mt-3" />
           </div>
 
-          <motion.div variants={staggerContainer} initial="hidden" animate="visible">
-            {lt(renderHeader)}
+          {/* 孩子信息栏 + 退出登录 */}
+          <div className="mt-2.5 flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+            <button
+              type="button"
+              data-onboarding="parent-child-switcher"
+              onClick={() => setChildMenuOpen((v) => !v)}
+              aria-expanded={childMenuOpen}
+              aria-haspopup="listbox"
+              className="flex w-full items-center gap-2.5 rounded-[1.4rem] border border-white/85 bg-white/92 py-2 pr-3 pl-2 shadow-luma-sm backdrop-blur-sm transition hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
+            >
+              <img
+                src={childAvatar(selectedChild ?? { id: 'none' }, Math.max(0, children.findIndex((c) => c.id === selectedChild?.id)))}
+                alt=""
+                className="size-9 shrink-0 rounded-full object-contain"
+              />
+              <span className="min-w-0 text-left leading-tight">
+                <span className="block truncate text-sm font-bold text-[#334038]">
+                  {lt(selectedChild?.nickname ?? '小小创作者')}
+                </span>
+                <span className="block truncate text-[0.65rem] font-medium text-[#9a9280]">{lt(childMeta)}</span>
+              </span>
+              <ChevronRightIcon
+                className={cn('ml-auto size-4 shrink-0 text-[#9a9280] transition-transform', childMenuOpen && 'rotate-90')}
+              />
+            </button>
 
+            {childMenuOpen && (
+              <div
+                role="listbox"
+                aria-label={t("选择孩子")}
+                className="absolute top-[calc(100%+0.55rem)] left-0 z-50 w-64 overflow-hidden rounded-3xl border border-white/90 bg-white/95 p-2 shadow-luma-md backdrop-blur-xl"
+              >
+                {children.length > 0 ? (
+                  children.map((child, index) => {
+                    const active = child.id === selectedChild?.id
+                    return (
+                      <button
+                        key={child.id}
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        onClick={() => {
+                          setSelectedChildId(child.id)
+                          setChildMenuOpen(false)
+                        }}
+                        className={cn(
+                          'flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left transition',
+                          active ? 'bg-luma-grass-50' : 'hover:bg-[#faf7ef]',
+                        )}
+                      >
+                        <img src={childAvatar(child, index)} alt="" className="size-8 rounded-full object-contain" />
+                        <span className="flex-1 truncate text-sm font-bold text-[#334038]">{child.nickname}</span>
+                        {active && <span className="size-1.5 rounded-full bg-luma-grass-500" />}
+                      </button>
+                    )
+                  })
+                ) : (
+                  <p className="px-3 py-2.5 text-sm text-[#9a9280]">{t("还没有孩子加入，去家庭设置邀请 ta 吧。")}</p>
+                )}
+              </div>
+            )}
+            </div>
+
+            {/* 退出登录：回到家长登录页 */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label={t("退出登录")}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/85 bg-white/90 py-2 pr-3.5 pl-2.5 text-xs font-bold text-luma-teal-700 shadow-luma-sm transition hover:bg-luma-teal-50 focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
+            >
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="size-4">
+                <path d="M14 7V4.5A1.5 1.5 0 0 0 12.5 3h-8A1.5 1.5 0 0 0 3 4.5v11A1.5 1.5 0 0 0 4.5 17h8a1.5 1.5 0 0 0 1.5-1.5V13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="m8 10 9 0M13.5 6.5 17 10l-3.5 3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {t("退出登录")}
+            </button>
+          </div>
+
+          {/* 手绘装饰 + 手写文案 */}
+          <div aria-hidden="true" className="pointer-events-none mt-2 flex items-center justify-end gap-1.5 pr-1">
+            <LeafSprig className="h-5 w-5 opacity-75" tone="green" />
+            <span className="font-hand text-[0.95rem] leading-none text-[#8fa180] [text-shadow:0_1px_0_rgba(255,255,255,0.85)]">
+              {t('每个孩子都有看向世界的方式♡')}
+            </span>
+            <OtterDeco className="h-8 w-auto opacity-90" alt="" />
+            <Butterfly className="h-4 w-5 -translate-y-1 -rotate-6 opacity-90" />
+          </div>
+        </header>
+
+        {/* ===== 中间滚动内容 ===== */}
+        <div className="luma-app-scroll">
+          <div className="luma-app-content">
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible">
+              {/* 页面标题区 */}
+              <motion.div variants={fadeUp} className="luma-app-title">
+                <div className="flex items-center gap-2 text-[#a0906b]">
+                  <SparkleDot className="size-3.5 text-luma-gold-300" />
+                  <span className="luma-eyebrow text-[0.62rem] tracking-[0.22em]">{t("Luma · 家长空间")}</span>
+                </div>
+                <h1>{lt(meta.title)}</h1>
+                <p>{lt(meta.subtitle)}</p>
+              </motion.div>
             {isGuest && activeView === 'overview' && (
               <motion.div
                 variants={fadeUp}
@@ -971,9 +938,10 @@ export function ParentDemoPage() {
                           model={overview}
                           childName={selectedChild?.nickname ?? '孩子'}
                           token={session?.token}
+                          stats={overviewStats}
                           readingOpen={readingOpen}
                           onToggleReading={() => setReadingOpen((v) => !v)}
-                          onMoreFindings={() => selectView('themes')}
+                          onMoreFindings={() => selectView('records')}
                           onSuggestion={() => selectView('communication')}
                         />
                         {readingOpen && readingMeta && (
@@ -1009,7 +977,7 @@ export function ParentDemoPage() {
                                 {lt(readingMeta.observation)}
                               </p>
 
-                              <div className="mt-6 grid gap-5 lg:grid-cols-2">
+                              <div className="mt-6 grid gap-5">
                                 <div className="rounded-[1.4rem] bg-[#faf7ef] p-5">
                                   <div className="flex items-center gap-2 text-xs font-bold tracking-wide text-[#8a9a7c]">
                                     <span className="inline-block size-1.5 rounded-full bg-luma-grass-400" />
@@ -1071,7 +1039,7 @@ export function ParentDemoPage() {
 
                 {activeView === 'records' && (
                   <div className="space-y-6">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
                       <span className="text-xs text-[#9a9280]">
                         {lt(isGuest || realEmptyDemo
                           ? isGuest
@@ -1079,27 +1047,25 @@ export function ParentDemoPage() {
                             : '暂无真实创作，以下为功能示例'
                           : `共 ${analyses?.length ?? 0} 件作品 · 每一件都是孩子留下的印记`)}
                       </span>
-                      <a
-                        href="/parent/archive"
-                        data-onboarding="parent-archive"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-4 py-2 text-xs font-bold text-luma-grass-700 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white"
-                      >
-                        {t("进入完整成长档案")}<ChevronRightIcon className="size-3.5" />
-                      </a>
                     </div>
+
+                    {/* 创作记录：作品按月收好 */}
                     {lt(renderRecords())}
+
+                    {/* 并入：主题探索 */}
+                    <div className="luma-merge-block">{lt(renderThemes())}</div>
+
+                    {/* 并入：成长时间轴 */}
+                    <div className="luma-merge-block">
+                      <TimelineSection
+                        childName={selectedChild?.nickname ?? '孩子'}
+                        childId={feedChildId}
+                        token={feedToken}
+                      />
+                    </div>
                   </div>
                 )}
 
-                {lt(activeView === 'themes' && renderThemes())}
-
-                {activeView === 'timeline' && (
-                  <TimelineSection key={feedChildId}
-                    childName={selectedChild?.nickname ?? '孩子'}
-                    childId={feedChildId}
-                    token={feedToken}
-                  />
-                )}
 
                 {activeView === 'communication' && (
                   <CommunicationSection key={feedChildId}
@@ -1112,8 +1078,12 @@ export function ParentDemoPage() {
                 {activeView === 'reports' && <PeriodicReportsSection key={feedChildId} childId={feedChildId} childName={selectedChild?.nickname ?? '孩子'} token={feedToken} />}
               </div>
             )}
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
+
+        {/* ===== 底部 Tab 固定外框 ===== */}
+        <ParentTabBar active={activeView} onSelect={selectView} />
       </div>
     </main>
   )
