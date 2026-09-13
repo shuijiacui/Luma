@@ -229,9 +229,9 @@ export function OverviewDashboard({
   const weeklyDelta = stats?.weeklyDelta ?? 0
   const deltaText =
     weeklyDelta > 0
-      ? `${t('比上周多')} ${weeklyDelta} ${t('幅')}`
+      ? `${t('比上周多')} ${t(`${weeklyDelta} 幅`)}`
       : weeklyDelta < 0
-        ? `${t('比上周少')} ${Math.abs(weeklyDelta)} ${t('幅')}`
+        ? `${t('比上周少')} ${t(`${Math.abs(weeklyDelta)} 幅`)}`
         : t('与上周持平')
 
   return (
@@ -245,7 +245,7 @@ export function OverviewDashboard({
           <MetricCard
             icon={<RecordsIcon className="size-4" />}
             tone="blue"
-            value={`${stats?.weeklyCount ?? 0} ${t('幅')}`}
+            value={t(`${stats?.weeklyCount ?? 0} 幅`)}
             label="本周创作"
             helper={deltaText}
             trend={weeklyDelta > 0 ? 'up' : weeklyDelta < 0 ? 'down' : 'flat'}

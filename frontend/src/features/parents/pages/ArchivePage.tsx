@@ -48,7 +48,7 @@ const emotionColor: Record<string, string> = {
 }
 
 export function ArchivePage() {
-  useLocale()
+  const locale = useLocale()
   const navigate = useNavigate()
   const { session, logout } = useAuth()
 
@@ -216,10 +216,10 @@ export function ArchivePage() {
                             </span>
                           )}
                           <span className="text-xs text-luma-muted">
-                            {lt(new Date(work.createdAt).toLocaleDateString('zh-CN', {
+                            {new Date(work.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'zh-CN', {
                               month: 'numeric',
                               day: 'numeric',
-                            }))}
+                            })}
                           </span>
                         </div>
                       </div>

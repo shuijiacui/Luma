@@ -20,6 +20,7 @@ import { parentSteps } from '@/features/onboarding/steps/parentSteps'
 import { defaultAvatars } from '@/assets/avatars'
 import { portalUrl } from '@/config/appMode'
 import bgParent from '@/assets/images/bg-parent.png'
+import { Brand } from '@/components/brand'
 import { Button, Card } from '@/components/ui'
 import { fadeUp, staggerContainer } from '@/design-system'
 import { CommunicationSection } from '@/features/parents/components/CommunicationSection'
@@ -505,7 +506,7 @@ export function ParentDemoPage() {
                     </div>
                     <div className="mt-1 flex items-center gap-2 text-xs text-[#9a9280]">
                       <span>
-                        {lt(new Date(a.createdAt).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }))}
+                        {new Date(a.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'zh-CN', { month: 'numeric', day: 'numeric' })}
                       </span>
                       {a.report?.emotion && (
                         <span className="rounded-full bg-luma-grass-50 px-2 py-0.5 font-bold text-luma-grass-700">
@@ -741,12 +742,9 @@ export function ParentDemoPage() {
               aria-label={t("返回 Luma 官网")}
               className="inline-flex items-center gap-2 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-full border border-white/85 bg-white/90 shadow-luma-sm">
-                <OtterDeco className="h-8 w-8" alt={t('陪伴的水獭 Nilo')} />
-              </span>
               <span className="leading-tight">
-                <span className="block font-brand text-[1.35rem] font-bold tracking-[-0.03em] text-[#33503a]">Luma</span>
-                <span className="block text-[0.6rem] font-medium text-[#9a9280]">{t('看见创作，也看见成长。')}</span>
+                <Brand size="sm" />
+                <span className="mt-0.5 block pl-14 text-[0.6rem] font-medium text-[#9a9280]">{t('看见创作，也看见成长。')}</span>
               </span>
             </a>
             <div className="ml-auto flex items-center gap-1.5">
