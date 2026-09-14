@@ -87,4 +87,6 @@ test('a family without children can still access account deletion in settings', 
   const accountSection = screen.getAllByRole('button', { name: '退出登录' })
     .map(button => button.closest('section')).find(Boolean)
   expect(accountSection?.parentElement?.firstElementChild).toBe(accountSection)
+  expect(accountSection?.querySelector('[aria-label="打开头像设置"]')).toBeNull()
+  expect(accountSection?.querySelector('[aria-label="我的头像"]')).toBeTruthy()
 })

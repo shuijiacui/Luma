@@ -606,7 +606,7 @@ export function ParentDemoPage() {
         <motion.section variants={fadeUp} className={cn(CARD_CLASS)}>
           <div className="flex flex-wrap items-center justify-between gap-5 p-6 sm:p-7">
             <div className="flex items-center gap-4">
-              <AvatarPicker userId={session?.id ?? 'guest-parent'} compact />
+              <AvatarPicker userId={session?.id ?? 'guest-parent'} compact editable={false} />
               <div>
                 <div className="text-base font-bold text-[#334038]">{lt(session?.displayName ?? '家长')}</div>
                 <div className="mt-0.5 text-xs text-[#9a9280]">

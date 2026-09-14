@@ -9,11 +9,13 @@ const avatarChangeEvent = 'luma-avatar-change'
 interface AvatarPickerProps {
   userId: string
   compact?: boolean
+  editable?: boolean
 }
 
 export function AvatarPicker({
   userId,
   compact = false,
+  editable = true,
 }: AvatarPickerProps) {
   useLocale()
   const storageKey = `luma_avatar_${userId}`
@@ -50,6 +52,20 @@ export function AvatarPicker({
     }
     reader.readAsDataURL(file)
     event.target.value = ''
+  }
+
+  if (!editable) {
+    return (
+      <span className="luma-avatar-display inline-flex items-center" aria-label={t('我的头像')}>
+        <span className="relative size-16 shrink-0">
+          <img
+            src={selectedAvatar}
+            alt=""
+            className="size-full object-contain drop-shadow-[0_5px_8px_rgba(16,90,81,0.12)]"
+          />
+        </span>
+      </span>
+    )
   }
 
   return (
