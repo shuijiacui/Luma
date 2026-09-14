@@ -5,8 +5,8 @@ import type { ReactNode } from 'react'
 import { fadeUp } from '@/design-system'
 import { cn } from '@/lib/cn'
 import { AuthedArtwork } from './AuthedArtwork'
-import { LeafSprig, OtterDeco } from './decor'
-import { ChevronRightIcon, HeartIcon, RecordsIcon, SproutIcon } from './icons'
+import { LeafSprig } from './decor'
+import { ChevronRightIcon, HeartIcon, RecordsIcon, SproutIcon, TimelineIcon } from './icons'
 import type { OverviewModel } from './overviewModel'
 
 /** 概览顶部指标卡的数据（由页面按真实创作计算，游客使用演示值） */
@@ -18,6 +18,7 @@ export interface OverviewStats {
   emotionHint: string
   highlight: string
   highlightHint: string
+  reportReady: boolean
 }
 
 interface Props {
@@ -50,62 +51,52 @@ function MetricCard({
   tone,
   value,
   label,
-  helper,
-  trend,
 }: {
   icon: ReactNode
   tone: keyof typeof METRIC_TONES
   value: string
   label: string
-  helper?: string
-  trend?: 'up' | 'down' | 'flat'
 }) {
   useLocale()
   return (
-    <div className="flex flex-col items-center rounded-[1.25rem] border border-white/80 bg-white/95 px-2 py-3 text-center shadow-luma-sm">
-      <span className={cn('grid size-8 place-items-center rounded-full', METRIC_TONES[tone])}>
+    <div className="luma-metric-card flex min-w-0 items-center gap-2.5 rounded-[1.35rem] border border-white/90 bg-white/92 px-3 py-3.5 shadow-luma-sm">
+      <span className={cn('luma-metric-icon grid size-10 shrink-0 place-items-center rounded-full', METRIC_TONES[tone])}>
         {icon}
       </span>
-      <span className="mt-2 font-display text-base font-bold leading-none text-[#2c3a33]">
-        {lt(value)}
-      </span>
-      <span className="mt-1 text-[0.66rem] font-semibold text-[#8a9280]">{t(label)}</span>
-      {helper && (
-        <span className="mt-1 flex items-center gap-0.5 text-[0.6rem] leading-snug text-[#a49c87]">
-          {trend === 'up' && <span aria-hidden="true" className="text-[#7fa462]">↑</span>}
-          {trend === 'down' && <span aria-hidden="true" className="text-[#c4746a]">↓</span>}
-          {lt(helper)}
+      <span className="luma-metric-copy min-w-0 leading-tight">
+        <span className="block truncate text-[0.66rem] font-semibold text-[#989e91]">{t(label)}</span>
+        <span className="mt-1 block truncate font-display text-[1.05rem] font-bold text-[#27453f]">
+          {lt(value)}
         </span>
-      )}
+      </span>
     </div>
   )
 }
 
-/** 顶部 Banner：柔和室内场景 + 小水獭 + 手写装饰 */
-function BannerCard() {
+/** 首屏摘要入口：保持项目视觉，只参考设计稿的信息层级与横向结构。 */
+function GrowthSummaryCard({ onViewDetails }: { onViewDetails?: () => void }) {
   useLocale()
   return (
-    <section className="relative overflow-hidden rounded-[1.9rem] border border-white/70 bg-gradient-to-br from-[#e9f3e4] via-[#fdf9ef] to-[#e6eff3] p-5 shadow-luma-card">
-      <div aria-hidden="true" className="pointer-events-none absolute -top-8 -right-8 size-36 rounded-full bg-[#dcead0]/70 blur-2xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-10 left-6 size-32 rounded-full bg-[#dcebf1]/70 blur-2xl" />
-      <span className="font-hand pointer-events-none absolute top-4 right-4 text-[0.8rem] leading-none text-[#9db08a] [text-shadow:0_1px_0_rgba(255,255,255,0.9)]">
-        {t('小小的创作 大大的世界♡')}
-      </span>
-
-      <div className="relative flex items-end justify-between gap-2 pt-5">
-        <div className="max-w-[62%]">
-          <h2 className="font-display text-[1.45rem] font-bold leading-snug tracking-tight text-[#2c3a33]">
-            {t('看见创作，也看见成长。')}
-          </h2>
-          <p className="mt-2 text-xs leading-relaxed text-[#7d8777]">
-            {t('每一幅画，都是孩子看向世界的方式。')}
-          </p>
-        </div>
-        <div className="relative shrink-0 pr-1">
-          <OtterDeco className="h-24 w-auto opacity-95" alt={t('陪伴的水獭 Nilo')} />
-          <span aria-hidden="true" className="absolute -bottom-1 left-1/2 h-2 w-20 -translate-x-1/2 rounded-full bg-[#d9c9a8]/60 blur-[2px]" />
-          <LeafSprig className="absolute -left-4 bottom-1 h-9 w-9 opacity-70" tone="green" />
-        </div>
+    <section className="luma-growth-summary relative overflow-hidden rounded-[1.85rem] border border-white/80 bg-gradient-to-br from-[#eef7ed] via-[#f8fbf2] to-[#e7f1ee] px-5 py-6 shadow-luma-card">
+      <div aria-hidden="true" className="pointer-events-none absolute -top-12 -right-6 size-40 rounded-full bg-white/60 blur-2xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-12 left-1/3 size-32 rounded-full bg-[#d8ecdf]/55 blur-2xl" />
+      <div className="luma-growth-summary-row relative flex items-start justify-between gap-4">
+        <h2 className="luma-growth-summary-title font-display text-[1.65rem] font-bold leading-tight tracking-[-0.025em] text-[#204b49]">
+          {t('本周成长摘要')}
+        </h2>
+        <button
+          type="button"
+          onClick={onViewDetails}
+          className="luma-growth-summary-action inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-white/90 px-4 text-sm font-bold text-luma-grass-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-white focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
+        >
+          {t('查看详情')}
+          <ChevronRightIcon className="size-4" />
+        </button>
+      </div>
+      <div aria-hidden="true" className="relative mt-4 flex items-center justify-end gap-1.5 pr-3 text-[#8bad91]">
+        <span className="font-hand text-lg font-semibold tracking-[0.08em]">{t('小小创作')}</span>
+        <span className="h-px w-12 rotate-[-10deg] bg-current/60" />
+        <LeafSprig className="h-7 w-7 opacity-80" tone="green" />
       </div>
     </section>
   )
@@ -121,7 +112,7 @@ function ArtworkCard({
   useLocale()
   const art = model.artwork
   return (
-    <section className="rounded-[1.9rem] border border-white/70 bg-white/95 p-4 shadow-luma-card">
+    <section className="luma-artwork-card rounded-[1.9rem] border border-white/70 bg-white/95 p-4 shadow-luma-card">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-display text-base font-bold tracking-tight text-[#2c3a33]">{t('最近一幅作品')}</h3>
         {onToggleReading && (
@@ -136,8 +127,8 @@ function ArtworkCard({
         )}
       </div>
 
-      <div className="mt-3 flex gap-3">
-        <div className="relative aspect-[4/3] w-[42%] shrink-0 overflow-hidden rounded-[1.25rem] border border-[#efe8d9] bg-[#fffdf6] shadow-[0_5px_14px_rgba(71,101,58,0.06)]">
+      <div className="luma-artwork-body mt-3 flex gap-3">
+        <div className="luma-artwork-preview relative aspect-[4/3] w-[42%] shrink-0 overflow-hidden rounded-[1.25rem] border border-[#efe8d9] bg-[#fffdf6] shadow-[0_5px_14px_rgba(71,101,58,0.06)]">
           <AuthedArtwork path={art.imagePath} token={token} kind={art.kind} />
         </div>
 
@@ -176,7 +167,7 @@ function SuggestionsCard({ model, onSuggestion }: Pick<Props, 'model' | 'onSugge
   useLocale()
   const suggestions = model.suggestions.slice(0, 2)
   return (
-    <section className="rounded-[1.9rem] border border-white/70 bg-white/95 p-5 shadow-luma-card">
+    <section className="luma-suggestions-card rounded-[1.9rem] border border-white/70 bg-white/95 p-5 shadow-luma-card">
       <div className="flex items-center gap-2">
         <span className="grid size-7 place-items-center rounded-full bg-luma-grass-100 text-luma-grass-600">
           <SproutIcon className="size-4" />
@@ -192,7 +183,7 @@ function SuggestionsCard({ model, onSuggestion }: Pick<Props, 'model' | 'onSugge
         </button>
       </div>
 
-      <ol className="mt-4 space-y-3">
+      <ol className="luma-suggestions-list mt-4 space-y-3">
         {suggestions.map((s, i) => (
           <li key={s.id}>
             <button
@@ -226,61 +217,37 @@ export function OverviewDashboard({
   stats,
 }: Props) {
   useLocale()
-  const weeklyDelta = stats?.weeklyDelta ?? 0
-  const deltaText =
-    weeklyDelta > 0
-      ? `${t('比上周多')} ${t(`${weeklyDelta} 幅`)}`
-      : weeklyDelta < 0
-        ? `${t('比上周少')} ${t(`${Math.abs(weeklyDelta)} 幅`)}`
-        : t('与上周持平')
 
   return (
-    <motion.div className="flex flex-col gap-4" initial="hidden" animate="visible">
+    <motion.div className="luma-overview-layout flex flex-col gap-4" initial="hidden" animate="visible">
       <motion.div variants={fadeUp}>
-        <BannerCard />
+        <GrowthSummaryCard onViewDetails={onMoreFindings} />
       </motion.div>
 
       <motion.section variants={fadeUp}>
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="luma-overview-grid grid grid-cols-3 gap-2.5">
           <MetricCard
             icon={<RecordsIcon className="size-4" />}
-            tone="blue"
+            tone="green"
             value={t(`${stats?.weeklyCount ?? 0} 幅`)}
             label="本周创作"
-            helper={deltaText}
-            trend={weeklyDelta > 0 ? 'up' : weeklyDelta < 0 ? 'down' : 'flat'}
-          />
-          <MetricCard
-            icon={<SproutIcon className="size-4" />}
-            tone="green"
-            value={stats?.emotionText ?? '观察中'}
-            label="情绪状态"
-            helper={stats?.emotionHint ?? '数据还在积累中'}
           />
           <MetricCard
             icon={<HeartIcon className="size-4" />}
             tone="rose"
-            value={stats?.highlight ?? '想象力'}
-            label="成长亮点"
-            helper={stats?.highlightHint ?? '在故事表达中有进步'}
+            value={stats?.emotionText ?? '观察中'}
+            label="情绪趋势"
           />
-        </div>
-        <div className="mt-1.5 flex items-center gap-1.5 px-1 text-[0.62rem] text-[#9a9280]">
-          <span>{t('近 4 周作品数')}</span>
-          <span aria-hidden="true">·</span>
-          <span>{stats?.recentCount ?? 0} {t('件')}</span>
-          <button
-            type="button"
-            onClick={onMoreFindings}
-            className="ml-auto inline-flex items-center gap-0.5 font-semibold text-[#8a9a7c] transition hover:text-luma-grass-600"
-          >
-            {t('更多发现')}
-            <ChevronRightIcon className="size-3" />
-          </button>
+          <MetricCard
+            icon={<TimelineIcon className="size-4" />}
+            tone="blue"
+            value={stats?.reportReady ? '已生成' : '待生成'}
+            label="本月报告"
+          />
         </div>
       </motion.section>
 
-      <motion.div variants={fadeUp}>
+      <motion.div variants={fadeUp} className="hidden lg:block">
         <ArtworkCard
           model={model}
           token={token}
@@ -289,7 +256,7 @@ export function OverviewDashboard({
         />
       </motion.div>
 
-      <motion.div variants={fadeUp}>
+      <motion.div variants={fadeUp} className="hidden lg:block">
         <SuggestionsCard model={model} onSuggestion={onSuggestion} />
       </motion.div>
 

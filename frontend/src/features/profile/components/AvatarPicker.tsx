@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { defaultAvatars } from '@/assets/avatars'
 import { cn } from '@/lib/cn'
 
+const avatarChangeEvent = 'luma-avatar-change'
+
 interface AvatarPickerProps {
   userId: string
   compact?: boolean
@@ -22,11 +24,18 @@ export function AvatarPicker({
   useEffect(() => {
     const savedAvatar = window.localStorage.getItem(storageKey)
     if (savedAvatar) setSelectedAvatar(savedAvatar)
+    const syncAvatar = (event: Event) => {
+      const detail = (event as CustomEvent<{ storageKey?: string; src?: string }>).detail
+      if (detail?.storageKey === storageKey && detail.src) setSelectedAvatar(detail.src)
+    }
+    window.addEventListener(avatarChangeEvent, syncAvatar)
+    return () => window.removeEventListener(avatarChangeEvent, syncAvatar)
   }, [storageKey])
 
   function selectAvatar(src: string) {
     setSelectedAvatar(src)
     window.localStorage.setItem(storageKey, src)
+    window.dispatchEvent(new CustomEvent(avatarChangeEvent, { detail: { storageKey, src } }))
     setIsOpen(false)
   }
 

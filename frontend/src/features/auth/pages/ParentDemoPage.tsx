@@ -33,7 +33,7 @@ import { useAuth } from '../AuthContext'
 import { findFamilyById, getChildrenForFamily } from '../storage'
 import { ChildArtwork, type ArtworkKind } from '@/features/parents/components/dashboard/artworks'
 import { AuthedArtwork } from '@/features/parents/components/dashboard/AuthedArtwork'
-import { Butterfly, LeafSprig, OtterDeco, SparkleDot } from '@/features/parents/components/dashboard/decor'
+import { OtterDeco, SparkleDot } from '@/features/parents/components/dashboard/decor'
 import { ArrowLeftIcon, BellIcon, ChevronRightIcon } from '@/features/parents/components/dashboard/icons'
 import { OverviewDashboard, type OverviewStats } from '@/features/parents/components/dashboard/OverviewDashboard'
 import {
@@ -47,7 +47,7 @@ import {
   type ThemeTile,
 } from '@/features/parents/components/dashboard/overviewModel'
 import { DEFAULT_VIEW, NAV_ENTRIES, type ViewKey } from '@/features/parents/components/dashboard/parentNav'
-import { ParentTabBar } from '@/features/parents/components/dashboard/ParentSidebar'
+import { ParentSidebar, ParentTabBar } from '@/features/parents/components/dashboard/ParentSidebar'
 import '@/features/parents/styles/parent-app.css'
 
 // 游客演示 insight（无真实数据时展示）
@@ -370,6 +370,7 @@ export function ParentDemoPage() {
         emotionHint: '近期情绪较为平稳',
         highlight: '想象力',
         highlightHint: '在故事表达中有进步',
+        reportReady: true,
       }
     }
     const list = analyses ?? []
@@ -402,6 +403,7 @@ export function ParentDemoPage() {
       emotionHint: emotion === '观察中' ? '数据还在积累中' : '近期状态较为平稳',
       highlight: theme ?? '想象力',
       highlightHint: finding ?? '在故事表达中有进步',
+      reportReady: list.some((item) => Boolean(item.report)),
     }
   }, [analyses, isGuest, overview])
 
@@ -600,6 +602,34 @@ export function ParentDemoPage() {
         animate="visible"
         className="grid gap-5"
       >
+        <motion.section variants={fadeUp} className={cn(CARD_CLASS)}>
+          <div className="flex flex-wrap items-center justify-between gap-5 p-6 sm:p-7">
+            <div className="flex items-center gap-4">
+              <AvatarPicker userId={session?.id ?? 'guest-parent'} compact />
+              <div>
+                <div className="text-base font-bold text-[#334038]">{lt(session?.displayName ?? '家长')}</div>
+                <div className="mt-0.5 text-xs text-[#9a9280]">
+                  {t("家长账号 ·")}{lt(isGuest ? '游客演示家庭' : '已连接家庭空间')}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {!isGuest && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    startOnboarding(parentSteps, { onDismiss: () => markOnboardingDone('parent') })
+                  }
+                >
+                  {t("重新看新手引导")}</Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                {t("退出登录")}</Button>
+            </div>
+          </div>
+        </motion.section>
+
         <motion.section variants={fadeUp} className={CARD_CLASS}>
           <div className="p-6 sm:p-7">
             <div className="luma-eyebrow text-[0.66rem] tracking-[0.2em] text-[#9b8a5f]">{t("家庭空间")}</div>
@@ -661,34 +691,6 @@ export function ParentDemoPage() {
           </div>
         </motion.section>
 
-        <motion.section variants={fadeUp} className={cn(CARD_CLASS)}>
-          <div className="flex flex-wrap items-center justify-between gap-5 p-6 sm:p-7">
-            <div className="flex items-center gap-4">
-              <AvatarPicker userId={session?.id ?? 'guest-parent'} compact />
-              <div>
-                <div className="text-base font-bold text-[#334038]">{lt(session?.displayName ?? '家长')}</div>
-                <div className="mt-0.5 text-xs text-[#9a9280]">
-                  {t("家长账号 ·")}{lt(isGuest ? '游客演示家庭' : '已连接家庭空间')}
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              {!isGuest && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    startOnboarding(parentSteps, { onDismiss: () => markOnboardingDone('parent') })
-                  }
-                >
-                  {t("重新看新手引导")}</Button>
-              )}
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                {t("退出登录")}</Button>
-            </div>
-          </div>
-        </motion.section>
-
         {!isGuest && session?.token && <div className="md:col-span-2"><FamilyDataSettings token={session.token} onDeleted={handleLogout} /></div>}
         {isGuest && (
           <motion.section variants={fadeUp} className={cn(CARD_CLASS)}>
@@ -734,20 +736,82 @@ export function ParentDemoPage() {
         </div>
         <div className="luma-stage-tint" aria-hidden="true" />
 
+        <ParentSidebar active={activeView} onSelect={selectView} />
+
         {/* ===== 顶部固定外框 ===== */}
         <header data-onboarding="parent-navbar" className="luma-app-top">
-          <div className="flex items-center gap-2">
+          <div className="luma-parent-head-row flex items-center gap-2">
             <a
               href={portalUrl}
               aria-label={t("返回 Luma 官网")}
-              className="inline-flex items-center gap-2 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
+              className="luma-parent-brand-link inline-flex shrink-0 items-center rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
             >
-              <span className="leading-tight">
-                <Brand size="sm" />
-                <span className="mt-0.5 block pl-14 text-[0.6rem] font-medium text-[#9a9280]">{t('看见创作，也看见成长。')}</span>
-              </span>
+              <Brand size="sm" className="luma-parent-brand" />
             </a>
-            <div className="ml-auto flex items-center gap-1.5">
+
+            <div className="luma-parent-child-wrap relative min-w-0 flex-1">
+              <button
+                type="button"
+                data-onboarding="parent-child-switcher"
+                onClick={() => setChildMenuOpen((v) => !v)}
+                aria-expanded={childMenuOpen}
+                aria-haspopup="listbox"
+                className="luma-parent-child-trigger flex w-full min-w-0 items-center gap-2 rounded-full border border-white/90 bg-white/90 py-1.5 pr-2.5 pl-1.5 shadow-luma-sm backdrop-blur-sm transition hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
+              >
+                <img
+                  src={childAvatar(selectedChild ?? { id: 'none' }, Math.max(0, children.findIndex((c) => c.id === selectedChild?.id)))}
+                  alt=""
+                  className="size-9 shrink-0 rounded-full object-contain"
+                />
+                <span className="min-w-0 text-left leading-tight">
+                  <span className="block truncate text-sm font-bold text-[#27453f]">
+                    {lt(selectedChild?.nickname ?? '小小创作者')}
+                  </span>
+                  <span className="luma-parent-child-meta block truncate text-[0.62rem] font-medium text-[#9a9280]">{lt(childMeta)}</span>
+                </span>
+                <ChevronRightIcon
+                  className={cn('ml-auto size-4 shrink-0 text-[#9a9280] transition-transform', childMenuOpen && 'rotate-90')}
+                />
+              </button>
+
+              {childMenuOpen && (
+                <div
+                  role="listbox"
+                  aria-label={t("选择孩子")}
+                  className="absolute top-[calc(100%+0.55rem)] right-0 z-50 w-64 overflow-hidden rounded-3xl border border-white/90 bg-white/95 p-2 shadow-luma-md backdrop-blur-xl"
+                >
+                  {children.length > 0 ? (
+                    children.map((child, index) => {
+                      const active = child.id === selectedChild?.id
+                      return (
+                        <button
+                          key={child.id}
+                          type="button"
+                          role="option"
+                          aria-selected={active}
+                          onClick={() => {
+                            setSelectedChildId(child.id)
+                            setChildMenuOpen(false)
+                          }}
+                          className={cn(
+                            'flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left transition',
+                            active ? 'bg-luma-grass-50' : 'hover:bg-[#faf7ef]',
+                          )}
+                        >
+                          <img src={childAvatar(child, index)} alt="" className="size-8 rounded-full object-contain" />
+                          <span className="flex-1 truncate text-sm font-bold text-[#334038]">{child.nickname}</span>
+                          {active && <span className="size-1.5 rounded-full bg-luma-grass-500" />}
+                        </button>
+                      )
+                    })
+                  ) : (
+                    <p className="px-3 py-2.5 text-sm text-[#9a9280]">{t("还没有孩子加入，去家庭设置邀请 ta 吧。")}</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="luma-parent-head-actions ml-auto flex shrink-0 items-center gap-1.5">
               <LanguageSwitcher />
               <div className="relative">
                 <button
@@ -768,97 +832,13 @@ export function ParentDemoPage() {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* 孩子信息栏 + 退出登录 */}
-          <div className="mt-2.5 flex items-center gap-2">
-            <div className="relative min-w-0 flex-1">
-            <button
-              type="button"
-              data-onboarding="parent-child-switcher"
-              onClick={() => setChildMenuOpen((v) => !v)}
-              aria-expanded={childMenuOpen}
-              aria-haspopup="listbox"
-              className="flex w-full items-center gap-2.5 rounded-[1.4rem] border border-white/85 bg-white/92 py-2 pr-3 pl-2 shadow-luma-sm backdrop-blur-sm transition hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
-            >
-              <img
-                src={childAvatar(selectedChild ?? { id: 'none' }, Math.max(0, children.findIndex((c) => c.id === selectedChild?.id)))}
-                alt=""
-                className="size-9 shrink-0 rounded-full object-contain"
-              />
-              <span className="min-w-0 text-left leading-tight">
-                <span className="block truncate text-sm font-bold text-[#334038]">
-                  {lt(selectedChild?.nickname ?? '小小创作者')}
-                </span>
-                <span className="block truncate text-[0.65rem] font-medium text-[#9a9280]">{lt(childMeta)}</span>
-              </span>
-              <ChevronRightIcon
-                className={cn('ml-auto size-4 shrink-0 text-[#9a9280] transition-transform', childMenuOpen && 'rotate-90')}
-              />
-            </button>
-
-            {childMenuOpen && (
-              <div
-                role="listbox"
-                aria-label={t("选择孩子")}
-                className="absolute top-[calc(100%+0.55rem)] left-0 z-50 w-64 overflow-hidden rounded-3xl border border-white/90 bg-white/95 p-2 shadow-luma-md backdrop-blur-xl"
-              >
-                {children.length > 0 ? (
-                  children.map((child, index) => {
-                    const active = child.id === selectedChild?.id
-                    return (
-                      <button
-                        key={child.id}
-                        type="button"
-                        role="option"
-                        aria-selected={active}
-                        onClick={() => {
-                          setSelectedChildId(child.id)
-                          setChildMenuOpen(false)
-                        }}
-                        className={cn(
-                          'flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left transition',
-                          active ? 'bg-luma-grass-50' : 'hover:bg-[#faf7ef]',
-                        )}
-                      >
-                        <img src={childAvatar(child, index)} alt="" className="size-8 rounded-full object-contain" />
-                        <span className="flex-1 truncate text-sm font-bold text-[#334038]">{child.nickname}</span>
-                        {active && <span className="size-1.5 rounded-full bg-luma-grass-500" />}
-                      </button>
-                    )
-                  })
-                ) : (
-                  <p className="px-3 py-2.5 text-sm text-[#9a9280]">{t("还没有孩子加入，去家庭设置邀请 ta 吧。")}</p>
-                )}
+              <div className="luma-parent-avatar">
+                <AvatarPicker userId={session?.id ?? 'guest-parent'} compact />
               </div>
-            )}
             </div>
 
-            {/* 退出登录：回到家长登录页 */}
-            <button
-              type="button"
-              onClick={handleLogout}
-              aria-label={t("退出登录")}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/85 bg-white/90 py-2 pr-3.5 pl-2.5 text-xs font-bold text-luma-teal-700 shadow-luma-sm transition hover:bg-luma-teal-50 focus-visible:ring-3 focus-visible:ring-luma-grass-300/60"
-            >
-              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="size-4">
-                <path d="M14 7V4.5A1.5 1.5 0 0 0 12.5 3h-8A1.5 1.5 0 0 0 3 4.5v11A1.5 1.5 0 0 0 4.5 17h8a1.5 1.5 0 0 0 1.5-1.5V13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="m8 10 9 0M13.5 6.5 17 10l-3.5 3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {t("退出登录")}
-            </button>
           </div>
 
-          {/* 手绘装饰 + 手写文案 */}
-          <div aria-hidden="true" className="pointer-events-none mt-2 flex items-center justify-end gap-1.5 pr-1">
-            <LeafSprig className="h-5 w-5 opacity-75" tone="green" />
-            <span className="font-hand text-[0.95rem] leading-none text-[#8fa180] [text-shadow:0_1px_0_rgba(255,255,255,0.85)]">
-              {t('每个孩子都有看向世界的方式♡')}
-            </span>
-            <OtterDeco className="h-8 w-auto opacity-90" alt="" />
-            <Butterfly className="h-4 w-5 -translate-y-1 -rotate-6 opacity-90" />
-          </div>
         </header>
 
         {/* ===== 中间滚动内容 ===== */}
@@ -866,30 +846,45 @@ export function ParentDemoPage() {
           <div className="luma-app-content">
             <motion.div variants={staggerContainer} initial="hidden" animate="visible">
               {/* 页面标题区 */}
-              <motion.div variants={fadeUp} className="luma-app-title">
-                <div className="flex items-center gap-2 text-[#a0906b]">
-                  <SparkleDot className="size-3.5 text-luma-gold-300" />
-                  <span className="luma-eyebrow text-[0.62rem] tracking-[0.22em]">{t("Luma · 家长空间")}</span>
-                </div>
-                <h1>{lt(meta.title)}</h1>
-                <p>{lt(meta.subtitle)}</p>
-              </motion.div>
+              {activeView !== 'overview' && (
+                <motion.div variants={fadeUp} className="luma-app-title">
+                  <div className="flex items-center gap-2 text-[#a0906b]">
+                    <SparkleDot className="size-3.5 text-luma-gold-300" />
+                    <span className="luma-eyebrow text-[0.62rem] tracking-[0.22em]">{t("Luma · 家长空间")}</span>
+                  </div>
+                  <h1>{lt(meta.title)}</h1>
+                  <p>{lt(meta.subtitle)}</p>
+                </motion.div>
+              )}
+              {activeView === 'overview' && (
+                <motion.div variants={fadeUp} className="luma-desktop-page-title hidden lg:block">
+                  <div className="flex items-center gap-2 text-[#a0906b]">
+                    <SparkleDot className="size-3.5 text-luma-gold-300" />
+                    <span className="luma-eyebrow text-[0.62rem] tracking-[0.22em]">{t('Luma · 家长空间')}</span>
+                  </div>
+                  <h1>{lt(meta.title)}</h1>
+                  <p>{lt(meta.subtitle)}</p>
+                </motion.div>
+              )}
             {isGuest && activeView === 'overview' && (
               <motion.div
                 variants={fadeUp}
-                className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[1.4rem] border border-luma-gold-300/40 bg-[#fbf4e2]/85 px-5 py-3.5 backdrop-blur-sm"
+                className="luma-demo-notice flex items-center gap-3 rounded-[1.5rem] border border-luma-gold-300/35 bg-[#fffaf0]/90 px-3.5 py-3 backdrop-blur-sm"
               >
-                <span className="text-xs leading-relaxed font-semibold text-[#8d6719] sm:text-sm">
-                  {t("当前为演示家庭，页面内容用于体验成长洞察的呈现方式。")}</span>
+                <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-luma-gold-100 font-serif text-lg font-bold text-[#b8792c]">i</span>
+                <span className="min-w-0 flex-1 leading-tight">
+                  <strong className="block text-sm text-[#8a531d]">{t("当前为演示家庭")}</strong>
+                  <span className="mt-1 block text-[0.68rem] leading-snug text-[#9a9280]">{t("页面内容用于体验成长洞察的呈现方式。")}</span>
+                </span>
                 <button
                   type="button"
                   onClick={() => {
                     logout()
                     navigate('/auth?role=parent&mode=register')
                   }}
-                  className="shrink-0 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-[#8d6719] shadow-sm transition hover:bg-[#fdf6e2]"
+                  className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-[#d4a15c] to-[#b8792c] px-3.5 text-xs font-bold text-white shadow-sm transition hover:-translate-y-0.5"
                 >
-                  {t("创建正式账号")}</button>
+                  {t("创建正式账号")}<ChevronRightIcon className="size-3.5" /></button>
               </motion.div>
             )}
 
@@ -927,7 +922,7 @@ export function ParentDemoPage() {
                 </Card>
               </motion.section>
             ) : (
-              <div className="mt-6">
+              <div className={activeView === 'overview' ? 'mt-4' : 'mt-6'}>
                 {activeView === 'overview' && (
                   <>
                     {overview ? (
