@@ -136,19 +136,6 @@ export function AuthShell({
         aria-hidden="true"
       />
 
-      {/* 手机竖屏：整幅插画完整显示在页面顶部，不被裁切 */}
-      <div className="lg:hidden">
-        <motion.img
-          key={`sm-${role ?? 'none'}`}
-          src={background}
-          alt=""
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="block h-auto w-full object-contain"
-        />
-      </div>
-
       <div
         className={cn(
           'luma-auth-shell-content relative z-10 mx-auto flex w-full max-w-7xl justify-center px-5 py-6 sm:px-8 sm:py-8 lg:min-h-screen lg:items-center lg:px-24 lg:py-10 xl:px-36 2xl:px-40',
