@@ -1,13 +1,14 @@
 import { afterEach, expect, test, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { ParentDemoPage } from '@/features/auth/pages/ParentDemoPage'
 import { ArchivePage } from '@/features/parents/pages/ArchivePage'
 import { fetchMe } from '@/lib/api/authApi'
 import { useChildHistory } from '@/hooks/useChildHistory'
 
-vi.mock('@/features/auth/AuthContext', () => ({ useAuth: () => ({ session: { id: 'P', token: 'token', role: 'parent', displayName: '家长', isGuest: false }, logout: vi.fn() }) }))
-vi.mock('@/features/onboarding/OnboardingContext', () => ({ isOnboardingDone: () => true, isOnboardingShownThisSession: () => true, markOnboardingDone: vi.fn(), markOnboardingShownThisSession: vi.fn(), useOnboarding: () => ({ start: vi.fn() }) }))
+const { logout } = vi.hoisted(() => ({ logout: vi.fn() }))
+vi.mock('@/features/auth/AuthContext', () => ({ useAuth: () => ({ session: { id: 'P', token: 'token', role: 'parent', displayName: '家长', isGuest: false }, logout }) }))
+vi.mock('@/features/onboarding/useOnboardingTour', () => ({ useOnboardingTour: () => vi.fn() }))
 vi.mock('@/lib/api/authApi', () => ({ fetchMe: vi.fn(), listAnalyses: vi.fn(), fetchTrend: vi.fn() }))
 vi.mock('@/hooks/useChildHistory', () => ({ useChildHistory: vi.fn() }))
 vi.mock('@/hooks/useAuthedImage', () => ({ useAuthedImage: () => null }))
@@ -32,6 +33,22 @@ test('real overview follows the compact summary layout and does not invent psych
   expect(screen.getByText('本周创作')).toBeTruthy()
   expect(screen.queryByText('表达意愿')).toBeNull()
   expect(screen.getByText('观察中')).toBeTruthy()
+})
+
+test('header logout ends the session and returns directly to parent login', async () => {
+  family()
+  vi.mocked(useChildHistory).mockReturnValue({ analyses: [], error: null, reload: vi.fn() })
+  function LocationProbe() {
+    const location = useLocation()
+    return <output data-testid="location">{location.pathname}{location.search}</output>
+  }
+  render(<MemoryRouter initialEntries={['/parent/demo']}><ParentDemoPage /><LocationProbe /></MemoryRouter>)
+  await screen.findByText('小朋友 的第一幅画，正在路上')
+  const button = screen.getByRole('button', { name: '退出登录' })
+  expect(button.closest('header')).toBeTruthy()
+  fireEvent.click(button)
+  expect(logout).toHaveBeenCalledTimes(1)
+  expect(screen.getByTestId('location').textContent).toBe('/auth?role=parent&mode=login')
 })
 
 test('empty family view does not substitute demonstration artwork', async () => {
@@ -67,7 +84,7 @@ test('a family without children can still access account deletion in settings', 
   await screen.findByText('邀请孩子加入家庭空间')
   fireEvent.click(screen.getAllByText('家庭设置')[0])
   await screen.findByText('注销整个家庭')
-  const logoutButton = screen.getByRole('button', { name: '退出登录' })
-  const accountSection = logoutButton.closest('section')
+  const accountSection = screen.getAllByRole('button', { name: '退出登录' })
+    .map(button => button.closest('section')).find(Boolean)
   expect(accountSection?.parentElement?.firstElementChild).toBe(accountSection)
 })

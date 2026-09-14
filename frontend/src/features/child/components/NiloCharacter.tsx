@@ -107,7 +107,7 @@ export function NiloCharacter({ disabled, playSound }: { disabled: boolean; play
   function hotspot(part: Part) {
     const spec = interactions[part]
     const raised = pose === 'highfive' && part === 'hand'
-    return <button key={part} type="button" className={'nilo-touch-target hotspot-' + part} aria-label={t(spec.label)} disabled={disabled}
+    return <button key={part} type="button" data-onboarding={part === 'head' ? 'child-head' : undefined} className={'nilo-touch-target hotspot-' + part} aria-label={t(spec.label)} disabled={disabled}
       style={{ left: (raised ? 66 : spec.x) + '%', top: (raised ? 36 : spec.y) + '%', width: spec.w + '%', height: (raised ? 15 : spec.h) + '%' }}
       onClick={() => interact(part)} onFocus={resetGaze}>
       <span className="nilo-target-aura" /><span className="nilo-target-dot" /><span className="nilo-target-label">{t(spec.short)}</span>

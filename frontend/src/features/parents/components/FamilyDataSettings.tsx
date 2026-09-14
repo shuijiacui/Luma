@@ -11,7 +11,7 @@ export function FamilyDataSettings({ token, onDeleted }: { token: string; onDele
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   return <section className="rounded-3xl border border-[#efe8d9] bg-white/90 p-6">
-    <h3 className="font-bold">{t("家庭数据管理")}</h3>
+    <h3 data-onboarding="parent-data-title" className="font-bold">{t("家庭数据管理")}</h3>
     <p className="mt-2 text-sm leading-relaxed">{t("可在完整成长档案中导出作品和解读，在单幅画作的完整解读中删除作品。")}</p>
     {!open ? <Button variant="ghost" className="mt-4" onClick={() => setOpen(true)}>{t("注销整个家庭")}</Button> : <form className="mt-4 space-y-4" onSubmit={async event => {
       event.preventDefault()

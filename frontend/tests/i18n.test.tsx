@@ -14,6 +14,7 @@ import { HomePage } from '@/features/marketing/pages/HomePage'
 import { FamilyDataSettings } from '@/features/parents/components/FamilyDataSettings'
 import { authFetch } from '@/lib/api/authFetch'
 import { ChildCreatePage } from '@/features/child/pages/ChildCreatePage'
+import { OnboardingProvider } from '@/features/onboarding/OnboardingContext'
 import { clearChildDraft, getChildDraft } from '@/features/child/draft'
 
 vi.mock('@/lib/api/authFetch', () => ({ authFetch: vi.fn() }))
@@ -24,7 +25,7 @@ test('drawing header follows the language without replacing the active canvas', 
     saveSession({ id: 'guest-child', role: 'child', familyId: 'demo-family', displayName: '小朋友', isGuest: true })
     clearChildDraft()
     getChildDraft('guest-child').artworkId = 'already-open-drawing'
-    render(<AuthProvider><MemoryRouter><ChildCreatePage /></MemoryRouter></AuthProvider>)
+    render(<AuthProvider><OnboardingProvider><MemoryRouter><ChildCreatePage /></MemoryRouter></OnboardingProvider></AuthProvider>)
     const canvas = screen.getByLabelText('自由绘画画布')
     expect(screen.getByText('我的创作空间')).toBeTruthy()
     expect(screen.getByText('让想象从这里开始')).toBeTruthy()

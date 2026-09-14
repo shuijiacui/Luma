@@ -55,7 +55,7 @@
 }
 .luma-parent-head-row {
   display: grid !important;
-  grid-template-columns: auto minmax(112px, 178px) minmax(max-content, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: clamp(6px, 1.8vw, 12px);
   min-width: 0;
@@ -85,17 +85,38 @@
 }
 .luma-parent-head-actions {
   justify-self: end;
+  min-width: max-content;
+  gap: 8px;
 }
 .luma-parent-head-actions .luma-language-switch {
-  width: clamp(32px, 9vw, 38px);
-  min-width: clamp(32px, 9vw, 38px);
-  min-height: 38px;
-  padding-inline: 5px;
+  width: auto;
+  min-width: 44px;
+  min-height: 40px;
+  padding-inline: 12px;
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 5px 16px rgba(62, 78, 64, 0.06);
 }
 .luma-parent-head-actions .luma-language-short {
   font-size: 0.68rem;
+}
+.luma-parent-head-actions .luma-parent-logout {
+  min-height: 40px;
+  white-space: nowrap;
+}
+/* 紧凑模式同时收起完整标签，避免小按钮承载桌面文案而溢出。 */
+@media (max-width: 767px) {
+  .luma-parent-head-actions .luma-language-switch {
+    width: 40px;
+    min-width: 40px;
+    padding-inline: 6px;
+  }
+  .luma-parent-head-actions .luma-language-switch svg,
+  .luma-parent-head-actions .luma-language-labels {
+    display: none;
+  }
+  .luma-parent-head-actions .luma-language-short {
+    display: inline;
+  }
 }
 .luma-parent-avatar {
   flex: none;
@@ -271,11 +292,8 @@
   }
 }
 
-/* 320–360px 窄屏：仍保留一个顶部区，但让孩子切换器自然占据第二行。 */
-@media (max-width: 360px) {
-  .luma-app-top {
-    padding-top: max(10px, env(safe-area-inset-top));
-  }
+/* 手机顶部保留明确的退出入口，孩子切换器独占第二行，避免挤压。 */
+@media (max-width: 639px) {
   .luma-parent-head-row {
     grid-template-columns: minmax(0, 1fr) auto;
     row-gap: 7px;
@@ -293,6 +311,24 @@
   .luma-parent-head-actions {
     grid-column: 2;
     grid-row: 1;
+  }
+  .luma-parent-logout {
+    min-height: 40px;
+    padding-inline: 8px;
+    font-size: 0.75rem;
+  }
+}
+
+/* 320–360px 窄屏：压缩卡片间距。 */
+@media (max-width: 360px) {
+  .luma-parent-brand > span + span {
+    display: none;
+  }
+  .luma-parent-brand {
+    gap: 0;
+  }
+  .luma-app-top {
+    padding-top: max(10px, env(safe-area-inset-top));
   }
   .luma-overview-grid {
     gap: 6px;
@@ -341,7 +377,7 @@
     max-width: 820px;
   }
   .luma-parent-head-row {
-    grid-template-columns: auto minmax(190px, 240px) 1fr;
+    grid-template-columns: auto minmax(0, 240px) auto;
   }
   .luma-parent-child-trigger {
     min-height: 50px;
@@ -435,7 +471,7 @@
     padding-bottom: 12px;
   }
   .luma-parent-head-row {
-    grid-template-columns: minmax(220px, 280px) minmax(max-content, 1fr);
+    grid-template-columns: minmax(0, 280px) minmax(max-content, 1fr);
     max-width: 1480px;
   }
   .luma-parent-brand-link {
@@ -446,6 +482,7 @@
   }
   .luma-parent-head-actions {
     grid-column: 2;
+    gap: 12px;
   }
   .luma-app-content {
     max-width: 1480px;

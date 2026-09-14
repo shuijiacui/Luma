@@ -7,7 +7,7 @@ import { Brand } from '@/components/brand'
 import { portalUrl } from '@/config/appMode'
 import { useAuth } from '@/features/auth/AuthContext'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
-import { useOnboarding } from '@/features/onboarding/OnboardingContext'
+import { useOnboardingTour } from '@/features/onboarding/useOnboardingTour'
 import { childSteps } from '@/features/onboarding/steps/childSteps'
 import { NiloCharacter } from '../components/NiloCharacter'
 import { CreationDoor } from '../components/CreationDoor'
@@ -18,13 +18,17 @@ export function ChildHomePage() {
   useLocale()
   const { session, logout } = useAuth()
   const navigate = useNavigate()
-  const { start } = useOnboarding()
+  const start = useOnboardingTour('home', 'child')
   const reduceMotion = useReducedMotion()
   const [opening, setOpening] = useState(false)
   const openingRef = useRef(false)
   const navigationTimer = useRef<number | undefined>(undefined)
   const { soundOn, toggleSound, play } = useNiloSound()
   useEffect(() => () => window.clearTimeout(navigationTimer.current), [])
+  useEffect(() => {
+    const timer = window.setTimeout(() => start(childSteps), 600)
+    return () => window.clearTimeout(timer)
+  }, [start])
 
   function openDoor() {
     if (openingRef.current) return
@@ -44,7 +48,7 @@ export function ChildHomePage() {
           <button type="button" className="nilo-icon-button" aria-label={t(soundOn ? '关闭声音' : '打开声音')} aria-pressed={soundOn} onClick={toggleSound}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z" strokeLinejoin="round" />{soundOn ? <path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14" strokeLinecap="round" /> : <path d="m16 9 5 6m0-6-5 6" strokeLinecap="round" />}</svg>
           </button>
-          <button type="button" className="nilo-icon-button" aria-label={t("怎么玩")} onClick={() => start(childSteps)}>?</button>
+          <button type="button" className="nilo-icon-button" aria-label={t("怎么玩")} onClick={() => start(childSteps, true)}>?</button>
           <span className="nilo-nav-divider" />
           <div data-onboarding="child-avatar"><AvatarPicker userId={session?.id ?? 'guest-child'} compact /></div>
           <button type="button" className="nilo-leave" onClick={() => { logout(); navigate('/auth?role=child&mode=login') }}>{t("下次见")}<span aria-hidden="true">↗</span></button>

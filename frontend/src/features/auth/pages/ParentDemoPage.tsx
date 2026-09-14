@@ -8,14 +8,8 @@ import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import {
-  isOnboardingDone,
-  isOnboardingShownThisSession,
-  markOnboardingDone,
-  markOnboardingShownThisSession,
-  useOnboarding,
-} from '@/features/onboarding/OnboardingContext'
-import { parentSteps } from '@/features/onboarding/steps/parentSteps'
+import { useOnboardingTour } from '@/features/onboarding/useOnboardingTour'
+import { parentSteps, communicationSteps, settingsSteps } from '@/features/onboarding/steps/parentSteps'
 
 import { defaultAvatars } from '@/assets/avatars'
 import { portalUrl } from '@/config/appMode'
@@ -302,22 +296,9 @@ export function ParentDemoPage() {
   const [selectedChildId, setSelectedChildId] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const { start: startOnboarding } = useOnboarding()
-  useEffect(() => {
-    if (isGuest) {
-      if (isOnboardingShownThisSession('parent')) return
-      const timer = window.setTimeout(() => {
-        markOnboardingShownThisSession('parent')
-        startOnboarding(parentSteps)
-      }, 700)
-      return () => window.clearTimeout(timer)
-    }
-    if (isOnboardingDone('parent')) return
-    const timer = window.setTimeout(() => {
-      startOnboarding(parentSteps, { onDismiss: () => markOnboardingDone('parent') })
-    }, 700)
-    return () => window.clearTimeout(timer)
-  }, [isGuest, startOnboarding])
+  const startOnboarding = useOnboardingTour('welcome', 'parent')
+  const startCommunicationTour = useOnboardingTour('communication', 'parent')
+  const startSettingsTour = useOnboardingTour('settings', 'parent')
 
   useEffect(() => {
     if (!session?.isGuest && session?.token) {
@@ -340,8 +321,28 @@ export function ParentDemoPage() {
   )
 
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? children[0]
-
   const { analyses, error: historyError, reload: reloadHistory } = useChildHistory(isGuest ? undefined : selectedChild?.id, isGuest ? undefined : session?.token)
+
+  const hasChildren = children.length > 0
+  const welcomeSteps = useMemo(() => parentSteps(hasChildren, view => {
+    setActiveView(view)
+    setReadingOpen(false)
+    setChildMenuOpen(false)
+    setBellOpen(false)
+  }), [hasChildren])
+  useEffect(() => {
+    if (!isGuest && (!me || meError || historyError || (hasChildren && analyses === null))) return
+    const timer = window.setTimeout(() => startOnboarding(welcomeSteps), 450)
+    return () => window.clearTimeout(timer)
+  }, [isGuest, me, meError, historyError, hasChildren, analyses, startOnboarding, welcomeSteps])
+  useEffect(() => {
+    if (!isGuest && (!me || meError || historyError)) return
+    const timer = window.setTimeout(() => {
+      if (activeView === 'communication' && hasChildren) startCommunicationTour(communicationSteps)
+      if (activeView === 'settings') startSettingsTour(isGuest ? settingsSteps.slice(0, 1) : settingsSteps)
+    }, 500)
+    return () => window.clearTimeout(timer)
+  }, [activeView, hasChildren, isGuest, me, meError, historyError, startCommunicationTour, startSettingsTour])
 
   const insight = useMemo(() => {
     if (isGuest) {
@@ -619,7 +620,7 @@ export function ParentDemoPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() =>
-                    startOnboarding(parentSteps, { onDismiss: () => markOnboardingDone('parent') })
+                    startOnboarding(welcomeSteps, true)
                   }
                 >
                   {t("重新看新手引导")}</Button>
@@ -636,7 +637,7 @@ export function ParentDemoPage() {
             <h2 className="mt-1.5 font-display text-xl font-bold text-[#2c3a33]">{t("邀请孩子加入")}</h2>
             <p className="mt-2 text-sm leading-relaxed text-[#7d8777]">
               {t("把这串邀请码发给孩子，ta 注册后就会出现在你的成长概览里，两个账号就连在一起了。")}</p>
-            <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-luma-grass-50 px-5 py-4">
+            <div data-onboarding="parent-invite" className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-luma-grass-50 px-5 py-4">
               <span className="font-brand text-2xl font-bold tracking-[0.14em] text-luma-grass-700">
                 {inviteCode ?? '—'}
               </span>
@@ -812,6 +813,9 @@ export function ParentDemoPage() {
             </div>
 
             <div className="luma-parent-head-actions ml-auto flex shrink-0 items-center gap-1.5">
+              <Button variant="ghost" size="sm" className="luma-parent-logout shrink-0 whitespace-nowrap" onClick={handleLogout}>
+                {t("退出登录")}
+              </Button>
               <LanguageSwitcher />
               <div className="relative">
                 <button
@@ -852,7 +856,7 @@ export function ParentDemoPage() {
                     <SparkleDot className="size-3.5 text-luma-gold-300" />
                     <span className="luma-eyebrow text-[0.62rem] tracking-[0.22em]">{t("Luma · 家长空间")}</span>
                   </div>
-                  <h1>{lt(meta.title)}</h1>
+                  <h1 data-onboarding={activeView === 'communication' ? 'parent-communication-title' : undefined}>{lt(meta.title)}</h1>
                   <p>{lt(meta.subtitle)}</p>
                 </motion.div>
               )}
@@ -902,7 +906,7 @@ export function ParentDemoPage() {
             {!isGuest && (meError || historyError) ? (
               <div role="alert" className="mt-6 rounded-2xl bg-white p-6">{lt(historyError ?? '家庭信息加载失败。')}<Button onClick={() => { setFamilyRevision(n => n + 1); reloadHistory() }}>{t("重试")}</Button></div>
             ) : !isGuest && !me ? <p className="p-6">{t("正在加载家庭信息…")}</p> : activeView === 'settings' ? <div className="mt-6">{lt(renderSettings())}</div> : children.length === 0 ? (
-              <motion.section variants={fadeUp} className="mt-8">
+              <motion.section data-onboarding="parent-empty" variants={fadeUp} className="mt-8">
                 <Card
                   variant="glass"
                   title={t("邀请孩子加入家庭空间")}
@@ -1020,7 +1024,7 @@ export function ParentDemoPage() {
                       <motion.section variants={fadeUp} className={cn('p-8 text-center sm:p-12', CARD_CLASS)}>
                         <div className="mx-auto flex max-w-md flex-col items-center gap-4">
                           <OtterDeco className="h-24 w-auto opacity-90" alt="Nilo" />
-                          <h2 className="font-display text-xl font-bold text-[#2c3a33]">
+                          <h2 data-onboarding="parent-recent" className="font-display text-xl font-bold text-[#2c3a33]">
                             {lt(selectedChild?.nickname ?? '孩子')} {t("的第一幅画，正在路上")}</h2>
                           <p className="text-sm leading-relaxed text-[#7d8777]">
                             {t("等 ta 在创作空间画下第一幅画，这里就会慢慢长出成长概览、创作主题与陪伴建议。")}</p>

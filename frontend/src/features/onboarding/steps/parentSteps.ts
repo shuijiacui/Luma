@@ -1,38 +1,27 @@
 import type { OnboardingStep } from '../OnboardingContext'
 
-export const parentSteps: OnboardingStep[] = [
-  {
-    target: '[data-onboarding="parent-navbar"]',
-    title: '欢迎来到 Luma 家长空间',
-    body: '孩子每画一幅画，都在用颜色和线条说一些还不知道怎么开口的话。这里帮你把这些话读出来。',
-  },
-  {
-    // Desktop: switcher in navbar; mobile: switcher in page body
-    target: '[data-onboarding="parent-child-switcher"]',
-    mobileTarget: '[data-onboarding="parent-child-switcher-mobile"]',
-    title: '切换查看不同的孩子',
-    body: '每个孩子的成长节奏都不一样。点头像切换，单独看每一个孩子的故事。',
-  },
-  {
-    // Desktop: invite pill in navbar; mobile: invite pill in page body
-    target: '[data-onboarding="parent-invite"]',
-    mobileTarget: '[data-onboarding="parent-invite-mobile"]',
-    title: '邀请孩子加入',
-    body: '把这串邀请码发给孩子，他们注册后就会出现在你这里，两个账号就连在一起了。',
-  },
-  {
-    target: '[data-onboarding="parent-tabs"]',
-    title: '五个入口，各有侧重',
-    body: '成长概览看最近的状态；创作记录把每一幅画、主题探索和成长时间轴收在同一页；家庭设置管理邀请码与家庭空间；周报与月报把一段时间收在一起；AI 沟通助手帮你找到跟孩子说话的方式。',
-  },
-  {
-    target: '[data-onboarding="parent-tab-communication"]',
-    title: '读懂孩子画里的话',
-    body: '孩子画里藏着很多他说不出口的话。这里会帮你读懂这些画，找到真正走进孩子内心的沟通方式。',
-  },
-  {
-    target: '[data-onboarding="parent-archive"]',
-    title: '所有作品都留在这里',
-    body: '点进创作记录，孩子的每一幅画、反复出现的主题和成长时间轴都留在那里。某天翻出来，也许会看见一个你当时没注意到的成长节点。',
-  },
+export function parentSteps(hasChildren: boolean, show: (view: 'overview' | 'settings') => void): OnboardingStep[] {
+  return [
+    hasChildren ? {
+      id: 'parent-child', target: '[data-onboarding="parent-child-switcher"]',
+      title: '每个孩子，都有自己的空间', body: '在这里切换孩子，查看各自的创作记录。', prepare: () => show('overview'),
+    } : {
+      id: 'parent-invite', target: '[data-onboarding="parent-invite"]',
+      title: '先连接孩子的创作空间', body: '复制家庭邀请码，让孩子注册时填写，就能连接两个账号。', prepare: () => show('settings'),
+    },
+    { id: 'parent-recent', target: '[data-onboarding="parent-recent"], [data-onboarding="parent-empty"] h3', title: '最近的创作，从这里看',
+      body: '这里汇总最近的创作，点查看详情可以回看作品。还没有作品也没关系，等第一幅画到来。', prepare: () => show('overview') },
+    { id: 'parent-records', target: '[data-onboarding="parent-archive"]', title: '留住每一次小小创作',
+      body: '创作记录收好了作品、主题探索和时间轴，随时可以回看。', prepare: () => show('overview') },
+    { id: 'parent-reports', target: '[data-onboarding="parent-reports"]', title: '回看一段时间的成长',
+      body: '有了创作记录，就可以在周报与月报里查看阶段汇总和陪伴建议。', prepare: () => show('overview') },
+  ]
+}
+export const communicationSteps: OnboardingStep[] = [{
+  id: 'parent-communication', target: '[data-onboarding="parent-communication-title"]', title: '找一个温柔的开场白',
+  body: '这里整理了创作观察和已有的陪伴建议，可以作为交流的参考。也请结合你对孩子的了解。',
+}]
+export const settingsSteps: OnboardingStep[] = [
+  { id: 'settings-invite', target: '[data-onboarding="parent-invite"]', title: '邀请孩子加入家庭', body: '家庭邀请码在这里，也可以随时复制给新加入的孩子。' },
+  { id: 'settings-data', target: '[data-onboarding="parent-data-title"]', title: '管理家庭数据', body: '查看作品导出、删除的说明，也可以在这里了解家庭账号注销。' },
 ]

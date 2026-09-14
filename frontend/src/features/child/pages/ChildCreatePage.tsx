@@ -20,6 +20,9 @@ import {
   type DrawingCanvasHandle,
 } from '../components/DrawingCanvas'
 import { WelcomeOverlay } from '../components/WelcomeOverlay'
+import { useOnboardingTour } from '@/features/onboarding/useOnboardingTour'
+import { useOnboarding } from '@/features/onboarding/OnboardingContext'
+import { canvasSteps } from '@/features/onboarding/steps/childSteps'
 import { DrawingGuide } from '../components/DrawingGuide'
 import {
   WARMUP_SHAPES,
@@ -104,10 +107,18 @@ function ChildDrawingEditor() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   // 进入画板后先显示欢迎蒙版，蒙版盖在 My Creative Space 之上
   const [showWelcome, setShowWelcome] = useState(!draft.artworkId)
+  const startCanvasTour = useOnboardingTour('canvas', 'child')
+  const { completeInteraction } = useOnboarding()
+  useEffect(() => {
+    if (showWelcome) return
+    const timer = window.setTimeout(() => startCanvasTour(canvasSteps), 450)
+    return () => window.clearTimeout(timer)
+  }, [showWelcome, startCanvasTour])
   // 欢迎询问阶段画板保持「清除图形」状态；点「好呀一起画」后才出现半圆
   const [shapeId, setShapeId] = useState<WarmupShapeId | null>(null)
 
   function handleStrokeComplete() {
+    completeInteraction('canvas-stroke')
     setSaveMessage(null)
     setAnalysis('idle')
     setFeatures(null)
@@ -242,6 +253,7 @@ function ChildDrawingEditor() {
           <div className="text-xs text-luma-muted">{t('让想象从这里开始')}</div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <button type="button" disabled={showWelcome || saving} onClick={() => startCanvasTour(canvasSteps, true)} className="min-h-10 rounded-xl px-3 text-sm text-luma-teal-700" aria-label={t('怎么玩')}>?</button>
           <button type="button" disabled={saving} onClick={() => navigate('/child/history')} className="min-h-10 rounded-xl px-3 text-sm font-bold text-luma-teal-700">{t('历史图画')}</button>
           <button type="button" disabled={saving} onClick={() => canvasRef.current?.download()} className="min-h-10 rounded-xl px-3 text-sm text-luma-teal-700">{t('下载')}</button>
           <LanguageSwitcher />
@@ -262,7 +274,7 @@ function ChildDrawingEditor() {
       >
       <section className="relative flex min-h-0 flex-1">
         {(saving || saveMessage) && <p role="status" className="pointer-events-none absolute top-3 right-3 left-3 z-30 mx-auto w-fit max-w-[90%] rounded-2xl bg-luma-teal-50/95 px-4 py-2 text-center text-sm font-bold text-luma-teal-800 shadow-luma-sm">{t(saving ? '正在保存图画…' : saveMessage!)}</p>}
-        <div className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-luma-lg border border-white/90 bg-white p-2 shadow-luma-md sm:p-3">
+        <div data-onboarding="canvas-paper" className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-luma-lg border border-white/90 bg-white p-2 shadow-luma-md sm:p-3">
           <DrawingCanvas
             draft={draft.canvas}
             disabled={saving || analysis === 'loading'}

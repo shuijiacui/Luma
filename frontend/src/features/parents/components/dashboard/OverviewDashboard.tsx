@@ -81,7 +81,7 @@ function GrowthSummaryCard({ onViewDetails }: { onViewDetails?: () => void }) {
       <div aria-hidden="true" className="pointer-events-none absolute -top-12 -right-6 size-40 rounded-full bg-white/60 blur-2xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -bottom-12 left-1/3 size-32 rounded-full bg-[#d8ecdf]/55 blur-2xl" />
       <div className="luma-growth-summary-row relative flex items-start justify-between gap-4">
-        <h2 className="luma-growth-summary-title font-display text-[1.65rem] font-bold leading-tight tracking-[-0.025em] text-[#204b49]">
+        <h2 data-onboarding="parent-recent" className="luma-growth-summary-title font-display text-[1.65rem] font-bold leading-tight tracking-[-0.025em] text-[#204b49]">
           {t('本周成长摘要')}
         </h2>
         <button

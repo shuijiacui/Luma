@@ -68,7 +68,7 @@ export function DrawingTools(props: Props) {
       <aside className="drawing-tools drawing-tool-rail" aria-label={t('绘画工具')}>
       <div className="drawing-color-section" role="group" aria-label={t('选择颜色')}>
         <span className="drawing-rail-title">{t('选择颜色')}</span>
-        <div className="drawing-colors">{quickColors.map(([hex, label]) => swatch(hex, label))}</div>
+        <div data-onboarding="canvas-colors" className="drawing-colors">{quickColors.map(([hex, label]) => swatch(hex, label))}</div>
         <button type="button" ref={paletteTrigger} aria-expanded={paletteOpen} aria-controls={id} aria-haspopup="dialog" className="drawing-tool-button drawing-palette-trigger" onClick={() => setPaletteOpen(value => !value)} disabled={props.disabled}>
           <span className="drawing-active-color" style={{ background: props.color }} aria-hidden="true" />{t('更多颜色')}
         </button>
@@ -111,9 +111,9 @@ export function DrawingTools(props: Props) {
         <button type="button" className="drawing-tool-button" onClick={props.onClearShape} disabled={props.disabled}>{t('清除图形')}</button>
       </div>
       <div className="drawing-actions" role="group" aria-label={t('画作操作')}>
-        <button type="button" className="drawing-tool-button" onClick={props.onUndo} disabled={props.disabled}>{t('撤销')}</button>
+        <button type="button" data-onboarding="canvas-undo" className="drawing-tool-button" onClick={props.onUndo} disabled={props.disabled}>{t('撤销')}</button>
         <button type="button" className="drawing-tool-button" onClick={props.onClear} disabled={props.disabled}>{t('清空')}</button>
-        <button type="button" className="drawing-tool-button" onClick={props.onSave} disabled={props.disabled}>{t('保存')}</button>
+        <button type="button" data-onboarding="canvas-save" className="drawing-tool-button" onClick={props.onSave} disabled={props.disabled}>{t('保存')}</button>
         <button type="button" className="drawing-tool-button drawing-finish" onClick={props.onFinish} disabled={props.disabled}>{t(props.disabled ? 'Nilo 在看…' : '完成')}</button>
       </div>
     </footer>

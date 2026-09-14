@@ -52,7 +52,7 @@ export function ParentSidebar({ active, onSelect, className }: TabBarProps) {
                   ? 'parent-tab-communication'
                   : entry.key === 'records'
                     ? 'parent-archive'
-                    : undefined
+                    : entry.key === 'reports' ? 'parent-reports' : undefined
               }
               className={cn('luma-desktop-nav-item', isActive && 'is-active')}
             >
@@ -105,7 +105,7 @@ export function ParentTabBar({ active, onSelect, className }: TabBarProps) {
                 ? 'parent-tab-communication'
                 : entry.key === 'records'
                   ? 'parent-archive'
-                  : undefined
+                  : entry.key === 'reports' ? 'parent-reports' : undefined
             }
             className={cn('luma-tabbar-item', isActive && 'is-active')}
           >

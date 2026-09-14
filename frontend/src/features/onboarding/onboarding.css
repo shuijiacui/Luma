@@ -1,0 +1,43 @@
+.luma-tour { position: fixed; inset: 0; z-index: 9999; pointer-events: none; color: #294e43; font-family: var(--font-sans); padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.luma-tour-shade { position: absolute; inset: 0; width: 100%; height: 100%; }
+.luma-tour-blocker { position: absolute; pointer-events: auto; touch-action: none; }
+.luma-tour-ring { position: absolute; border: 2px solid #fffcf0; border-radius: 16px; box-shadow: 0 0 0 3px #96b69a80, 0 4px 20px #263f351a; }
+.luma-tour-card { position: absolute; pointer-events: auto; border: 1px solid #d6e1cc; border-radius: 22px; background: #fffdf5; box-shadow: 0 18px 54px #213d382b, 0 2px 8px #213d3814; outline: none; }
+.luma-tour-card:focus-visible { outline: 2px solid #678e77; outline-offset: 3px; }
+.luma-tour-card::before { content: ''; position: absolute; width: 12px; height: 12px; background: #fffdf5; border: 1px solid #d6e1cc; transform: rotate(45deg); }
+.luma-tour-card[data-side=bottom]::before { top: -7px; left: calc(var(--tour-arrow) - 6px); border-right: 0; border-bottom: 0; }
+.luma-tour-card[data-side=top]::before { bottom: -7px; left: calc(var(--tour-arrow) - 6px); border-left: 0; border-top: 0; }
+.luma-tour-card[data-side=left]::before { right: -7px; top: calc(var(--tour-arrow) - 6px); border-left: 0; border-top: 0; }
+.luma-tour-card[data-side=right]::before { left: -7px; top: calc(var(--tour-arrow) - 6px); border-right: 0; border-bottom: 0; }
+.luma-tour-card-scroll { padding: 16px 20px 18px; max-height: inherit; overflow-y: auto; overscroll-behavior: contain; border-radius: inherit; }
+.luma-tour-topline, .luma-tour-footer, .luma-tour-footer > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.luma-tour-topline { margin-bottom: 12px; color: #697e70; font-size: 11px; letter-spacing: .04em; }
+.luma-tour button { cursor: pointer; min-height: 44px; border-radius: 12px; padding: 0 10px; font-size: 12px; font-weight: 600; }
+.luma-tour button:focus-visible { outline: 2px solid #ad8e46; outline-offset: 2px; }
+.luma-tour-topline button { margin-right: -10px; color: #697e70; }
+.luma-tour-message { display: flex; align-items: flex-start; gap: 10px; }
+.luma-tour-message h2 { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.4; }
+.luma-tour-message p { margin: 9px 0 0; font-size: 14px; color: #657669; line-height: 1.75; }
+.luma-tour-hint { margin: 14px 0 0; padding: 8px 10px; border-radius: 10px; background: #edf3e6; font-size: 12px; line-height: 1.6; color: #55774f; }
+.luma-tour-footer { margin-top: 18px; }
+.luma-tour-progress { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.luma-tour-progress > span { color: #8c9b8c; font-size: 12px; font-weight: 400; }
+.luma-tour .luma-tour-next { background: #47775f; color: #fffdf5; padding-inline: 16px; }
+.luma-tour .luma-tour-next:hover { background: #365e4b; }
+.luma-tour-previous:hover, .luma-tour-topline button:hover { background: #edf3e6; }
+.luma-tour-nilo { width: 48px; height: 48px; flex: none; border-radius: 50%; object-fit: cover; background: #f4e7c2; border: 3px solid white; }
+.luma-tour-child .luma-tour-card { border-radius: 26px; border-color: #ddcfad; }
+.luma-tour-child .luma-tour-message h2 { font-size: 20px; }
+.luma-tour-child .luma-tour-message p { font-size: 16px; }
+.luma-tour-child .luma-tour-next { min-height: 48px; font-size: 15px; }
+.luma-tour-wait { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 18px; border-radius: 18px; background: #fffdf5; pointer-events: auto; white-space: nowrap; font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) {
+  .luma-tour:not(.luma-tour-still) .luma-tour-card { animation: luma-tour-appear .18s ease-out; }
+  @keyframes luma-tour-appear { from { opacity: 0; } to { opacity: 1; } }
+}
+@media (max-height: 520px) {
+  .luma-tour-card-scroll { padding: 10px 16px; }
+  .luma-tour-topline { margin-bottom: 5px; }
+  .luma-tour-footer { margin-top: 10px; }
+  .luma-tour-message p { line-height: 1.5; }
+}

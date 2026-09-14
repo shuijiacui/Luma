@@ -1,113 +1,96 @@
-import { lt, useLocale } from '@/i18n'
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 
 export interface OnboardingStep {
-  /** CSS selector for the element to highlight */
+  id: string
   target: string
-  /** Fallback selector used on mobile when target is hidden */
-  mobileTarget?: string
   title: string
   body: string
+  prepare?: () => void | Promise<void>
+  interaction?: 'click' | 'stroke'
+  /** Small drawing area, expressed as fractions of the target's size. */
+  focusArea?: { x: number; y: number; width: number; height: number }
 }
-
+export type OnboardingResult = 'completed' | 'skipped'
 interface StartOptions {
-  onDismiss?: () => void
+  owner?: string
+  theme?: 'parent' | 'child'
+  onDismiss?: (result: OnboardingResult) => void
 }
-
 interface OnboardingContextValue {
   active: boolean
   steps: OnboardingStep[]
   currentIndex: number
+  theme: 'parent' | 'child'
   start: (steps: OnboardingStep[], options?: StartOptions) => void
-  next: () => void
+  next: (unavailable?: boolean) => void
+  previous: () => void
   skip: () => void
+  cancel: (owner: string) => void
+  completeInteraction: (id: string) => void
 }
-
 const OnboardingContext = createContext<OnboardingContextValue | null>(null)
 
-const STORAGE_KEYS = {
-  parent: 'luma_onboarding_parent_done',
-  child: 'luma_onboarding_child_done',
-} as const
-
-const SESSION_KEYS = {
-  parent: 'luma_onboarding_parent_session',
-  child: 'luma_onboarding_child_session',
-} as const
-
-export type OnboardingRole = keyof typeof STORAGE_KEYS
-
-export function isOnboardingDone(role: OnboardingRole): boolean {
-  return localStorage.getItem(STORAGE_KEYS[role]) === '1'
-}
-
-export function markOnboardingDone(role: OnboardingRole): void {
-  localStorage.setItem(STORAGE_KEYS[role], '1')
-}
-
-export function isOnboardingShownThisSession(role: OnboardingRole): boolean {
-  return sessionStorage.getItem(SESSION_KEYS[role]) === '1'
-}
-
-export function markOnboardingShownThisSession(role: OnboardingRole): void {
-  sessionStorage.setItem(SESSION_KEYS[role], '1')
-}
-
+/** Kept for logout; new records are scoped by account and version. */
 export function clearOnboardingSession(): void {
-  sessionStorage.removeItem(SESSION_KEYS.parent)
-  sessionStorage.removeItem(SESSION_KEYS.child)
+  for (const key of Object.keys(sessionStorage)) {
+    if (key.startsWith('luma_onboarding_')) sessionStorage.removeItem(key)
+  }
 }
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  useLocale()
-  const [active, setActive] = useState(false)
-  const [steps, setSteps] = useState<OnboardingStep[]>([])
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const onDismissRef = useRef<(() => void) | undefined>(undefined)
-
-  const dismiss = useCallback(() => {
-    setActive(false)
-    onDismissRef.current?.()
-    onDismissRef.current = undefined
+  const [tour, setTour] = useState<{ steps: OnboardingStep[]; index: number; theme: 'parent' | 'child' } | null>(null)
+  const optionsRef = useRef<StartOptions>({})
+  const tourRef = useRef(tour)
+  const missedRef = useRef(false)
+  const dismiss = useCallback((result?: OnboardingResult) => {
+    const options = optionsRef.current
+    optionsRef.current = {}
+    tourRef.current = null
+    setTour(null)
+    if (result) options.onDismiss?.(result)
   }, [])
-
-  const start = useCallback((nextSteps: OnboardingStep[], options?: StartOptions) => {
-    onDismissRef.current = options?.onDismiss
-    setSteps(nextSteps)
-    setCurrentIndex(0)
-    setActive(true)
+  const start = useCallback((steps: OnboardingStep[], options: StartOptions = {}) => {
+    if (!steps.length) return
+    optionsRef.current = options
+    missedRef.current = false
+    const value = { steps, index: 0, theme: options.theme ?? 'parent' }
+    tourRef.current = value
+    setTour(value)
   }, [])
-
-  const next = useCallback(() => {
-    setCurrentIndex((i) => {
-      if (i < steps.length - 1) return i + 1
-      dismiss()
-      return i
-    })
-  }, [steps.length, dismiss])
-
-  const skip = useCallback(() => {
-    dismiss()
+  const next = useCallback((unavailable = false) => {
+    const current = tourRef.current
+    if (!current) return
+    missedRef.current ||= unavailable
+    if (current.index === current.steps.length - 1) dismiss(missedRef.current ? 'skipped' : 'completed')
+    else {
+      const value = { ...current, index: current.index + 1 }
+      tourRef.current = value
+      setTour(value)
+    }
   }, [dismiss])
-
-  const value = useMemo(
-    () => ({ active, steps, currentIndex, start, next, skip }),
-    [active, steps, currentIndex, start, next, skip],
-  )
-
-  return <OnboardingContext.Provider value={value}>{lt(children)}</OnboardingContext.Provider>
+  const previous = useCallback(() => {
+    const current = tourRef.current
+    if (!current || current.index === 0) return
+    const value = { ...current, index: current.index - 1 }
+    tourRef.current = value
+    setTour(value)
+  }, [])
+  const skip = useCallback(() => dismiss('skipped'), [dismiss])
+  const cancel = useCallback((owner: string) => {
+    if (optionsRef.current.owner === owner) dismiss()
+  }, [dismiss])
+  const completeInteraction = useCallback((id: string) => {
+    const current = tourRef.current
+    if (current?.steps[current.index]?.id === id) next()
+  }, [next])
+  const value = useMemo(() => ({
+    active: !!tour, steps: tour?.steps ?? [], currentIndex: tour?.index ?? 0,
+    theme: tour?.theme ?? 'parent', start, next, previous, skip, cancel, completeInteraction,
+  }), [tour, start, next, previous, skip, cancel, completeInteraction])
+  return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>
 }
-
 export function useOnboarding() {
-  const ctx = useContext(OnboardingContext)
-  if (!ctx) throw new Error('useOnboarding must be used inside OnboardingProvider')
-  return ctx
+  const context = useContext(OnboardingContext)
+  if (!context) throw new Error('useOnboarding must be used inside OnboardingProvider')
+  return context
 }

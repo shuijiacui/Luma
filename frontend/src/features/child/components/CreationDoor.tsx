@@ -4,7 +4,7 @@ import worldArtwork from '@/assets/images/nilo-storybook-world-v2.png'
 export function CreationDoor({ opening, onOpen }: { opening: boolean; onOpen: () => void }) {
   useLocale()
   return (
-    <button type="button" className={`creation-door${opening ? ' is-open' : ''}`} onClick={onOpen} disabled={opening} aria-label={t(opening ? '正在打开创作大门' : '打开大门，去画画')}>
+    <button type="button" data-onboarding="child-door-button" className={`creation-door${opening ? ' is-open' : ''}`} onClick={onOpen} disabled={opening} aria-label={t(opening ? '正在打开创作大门' : '打开大门，去画画')}>
       <span className="door-world" aria-hidden="true"><span className="door-world-sun" /><span className="door-world-hill" /><span className="door-easel"><span /></span><span className="door-world-star">✦</span></span>
       <span className="door-leaf" aria-hidden="true">
         <img className="door-painted-surface" src={worldArtwork} alt="" draggable={false} />

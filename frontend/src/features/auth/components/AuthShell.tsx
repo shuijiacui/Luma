@@ -89,15 +89,29 @@ export function AuthShell({
     </motion.div>
   )
 
-  // 家长端：与登录后页面一致的竖屏手机外框（桌面窗口也居中成竖屏列）
+  // 同一份表单通过 CSS 适配：手机居中，桌面恢复插画背景与右侧表单。
   if (role === 'parent') {
     return (
       <main className="luma-auth-shell luma-auth-role-parent relative min-h-screen overflow-y-auto bg-luma-ivory-50">
+        <motion.img
+          src={authParentBackground}
+          alt=""
+          initial={{ opacity: 0, scale: 1.015 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.55, ease: 'easeOut' }}
+          className="pointer-events-none fixed inset-0 hidden size-full object-cover lg:block"
+        />
+        <div
+          className="pointer-events-none fixed inset-0 hidden bg-gradient-to-l from-luma-ivory-50/94 via-luma-ivory-50/60 to-luma-ivory-50/8 lg:block"
+          aria-hidden="true"
+        />
         <div className="luma-auth-portrait-stage">
-          <div className="luma-auth-shell-content luma-auth-stage-content relative z-10 mx-auto flex w-full max-w-[540px] flex-col items-center justify-center px-5 py-6">
-            {panel}
-            <div className="mt-5 w-full">
-              <SafetyDisclaimer />
+          <div className="luma-auth-shell-content luma-auth-stage-content relative z-10 mx-auto flex w-full max-w-[540px] items-center justify-center px-5 py-6 lg:max-w-7xl lg:justify-end lg:px-24 lg:py-10 xl:px-36 2xl:px-40">
+            <div className="flex w-full flex-col items-center lg:max-w-md">
+              {panel}
+              <div className="mt-5 w-full">
+                <SafetyDisclaimer />
+              </div>
             </div>
           </div>
         </div>
