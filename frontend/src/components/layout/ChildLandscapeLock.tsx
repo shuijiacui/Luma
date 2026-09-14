@@ -7,6 +7,10 @@ type LockableOrientation = ScreenOrientation & {
   unlock?: () => void
 }
 
+type FullscreenDocumentElement = HTMLElement & {
+  requestFullscreen?: (options?: FullscreenOptions) => Promise<void>
+}
+
 function isPhoneScreen() {
   if (typeof window === 'undefined') return false
   return Math.min(window.screen.width, window.screen.height) <= PHONE_MAX_SHORT_SIDE
@@ -21,22 +25,29 @@ export function ChildLandscapeLock() {
     if (!orientation?.lock) return
 
     let active = true
-    const lockLandscape = async () => {
+    const lockLandscape = async (enterFullscreen = false) => {
       if (!active) return
       try {
+        if (enterFullscreen && !document.fullscreenElement) {
+          const root = document.documentElement as FullscreenDocumentElement
+          await root.requestFullscreen?.({ navigationUI: 'hide' })
+        }
         await orientation.lock?.('landscape')
       } catch {
-        // 普通浏览器可能要求一次用户操作；首次点击时会静默重试。
+        // 浏览器可能禁用全屏或方向锁定；保持页面可用，不显示阻断界面。
       }
     }
 
-    void lockLandscape()
-    window.addEventListener('pointerdown', lockLandscape, { once: true })
+    const retryAfterInteraction = () => void lockLandscape(true)
+
+    void lockLandscape(false)
+    window.addEventListener('pointerdown', retryAfterInteraction, { once: true, capture: true })
 
     return () => {
       active = false
-      window.removeEventListener('pointerdown', lockLandscape)
+      window.removeEventListener('pointerdown', retryAfterInteraction, { capture: true })
       orientation.unlock?.()
+      if (document.fullscreenElement) void document.exitFullscreen?.()
     }
   }, [])
 
