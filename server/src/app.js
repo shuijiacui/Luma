@@ -4,6 +4,7 @@ import path from 'node:path'
 import { createApiRouter } from './routes/analyze.js'
 import { createAuthRouter } from './routes/auth.js'
 import { createArtworkRouter } from './routes/artworks.js'
+import { createNiloRouter } from './routes/nilo.js'
 import { loadEntries } from './services/retrieve.js'
 import { DEFAULT_CONFIG } from './services/score.js'
 import { createDb } from './db.js'
@@ -79,6 +80,8 @@ export function createApp(deps = {}) {
   app.use('/api/artworks', createArtworkRouter({ db }))
   app.use('/api/analyze', rateLimit(limits.analyze)) // LLM 成本保护
   app.use('/api/report', rateLimit(limits.analyze))
+  app.use('/api/nilo', rateLimit(limits.nilo ?? limits.analyze ?? limits.global)) // Nilo 共创：模型调用成本保护
+  app.use('/api/nilo', createNiloRouter({ chatWithImage: deps.chatWithImage ?? undefined }))
   app.use('/api', createApiRouter({
     chatWithImage: deps.chatWithImage ?? undefined,
     chatText: deps.chatText ?? (process.env.NODE_ENV === 'test' ? null : chatText),
