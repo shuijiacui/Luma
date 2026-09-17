@@ -24,6 +24,8 @@ import { useOnboardingTour } from '@/features/onboarding/useOnboardingTour'
 import { useOnboarding } from '@/features/onboarding/OnboardingContext'
 import { canvasSteps } from '@/features/onboarding/steps/childSteps'
 import { DrawingGuide } from '../components/DrawingGuide'
+import { DrawingMusic } from '../components/DrawingMusic'
+import { useIdleEncouragement } from '../useIdleEncouragement'
 import {
   WARMUP_SHAPES,
   type WarmupShapeId,
@@ -32,6 +34,14 @@ import {
 const niloPrompts = [
   '咦，这里多了新东西呢～',
   '继续画呀，Nilo 在旁边看呢！',
+  '慢慢画，不着急，我陪着你～',
+  '你的小想法，都可以画在这里。',
+  '喜欢什么颜色，就大胆试试吧！',
+  '画成什么样都可以，这是你的世界。',
+  '这一笔让我更想看看你的故事啦！',
+  '每一笔，都在让你的故事慢慢长出来～',
+  '你的想象里，还藏着什么有趣的东西呀？',
+  '跟着你的想象，看看接下来会出现什么吧！',
 ] as const
 const niloSaveMessages = [
   '我会记住这幅画的。',
@@ -102,13 +112,19 @@ function ChildDrawingEditor() {
   const [serverBubble, setServerBubble] = useState<string | null>(null)
   const [serverBubbleEn, setServerBubbleEn] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [niloHidden, setNiloHidden] = useState(false)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const lastNiloTap = useRef<{ time: number; x: number; y: number } | null>(null)
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   // 进入画板后先显示欢迎蒙版，蒙版盖在 My Creative Space 之上
   const [showWelcome, setShowWelcome] = useState(!draft.artworkId)
   const startCanvasTour = useOnboardingTour('canvas', 'child')
-  const { completeInteraction } = useOnboarding()
+  const { completeInteraction, active: tourActive } = useOnboarding()
+  const { message: idleMessage, resetIdle } = useIdleEncouragement(
+    !showWelcome && !niloHidden && !tourActive && !saving && analysis === 'idle' && !isDrawing,
+  )
   useEffect(() => {
     if (showWelcome) return
     const timer = window.setTimeout(() => startCanvasTour(canvasSteps), 450)
@@ -118,13 +134,17 @@ function ChildDrawingEditor() {
   const [shapeId, setShapeId] = useState<WarmupShapeId | null>(null)
 
   function handleStrokeComplete() {
+    setIsDrawing(false)
+    resetIdle()
     completeInteraction('canvas-stroke')
     setSaveMessage(null)
     setAnalysis('idle')
     setFeatures(null)
     setServerBubble(null)
     setServerBubbleEn(null)
-    setPromptIndex((current) => (current + 1) % niloPrompts.length)
+    setPromptIndex(current => current < 0
+      ? Math.floor(Math.random() * niloPrompts.length)
+      : (current + 1 + Math.floor(Math.random() * (niloPrompts.length - 1))) % niloPrompts.length)
   }
   useEffect(() => {
     draft.color = color; draft.features = features; draft.brushSize = brushSize
@@ -210,7 +230,7 @@ function ChildDrawingEditor() {
   const bubbleText =
     analysis === 'loading'
       ? 'Nilo 正在仔细看你的画…'
-      : ((locale === 'en' && serverBubbleEn ? serverBubbleEn : serverBubble) ?? (promptIndex >= 0 ? niloPrompts[promptIndex] : null))
+      : ((locale === 'en' && serverBubbleEn ? serverBubbleEn : serverBubble) ?? idleMessage ?? (promptIndex >= 0 ? niloPrompts[promptIndex] : null))
 
   return (
     <main className="luma-child-create-shell relative flex min-h-screen flex-col overflow-hidden bg-luma-teal-50">
@@ -253,6 +273,7 @@ function ChildDrawingEditor() {
           <div className="text-xs text-luma-muted">{t('让想象从这里开始')}</div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <DrawingMusic />
           <button type="button" disabled={showWelcome || saving} onClick={() => startCanvasTour(canvasSteps, true)} className="min-h-10 rounded-xl px-3 text-sm text-luma-teal-700" aria-label={t('怎么玩')}>?</button>
           <button type="button" disabled={saving} onClick={() => navigate('/child/history')} className="min-h-10 rounded-xl px-3 text-sm font-bold text-luma-teal-700">{t('历史图画')}</button>
           <button type="button" disabled={saving} onClick={() => canvasRef.current?.download()} className="min-h-10 rounded-xl px-3 text-sm text-luma-teal-700">{t('下载')}</button>
@@ -283,11 +304,22 @@ function ChildDrawingEditor() {
             brushSize={brushSize}
             brushKind={brushKind}
             isEraser={isEraser}
+            onStrokeStart={() => { setIsDrawing(true); resetIdle() }}
             onStrokeComplete={handleStrokeComplete}
           />
           <DrawingGuide shapeId={shapeId} />
 
           <div className="pointer-events-none absolute right-4 bottom-5 z-20 flex items-end gap-2 sm:right-7 sm:bottom-6">
+            {niloHidden ? (
+              <button
+                type="button"
+                data-onboarding="canvas-nilo"
+                onClick={() => { lastNiloTap.current = null; setNiloHidden(false) }}
+                className="pointer-events-auto min-h-11 rounded-full border border-luma-teal-100 bg-white/95 px-4 text-sm font-bold text-luma-teal-700 shadow-luma-sm outline-none hover:bg-luma-teal-50 focus-visible:ring-3 focus-visible:ring-luma-gold-300/60"
+              >
+                {t('显示 Nilo')}
+              </button>
+            ) : <>
             <AnimatePresence mode="wait">
               {bubbleText && (
                 <motion.div
@@ -303,21 +335,43 @@ function ChildDrawingEditor() {
                 </motion.div>
               )}
             </AnimatePresence>
-            <motion.div
+            <motion.button
+              type="button"
+              data-onboarding="canvas-nilo"
+              onDoubleClick={() => { lastNiloTap.current = null; setNiloHidden(true) }}
+              onPointerUp={event => {
+                if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return
+                const tap = { time: event.timeStamp, x: event.clientX, y: event.clientY }
+                const previous = lastNiloTap.current
+                if (previous && tap.time - previous.time <= 350 && Math.hypot(tap.x - previous.x, tap.y - previous.y) <= 24) {
+                  lastNiloTap.current = null
+                  setNiloHidden(true)
+                } else lastNiloTap.current = tap
+              }}
+              onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  lastNiloTap.current = null
+                  setNiloHidden(true)
+                }
+              }}
               animate={saved ? { y: [0, -22, 0], scale: [1, 1.15, 1] } : { y: [0, -5, 0] }}
               transition={saved
                 ? { duration: 0.5, ease: 'easeOut' }
                 : { duration: 3, repeat: Infinity, ease: 'easeInOut' }
               }
-              className="size-20 overflow-hidden rounded-full border-4 border-white bg-luma-gold-100 shadow-luma-md sm:size-24"
-              aria-label={t("Nilo 正陪你创作")}
+              className="pointer-events-auto size-20 touch-manipulation cursor-pointer overflow-hidden rounded-full border-4 border-white bg-luma-gold-100 shadow-luma-md outline-none focus-visible:ring-3 focus-visible:ring-luma-teal-400 sm:size-24"
+              aria-label={t('双击隐藏 Nilo')}
+              title={t('双击隐藏 Nilo')}
             >
               <img
                 src={niloCompanion}
-                alt="Nilo"
+                alt=""
+                draggable={false}
                 className="size-full object-cover"
               />
-            </motion.div>
+            </motion.button>
+            </>}
           </div>
         </div>
       </section>

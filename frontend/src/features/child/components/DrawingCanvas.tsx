@@ -23,6 +23,7 @@ interface DrawingCanvasProps {
   brushKind?: BrushKind
   isEraser: boolean
   onStrokeComplete: () => void
+  onStrokeStart?: () => void
   draft: { history: string[] }
   disabled?: boolean
 }
@@ -31,7 +32,7 @@ export const DrawingCanvas = forwardRef<
   DrawingCanvasHandle,
   DrawingCanvasProps
 >(function DrawingCanvas(
-  { color, brushSize, brushKind = 'round', isEraser, onStrokeComplete, draft, disabled },
+  { color, brushSize, brushKind = 'round', isEraser, onStrokeComplete, onStrokeStart, draft, disabled },
   forwardedRef,
 ) {
   useLocale()
@@ -195,6 +196,7 @@ export const DrawingCanvas = forwardRef<
 
     canvas.setPointerCapture(event.pointerId)
     isDrawingRef.current = true
+    onStrokeStart?.()
     pointerRef.current = event.pointerId
     const point = getPoint(event)
     const scale = canvas.width / canvas.getBoundingClientRect().width
