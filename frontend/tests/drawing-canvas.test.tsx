@@ -37,8 +37,13 @@ function prepare() {
 }
 
 test('a tap is saved as one undoable stroke; a second pointer cannot finish it', () => {
-  const {canvas, draft, complete, ref} = prepare()
+  const {canvas, draft, complete, ref, view, props} = prepare()
+  const start = vi.fn()
+  view.rerender(<DrawingCanvas {...props} onStrokeStart={start} />)
   pointer(canvas,'pointerdown')
+  expect(start).toHaveBeenCalledOnce()
+  pointer(canvas,'pointerdown',{pointerId:2,isPrimary:false})
+  expect(start).toHaveBeenCalledOnce()
   expect(ctx.fill).toHaveBeenCalled()
   pointer(canvas,'pointerup',{pointerId:2,isPrimary:false})
   expect(complete).not.toHaveBeenCalled()

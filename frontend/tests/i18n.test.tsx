@@ -18,7 +18,7 @@ import { OnboardingProvider } from '@/features/onboarding/OnboardingContext'
 import { clearChildDraft, getChildDraft } from '@/features/child/draft'
 
 vi.mock('@/lib/api/authFetch', () => ({ authFetch: vi.fn() }))
-test('drawing header follows the language without replacing the active canvas', () => {
+test('drawing header and Nilo visibility controls preserve the active canvas across languages', () => {
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
   const context = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
   try {
@@ -30,12 +30,37 @@ test('drawing header follows the language without replacing the active canvas', 
     expect(screen.getByText('我的创作空间')).toBeTruthy()
     expect(screen.getByText('让想象从这里开始')).toBeTruthy()
     expect(screen.queryByText('My Creative Space')).toBeNull()
+    const nilo = screen.getByRole('button', { name: '双击隐藏 Nilo' })
+    fireEvent.click(nilo)
+    expect(screen.queryByRole('button', { name: '显示 Nilo' })).toBeNull()
+    fireEvent.doubleClick(nilo)
+    expect(screen.queryByRole('button', { name: '双击隐藏 Nilo' })).toBeNull()
+    expect(screen.getByRole('button', { name: '显示 Nilo' })).toBeTruthy()
+    expect(document.querySelector('canvas')).toBe(canvas)
     fireEvent.click(screen.getByRole('button', { name: 'Switch to English' }))
     expect(screen.getByText('My Creative Space')).toBeTruthy()
     expect(screen.getByText('Anything can begin here')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Show Nilo' }))
+    expect(screen.getByRole('button', { name: 'Double-click to hide Nilo' })).toBeTruthy()
     expect(document.querySelector('canvas')).toBe(canvas)
     fireEvent.click(screen.getByRole('button', { name: '切换为中文' }))
     expect(screen.getByText('我的创作空间')).toBeTruthy()
+    const touchTap = (time: number) => {
+      const event = new Event('pointerup', { bubbles: true })
+      Object.defineProperties(event, {
+        pointerType: { value: 'touch' }, timeStamp: { value: time },
+        clientX: { value: 20 }, clientY: { value: 20 },
+      })
+      fireEvent(screen.getByRole('button', { name: '双击隐藏 Nilo' }), event)
+    }
+    touchTap(1000)
+    expect(screen.queryByRole('button', { name: '显示 Nilo' })).toBeNull()
+    touchTap(1500) // Separate taps do not hide Nilo.
+    expect(screen.queryByRole('button', { name: '显示 Nilo' })).toBeNull()
+    touchTap(1700)
+    fireEvent.click(screen.getByRole('button', { name: '显示 Nilo' }))
+    fireEvent.keyDown(screen.getByRole('button', { name: '双击隐藏 Nilo' }), { key: 'Enter' })
+    expect(screen.getByRole('button', { name: '显示 Nilo' })).toBeTruthy()
     expect(document.querySelector('canvas')).toBe(canvas)
   } finally { cleanup(); clearChildDraft(); context.mockRestore(); vi.unstubAllGlobals() }
 })
