@@ -35,7 +35,7 @@ test('CORS: 白名单来源放行，其他来源不发许可头', async () => {
 
 // ---- 限流 ----
 test('rate limit: auth 端点超限返回 429 + Retry-After', async () => {
-  const app = makeApp({ limits: { global: { windowMs: 60_000, max: 100 }, auth: { windowMs: 60_000, max: 3 }, analyze: { windowMs: 60_000, max: 100 } } })
+  const app = makeApp({ limits: { global: { windowMs: 60_000, max: 100 }, auth: { windowMs: 60_000, max: 3 }, analyze: { windowMs: 60_000, max: 100 }, nilo: { windowMs: 60_000, max: 100 } } })
   for (let i = 0; i < 3; i += 1) {
     await request(app).post('/api/auth/parent/login').send({ email: 'x@x.com', password: 'badbad' })
   }

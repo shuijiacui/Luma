@@ -8,5 +8,7 @@ export const canvasSteps: OnboardingStep[] = [
   { id: 'canvas-color', target: '[data-onboarding="canvas-colors"]', title: '挑一个喜欢的颜色', body: '点一下颜色，就能用它画画啦。', interaction: 'click' },
   { id: 'canvas-stroke', target: '[data-onboarding="canvas-paper"] canvas', title: '试着画一笔', body: '用手指或画笔，在亮起来的纸上画一笔吧。', interaction: 'stroke', focusArea: { x: .3, y: .25, width: .35, height: .25 } },
   { id: 'canvas-undo', target: '[data-onboarding="canvas-undo"]', title: '画错了也没关系', body: '点这里可以撤销刚才那一笔，再试一次。', interaction: 'click' },
+  { id: 'canvas-nilo', target: '[data-onboarding="canvas-nilo"]', title: '想安静画一会儿？', body: '双击右下角的 Nilo 头像，就能把我和气泡藏起来。用手指时连续轻点两下；想让我回来，点「显示 Nilo」就好啦。' },
+  { id: 'canvas-music', target: '[data-onboarding="canvas-music"]', title: '让音乐陪你画画', body: '点「音乐：关」就能开启背景音乐，再点一下就关闭。旁边的小箭头可以换歌、调音量，选一首喜欢的吧！' },
   { id: 'canvas-save', target: '[data-onboarding="canvas-save"]', title: '把喜欢的画收好', body: '画好后点保存，成功后就能在历史图画里找到，下次还能继续画。' },
 ]
