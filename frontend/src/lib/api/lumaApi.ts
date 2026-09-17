@@ -61,6 +61,104 @@ export function analyzeDrawing(
   })
 }
 
+export interface NiloStrokePoint {
+  x: number
+  y: number
+}
+
+/** Nilo 帮孩子添的一笔（AI 决策，前端负责动画落笔） */
+export interface NiloStrokeSpec {
+  kind: string
+  points: NiloStrokePoint[]
+  color: string
+  width: number
+  say?: string
+}
+
+export interface NiloStrokeResponse {
+  stroke: NiloStrokeSpec | null
+  /** true 表示模型超时/失败，由前端本地规则笔触兜底 */
+  fallback?: boolean
+}
+
+/**
+ * 请求 Nilo 的下一笔：把孩子当前画面交给后端模型，只返回结构化笔迹指令。
+ * 模型慢/失败时返回 { stroke: null }，前端自动用本地规则笔触，孩子不会等待。
+ */
+export function requestNiloStroke(
+  imageBase64: string,
+  opts: {
+    token?: string
+    mode: 'turn' | 'ask'
+    strokes?: number
+    recentColors?: string[]
+    /** 孩子最后一笔（归一化坐标），让 Nilo 呼应/延伸 */
+    lastStroke?: { points: { x: number; y: number }[]; color: string; width: number } | null
+    /** 画面内容分布（4×4=16 个 0-1），让 Nilo 贴着内容下笔 */
+    inkGrid?: number[] | null
+    /** 本轮意图：陪一个伙伴 / 补细节 / 呼应最后一笔 */
+    intent?: 'companion' | 'detail' | 'echo'
+    /** 最近已经画过的形状：让模型换着来，别老是星星 */
+    recentKinds?: string[]
+    locale?: 'zh' | 'en'
+    signal?: AbortSignal
+  },
+): Promise<NiloStrokeResponse> {
+  return authFetch<NiloStrokeResponse>('/nilo/stroke', {
+    method: 'POST',
+    token: opts.token,
+    signal: opts.signal,
+    body: {
+      imageBase64,
+      mode: opts.mode,
+      context: {
+        locale: opts.locale ?? getLocale(),
+        strokes: opts.strokes ?? 0,
+        recentColors: opts.recentColors ?? [],
+        lastStroke: opts.lastStroke ?? null,
+        inkGrid: opts.inkGrid ?? [],
+        intent: opts.intent ?? 'companion',
+        recentKinds: opts.recentKinds ?? [],
+      },
+    },
+  })
+}
+
+export interface NiloPraiseResponse {
+  praise: string
+  suggestion: string
+}
+
+/** 让 Nilo 看着孩子的画说一句具体的夸奖 + 下一步建议（模型慢/失败时前端用本地分析兜底） */
+export function requestNiloPraise(
+  imageBase64: string,
+  opts: {
+    token?: string
+    strokes?: number
+    recentColors?: string[]
+    lastStroke?: { points: { x: number; y: number }[]; color: string; width: number } | null
+    inkGrid?: number[] | null
+    locale?: 'zh' | 'en'
+    signal?: AbortSignal
+  } = {},
+): Promise<NiloPraiseResponse> {
+  return authFetch<NiloPraiseResponse>('/nilo/praise', {
+    method: 'POST',
+    token: opts.token,
+    signal: opts.signal,
+    body: {
+      imageBase64,
+      context: {
+        locale: opts.locale ?? getLocale(),
+        strokes: opts.strokes ?? 0,
+        recentColors: opts.recentColors ?? [],
+        lastStroke: opts.lastStroke ?? null,
+        inkGrid: opts.inkGrid ?? [],
+      },
+    },
+  })
+}
+
 export function fetchReport(
   features: FeatureJSON | null,
   opts: { token?: string; analysisId?: string } = {},

@@ -47,11 +47,12 @@ function previewOf(messages) {
 const LLM_TIMEOUT_MS = 90_000   // 视觉推理可能较慢，给足 90s
 const MAX_RETRIES = 2           // 5xx/网络错误重试 2 次（指数退避），4xx 不重试
 
-async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), kind = 'text', signal } = {}) {
+async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), kind = 'text', signal, responseFormat } = {}) {
   const payload = {
     model,
     messages,
     max_tokens: maxTokens,
+    ...(responseFormat ? { response_format: responseFormat } : {}),
   }
   const started = Date.now()
   let lastError

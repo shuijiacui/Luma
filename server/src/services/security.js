@@ -51,6 +51,7 @@ export function defaultLimits(env = process.env) {
     global: { windowMs: 15 * 60_000, max: num(env.RATE_LIMIT_GLOBAL, 600) },
     auth: { windowMs: 15 * 60_000, max: num(env.RATE_LIMIT_AUTH, 20), message: '尝试次数太多，请 15 分钟后再试' },
     analyze: { windowMs: 3600_000, max: num(env.RATE_LIMIT_ANALYZE, 60), message: '分析次数达到上限，请稍后再试' },
+    nilo: { windowMs: 60_000, max: num(env.RATE_LIMIT_NILO, 12), message: 'Nilo 想休息一下，请稍后再试' },
   }
 }
 
