@@ -3,6 +3,9 @@
 import { Router } from 'express'
 import { asyncRoute } from '../services/http.js'
 import { NILO_STROKE_KINDS, generateNiloPraise, generateNiloStroke } from '../services/niloCompanion.js'
+import { generateNiloDialogue, sanitizeDialogueContext } from '../services/niloDialogue.js'
+import { voiceCapabilities, voiceConfig, transcribeVoice, synthesizeVoice } from '../services/voice.js'
+import { defaultLimits, rateLimit } from '../services/security.js'
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
@@ -58,13 +61,62 @@ function readImage(body) {
 
 export function createNiloRouter({
   chatWithImage,
+  chatText,
   generate = generateNiloStroke,
   generatePraise = generateNiloPraise,
+  generateDialogue = generateNiloDialogue,
+  voice = {},
   timeoutMs,
+  limits = {},
 } = {}) {
   const router = Router()
+  const configuredLimits = { ...defaultLimits(), ...limits }
+  // One conversation may use ASR, drawing and TTS; each has its own finite cost bucket.
+  // Read-only capabilities must not consume any model-call allowance.
+  const drawingLimit = rateLimit(configuredLimits.nilo)
+  const asrLimit = rateLimit(configuredLimits.niloVoiceAsr)
+  const ttsLimit = rateLimit(configuredLimits.niloVoiceTts)
+  const capabilitiesLimit = rateLimit(configuredLimits.niloCapabilities)
 
-  router.post('/stroke', asyncRoute(async (req, res) => {
+  const childOnly = (req, res, next) => req.auth && req.auth.role !== 'child'
+    ? res.status(403).json({ error: 'child account required' }) : next()
+  const cancellable = run => asyncRoute(async (req, res) => {
+    const controller = new AbortController()
+    const abort = () => { if (!res.writableEnded) controller.abort() }
+    req.once('aborted', abort)
+    res.once('close', abort)
+    try {
+      const result = await run(req, controller.signal)
+      if (!controller.signal.aborted) res.json(result)
+    } finally {
+      req.off('aborted', abort)
+      res.off('close', abort)
+    }
+  })
+
+  router.post('/companion', childOnly, drawingLimit, cancellable(async (req, signal) => {
+    if (!req.body?.context || typeof req.body.context !== 'object' || Array.isArray(req.body.context)) {
+      throw Object.assign(new Error('context required'), { status: 400 })
+    }
+    let imageBase64
+    if (req.body.imageBase64 !== undefined) {
+      // Companion requests use a small snapshot; do not send a full-resolution export.
+      if (typeof req.body.imageBase64 !== 'string' || req.body.imageBase64.length > 2 * 1024 * 1024) throw Object.assign(new Error('image too large'), { status: 400 })
+      const image = readImage(req.body)
+      if (image.error) throw Object.assign(new Error(image.error), { status: image.status })
+      imageBase64 = image.encoded
+    }
+    return generateDialogue({ imageBase64, context: sanitizeDialogueContext(req.body.context), chatWithImage, chatText, timeoutMs, signal })
+  }))
+
+  router.get('/voice/config', childOnly, capabilitiesLimit, (_req, res) => {
+    res.set('Cache-Control', 'no-store')
+    res.json(voiceCapabilities(voice.config ?? voiceConfig()))
+  })
+  router.post('/voice/transcribe', childOnly, asrLimit, cancellable((req, signal) => transcribeVoice(req.body, { ...voice, signal })))
+  router.post('/voice/speak', childOnly, ttsLimit, cancellable((req, signal) => synthesizeVoice(req.body, { ...voice, signal })))
+
+  router.post('/stroke', childOnly, drawingLimit, asyncRoute(async (req, res) => {
     // 与 /analyze 一致：允许游客，但登录后必须是儿童账号
     if (req.auth && req.auth.role !== 'child') return res.status(403).json({ error: 'child account required' })
     const image = readImage(req.body)
@@ -85,7 +137,7 @@ export function createNiloRouter({
     return res.json({ stroke: result.stroke })
   }))
 
-  router.post('/praise', asyncRoute(async (req, res) => {
+  router.post('/praise', childOnly, drawingLimit, asyncRoute(async (req, res) => {
     if (req.auth && req.auth.role !== 'child') return res.status(403).json({ error: 'child account required' })
     const image = readImage(req.body)
     if (image.error) return res.status(image.status).json({ error: image.error })

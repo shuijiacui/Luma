@@ -84,5 +84,8 @@ export function createDb(path = process.env.DB_PATH || DEFAULT_DB_PATH) {
     updated_at TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_artworks_child ON artworks(child_id, updated_at);`)
+  const artworkColumns = new Set(db.prepare('PRAGMA table_info(artworks)').all().map(c => c.name))
+  if (!artworkColumns.has('document_json')) db.exec('ALTER TABLE artworks ADD COLUMN document_json TEXT')
+  if (!artworkColumns.has('provenance')) db.exec("ALTER TABLE artworks ADD COLUMN provenance TEXT NOT NULL DEFAULT 'unknown'")
   return db
 }

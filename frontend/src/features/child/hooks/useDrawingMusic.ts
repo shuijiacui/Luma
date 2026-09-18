@@ -10,6 +10,8 @@ export function useDrawingMusic() {
   const wanted = useRef(false)
   const request = useRef(0)
   const mounted = useRef(true)
+  const voiceActive = useRef(false)
+  const preferredVolume = useRef(volume)
   const stop = useCallback(() => {
     request.current++
     audioRef.current?.pause()
@@ -40,12 +42,18 @@ export function useDrawingMusic() {
         setStatus('on')
       } else void play(audio)
     }
+    function voiceChanged(event: Event) {
+      voiceActive.current = (event as CustomEvent<boolean>).detail === true
+      if (audioRef.current) audioRef.current.volume = preferredVolume.current / 100 * (voiceActive.current ? .15 : 1)
+    }
     document.addEventListener('visibilitychange', visibilityChanged)
+    window.addEventListener('luma-voice-active', voiceChanged)
     return () => {
       mounted.current = false
       wanted.current = false
       stop()
       document.removeEventListener('visibilitychange', visibilityChanged)
+      window.removeEventListener('luma-voice-active', voiceChanged)
       const audio = audioRef.current
       if (audio) {
         audio.onerror = null
@@ -70,7 +78,7 @@ export function useDrawingMusic() {
       audio = new Audio(musicUrl(musicTracks.find(track => track.id === trackId)!.file))
       audio.loop = true
       audio.preload = 'none'
-      audio.volume = volume / 100
+      audio.volume = volume / 100 * (voiceActive.current ? .15 : 1)
       audio.onerror = () => {
         if (!mounted.current || !wanted.current) return
         wanted.current = false
@@ -99,8 +107,9 @@ export function useDrawingMusic() {
 
   function changeVolume(value: number) {
     const next = Math.max(0, Math.min(100, value))
+    preferredVolume.current = next
     setVolume(next)
-    if (audioRef.current) audioRef.current.volume = next / 100
+    if (audioRef.current) audioRef.current.volume = next / 100 * (voiceActive.current ? .15 : 1)
   }
 
   return { trackId, volume, status, error, toggle, selectTrack, changeVolume }

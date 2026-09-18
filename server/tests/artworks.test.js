@@ -72,3 +72,38 @@ test('continuing updates the same artwork; deleting family removes saved canvase
   deleteFamily(db, child.session.familyId, '.')
   expect(db.prepare('SELECT COUNT(*) AS n FROM artworks').get().n).toBe(0)
 })
+
+test('operation logs preserve authorship across reloads and reject stale same-PNG document changes', async () => {
+  const { app, child, db } = setup()
+  const id = crypto.randomUUID()
+  const document = { version: 1, baseSource: 'child', operations: [{ owner: 'nilo', type: 'stroke', groupId: 'contribution', brushKind: 'round', color: '#123456', size: 4, eraser: false, referenceWidth: 320, referenceHeight: 240, points: [{ x: .2, y: .3 }] }] }
+  const save = (body) => request(app).put(`/api/artworks/${id}`).set('Authorization', auth(child)).send({ image: PNG, ...body })
+  const created = await save({ revision: 0, document })
+  expect(created.status).toBe(200)
+  expect(created.body.provenance).toBe('co-created')
+  expect((await save({ revision: 0, document })).body.revision).toBe(1)
+  expect((await request(app).get(`/api/artworks/${id}`).set('Authorization', auth(child))).body.document).toEqual(document)
+  expect((await request(app).get('/api/artworks').set('Authorization', auth(child))).body.artworks[0].provenance).toBe('co-created')
+  const changed = { ...document, operations: [] }
+  expect((await save({ revision: 0, document: changed })).status).toBe(409)
+  expect(JSON.parse(db.prepare('SELECT document_json FROM artworks WHERE id = ?').get(id).document_json)).toEqual(document)
+  expect((await save({ revision: 1, document: changed })).body).toMatchObject({ revision: 2, provenance: 'child' })
+  expect((await save({ revision: 2, document: { ...document, operations: [{ ...document.operations[0], points: [{ x: 2, y: 0 }] }] } })).status).toBe(400)
+  expect((await save({ revision: 2, document: { ...document, version: 2 } })).status).toBe(400)
+})
+
+test('legacy PNG saves remain usable but have unknown authorship', async () => {
+  const { app, child } = setup()
+  const id = crypto.randomUUID()
+  const saved = await request(app).put(`/api/artworks/${id}`).set('Authorization', auth(child)).send({ image: PNG, revision: 0 })
+  expect(saved.body.provenance).toBe('unknown')
+})
+
+test('accepted collaboration remains attributed after all companion strokes are removed', async () => {
+  const { app, child } = setup()
+  const id = crypto.randomUUID()
+  const document = { version: 1, baseSource: 'child', coCreated: true, operations: [] }
+  const saved = await request(app).put(`/api/artworks/${id}`).set('Authorization', auth(child)).send({ image: PNG, revision: 0, document })
+  expect(saved.body.provenance).toBe('co-created')
+  expect((await request(app).get(`/api/artworks/${id}`).set('Authorization', auth(child))).body.document.coCreated).toBe(true)
+})

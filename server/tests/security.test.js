@@ -8,6 +8,7 @@ import { createApp } from '../src/app.js'
 import { createDb } from '../src/db.js'
 import { chatWithImage } from '../src/services/llmClient.js'
 import { backupDb } from '../scripts/backup.mjs'
+import { defaultLimits } from '../src/services/security.js'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -44,6 +45,44 @@ test('rate limit: auth 端点超限返回 429 + Retry-After', async () => {
   expect(blocked.headers['retry-after']).toBeTruthy()
   // 非 auth 端点不受 auth 档位影响
   expect((await request(app).get('/api/health')).status).toBe(200)
+})
+
+test('Nilo drawing, ASR, TTS and capability quotas are independent but finite', async () => {
+  const chat = vi.fn(async () => ({ reply: '我在这里陪你。' }))
+  const once = { windowMs: 60_000, max: 1 }
+  const app = makeApp({
+    chatText: chat,
+    voice: { config: {} },
+    limits: { global: { windowMs: 60_000, max: 100 }, auth: once, analyze: once, nilo: once, niloVoiceAsr: once, niloVoiceTts: once, niloCapabilities: once },
+  })
+  expect((await request(app).get('/api/nilo/voice/config')).status).toBe(200)
+  expect((await request(app).get('/api/nilo/voice/config')).status).toBe(429)
+  expect((await request(app).post('/api/nilo/companion').send({ context: { requestDrawing: false } })).status).toBe(200)
+  const blocked = await request(app).post('/api/nilo/companion').send({ context: { requestDrawing: false } })
+  expect(blocked.status).toBe(429)
+  expect(blocked.headers['retry-after']).toBeTruthy()
+  expect(chat).toHaveBeenCalledTimes(1)
+  // The deprecated drawing routes cannot bypass the same model-cost bucket.
+  expect((await request(app).post('/api/nilo/stroke').send({})).status).toBe(429)
+  expect((await request(app).post('/api/nilo/praise').send({})).status).toBe(429)
+  // Missing voice configuration returns 503, rather than consuming the drawing quota.
+  expect((await request(app).post('/api/nilo/voice/transcribe').send({ audioBase64: Buffer.from('test-audio').toString('base64'), mimeType: 'audio/webm', locale: 'zh' })).status).toBe(503)
+  expect((await request(app).post('/api/nilo/voice/transcribe').send({})).status).toBe(429)
+  expect((await request(app).post('/api/nilo/voice/speak').send({ text: '你好' })).status).toBe(503)
+  expect((await request(app).post('/api/nilo/voice/speak').send({ text: '你好' })).status).toBe(429)
+  expect((await request(app).get('/api/health')).status).toBe(200)
+})
+
+test('Nilo split quotas retain global protection and finite defaults', async () => {
+  const limits = defaultLimits({})
+  expect(limits.nilo.max).toBe(24)
+  expect(limits.niloVoiceAsr.max).toBe(36)
+  expect(limits.niloVoiceTts.max).toBe(36)
+  expect(limits.niloCapabilities.max).toBe(60)
+  expect(defaultLimits({ RATE_LIMIT_NILO: '-1', RATE_LIMIT_NILO_VOICE_ASR: '2', RATE_LIMIT_NILO_VOICE_TTS: '3', RATE_LIMIT_NILO_CAPABILITIES: '0' })).toMatchObject({ nilo: { max: 24 }, niloVoiceAsr: { max: 2 }, niloVoiceTts: { max: 3 }, niloCapabilities: { max: 60 } })
+  const app = makeApp({ limits: { ...limits, global: { windowMs: 60_000, max: 1 } } })
+  expect((await request(app).get('/api/nilo/voice/config')).status).toBe(200)
+  expect((await request(app).post('/api/nilo/companion').send({ context: {} })).status).toBe(429)
 })
 
 // ---- token 轮换 ----

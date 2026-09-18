@@ -2,6 +2,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { listArtworks, readArtwork, saveArtwork } from '@/features/child/artworks'
 import { clearChildDraft, getChildDraft, restoreChildArtwork } from '@/features/child/draft'
 import type { AuthSession } from '@/features/auth/types'
+import type { CanvasDocument } from '@/features/child/canvasDocument'
 
 const guest: AuthSession = { id: 'guest-child', role: 'child', isGuest: true, familyId: 'demo', displayName: '小朋友' }
 beforeEach(() => { localStorage.clear(); clearChildDraft() })
@@ -30,4 +31,17 @@ test('missing authentication never falls back to the guest gallery', async () =>
   await saveArtwork(guest, 'one', 0, 'guest image')
   await expect(listArtworks(null)).rejects.toThrow('请先登录')
   await expect(listArtworks({ ...guest, id: 'real-child', isGuest: false })).rejects.toThrow('请先登录')
+})
+
+test('guest operation logs survive reopening and same-image metadata changes use revision protection', async () => {
+  const document: CanvasDocument = { version: 1, baseSource: 'child', operations: [{ owner: 'nilo', type: 'stroke', groupId: 'one-contribution', brushKind: 'round', size: 3, color: '#123456', eraser: false, referenceWidth: 320, referenceHeight: 240, points: [{ x: .2, y: .3 }] }] }
+  const saved = await saveArtwork(guest, 'one', 0, 'same-image', document)
+  expect(saved.provenance).toBe('co-created')
+  const loaded = await readArtwork(guest, 'one')
+  const draft = restoreChildArtwork(guest.id, loaded)
+  expect(draft.canvas.document).toEqual(document)
+  draft.canvas.document!.operations = []
+  expect(loaded.document!.operations).toHaveLength(1)
+  await expect(saveArtwork(guest, 'one', 0, 'same-image', draft.canvas.document)).rejects.toThrow('其他页面更新')
+  expect((await saveArtwork(guest, 'one', 1, 'same-image', draft.canvas.document)).revision).toBe(2)
 })

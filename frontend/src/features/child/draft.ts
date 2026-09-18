@@ -1,8 +1,9 @@
 import type { FeatureJSON } from '@/lib/api/lumaApi'
 import type { BrushKind } from './brushes'
 import type { Artwork } from './artworks'
+import { cloneCanvasDocument, type CanvasDocument, type CanvasProvenance } from './canvasDocument'
 
-export interface CanvasDraft { history: string[] }
+export interface CanvasDraft { history: string[]; document?: CanvasDocument }
 export interface ChildDraft {
   canvas: CanvasDraft
   color: string
@@ -11,7 +12,7 @@ export interface ChildDraft {
   isEraser: boolean
   features: FeatureJSON | null
   bubble: string | null
-  submission?: { image: string; key: string }
+  submission?: { image: string; key: string; provenance?: CanvasProvenance }
   artworkId?: string
   artworkRevision?: number
   savedSnapshot?: string
@@ -29,6 +30,8 @@ export function restoreChildArtwork(owner: string, artwork: Artwork): ChildDraft
   clearChildDraft()
   const draft = getChildDraft(owner)
   draft.canvas.history = [artwork.image]
+  draft.canvas.document = artwork.document ? cloneCanvasDocument(artwork.document)
+    : { version: 1, baseSource: 'unknown', baseImage: artwork.image, operations: [] }
   draft.artworkId = artwork.id
   draft.artworkRevision = artwork.revision
   draft.savedSnapshot = artwork.image

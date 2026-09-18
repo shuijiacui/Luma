@@ -1,0 +1,131 @@
+.nilo-welcome-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px; background: #eaf6f0a3; backdrop-filter: blur(4px); }
+.nilo-welcome-card { width: min(780px,100%); display: grid; grid-template-columns: minmax(100px, .65fr) 1.35fr; gap: clamp(18px,4vw,42px); align-items: center; padding: clamp(20px,4vw,42px); border: 1px solid #fff; border-radius: 30px; background: #fffdf8f7; box-shadow: 0 20px 70px #264f4020; max-height: 94dvh; overflow: auto; }
+.nilo-welcome-character { width: 100%; max-height: 280px; object-fit: contain; }
+.nilo-create-header { flex-shrink:0; gap: 8px !important; padding-block: 8px !important; }
+.nilo-create-header .luma-avatar-trigger > span { width:44px; height:44px; }
+.nilo-header-extras { position:relative; }
+.nilo-header-extra-controls { display:flex; align-items:center; gap:4px; }
+.nilo-header-more { display:none; }
+.nilo-mode-toggle { display:flex; align-items:center; gap:3px; border:1px solid #fff; border-radius:14px; background:#ffffffab; padding:3px; }
+.nilo-mode-toggle button { min-height:40px; padding:5px 12px; border-radius:11px; font-size:12px; font-weight:700; }
+.nilo-mode-toggle button[aria-pressed=true] { background:#e5f2e9; color:#27533e; }
+.nilo-dock-button { min-width:40px; min-height:40px; padding:5px 9px; border-radius:12px; font-size:12px; font-weight:700; color:#285b50; }
+.nilo-dock-button:hover { background:#eaf5ee; }
+.nilo-dock-button:focus-visible { outline:3px solid #ddbd61; outline-offset:2px; }
+.nilo-dock-button:disabled { opacity:.5; }
+.nilo-projection { z-index:15; animation:nilo-project-in .35s ease-out both; }
+@keyframes nilo-project-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@media(max-height:520px) and (min-width:640px) {
+ .nilo-create-header { padding-inline:10px !important; padding-block:4px !important; }
+ .nilo-create-header .nilo-header-title { display:none; }
+ .nilo-welcome-card { padding:18px 24px; max-width:740px; gap:24px; }
+ .nilo-welcome-character { max-height:180px; }
+}
+@media(max-width:639px) {
+ .nilo-welcome-card { grid-template-columns:1fr; gap:12px; text-align:center; padding:20px; }
+ .nilo-welcome-character { max-height:130px; }
+ .nilo-welcome-card .flex { justify-content:center; }
+ .nilo-create-header { padding-inline:8px !important; }
+}
+@media(prefers-reduced-motion:reduce) { .nilo-projection { animation:none; } }
+
+/* Short landscape phones keep a usable drawing surface and one header row. */
+@media (max-height:520px) and (min-width:560px) {
+ .nilo-create-header { flex-wrap:nowrap; padding:3px 6px !important; gap:4px !important; }
+ .nilo-header-brand { display:none; }
+ .nilo-create-header .nilo-dock-button { min-height:36px; min-width:32px; padding:3px 6px; font-size:11px; }
+ .nilo-mode-toggle { flex-shrink:0; }
+ .nilo-mode-toggle button { min-height:36px; padding:3px 8px; font-size:11px; }
+ .nilo-create-header [data-onboarding=canvas-music] > button:first-child { width:36px; min-height:36px; padding:0; justify-content:center; font-size:0; gap:0; }
+ .nilo-create-header [data-onboarding=canvas-music] > button:nth-child(2) { min-height:36px; min-width:32px; }
+ .nilo-create-header .luma-avatar-trigger > span { width:36px; height:36px; }
+ .nilo-create-header .luma-language-labels { display:none; }
+ .nilo-create-header .luma-language-short { display:inline; }
+ .nilo-create-header .luma-language-switch { gap:4px; padding:4px; }
+ .nilo-header-more { display:block; }
+ .nilo-header-extra-controls { position:absolute; top:calc(100% + 6px); right:0; width:max-content; padding:6px; border:1px solid #dceae1; border-radius:12px; background:#fffdf8; box-shadow:0 5px 20px #173f3a22; }
+ .nilo-header-extra-controls[data-open=false] { display:none; }
+ .luma-child-create-shell .drawing-workspace { grid-template-columns:112px minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; grid-template-areas:"tools canvas" "tools actions"; gap:5px; padding:5px; }
+ .luma-child-create-shell .drawing-tool-rail { grid-template-columns:1fr; align-self:stretch; min-height:0; overflow-y:auto; overflow-x:visible; scrollbar-width:thin; gap:4px; padding:4px; }
+ .luma-child-create-shell .drawing-brush-section { border-left:0; border-top:1px solid #e7ece4; padding:4px 0 0; }
+ .luma-child-create-shell .drawing-brushes { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .luma-child-create-shell .drawing-colors .drawing-swatch { width:100%; height:36px; }
+ .luma-child-create-shell .drawing-colors .drawing-swatch:nth-child(n+7) { display:none; }
+ .luma-child-create-shell .drawing-swatch > span { width:23px; height:23px; }
+ .luma-child-create-shell .drawing-brush { min-height:36px; padding:1px; }
+ .luma-child-create-shell .drawing-brush svg { height:17px; width:32px; }
+ .luma-child-create-shell .drawing-tool-button { min-height:36px; min-width:36px; padding:3px 7px; font-size:11px; }
+ .luma-child-create-shell .drawing-tools-bottom { padding:3px 5px; gap:2px; flex-wrap:nowrap; width:auto; }
+ .luma-child-create-shell .drawing-actions,.luma-child-create-shell .drawing-shapes { gap:0; flex-wrap:nowrap; }
+ .luma-child-create-shell .drawing-shape-name { display:none; }
+ .luma-child-create-shell .drawing-palette { position:fixed; top:52px; bottom:10px; left:124px; transform:none; width:min(320px,calc(100vw - 140px)); max-height:none; }
+ .nilo-dock-button { min-height:36px; min-width:36px; padding:3px 6px; font-size:11px; }
+}
+
+/* A reserved narrow rail keeps the paper stationary when tools are toggled. */
+.luma-child-create-shell .drawing-workspace { grid-template-columns:112px minmax(0,1fr); grid-template-rows:minmax(0,1fr) 56px; grid-template-areas:"tools canvas" "actions actions"; padding:16px; gap:12px; width:100%; }
+.luma-child-create-shell .drawing-tool-rail { grid-template-columns:1fr; min-height:0; max-height:100%; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; align-self:center; gap:6px; padding:7px 5px; border-radius:18px; }
+.luma-child-create-shell .drawing-rail-toggle { gap:3px; font-size:10px; }
+.luma-child-create-shell .drawing-brush-section { border-left:0; border-top:1px solid #e7ece4; padding:6px 0 0; }
+.luma-child-create-shell .drawing-brushes { grid-template-columns:repeat(2,minmax(0,1fr)); gap:3px; }
+.luma-child-create-shell .drawing-brush { min-height:44px; padding:2px 0; font-size:10px; }
+.luma-child-create-shell .drawing-brush svg { width:32px; height:20px; }
+.luma-child-create-shell .drawing-colors .drawing-swatch { width:100%; height:34px; }
+.luma-child-create-shell .drawing-swatch > span { width:23px; height:23px; }
+.luma-child-create-shell .drawing-size-preview { flex-basis:26px; height:30px; }
+.luma-child-create-shell .drawing-sizes { padding-inline:0; }
+.luma-child-create-shell .drawing-size-control { gap:3px; }
+.luma-child-create-shell .drawing-tool-rail .drawing-palette { position:static; inset:auto; transform:none; width:100%; max-height:none; overflow:visible; padding:3px; margin-top:5px; border-radius:12px; box-shadow:none; }
+.luma-child-create-shell .drawing-palette-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; }
+.luma-child-create-shell .drawing-palette-heading { font-size:10px; }
+.luma-child-create-shell .drawing-palette-heading button { min-width:24px; padding:0; }
+.luma-child-create-shell .drawing-custom-color { flex-direction:column; align-items:flex-start; font-size:10px; }
+.luma-child-create-shell .drawing-custom-color label { flex-direction:column; gap:3px; }
+/* Drawing actions sit in the middle; companion controls stay on the right. */
+.drawing-footer-row { grid-area:actions; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:12px; min-height:0; min-width:0; padding:3px 10px; border:1px solid #fff; border-radius:19px; background:#fffdf8e8; box-shadow:0 3px 14px #173f3a06; }
+.drawing-footer-row .drawing-tools-bottom { grid-area:auto; grid-column:2; justify-self:center; width:auto; padding:0; border:0; box-shadow:none; background:transparent; margin:0; flex-wrap:nowrap; gap:8px; }
+.drawing-footer-row .drawing-shapes,.drawing-footer-row .drawing-actions { flex-wrap:nowrap; gap:4px; }
+.drawing-footer-row .drawing-shapes { border-right:1px solid #dce7df; padding-right:8px; }
+.drawing-footer-row .drawing-tool-button { flex-direction:column; gap:2px; min-width:48px; min-height:46px; padding:4px 9px; border-radius:13px; font-size:10px; line-height:1.2; }
+.drawing-footer-row .drawing-tool-button svg { width:19px; height:19px; flex:none; }
+.drawing-footer-row .drawing-save { background:#e7f2e9; }
+.drawing-footer-row .drawing-finish { padding-inline:16px; }
+.nilo-footer-companion { grid-column:3; justify-self:end; position:relative; min-width:0; z-index:38; }
+.nilo-footer-icons { display:flex; align-items:center; gap:5px; height:46px; }
+.nilo-footer-avatar,.nilo-footer-mic { display:grid; place-items:center; flex-shrink:0; width:34px; height:38px; border-radius:13px; color:#58766c; background:transparent; border:0; }
+.nilo-footer-avatar { width:44px; height:44px; border-radius:50%; overflow:hidden; background:#e8f3e9; border:2px solid white; box-shadow:0 1px 6px #264f401a; }
+.nilo-talk-button { width:44px; height:44px; background:#e4f1e8; border:1px solid #cee4d5; color:#236750; border-radius:50%; }
+.nilo-footer-mic:hover { background:#eaf3ed; }
+.nilo-footer-mic[aria-pressed=true] { color:#216849; background:#d9efdf; }
+.nilo-talk-button[aria-pressed=true] { color:#b0394c; background:#ffeef1; border-color:#e8a9b4; }
+.nilo-footer-mic:disabled { opacity:.4; }
+.nilo-footer-avatar:disabled { opacity:.7; }
+.nilo-footer-icons button:focus-visible { outline:3px solid #c99a2e; outline-offset:2px; }
+.nilo-bottom-projection { position:relative; display:flex; align-items:center; gap:2px; padding-right:5px; margin-right:2px; border-right:1px solid #dce7df; }
+.nilo-bottom-edit { position:absolute; right:0; bottom:calc(100% + 8px); display:flex; align-items:center; padding:5px; border:1px solid #dceae1; border-radius:12px; background:#fffdf8; box-shadow:0 4px 18px #19453815; }
+.nilo-bottom-edit button { width:32px; min-height:36px; border-radius:8px; }
+.nilo-bottom-caption { position:absolute; bottom:calc(100% + 8px); right:0; max-width:min(520px,calc(100vw - 20px)); width:max-content; padding:4px 8px; border-radius:8px; background:#fffdf8e8; color:#315c50; font-size:11px; line-height:1.5; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; pointer-events:none; }
+@media(max-width:1100px) {
+ .drawing-footer-row { grid-template-columns:minmax(0,1fr) auto; gap:8px; padding-inline:6px; }
+ .drawing-footer-row .drawing-tools-bottom { grid-column:1; }
+ .nilo-footer-companion { grid-column:2; }
+}
+@media(max-height:520px), (max-width:760px) {
+ .luma-child-create-shell .drawing-workspace { grid-template-columns:96px minmax(0,1fr); grid-template-rows:minmax(0,1fr) 50px; padding:8px; gap:8px; }
+ .luma-child-create-shell .drawing-tool-rail { align-self:stretch; padding:4px 3px; gap:4px; }
+ .luma-child-create-shell .drawing-tool-rail .drawing-rail-title { display:none; }
+ .luma-child-create-shell .drawing-tool-rail .drawing-brush { min-height:40px; font-size:9px; }
+ .luma-child-create-shell .drawing-colors .drawing-swatch { height:30px; }
+ .luma-child-create-shell .drawing-tools-reopen { width:70px; min-height:82px; }
+ .drawing-footer-row { gap:4px; border-radius:15px; padding:2px 4px; }
+ .drawing-footer-row .drawing-tools-bottom { gap:4px; min-width:0; }
+ .drawing-footer-row .drawing-shapes,.drawing-footer-row .drawing-actions { gap:2px; }
+ .drawing-footer-row .drawing-shapes { padding-right:4px; }
+ .drawing-footer-row .drawing-tool-button { width:42px; min-width:42px; min-height:42px; padding:3px 2px; gap:2px; font-size:9px; white-space:normal; }
+ .drawing-footer-row .drawing-tool-button svg { width:17px; height:17px; }
+ .nilo-footer-icons { height:44px; gap:3px; }
+ .nilo-footer-avatar,.nilo-talk-button { width:38px; height:38px; }
+ .nilo-bottom-projection { padding-right:2px; margin-right:0; gap:0; }
+ .nilo-bottom-projection .nilo-dock-button { min-width:48px; padding:3px 6px; }
+ .nilo-bottom-projection .nilo-footer-mic { width:30px; }
+}

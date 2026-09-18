@@ -11,6 +11,7 @@ import { backupDb } from '../scripts/backup.mjs'
 import { restoreBackup } from '../scripts/restore.mjs'
 import { dispatchEntries } from '../src/services/kbDispatcher.js'
 import { matchEntry } from '../src/services/retrieve.js'
+import crypto from 'node:crypto'
 
 const FEATURES = { rawDescription: '画面是一棵树', elements: ['tree'], colors: { dominant: ['green'], darkRatio: 0.1 }, composition: { size: 'normal', position: 'center', pressure: 'normal' }, distortions: [], erasureMarks: 0, confidence: { elements: .9, colors: .9, composition: .9, distortions: .9, erasureMarks: .9 } }
 const disposals = []
@@ -69,6 +70,69 @@ test('same submission key deduplicates concurrent and sequential completions', a
   expect(db.prepare('SELECT COUNT(*) AS n FROM analyses').get().n).toBe(1)
   const conflict = await request(app).post('/api/analyze').set('Authorization', `Bearer ${child.token}`).send({ imageBase64:'b3RoZXI=',submissionKey:'key' })
   expect(conflict.status).toBe(409)
+})
+
+test('co-created child-only observations preserve provenance into parent history and reports', async () => {
+  const { app, parent, child, db } = fixture()
+  const analyze = provenance => request(app).post('/api/analyze').set('Authorization', `Bearer ${child.token}`)
+    .send({ imageBase64: 'aGVsbG8=', submissionKey: 'shared', source: 'digital_canvas', provenance })
+  expect((await analyze('unknown')).status).toBe(422)
+  expect(db.prepare('SELECT COUNT(*) AS n FROM analyses').get().n).toBe(0)
+  const result = await analyze('co-created')
+  expect(result.status).toBe(200)
+  expect(result.body.features).toMatchObject({ provenance: 'co-created', analysisScope: 'child-only' })
+  expect((await analyze('child')).status).toBe(409)
+  const report = await request(app).post('/api/report').set('Authorization', `Bearer ${parent.token}`).send({ analysisId: result.body.analysisId, locale: 'en' })
+  expect(report.body).toMatchObject({ provenance: 'co-created', analysisScope: 'child-only' })
+  expect(report.body.provenanceNote).toContain('only the child')
+  expect(report.body.parentAdvice[0]).toBe(report.body.provenanceNote)
+  const history = await request(app).get(`/api/children/${child.session.id}/analyses`).set('Authorization', `Bearer ${parent.token}`)
+  expect(history.body.analyses[0]).toMatchObject({ provenance: 'co-created', analysisScope: 'child-only', report: { provenance: 'co-created', provenanceNote: report.body.provenanceNote } })
+})
+
+test('parent image uses the authorized saved composite while the model and dedup hash use only child strokes', async () => {
+  const observed = []
+  const { app, parent, child, db } = fixture({ chatWithImage: async image => { observed.push(image); return structuredClone(FEATURES) } })
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aO2kAAAAASUVORK5CYII='
+  const artworkId = crypto.randomUUID()
+  const document = { version: 1, baseSource: 'child', coCreated: true, operations: [] }
+  await request(app).put(`/api/artworks/${artworkId}`).set('Authorization', `Bearer ${child.token}`).send({ image: png, revision: 0, document }).expect(200)
+  const body = { imageBase64: 'aGVsbG8=', provenance: 'co-created', submissionKey: 'composite', artworkId, artworkRevision: 1 }
+  const analyze = changes => request(app).post('/api/analyze').set('Authorization', `Bearer ${child.token}`).send({ ...body, ...changes })
+  expect((await analyze({ artworkRevision: 2 })).status).toBe(409)
+  expect((await analyze({ provenance: 'child' })).status).toBe(409)
+  expect((await analyze({ artworkId: crypto.randomUUID() })).status).toBe(404)
+  expect(observed).toHaveLength(0)
+  const result = await analyze({})
+  expect(result.status).toBe(200)
+  expect(observed).toEqual(['aGVsbG8='])
+  expect(result.body.features).toMatchObject({ provenance: 'co-created', analysisScope: 'child-only', displayScope: 'composite', artworkId, artworkRevision: 1 })
+  expect((await analyze({})).body.analysisId).toBe(result.body.analysisId)
+  expect(observed).toHaveLength(1)
+  const image = await request(app).get(`/api/analyses/${result.body.analysisId}/image`).set('Authorization', `Bearer ${parent.token}`)
+  expect(Buffer.from(image.body).toString('base64')).toBe(png.split(',')[1])
+  expect(result.body.features.analysisImageSha256).toBe(crypto.createHash('sha256').update(Buffer.from('aGVsbG8=', 'base64')).digest('hex'))
+  expect(db.prepare('SELECT image_sha256 FROM analyses WHERE id = ?').get(result.body.analysisId).image_sha256).toBe(crypto.createHash('sha256').update(Buffer.from(png.split(',')[1], 'base64')).digest('hex'))
+  const sibling = registerChild(db, { nickname: 'Sibling', creationCode: '5678', inviteCode: parent.family.inviteCode })
+  expect((await request(app).post('/api/analyze').set('Authorization', `Bearer ${sibling.token}`).send(body)).status).toBe(404)
+  expect((await request(app).post('/api/analyze').send({ imageBase64: 'aGVsbG8=', displayImageBase64: 'not-png' })).status).toBe(400)
+  expect((await request(app).post('/api/analyze').send({ imageBase64: 'aGVsbG8=', displayImageBase64: png })).status).toBe(200)
+})
+
+test('saved artwork changes during analysis cannot attach a stale composite', async () => {
+  let enter, release
+  const started = new Promise(resolve => { enter = resolve })
+  const result = new Promise(resolve => { release = resolve })
+  const { app, child, db } = fixture({ chatWithImage: () => { enter(); return result } })
+  const artworkId = crypto.randomUUID()
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aO2kAAAAASUVORK5CYII='
+  await request(app).put(`/api/artworks/${artworkId}`).set('Authorization', `Bearer ${child.token}`).send({ image: png, revision: 0, document: { version: 1, baseSource: 'child', operations: [] } })
+  const pending = request(app).post('/api/analyze').set('Authorization', `Bearer ${child.token}`).send({ imageBase64: 'aGVsbG8=', provenance: 'child', artworkId, artworkRevision: 1 }).then(response => response)
+  await started
+  db.prepare('UPDATE artworks SET revision = 2 WHERE id = ?').run(artworkId)
+  release(structuredClone(FEATURES))
+  expect((await pending).status).toBe(409)
+  expect(db.prepare('SELECT COUNT(*) AS n FROM analyses').get().n).toBe(0)
 })
 
 test('a model response after family deletion cannot recreate a saved artwork', async () => {

@@ -18,7 +18,7 @@ import { OnboardingProvider } from '@/features/onboarding/OnboardingContext'
 import { clearChildDraft, getChildDraft } from '@/features/child/draft'
 
 vi.mock('@/lib/api/authFetch', () => ({ authFetch: vi.fn() }))
-test('drawing header and Nilo visibility controls preserve the active canvas across languages', () => {
+test('drawing modes and bottom voice settings preserve the active canvas across languages', async () => {
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
   const context = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
   try {
@@ -27,44 +27,34 @@ test('drawing header and Nilo visibility controls preserve the active canvas acr
     getChildDraft('guest-child').artworkId = 'already-open-drawing'
     render(<AuthProvider><OnboardingProvider><MemoryRouter><ChildCreatePage /></MemoryRouter></OnboardingProvider></AuthProvider>)
     const canvas = screen.getByLabelText('自由绘画画布')
-    expect(screen.getByText('我的创作空间')).toBeTruthy()
-    expect(screen.getByText('让想象从这里开始')).toBeTruthy()
-    expect(screen.queryByText('My Creative Space')).toBeNull()
-    const nilo = screen.getByRole('button', { name: '双击隐藏 Nilo' })
-    fireEvent.click(nilo)
-    expect(screen.queryByRole('button', { name: '显示 Nilo' })).toBeNull()
-    fireEvent.doubleClick(nilo)
-    expect(screen.queryByRole('button', { name: '双击隐藏 Nilo' })).toBeNull()
-    expect(screen.getByRole('button', { name: '显示 Nilo' })).toBeTruthy()
+    await act(async () => {})
+    expect(screen.getByRole('button', { name: '我自己画' }).getAttribute('aria-pressed')).toBe('true')
+    expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: '关闭 Nilo 声音' }))
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.queryByRole('dialog')).toBeNull()
     expect(document.querySelector('canvas')).toBe(canvas)
-    fireEvent.click(screen.getByRole('button', { name: 'Switch to English' }))
-    expect(screen.getByText('My Creative Space')).toBeTruthy()
-    expect(screen.getByText('Anything can begin here')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Show Nilo' }))
-    expect(screen.getByRole('button', { name: 'Double-click to hide Nilo' })).toBeTruthy()
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Switch to English' })))
+    expect(screen.getByRole('button', { name: 'Draw on my own' }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Unmute Nilo' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Talk to Nilo' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Start continuous conversation' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Draw with Nilo' }))
+    expect((screen.getByRole('button', { name: 'Your turn, Nilo' }) as HTMLButtonElement).disabled).toBe(false)
+    expect(screen.queryByRole('textbox')).toBeNull()
     expect(document.querySelector('canvas')).toBe(canvas)
-    fireEvent.click(screen.getByRole('button', { name: '切换为中文' }))
-    expect(screen.getByText('我的创作空间')).toBeTruthy()
-    const touchTap = (time: number) => {
-      const event = new Event('pointerup', { bubbles: true })
-      Object.defineProperties(event, {
-        pointerType: { value: 'touch' }, timeStamp: { value: time },
-        clientX: { value: 20 }, clientY: { value: 20 },
-      })
-      fireEvent(screen.getByRole('button', { name: '双击隐藏 Nilo' }), event)
-    }
-    touchTap(1000)
-    expect(screen.queryByRole('button', { name: '显示 Nilo' })).toBeNull()
-    touchTap(1500) // Separate taps do not hide Nilo.
-    expect(screen.queryByRole('button', { name: '显示 Nilo' })).toBeNull()
-    touchTap(1700)
-    fireEvent.click(screen.getByRole('button', { name: '显示 Nilo' }))
-    fireEvent.keyDown(screen.getByRole('button', { name: '双击隐藏 Nilo' }), { key: 'Enter' })
-    expect(screen.getByRole('button', { name: '显示 Nilo' })).toBeTruthy()
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '切换为中文' })))
+    expect(screen.getByRole('button', { name: '和 Nilo 一起画' }).getAttribute('aria-pressed')).toBe('true')
+    screen.getByRole('button', { name: '开启 Nilo 声音' }).focus()
+    await userEvent.keyboard('{Enter}')
+    expect(screen.getByRole('button', { name: '关闭 Nilo 声音' })).toBeTruthy()
     expect(document.querySelector('canvas')).toBe(canvas)
   } finally { cleanup(); clearChildDraft(); context.mockRestore(); vi.unstubAllGlobals() }
 })
-beforeEach(() => { localStorage.clear(); act(() => setLocale('zh')) })
+beforeEach(() => {
+  localStorage.clear(); act(() => setLocale('zh'))
+  vi.mocked(authFetch).mockReset().mockResolvedValue({ asr: false, tts: false })
+})
 afterEach(() => { cleanup(); act(() => setLocale('zh')); vi.clearAllMocks() })
 
 test('switches the live homepage, document language and saved preference without remounting', async () => {

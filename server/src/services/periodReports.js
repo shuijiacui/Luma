@@ -25,8 +25,10 @@ function summarize(rows, previousCount, bounds) {
   const advice = new Set()
   let withReport = 0
   let insufficientReports = 0
+  const provenanceCounts = { child: 0, coCreated: 0, unknown: 0 }
   for (const row of rows) {
     const features = JSON.parse(row.features_json)
+    provenanceCounts[features.provenance === 'child' ? 'child' : features.provenance === 'co-created' ? 'coCreated' : 'unknown']++
     for (const element of new Set(features.elements ?? [])) elements.set(element, (elements.get(element) ?? 0) + 1)
     if (row.report_json) {
       const report = JSON.parse(row.report_json)
@@ -42,10 +44,12 @@ function summarize(rows, previousCount, bounds) {
     previousArtworkCount: previousCount,
     artworkCountChange: rows.length - previousCount,
     withReport, insufficientReports,
+    provenanceCounts,
     elements: [...elements].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 12).map(([name, count]) => ({ name, count })),
     parentAdvice: [...advice].slice(0, 6),
-    sources: rows.map(row => ({ analysisId: row.id, createdAt: row.created_at, hasReport: !!row.report_json })),
-    note: '仅汇总已保存的创作与已有报告；数量变化不代表心理状态变化。元素由 AI 识别，可能存在误差。',
+    sources: rows.map(row => ({ analysisId: row.id, createdAt: row.created_at, hasReport: !!row.report_json, provenance: JSON.parse(row.features_json).provenance ?? 'unknown' })),
+    note: '仅汇总已保存的创作与已有报告；数量变化不代表心理状态变化。元素由 AI 识别，可能存在误差。'
+      + (provenanceCounts.coCreated ? '其中包含与 Nilo 共创的作品：观察仅使用孩子笔迹，创作选择仍可能受共创影响。' : ''),
   }
 }
 

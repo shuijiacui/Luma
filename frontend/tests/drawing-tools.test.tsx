@@ -1,11 +1,12 @@
-import { afterEach, expect, test, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { DrawingTools } from '@/features/child/components/DrawingTools'
 import { createStrokePainter, type BrushKind } from '@/features/child/brushes'
 import { clearChildDraft, getChildDraft } from '@/features/child/draft'
 
-afterEach(() => { cleanup(); clearChildDraft() })
+beforeEach(() => localStorage.clear())
+afterEach(() => { cleanup(); clearChildDraft(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 function context() {
   return {
@@ -61,6 +62,7 @@ const actions = () => ({ onColor: vi.fn(), onBrush: vi.fn(), onSize: vi.fn(), on
 test('palette, brush and size controls report selections; Escape restores focus', () => {
   const callbacks = actions()
   render(<DrawingTools color="#20352f" brushKind="round" brushSize={8} isEraser={false} disabled={false} shapeLabel="自由画" {...callbacks} />)
+  fireEvent.click(screen.getByRole('button', { name: '画笔工具' }))
   fireEvent.click(screen.getByRole('button', {name:'更多颜色'}))
   expect(screen.getByRole('dialog', {name:'我的调色盘'})).toBeTruthy()
   fireEvent.click(screen.getByRole('button', {name:'薰衣草紫'}))
@@ -80,6 +82,7 @@ test('size slider updates its value and preview between the former fixed sizes',
     return <DrawingTools color="#20352f" brushKind="round" brushSize={size} isEraser={false} disabled={false} shapeLabel="自由画" {...actions()} onSize={setSize} />
   }
   const {container} = render(<Workspace />)
+  fireEvent.click(screen.getByRole('button', { name: '画笔工具' }))
   const slider = screen.getByRole('slider', {name:'画笔粗细'}) as HTMLInputElement
   for (const value of [1, 13, 32]) {
     fireEvent.change(slider, {target:{value:String(value)}})
@@ -91,7 +94,10 @@ test('size slider updates its value and preview between the former fixed sizes',
 
 test('analysis locks drawing controls and submission actions', () => {
   const callbacks = actions()
-  const {container} = render(<DrawingTools color="#20352f" brushKind="round" brushSize={8} isEraser={false} disabled shapeLabel="自由画" {...callbacks} />)
+  const view = render(<DrawingTools color="#20352f" brushKind="round" brushSize={8} isEraser={false} disabled={false} shapeLabel="自由画" {...callbacks} />)
+  fireEvent.click(screen.getByRole('button', { name: '画笔工具' }))
+  view.rerender(<DrawingTools color="#20352f" brushKind="round" brushSize={8} isEraser={false} disabled shapeLabel="自由画" {...callbacks} />)
+  const { container } = view
   expect([...container.querySelectorAll('button')].every(button => button.disabled)).toBe(true)
   expect((screen.getByRole('slider', {name:'画笔粗细'}) as HTMLInputElement).disabled).toBe(true)
   fireEvent.click(screen.getByRole('button', {name:'星星笔'}))
@@ -104,4 +110,62 @@ test('brush preferences survive returning to the same child, but are cleared for
   expect(getChildDraft('first')).toBe(draft)
   expect(getChildDraft('first').brushSize).toBe(13)
   expect(getChildDraft('second')).toMatchObject({brushKind:'round',brushSize:8,color:'#20352f',canvas:{history:['']}})
+})
+
+function viewport(initialCompact: boolean) {
+  const listeners = new Set<() => void>()
+  const media = {
+    media: '(max-width: 760px), (max-height: 520px)', matches: initialCompact,
+    addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
+    removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
+  }
+  vi.stubGlobal('matchMedia', vi.fn((query: string) => query === media.media ? media : {
+    media: query, matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+  }))
+  return (compact: boolean) => act(() => { media.matches = compact; listeners.forEach(listener => listener()) })
+}
+
+test('collapsing tools hides the palette while preserving the canvas and brush selection', () => {
+  viewport(false)
+  function Workspace() {
+    const [brush, setBrush] = useState<BrushKind>('round')
+    return <DrawingTools color="#20352f" brushKind={brush} brushSize={8} isEraser={false} disabled={false} shapeLabel="自由画" {...actions()} onBrush={setBrush}><canvas aria-label="drawing surface" /></DrawingTools>
+  }
+  render(<Workspace />)
+  const canvas = screen.getByLabelText('drawing surface')
+  expect(screen.queryByRole('button', { name: '星星笔' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '画笔工具' }))
+  fireEvent.click(screen.getByRole('button', { name: '星星笔' }))
+  fireEvent.click(screen.getByRole('button', { name: '更多颜色' }))
+  expect(screen.getByRole('dialog', { name: '我的调色盘' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '收起工具' }))
+  expect(screen.queryByRole('dialog', { name: '我的调色盘' })).toBeNull()
+  expect(screen.queryByRole('button', { name: '星星笔' })).toBeNull()
+  expect(screen.getByRole('button', { name: '保存' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: '画笔工具' }).getAttribute('aria-expanded')).toBe('false')
+  fireEvent.click(screen.getByRole('button', { name: '画笔工具' }))
+  expect(screen.getByRole('button', { name: '星星笔' }).getAttribute('aria-pressed')).toBe('true')
+  expect(screen.getByLabelText('drawing surface')).toBe(canvas)
+})
+
+test('small and large screens remember independent tool-visibility preferences across resize and remount', () => {
+  const resize = viewport(true)
+  const props = { color: '#20352f', brushKind: 'round' as const, brushSize: 8, isEraser: false, disabled: false, shapeLabel: '自由画', ...actions() }
+  const { unmount } = render(<DrawingTools {...props} />)
+  expect(screen.getByRole('button', { name: '画笔工具' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '画笔工具' }))
+  expect(localStorage.getItem('luma:tools-collapsed:compact')).toBe('false')
+  resize(false)
+  expect(screen.getByRole('button', { name: '画笔工具' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '画笔工具' }))
+  expect(screen.getByRole('button', { name: '收起工具' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '收起工具' }))
+  expect(localStorage.getItem('luma:tools-collapsed:large')).toBe('true')
+  resize(true)
+  expect(screen.getByRole('button', { name: '收起工具' })).toBeTruthy()
+  resize(false)
+  expect(screen.getByRole('button', { name: '画笔工具' })).toBeTruthy()
+  unmount()
+  render(<DrawingTools {...props} />)
+  expect(screen.getByRole('button', { name: '画笔工具' })).toBeTruthy()
 })

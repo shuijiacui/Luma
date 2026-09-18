@@ -68,6 +68,18 @@ test('generation is idempotent and removed or changed sources cannot survive in 
   expect(db.prepare('SELECT COUNT(*) AS n FROM period_reports').get().n).toBe(0)
 })
 
+test('period summaries retain co-created and unknown source attribution', () => {
+  const { db, add, child } = setup()
+  const shared = add('2024-01-15T00:00:00.000Z')
+  add('2024-01-16T00:00:00.000Z')
+  db.prepare('UPDATE analyses SET features_json = ? WHERE id = ?').run(JSON.stringify({ elements: ['tree'], provenance: 'co-created', analysisScope: 'child-only' }), shared)
+  generateChildReports(db, child.session.id, new Date('2024-03-01T00:00:00Z'))
+  const summary = JSON.parse(db.prepare("SELECT summary_json FROM period_reports WHERE kind = 'monthly'").get().summary_json)
+  expect(summary.provenanceCounts).toEqual({ child: 0, coCreated: 1, unknown: 1 })
+  expect(summary.sources.find(source => source.analysisId === shared).provenance).toBe('co-created')
+  expect(summary.note).toContain('共创影响')
+})
+
 test('digest API authorizes before generation, validates queries, and paginates', async () => {
   const { db, parent, child, add, get } = setup()
   add('2024-01-01T00:00:00.000Z'); add('2024-02-01T00:00:00.000Z')

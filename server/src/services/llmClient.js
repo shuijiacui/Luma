@@ -47,16 +47,20 @@ function previewOf(messages) {
 const LLM_TIMEOUT_MS = 90_000   // 视觉推理可能较慢，给足 90s
 const MAX_RETRIES = 2           // 5xx/网络错误重试 2 次（指数退避），4xx 不重试
 
-async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), kind = 'text', signal, responseFormat } = {}) {
+async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), kind = 'text', signal, responseFormat, retries = MAX_RETRIES, privateContent = false, disableThinking = false, requireFinalContent = false } = {}) {
+  let isDeepSeek = false
+  try { isDeepSeek = new URL(config.baseUrl).hostname === 'api.deepseek.com' } catch { /* fetch reports invalid provider config */ }
   const payload = {
     model,
     messages,
     max_tokens: maxTokens,
     ...(responseFormat ? { response_format: responseFormat } : {}),
+    ...(disableThinking && isDeepSeek ? { thinking: { type: 'disabled' } } : {}),
   }
   const started = Date.now()
   let lastError
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+  const retryLimit = Math.max(0, Math.min(MAX_RETRIES, Math.trunc(retries)))
+  for (let attempt = 0; attempt <= retryLimit; attempt += 1) {
     signal?.throwIfAborted()
     try {
       const res = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -71,14 +75,14 @@ async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), k
       if (!res.ok) {
         const body = await res.text()
         // 4xx 是请求/配额问题，重试无意义
-        if (res.status < 500) throw new Error(`LLM request failed: ${res.status} ${body}`)
-        lastError = new Error(`LLM request failed: ${res.status} ${body}`)
+        if (res.status < 500) throw Object.assign(new Error(`LLM request failed: ${res.status} ${body}`), { status: res.status })
+        lastError = Object.assign(new Error(`LLM request failed: ${res.status} ${body}`), { status: res.status })
       } else {
         const data = await res.json()
         const msg = data.choices?.[0]?.message ?? {}
         // reasoning 模型：content 为空时回退 reasoning_content
-        const content = msg.content?.trim() ? msg.content : msg.reasoning_content
-        traceLLM({ model, kind, promptPreview: previewOf(messages), outputPreview: content, latencyMs: Date.now() - started, tokens: data.usage ?? null })
+        const content = msg.content?.trim() ? msg.content : (requireFinalContent ? '' : msg.reasoning_content)
+        traceLLM({ model, kind, promptPreview: privateContent ? '[private]' : previewOf(messages), outputPreview: privateContent ? '[private]' : content, latencyMs: Date.now() - started, tokens: data.usage ?? null })
         return extractJson(content)
       }
     } catch (err) {
@@ -88,11 +92,11 @@ async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), k
       if (err.message?.startsWith('LLM request failed: 4')) throw err
       lastError = err
     }
-    if (attempt < MAX_RETRIES) {
+    if (attempt < retryLimit) {
       await new Promise(r => setTimeout(r, 1000 * 2 ** attempt)) // 1s, 2s
     }
   }
-  traceLLM({ model, kind, promptPreview: previewOf(messages), latencyMs: Date.now() - started, error: lastError })
+  traceLLM({ model, kind, promptPreview: privateContent ? '[private]' : previewOf(messages), latencyMs: Date.now() - started, error: privateContent ? 'request_failed' : lastError })
   throw lastError
 }
 
@@ -106,10 +110,10 @@ export async function chatWithImage(imageBase64, prompt, opts = {}) {
         { type: 'image_url', image_url: { url: `data:image/png;base64,${imageBase64}` } },
       ],
     },
-  ], { ...opts, model: opts.model ?? config.visionModel, config, kind: 'vision' })
+  ], { ...opts, model: opts.model ?? config.visionModel, config, kind: opts.kind ?? 'vision' })
 }
 
 export async function chatText(prompt, opts = {}) {
   const config = opts.config ?? llmConfig()
-  return chat([{ role: 'user', content: prompt }], { ...opts, model: opts.model ?? config.textModel, config, kind: 'text' })
+  return chat([{ role: 'user', content: prompt }], { ...opts, model: opts.model ?? config.textModel, config, kind: opts.kind ?? 'text' })
 }

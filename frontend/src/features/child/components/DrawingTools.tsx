@@ -5,6 +5,7 @@ import '../styles/drawing-tools.css'
 
 interface Props {
   children?: ReactNode
+  footerAddon?: ReactNode
   color: string
   brushKind: BrushKind
   brushSize: number
@@ -31,13 +32,47 @@ function BrushPreview({ kind }: { kind: BrushKind }) {
   </svg>
 }
 
+function ActionIcon({ action }: { action: 'undo' | 'clear' | 'save' | 'finish' | 'shape' | 'clearShape' }) {
+  const paths = {
+    undo: 'M9 5 4 10l5 5M4 10h10a6 6 0 0 1 0 12',
+    clear: 'M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7',
+    save: 'M5 3h12l4 4v14H3V3h2Zm2 0v6h10V3M7 21v-8h10v8',
+    finish: 'm5 12 4 4L19 6',
+    shape: 'M12 3 3 20h18L12 3Z',
+    clearShape: 'm3 3 18 18M9 8l-6 12h13M13 5l8 15',
+  }
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[action]} /></svg>
+}
+
 export function DrawingTools(props: Props) {
   useLocale()
+  const toolPreference = () => window.matchMedia?.('(max-width: 760px), (max-height: 520px)').matches ? 'compact' : 'large'
+  const readCollapsed = (screen: string) => {
+    try { const saved = localStorage.getItem(`luma:tools-collapsed:${screen}`); return saved === null ? true : saved === 'true' }
+    catch { return true }
+  }
+  const [screen, setScreen] = useState(toolPreference)
+  const [collapsed, setCollapsed] = useState(() => readCollapsed(toolPreference()))
   const [paletteOpen, setPaletteOpen] = useState(false)
   const paletteRef = useRef<HTMLDivElement>(null)
   const paletteTrigger = useRef<HTMLButtonElement>(null)
   const id = useId()
   const sizeId = useId()
+  const toolsId = useId()
+  useEffect(() => {
+    const query = window.matchMedia?.('(max-width: 760px), (max-height: 520px)')
+    const change = () => {
+      const next = query?.matches ? 'compact' : 'large'
+      setScreen(next); setCollapsed(readCollapsed(next)); setPaletteOpen(false)
+    }
+    query?.addEventListener?.('change', change)
+    return () => query?.removeEventListener?.('change', change)
+  }, [])
+  function toggleTools() {
+    const next = !collapsed
+    setCollapsed(next); setPaletteOpen(false)
+    try { localStorage.setItem(`luma:tools-collapsed:${screen}`, String(next)) } catch { /* Optional preference. */ }
+  }
   const selectedColor = PALETTE.find(([hex]) => hex === props.color)
   const quickColors = [PALETTE[0], PALETTE[4], PALETTE[6], PALETTE[7], PALETTE[14], PALETTE[17], PALETTE[20], PALETTE[10], PALETTE[1]]
 
@@ -64,8 +99,16 @@ export function DrawingTools(props: Props) {
     </button>
   }
 
-  return <div className="drawing-workspace" role="group" aria-label={t('绘画工具')}>
-      <aside className="drawing-tools drawing-tool-rail" aria-label={t('绘画工具')}>
+  return <div className={`drawing-workspace${collapsed ? ' is-tools-collapsed' : ''}`} role="group" aria-label={t('绘画工具')}>
+      {collapsed && <button type="button" className="drawing-tools-reopen" aria-label={t('画笔工具')} title={t('画笔工具')} disabled={props.disabled} aria-expanded={false} aria-controls={toolsId} onClick={toggleTools}>
+        <svg viewBox="0 0 20 20" fill="none" width="25" height="25" aria-hidden="true"><path d="m5 12 7-8 4 3-8 8-4 1 1-4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="m11 5 4 3" stroke="currentColor" strokeWidth="1.5" /></svg>
+        <span>{t('画笔工具')}</span>
+        <span className="drawing-collapsed-color" style={{ background: props.color }} aria-hidden="true" />
+      </button>}
+      <aside id={toolsId} hidden={collapsed} className="drawing-tools drawing-tool-rail" aria-label={t('绘画工具')}>
+      <button type="button" className="drawing-rail-toggle" disabled={props.disabled} aria-expanded={!collapsed} aria-controls={toolsId} onClick={toggleTools}>
+        <span aria-hidden="true">‹</span>{t('收起工具')}
+      </button>
       <div className="drawing-color-section" role="group" aria-label={t('选择颜色')}>
         <span className="drawing-rail-title">{t('选择颜色')}</span>
         <div data-onboarding="canvas-colors" className="drawing-colors">{quickColors.map(([hex, label]) => swatch(hex, label))}</div>
@@ -103,19 +146,24 @@ export function DrawingTools(props: Props) {
       </div>
       </div>
       </aside>
-      <div className="drawing-canvas-region">{props.children}</div>
+      <div className="drawing-canvas-region">
+
+        {props.children}
+      </div>
+    <div className="drawing-footer-row">
     <footer className="drawing-tools drawing-tools-bottom">
       <div className="drawing-shapes" role="group" aria-label={t('引导图形')}>
-        <span className="drawing-shape-name">{t(props.shapeLabel)}</span>
-        <button type="button" className="drawing-tool-button" onClick={props.onNextShape} disabled={props.disabled}>{t('换图形')}</button>
-        <button type="button" className="drawing-tool-button" onClick={props.onClearShape} disabled={props.disabled}>{t('清除图形')}</button>
+        <button type="button" className="drawing-tool-button" onClick={props.onNextShape} disabled={props.disabled} title={`${t('换图形')} · ${t(props.shapeLabel)}`}><ActionIcon action="shape" /><span>{t('换图形')}</span></button>
+        <button type="button" className="drawing-tool-button" onClick={props.onClearShape} disabled={props.disabled}><ActionIcon action="clearShape" /><span>{t('清除图形')}</span></button>
       </div>
       <div className="drawing-actions" role="group" aria-label={t('画作操作')}>
-        <button type="button" data-onboarding="canvas-undo" className="drawing-tool-button" onClick={props.onUndo} disabled={props.disabled}>{t('撤销')}</button>
-        <button type="button" className="drawing-tool-button" onClick={props.onClear} disabled={props.disabled}>{t('清空')}</button>
-        <button type="button" data-onboarding="canvas-save" className="drawing-tool-button" onClick={props.onSave} disabled={props.disabled}>{t('保存')}</button>
-        <button type="button" className="drawing-tool-button drawing-finish" onClick={props.onFinish} disabled={props.disabled}>{t(props.disabled ? 'Nilo 在看…' : '完成')}</button>
+        <button type="button" data-onboarding="canvas-undo" className="drawing-tool-button" onClick={props.onUndo} disabled={props.disabled}><ActionIcon action="undo" /><span>{t('撤销')}</span></button>
+        <button type="button" className="drawing-tool-button" onClick={props.onClear} disabled={props.disabled}><ActionIcon action="clear" /><span>{t('清空')}</span></button>
+        <button type="button" data-onboarding="canvas-save" className="drawing-tool-button drawing-save" onClick={props.onSave} disabled={props.disabled}><ActionIcon action="save" /><span>{t('保存')}</span></button>
+        <button type="button" className="drawing-tool-button drawing-finish" onClick={props.onFinish} disabled={props.disabled}><ActionIcon action="finish" /><span>{t(props.disabled ? 'Nilo 在看…' : '完成')}</span></button>
       </div>
     </footer>
+    {props.footerAddon}
+    </div>
   </div>
 }

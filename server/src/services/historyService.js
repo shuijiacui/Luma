@@ -42,6 +42,9 @@ export function listAnalyses(db, childId, auth, { limit = 50, offset = 0 } = {})
         imageUrl: row.image_mime ? `/api/analyses/${row.id}/image` : null,
         feedback: feedback?.feedbackText ? feedback : null,
         rawDescription: features.rawDescription ?? null,
+        provenance: features.provenance ?? 'unknown',
+        analysisScope: features.analysisScope ?? 'legacy',
+        displayScope: features.displayScope ?? 'legacy',
         summary: {
           elements: features.elements ?? [],
           darkRatio: features.colors?.darkRatio ?? null,
@@ -63,6 +66,9 @@ export function listAnalyses(db, childId, auth, { limit = 50, offset = 0 } = {})
             referenceEvidence: report.referenceEvidence,
             referenceEvidenceSource: report.referenceEvidenceSource,
             audit: report.audit ?? null,
+            provenance: report.provenance ?? features.provenance ?? 'unknown',
+            analysisScope: report.analysisScope ?? features.analysisScope ?? 'legacy',
+            provenanceNote: report.provenanceNote,
           }
           : null,
       }
@@ -84,7 +90,7 @@ export function trendSummary(db, childId, auth) {
     .filter(r => r.report_json)
     .map(r => {
       const report = JSON.parse(r.report_json)
-      return { createdAt: r.createdAt, emotion: report.emotion, confidence: report.confidence }
+      return { createdAt: r.createdAt, emotion: report.emotion, confidence: report.confidence, provenance: report.provenance ?? 'unknown' }
     })
 
   const counts = {}
@@ -102,6 +108,11 @@ export function trendSummary(db, childId, auth) {
     withReport: points.length,
     direction,
     counts,
+    provenanceCounts: {
+      child: points.filter(point => point.provenance === 'child').length,
+      coCreated: points.filter(point => point.provenance === 'co-created').length,
+      unknown: points.filter(point => point.provenance === 'unknown').length,
+    },
     points: points.slice(0, 10).reverse(), // 时间正序，最近 10 个点
   }
 }

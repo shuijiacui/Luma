@@ -16,6 +16,17 @@ import { traceNode } from '../services/tracing.js'
 import { localeOf, localizeReport, englishFeedback, ENGLISH_FOLLOW_UP, ENGLISH_PROMPT } from '../services/localization.js'
 import { retrieveReferences, buildReferenceFilterPrompt, validateReferenceFilter } from '../services/referenceRag.js'
 
+function displayPng(value) {
+  if (typeof value !== 'string') return null
+  const encoded = value.replace(/^data:image\/png;base64,/i, '')
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return null
+  const buffer = Buffer.from(encoded, 'base64')
+  if (buffer.length < 24 || buffer.length > 10 * 1024 * 1024 || buffer.toString('base64') !== encoded
+    || buffer.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a' || buffer.toString('ascii', 12, 16) !== 'IHDR'
+    || buffer.readUInt32BE(16) < 1 || buffer.readUInt32BE(20) < 1 || buffer.readUInt32BE(16) * buffer.readUInt32BE(20) > 32_000_000) return null
+  return buffer
+}
+
 export function createApiRouter({ chatWithImage, chatText = null, webSearch = null, retrieveReferences: retrieveReferencesImpl = retrieveReferences, entries, constraints = {}, scoreConfig, db, kbVersion = 'unknown', uploadDir = path.resolve('uploads') }) {
   uploadDir = path.resolve(uploadDir)
   const router = Router()
@@ -52,7 +63,9 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
   })
 
   router.post('/analyze', asyncRoute(async (req, res) => {
-    const { imageBase64, submissionKey = null, source = null } = req.body ?? {}
+    const { imageBase64, submissionKey = null, source = null, provenance = 'child', artworkId, artworkRevision, displayImageBase64 } = req.body ?? {}
+    if (!['child', 'co-created', 'unknown'].includes(provenance)) return res.status(400).json({ error: 'invalid provenance' })
+    if (provenance === 'unknown') return res.status(422).json({ error: 'unknown_artwork_authorship', message: '无法区分旧画作中孩子与 AI 的笔迹，已保留作品，不进行儿童特征分析。' })
     if (typeof imageBase64 !== 'string' || !imageBase64.trim()) {
       return res.status(400).json({ error: 'imageBase64 required' })
     }
@@ -65,11 +78,34 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     const buffer = Buffer.from(encoded, 'base64')
     if (!buffer.length || buffer.length > 10 * 1024 * 1024) return res.status(400).json({ error: 'invalid image size' })
     const sha = crypto.createHash('sha256').update(buffer).digest('hex')
+    let displayBuffer = buffer
+    let displayMime = imageBase64.match(/^data:(image\/(?:png|jpeg|jpg|webp));base64,/i)?.[1]?.toLowerCase() ?? 'image/png'
+    if (artworkId !== undefined || artworkRevision !== undefined) {
+      if (displayImageBase64 !== undefined || typeof artworkId !== 'string' || !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(artworkId)
+        || !Number.isSafeInteger(artworkRevision) || artworkRevision < 1) return res.status(400).json({ error: 'invalid artwork reference' })
+      if (!db || req.auth?.role !== 'child') return res.status(401).json({ error: 'login required for artwork reference' })
+      const saved = db.prepare('SELECT image_base64, revision, provenance FROM artworks WHERE id = ? AND child_id = ?').get(artworkId, req.auth.accountId)
+      if (!saved) return res.status(404).json({ error: 'artwork not found' })
+      if (saved.revision !== artworkRevision || saved.provenance !== provenance) return res.status(409).json({ error: 'artwork version or provenance changed' })
+      displayBuffer = displayPng(saved.image_base64)
+      if (!displayBuffer) return res.status(400).json({ error: 'invalid saved artwork image' })
+      displayMime = 'image/png'
+    } else if (displayImageBase64 !== undefined) {
+      if (req.auth) return res.status(400).json({ error: 'use a saved artwork reference for the display image' })
+      displayBuffer = displayPng(displayImageBase64)
+      if (!displayBuffer) return res.status(400).json({ error: 'invalid display image' })
+      displayMime = 'image/png'
+    }
+    const displaySha = crypto.createHash('sha256').update(displayBuffer).digest('hex')
     const existing = () => db && req.auth && submissionKey
       ? db.prepare('SELECT * FROM analyses WHERE child_id = ? AND submission_key = ?').get(req.auth.accountId, submissionKey) : null
     const returnExisting = row => {
-      if (row.image_sha256 !== sha) return res.status(409).json({ error: 'submission key belongs to another image' })
       const stored = JSON.parse(row.features_json)
+      if ((stored.analysisImageSha256 ?? row.image_sha256) !== sha) return res.status(409).json({ error: 'submission key belongs to another image' })
+      if ((stored.provenance ?? 'child') !== provenance) return res.status(409).json({ error: 'submission key belongs to another provenance' })
+      if ((stored.displayImageSha256 ?? row.image_sha256) !== displaySha
+        || (stored.artworkId ?? null) !== (artworkId ?? null)
+        || (stored.artworkRevision ?? null) !== (artworkRevision ?? null)) return res.status(409).json({ error: 'submission key belongs to another artwork display' })
       return res.json({ features: stored, feedbackText: buildFeedback(stored), followUp: FOLLOW_UP, feedbackTextEn: englishFeedback(stored), followUpEn: ENGLISH_FOLLOW_UP, analysisId: row.id })
     }
     const previous = existing()
@@ -77,6 +113,12 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     let features
     try {
       features = await extractFeatures(encoded, { chatWithImage })
+      features.provenance = provenance
+      features.analysisScope = 'child-only'
+      features.analysisImageSha256 = sha
+      features.displayImageSha256 = displaySha
+      features.displayScope = artworkId !== undefined || displayImageBase64 !== undefined ? 'composite' : 'child-only'
+      if (artworkId !== undefined) { features.artworkId = artworkId; features.artworkRevision = artworkRevision }
       if (source === 'digital_canvas') features.source = 'digital_canvas'
     } catch (err) {
       log.error('analyze', { msg: `feature extraction failed: ${err.message}` })
@@ -88,24 +130,24 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
       if (!db.prepare("SELECT 1 FROM accounts WHERE id = ? AND family_id = ? AND role = 'child'").get(req.auth.accountId, req.auth.familyId)) {
         return res.status(401).json({ error: 'account no longer exists' })
       }
+      if (artworkId !== undefined) {
+        const latest = db.prepare('SELECT revision, provenance FROM artworks WHERE id = ? AND child_id = ?').get(artworkId, req.auth.accountId)
+        if (!latest || latest.revision !== artworkRevision || latest.provenance !== provenance) return res.status(409).json({ error: 'artwork changed during analysis' })
+      }
       let writtenFile = null
       try {
         const concurrent = existing()
         if (concurrent) return returnExisting(concurrent)
-        const match = imageBase64.match(/^data:(image\/(?:png|jpeg|jpg|webp));base64,(.+)$/i)
-        const encoded = match ? match[2] : imageBase64
-        const buffer = Buffer.from(encoded, 'base64')
-        if (!buffer.length || buffer.length > 10 * 1024 * 1024) throw new Error('invalid image size')
-        const mime = match?.[1]?.toLowerCase() ?? 'image/png'
         fs.mkdirSync(uploadDir, { recursive: true })
         const fileName = `${crypto.randomUUID()}.bin`
-        fs.writeFileSync(path.join(uploadDir, fileName), buffer, { flag: 'wx' })
+        fs.writeFileSync(path.join(uploadDir, fileName), displayBuffer, { flag: 'wx' })
         writtenFile = path.join(uploadDir, fileName)
         analysisId = insertAnalysis(db, {
           childId: req.auth.accountId, familyId: req.auth.familyId, features,
           submissionKey,
           feedbackText: buildFeedback(features), followUp: FOLLOW_UP,
-          image: { path: fileName, mime, size: buffer.length, sha256: crypto.createHash('sha256').update(buffer).digest('hex') },
+          // The media checksum matches retained bytes for backups; analysisImageSha256 deduplicates the child-only input.
+          image: { path: fileName, mime: displayMime, size: displayBuffer.length, sha256: displaySha },
         })
       } catch (err) {
         if (writtenFile) fs.rmSync(writtenFile, { force: true })
@@ -228,7 +270,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
         log.error('report_web_advice', { msg: `web advice failed: ${err.message}` })
       }
     }
-    const enrichedReport = { ...report }
+    const enrichedReport = { ...report, provenance: features.provenance ?? 'unknown', analysisScope: features.analysisScope ?? 'legacy' }
     if (narrative) {
       enrichedReport.narrative = narrative.summary
       enrichedReport.parentAdvice = narrative.advice
@@ -243,6 +285,12 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
     if (webAdvice) {
       enrichedReport.webAdvice = webAdvice
       enrichedReport.webAdviceSource = '网络搜索（仅供参考）'
+    }
+    if (features.provenance === 'co-created') {
+      enrichedReport.provenanceNote = locale === 'en'
+        ? 'Co-created with Nilo. This observation uses only the child’s strokes; their choices may still reflect the shared activity. It does not represent fully independent drawing.'
+        : '这是一幅与 Nilo 合作完成的作品。本次观察只使用孩子自己的笔迹；创作选择仍可能受到共创过程影响，不代表完全独立绘画。'
+      enrichedReport.parentAdvice = [enrichedReport.provenanceNote, ...(enrichedReport.parentAdvice ?? [])]
     }
     // The source can be removed while optional enrichment awaits an external service.
     if (db && req.auth && analysisId) {

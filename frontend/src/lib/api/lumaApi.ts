@@ -1,8 +1,11 @@
 // Luma 判定服务 API（docs/API契约.md，base 默认 /api，由 vite proxy 转发到 localhost:3001）
 import { authFetch } from '@/lib/api/authFetch'
 import { getLocale } from '@/i18n/store'
+import type { BrushKind } from '@/features/child/brushes'
 
 export interface FeatureJSON {
+  provenance?: 'child' | 'co-created' | 'unknown'
+  analysisScope?: 'child-only'
   rawDescription: string
   elements: string[]
   colors: { dominant: string[]; darkRatio: number } | null
@@ -53,11 +56,14 @@ export function analyzeDrawing(
   priorFeatures: FeatureJSON | null = null,
   token?: string,
   submissionKey?: string,
+  provenance: 'child' | 'co-created' | 'unknown' = 'child',
+  display?: { artworkId?: string; revision?: number; displayImageBase64?: string },
 ): Promise<AnalyzeResponse> {
   return authFetch<AnalyzeResponse>('/analyze', {
     method: 'POST',
     token,
-    body: { imageBase64, priorFeatures, submissionKey, source: 'digital_canvas' },
+    body: { imageBase64, priorFeatures, submissionKey, source: 'digital_canvas', provenance,
+      artworkId: display?.artworkId, artworkRevision: display?.revision, displayImageBase64: display?.displayImageBase64 },
   })
 }
 
@@ -72,6 +78,7 @@ export interface NiloStrokeSpec {
   points: NiloStrokePoint[]
   color: string
   width: number
+  brushKind?: BrushKind
   say?: string
 }
 
