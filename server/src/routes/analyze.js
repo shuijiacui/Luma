@@ -202,7 +202,7 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
       } finally { if (abort) controller.signal.removeEventListener('abort', abort) }
     }
     const text = (prompt, opts) => bounded(() => chatText(prompt + (locale === 'en' ? ENGLISH_PROMPT : ''), { ...opts, signal: controller.signal }))
-    // 调度器：年龄调制 → 标签匹配 → L3 共现门槛 → 冲突处置（知识库调度.md）
+    // 调度器：年龄调制 → 标签匹配 → L3 共现门槛 → 冲突处置（docs/AI解读与知识库.md）
     const { hits: matches, conflicts, dropped } = dispatchEntries({
       features, entries, constraints,
       childAge: age,

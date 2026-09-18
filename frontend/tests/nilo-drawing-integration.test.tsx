@@ -8,6 +8,7 @@ import { authFetch } from '@/lib/api/authFetch'
 import type { Artwork } from '@/features/child/artworks'
 import type { CompanionReply } from '@/features/child/companion/proposals'
 import { setLocale } from '@/i18n'
+import { customSketchExamples } from './fixtures/customSketches'
 
 const { startTour } = vi.hoisted(() => ({ startTour: vi.fn() }))
 vi.mock('@/features/auth/AuthContext', () => ({
@@ -255,6 +256,55 @@ test('four projected elements commit and save as one contribution; the next turn
   fireEvent.click(screen.getByRole('button', { name: '撤销 Nilo 的创作' }))
   expect(operations()).toEqual(childOperations)
   expect(ink.get(canvas)).toEqual(new Set(['#20352f']))
+})
+
+test('custom robot, rocket and dinosaur paths remain preview-only, reopen losslessly, and undo together without contaminating child analysis or starting voice', async () => {
+  localStorage.setItem('luma_companion_mode:guest-child', 'together')
+  localStorage.setItem('luma:voice-sound:guest-child', 'on')
+  const speak = vi.fn(), microphone = vi.fn()
+  vi.stubGlobal('speechSynthesis', { speak, cancel: vi.fn() })
+  vi.stubGlobal('SpeechSynthesisUtterance', class { text: string; constructor(text: string) { this.text = text } })
+  vi.stubGlobal('SpeechRecognition', class { start = microphone; abort = vi.fn() })
+  companionReply = () => Promise.resolve({ status: 'ready', reply: '机器人、火箭和恐龙，先给你看看。',
+    proposal: customSketchExamples[0], additions: customSketchExamples.slice(1) })
+  const canvas = prepare(); draw(canvas)
+  const childOperations = structuredClone(operations())
+  await project()
+  expect(operations()).toEqual(childOperations)
+  expect(ink.get(canvas)).toEqual(new Set(['#20352f']))
+  const preview = document.querySelector<HTMLCanvasElement>('.nilo-projection canvas')!
+  expect(ink.get(preview)).toEqual(new Set(customSketchExamples.map(item => item.color)))
+  fireEvent.click(screen.getByRole('button', { name: '留下来' }))
+  const contribution = operations().filter(operation => operation.owner === 'nilo')
+  expect(contribution).toHaveLength(24)
+  expect(new Set(contribution.map(operation => operation.groupId)).size).toBe(1)
+  for (const example of customSketchExamples) {
+    const parts = contribution.filter(operation => operation.type === 'stroke' && operation.color === example.color)
+    expect(parts).toHaveLength(example.sketch!.paths.length)
+    expect(parts.every(operation => operation.type === 'stroke' && operation.brushKind === example.brushKind)).toBe(true)
+  }
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '保存' })))
+  const saved: Artwork = JSON.parse(localStorage.getItem('luma_guest_artworks_v1')!)[0]
+  const accepted = structuredClone(operations())
+  expect(saved.document?.operations).toEqual(accepted)
+  expect(saved.provenance).toBe('co-created')
+  cleanup(); clearChildDraft()
+  prepare(`/child/create?artwork=${encodeURIComponent(saved.id)}`)
+  await act(async () => {})
+  expect(operations()).toEqual(accepted)
+  const reopened = screen.getByLabelText('自由绘画画布') as HTMLCanvasElement
+  expect(ink.get(reopened)).toEqual(new Set(['#20352f', ...customSketchExamples.map(item => item.color)]))
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '完成' })))
+  const [image, , , , provenance, display] = vi.mocked(analyzeDrawing).mock.calls[0]
+  expect(JSON.parse(atob(image))).toEqual(['#20352f'])
+  expect(provenance).toBe('co-created')
+  expect(JSON.parse(atob(display!.displayImageBase64!))).toEqual(['#20352f', ...customSketchExamples.map(item => item.color)].sort())
+  fireEvent.click(screen.getByRole('button', { name: '撤销 Nilo 的创作' }))
+  expect(operations()).toEqual(childOperations)
+  expect(ink.get(reopened)).toEqual(new Set(['#20352f']))
+  expect(speak).not.toHaveBeenCalled()
+  expect(microphone).not.toHaveBeenCalled()
+  expect(requests()).toHaveLength(1)
 })
 
 test('dismissing a projection and saving it never adds the projected content to the document or image', async () => {

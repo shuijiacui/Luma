@@ -1,8 +1,10 @@
 import type { NiloStrokeSpec } from '@/lib/api/lumaApi'
 import { BRUSHES, type BrushKind } from '../brushes'
+import { compileSketch, SKETCH_LIMITS, validateSketch, type DrawingSketch } from './sketch'
 
 export const templates = ['waves', 'fish', 'leaf', 'window', 'stars', 'cloud', 'flower', 'trail', 'flame', 'rain', 'grass', 'echo', 'sun', 'moon', 'tree', 'mountain', 'house', 'boat', 'bird', 'butterfly', 'heart'] as const
-export type Template = typeof templates[number]
+export type BuiltinTemplate = typeof templates[number]
+export type Template = BuiltinTemplate | 'custom'
 export interface SubjectAnchor { x: number; y: number; width: number; height: number }
 export type ProposalPlacement = 'above' | 'below' | 'left' | 'right' | 'inside' | 'near'
 export interface DrawingProposal {
@@ -13,6 +15,9 @@ export interface DrawingProposal {
   target?: string; relation?: string
   anchor?: SubjectAnchor
   placement?: ProposalPlacement
+  /** A bounded new object, distinct from its existing-scene target. */
+  subject?: string
+  sketch?: DrawingSketch
   /** Child-authored source samples, supplied by the server for echo only. */
   echoPoints?: { x: number; y: number }[]
 }
@@ -30,12 +35,17 @@ export interface StoryMemory {
   theme: string
   recentTemplates: string[]
   rejectedTemplates: string[]
+  recentSubjects: string[]
+  rejectedSubjects: string[]
 }
-export const emptyMemory = (): StoryMemory => ({ theme: '', recentTemplates: [], rejectedTemplates: [] })
+export const emptyMemory = (): StoryMemory => ({ theme: '', recentTemplates: [], rejectedTemplates: [], recentSubjects: [], rejectedSubjects: [] })
+const memorySubjects = (value: unknown): string[] => Array.isArray(value)
+  ? [...new Set(value.filter((v): v is string => typeof v === 'string').map(v => v.trim().slice(0, 60)).filter(Boolean))].slice(-4) : []
 const memoryValue = (value: Partial<StoryMemory>): StoryMemory => ({
   theme: typeof value.theme === 'string' ? value.theme.trim().slice(0, 120) : '',
-  recentTemplates: Array.isArray(value.recentTemplates) ? value.recentTemplates.filter((v: unknown) => templates.includes(v as Template)).slice(-4) : [],
-  rejectedTemplates: Array.isArray(value.rejectedTemplates) ? value.rejectedTemplates.filter((v: unknown) => templates.includes(v as Template)).slice(-4) : [],
+  recentTemplates: Array.isArray(value.recentTemplates) ? value.recentTemplates.filter((v: unknown) => templates.includes(v as BuiltinTemplate)).slice(-4) : [],
+  rejectedTemplates: Array.isArray(value.rejectedTemplates) ? value.rejectedTemplates.filter((v: unknown) => templates.includes(v as BuiltinTemplate)).slice(-4) : [],
+  recentSubjects: memorySubjects(value.recentSubjects), rejectedSubjects: memorySubjects(value.rejectedSubjects),
 })
 export function readMemory(owner: string, artwork?: string): StoryMemory {
   if (!artwork) return emptyMemory()
@@ -44,7 +54,7 @@ export function readMemory(owner: string, artwork?: string): StoryMemory {
     return value && typeof value === 'object' ? memoryValue(value) : emptyMemory()
   } catch { return emptyMemory() }
 }
-export function saveMemory(owner: string, artwork: string, memory: StoryMemory) {
+export function saveMemory(owner: string, artwork: string, memory: Partial<StoryMemory>) {
   try { localStorage.setItem(`luma_story:${owner}:${artwork}`, JSON.stringify(memoryValue(memory))) } catch { /* Drawing persistence remains independent of optional story memory. */ }
 }
 export function readMode(owner: string): 'off' | 'together' {
@@ -78,7 +88,7 @@ const curve = (x0: number, y0: number, x1: number, y1: number, x2: number, y2: n
   Array.from({ length: 33 }, (_, i) => { const t = i / 32; return { x: (1 - t) ** 2 * x0 + 2 * t * (1 - t) * x1 + t ** 2 * x2, y: (1 - t) ** 2 * y0 + 2 * t * (1 - t) * y1 + t ** 2 * y2 } })
 
 /** Small complete contributions. Geometry, preview and committed drawing share these paths. */
-function localPaths(template: Template): Paths {
+function localPaths(template: BuiltinTemplate): Paths {
   switch (template) {
     case 'waves': return [0.28, 0.7].map(y => Array.from({ length: 61 }, (_, i) => ({ x: 0.06 + i / 60 * .88, y: y + Math.sin(i / 60 * Math.PI * 4) * .13 })))
     case 'fish': return [ellipse(.43, .5, .34, .29), path(.75, .5, .94, .18, .94, .82, .75, .5), ellipse(.25, .43, .025, .035)]
@@ -122,9 +132,9 @@ function localPaths(template: Template): Paths {
 export function validateProposal(value: unknown): DrawingProposal | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
   const raw = value as DrawingProposal
-  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints'].includes(key))) return null
+  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints', 'subject', 'sketch'].includes(key))) return null
   const p = { ...raw, rotation: raw.rotation === undefined ? 0 : raw.rotation, strokeWidth: raw.strokeWidth === undefined ? 4 : raw.strokeWidth }
-  if (!templates.includes(p.template) || !/^#[\da-f]{6}$/i.test(p.color)) return null
+  if (!(p.template === 'custom' || templates.includes(p.template)) || !/^#[\da-f]{6}$/i.test(p.color)) return null
   if (![p.x, p.y, p.width, p.height, p.rotation, p.strokeWidth].every(Number.isFinite)) return null
   if (p.width < .025 || p.height < .025 || p.width > .45 || p.height > .45 || p.width * p.height > .16) return null
   if (p.x < 0 || p.y < 0 || p.x + p.width > 1 || p.y + p.height > 1 || Math.abs(p.rotation) > 180 || p.strokeWidth < 1 || p.strokeWidth > 32) return null
@@ -132,6 +142,13 @@ export function validateProposal(value: unknown): DrawingProposal | null {
   const target = typeof p.target === 'string' ? p.target.trim().slice(0, 100) : ''
   const relation = typeof p.relation === 'string' ? p.relation.trim().slice(0, 180) : ''
   if (!target || !relation) return null
+  let sketch: DrawingSketch | null = null
+  let subject = ''
+  if (p.template === 'custom') {
+    subject = typeof p.subject === 'string' ? p.subject.trim() : ''
+    sketch = validateSketch(p.sketch)
+    if (!subject || subject.length > 60 || !sketch) return null
+  } else if ('subject' in p || 'sketch' in p) return null
   if (p.placement !== undefined && !['above', 'below', 'left', 'right', 'inside', 'near'].includes(p.placement)) return null
   if (p.anchor !== undefined) {
     const a = p.anchor
@@ -143,12 +160,12 @@ export function validateProposal(value: unknown): DrawingProposal | null {
     const xs = p.echoPoints.map(point => point.x), ys = p.echoPoints.map(point => point.y)
     if (Math.max(...xs) - Math.min(...xs) + Math.max(...ys) - Math.min(...ys) < .005) return null
   } else if (p.echoPoints !== undefined) return null
-  return { ...p, color: p.color.toLowerCase(), target, relation, ...(p.anchor ? { anchor: { ...p.anchor } } : {}), ...(p.echoPoints ? { echoPoints: p.echoPoints.map(({ x, y }) => ({ x, y })) } : {}) }
+  return { ...p, color: p.color.toLowerCase(), target, relation, ...(sketch ? { subject, sketch } : {}), ...(p.anchor ? { anchor: { ...p.anchor } } : {}), ...(p.echoPoints ? { echoPoints: p.echoPoints.map(({ x, y }) => ({ x, y })) } : {}) }
 }
 export function proposalStrokes(p: DrawingProposal, aspect = 1): NiloStrokeSpec[] {
   if (!Number.isFinite(aspect) || aspect <= 0 || !validateProposal(p)) return []
   const angle = p.rotation * Math.PI / 180
-  let paths = localPaths(p.template)
+  let paths = p.template === 'custom' ? compileSketch(p.sketch)! : localPaths(p.template)
   if (p.template === 'echo' && p.echoPoints) {
     const xs = p.echoPoints.map(point => point.x * aspect), ys = p.echoPoints.map(point => point.y)
     const left = Math.min(...xs), right = Math.max(...xs), top = Math.min(...ys), bottom = Math.max(...ys)
@@ -212,7 +229,7 @@ export function projectionFits(p: DrawingProposal, occupancy: number[], aspect =
   return !!cells && [...cells].every(cell => occupancy[cell] <= .025)
 }
 
-const naturalRatios: Record<Exclude<Template, 'echo'>, number> = {
+const naturalRatios: Record<Exclude<BuiltinTemplate, 'echo'>, number> = {
   waves: 2.8, fish: 1.55, leaf: .8, window: 1, stars: 1, cloud: 1.7,
   flower: .7, trail: .8, flame: .65, rain: 1.25, grass: 2.2,
   sun: 1, moon: .85, tree: .8, mountain: 1.55, house: 1, boat: 1.4,
@@ -223,7 +240,7 @@ function proportionedProposal(p: DrawingProposal, aspect: number): DrawingPropos
   let width = p.width * aspect
   let height = p.height
   if (p.template !== 'echo') {
-    const ratio = naturalRatios[p.template]
+    const ratio = p.template === 'custom' ? p.sketch!.aspect : naturalRatios[p.template]
     if (width / height > ratio) width = height * ratio
     else height = width / ratio
   }
@@ -295,7 +312,7 @@ export function prepareProposal(value: DrawingProposal, occupancy: number[], asp
 /** Validation for editing/accepting a complete plan; never adjusts its coordinates. */
 export function drawingPlanFits(proposals: DrawingProposal[], occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize): boolean {
   const n = occupancySize(occupancy)
-  if (!n || proposals.length < 1 || proposals.length > 4 || proposals.reduce((area, p) => area + p.width * p.height, 0) > .24) return false
+  if (!n || !planBudgetFits(proposals) || proposals.reduce((area, p) => area + p.width * p.height, 0) > .24) return false
   const occupied = [...occupancy]
   for (const p of proposals) {
     const cells = proposalFootprint(p, n, aspect, surfaceSize)
@@ -308,7 +325,7 @@ export function drawingPlanFits(proposals: DrawingProposal[], occupancy: number[
 /** Prepare the whole contribution atomically: an unsafe addition rejects the plan. */
 export function prepareDrawingPlan(proposals: DrawingProposal[], occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize): DrawingProposal[] | null {
   const n = occupancySize(occupancy)
-  if (!n || proposals.length < 1 || proposals.length > 4) return null
+  if (!n || !planBudgetFits(proposals)) return null
   const occupied = [...occupancy]
   const prepared: DrawingProposal[] = []
   for (const p of proposals) {
@@ -320,6 +337,21 @@ export function prepareDrawingPlan(proposals: DrawingProposal[], occupancy: numb
     prepared.push(candidate)
   }
   return drawingPlanFits(prepared, occupancy, aspect, surfaceSize) ? prepared : null
+}
+
+function planBudgetFits(proposals: DrawingProposal[]): boolean {
+  if (!Array.isArray(proposals) || proposals.length < 1 || proposals.length > 4) return false
+  let strokes = 0, commands = 0
+  for (const value of proposals) {
+    const p = validateProposal(value)
+    if (!p) return false
+    if (p.template === 'custom') {
+      strokes += p.sketch!.paths.length
+      commands += p.sketch!.paths.reduce((sum, path) => sum + path.length, 0)
+    } else strokes += p.template === 'echo' ? 1 : localPaths(p.template).length
+    if (strokes > SKETCH_LIMITS.planStrokes || commands > SKETCH_LIMITS.planCommands) return false
+  }
+  return true
 }
 
 export type LocalCommand = 'accept' | 'dismiss' | 'alternative' | 'smaller' | 'larger' | 'left' | 'right' | 'up' | 'down' | 'stop' | 'forget' | { color: string } | null

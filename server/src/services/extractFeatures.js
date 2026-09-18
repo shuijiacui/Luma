@@ -1,5 +1,5 @@
 // 画作特征提取：多模态 LLM → 结构化特征 JSON
-// 防幻觉三闸（docs/RAG设计.md「特征可信度过滤」）：
+// 特征输入校验与门控（docs/AI解读与知识库.md）：
 //   1. 每维度必须带 confidence 0-1
 //   2. server 丢弃 confidence < 0.5 的维度，不进检索
 //   3. 先输出 rawDescription 再给特征，描述原文入库供人工抽查

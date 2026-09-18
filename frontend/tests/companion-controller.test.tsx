@@ -17,6 +17,17 @@ const plan: DrawingProposal[] = [
   { ...proposal, template: 'sun', x: .65, y: .12, width: .18, height: .2 },
   { ...proposal, template: 'cloud', x: .55, y: .47, width: .24, height: .13 },
 ]
+const robot: DrawingProposal = {
+  ...proposal, template: 'custom', subject: '机器人', x: .3, y: .2, width: .24, height: .4,
+  target: '孩子想要的机器人', relation: '先预览一个有天线和圆眼睛的机器人', brushKind: 'crayon',
+  sketch: { aspect: .8, paths: [
+    [['M', .3, .18], ['L', .7, .18], ['L', .7, .45], ['L', .3, .45], ['Z']],
+    [['M', .5, .18], ['L', .5, .08]],
+    [['E', .4, .3, .025, .025]], [['E', .6, .3, .025, .025]],
+    [['M', .25, .5], ['L', .75, .5], ['L', .75, .78], ['L', .25, .78], ['Z']],
+    [['M', .35, .78], ['L', .35, .92]], [['M', .65, .78], ['L', .65, .92]],
+  ] },
+}
 beforeEach(() => {
   vi.useFakeTimers(); vi.mocked(authFetch).mockReset(); localStorage.clear()
   vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
@@ -78,6 +89,58 @@ test('a silent drawing handoff and its confirmation never invoke speech', async 
   act(() => hook.result.current.accept({ speak: false }))
   expect(hook.commit).toHaveBeenCalledOnce()
   expect(hook.onSpeak).not.toHaveBeenCalled()
+})
+
+test('a custom subject previews and edits with the child brush, commits once and remembers its meaning', async () => {
+  const hook = setup()
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '先看看这个机器人。', proposal: robot })
+  await act(async () => { await hook.result.current.ask('画一个机器人', true, { speak: false }) })
+  expect(hook.commit).not.toHaveBeenCalled()
+  act(() => vi.advanceTimersByTime(550))
+  expect(hook.result.current.projection?.proposal.subject).toBe('机器人')
+  act(() => hook.result.current.receive('smaller', { speak: false }))
+  act(() => hook.result.current.edit({ color: '#123456' }))
+  const preview = hook.result.current.projection!
+  expect(preview.proposal.width * preview.aspect / preview.proposal.height).toBeCloseTo(.8)
+  expect(preview.proposal.sketch).toEqual(robot.sketch)
+  const paths = proposalStrokes(preview.proposal, preview.aspect)
+  expect(paths).toHaveLength(7)
+  expect(paths.every(path => path.brushKind === 'crayon' && path.color === '#123456')).toBe(true)
+  act(() => { hook.result.current.accept({ speak: false }); hook.result.current.accept({ speak: false }) })
+  expect(hook.commit).toHaveBeenCalledExactlyOnceWith(paths, 1)
+  expect(authFetch).toHaveBeenCalledOnce()
+  expect(hook.onSpeak.mock.calls.every(([text]) => text === '')).toBe(true)
+  expect(readMemory('child-a', 'work-a')).toMatchObject({ recentTemplates: [], recentSubjects: ['机器人'] })
+})
+
+test('rejecting one custom subject preserves other custom ideas and sends bounded semantic memory', async () => {
+  const hook = setup()
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '先看看机器人。', proposal: robot })
+  await act(async () => { await hook.result.current.ask('帮我画机器人', true) })
+  act(() => vi.advanceTimersByTime(550))
+  act(() => hook.result.current.dismiss({ speak: false }))
+  expect(readMemory('child-a', 'work-a')).toMatchObject({ rejectedTemplates: [], rejectedSubjects: ['机器人'] })
+  act(() => vi.advanceTimersByTime(1500))
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '先看看火箭。', proposal: { ...robot, subject: '火箭' } })
+  await act(async () => { await hook.result.current.ask('画一架火箭', true, { speak: false }) })
+  const body = vi.mocked(authFetch).mock.calls[1][1]?.body as { context: { rejectedTemplates: string[]; rejectedSubjects: string[] } }
+  expect(body.context.rejectedTemplates).toEqual([])
+  expect(body.context.rejectedSubjects).toEqual(['机器人'])
+  act(() => vi.advanceTimersByTime(550))
+  expect(hook.result.current.projection?.proposal.subject).toBe('火箭')
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('plain Chinese object requests reach the drawing planner and malformed custom paths never project', async () => {
+  const hook = setup()
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '先看看机器人。', proposal: { ...robot, sketch: { ...robot.sketch!, paths: [] } } })
+  await act(async () => { hook.result.current.receive('画一个机器人', { speak: false }); await Promise.resolve() })
+  const body = vi.mocked(authFetch).mock.calls[0][1]?.body as { context: { requestDrawing: boolean } }
+  expect(body.context.requestDrawing).toBe(true)
+  expect(hook.result.current.phase).toBe('idle')
+  expect(hook.result.current.projection).toBeNull()
+  expect(hook.result.current.message).toContain('没准备完整')
+  expect(hook.commit).not.toHaveBeenCalled()
 })
 
 test.each([2, 3, 4])('%s related additions preview together and commit exactly the shown group once', async count => {
@@ -341,7 +404,7 @@ test('forgetting a story is local, clears memory and preview, and never changes 
   vi.mocked(authFetch).mockClear()
   const revision = hook.state.revision
   act(() => hook.result.current.receive('忘掉这个故事'))
-  expect(hook.result.current.memory).toEqual({ theme: '', recentTemplates: [], rejectedTemplates: [] })
+  expect(hook.result.current.memory).toEqual({ theme: '', recentTemplates: [], rejectedTemplates: [], recentSubjects: [], rejectedSubjects: [] })
   expect(readMemory('child-a', 'work-a').theme).toBe('')
   expect(hook.result.current.projection).toBeNull()
   expect(hook.state.revision).toBe(revision)

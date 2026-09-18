@@ -19,6 +19,8 @@
     "revision": 7,
     "recentTemplates": [],
     "rejectedTemplates": [],
+    "recentSubjects": [],
+    "rejectedSubjects": [],
     "currentProposal": null,
     "currentAdditions": [],
     "inkGrid": [],
@@ -51,18 +53,54 @@
 
 `proposal` 是待确认投影，不是执行命令。模型没有 `accept`、删除原画等权限。
 模板：`waves fish leaf window stars cloud flower trail flame rain grass echo sun moon tree mountain house boat bird butterfly heart`。
+模板之外的物体使用 `template: "custom"`，额外提供 `subject` 和 `sketch`。例如下面是一个独立的火箭投影（实际样式默认继承孩子的笔刷）：
+
+```json
+{
+  "template": "custom", "subject": "火箭",
+  "x": 0.6, "y": 0.2, "width": 0.16, "height": 0.32,
+  "rotation": 0, "color": "#e4a86a", "strokeWidth": 4, "brushKind": "crayon",
+  "target": "孩子想画的火箭", "relation": "在留白处预览带舷窗的小火箭",
+  "sketch": {
+    "aspect": 0.7,
+    "paths": [
+      [["M", 0.28, 0.75], ["Q", 0.24, 0.25, 0.5, 0.06], ["Q", 0.76, 0.25, 0.72, 0.75], ["Z"]],
+      [["E", 0.5, 0.38, 0.1, 0.07]],
+      [["M", 0.28, 0.57], ["L", 0.1, 0.82], ["L", 0.3, 0.75]],
+      [["M", 0.72, 0.57], ["L", 0.9, 0.82], ["L", 0.7, 0.75]],
+      [["M", 0.4, 0.79], ["Q", 0.5, 0.98, 0.6, 0.79]]
+    ]
+  }
+}
+```
+
+`subject` 是新物体名称，去除首尾空白后 1–60 字符；`sketch` 仅允许 `aspect` 与 `paths`。`aspect` 为设计的物理宽高比（0.2–5），前端在提案框内等比适配。`paths` 内每条路径编译为一条现有笔刷笔迹，支持以下定长元组，所有坐标及控制点必须为 0–1 的有限数：
+
+| 指令 | 格式与作用 |
+| --- | --- |
+| M | `["M", x, y]`，普通路径唯一的起点，必须在首位 |
+| L | `["L", x, y]`，连接到终点 |
+| Q | `["Q", cx, cy, x, y]`，二次曲线 |
+| C | `["C", c1x, c1y, c2x, c2y, x, y]`，三次曲线 |
+| Z | `["Z"]`，闭合回起点，只能在末尾 |
+| E | `["E", cx, cy, rx, ry]`，完整椭圆；必须独占一条路径，半径大于 0，整个椭圆位于 0–1 内 |
+
+每个物体 1–24 条路径，每路径最多 32 条指令，每物体最多 96 条指令；普通路径必须实际产生非退化绘制，不能只有起点。局部坐标也受 `sketch.aspect` 影响：圆形应满足 `rx * aspect = ry`，方形应满足局部宽度乘 aspect 等于局部高度；客户端不会擅自将有意绘制的椭圆改成圆。基础模板不接受 `subject` / `sketch`，任意额外字段、SVG、可执行代码及非法路径均拒绝。曲线在前端有界采样并使用相同笔刷渲染预览和确认结果。
+
+`recentSubjects` / `rejectedSubjects` 分别保留最近接受/拒绝的自定义物体名称，最多 4 项、每项 60 字符；不在 `rejectedTemplates` 中记录 `custom`。拒绝同名物体后，除非孩子明确重新要求，不继续提议它；提示词同时参考语义避免换个名称重复建议。
+
 `imageProvenance` 为 `child` / `unknown` / `composite`。只有分离出的孩子图层可以标注 `child`；来源不明的旧合成图必须标 `unknown`，模型不能据此声称全部由孩子画出。
 坐标是归一化框的左上角和宽高；宽高 0.025–0.45，面积不超过 0.16；旋转角 -180–180 度；线宽 1–32 CSS 像素，允许小数；颜色必须是六位 HEX。所有 proposal 都需要 `target` 和 `relation`。`brushKind` 支持 `round / pencil / marker / crayon / star`，旧响应省略时前端按圆头笔兼容。
 
 前端从最近一次非橡皮的孩子笔迹提取 `drawingStyle`（没有笔迹时使用当前工具）；`brushSize` 与 `lastStroke.width` 必须是 CSS 像素，不能乘设备像素比。后端默认逐项沿用现有投影、`drawingStyle`、最近笔迹中的颜色、粗细和笔刷，孩子明确指定某一属性时才允许模型覆盖该属性。主提案和备选均采用此规则；预览与确认后的笔迹使用相同画笔渲染器和几何路径。
 
-响应可包含 `additions`（最多 3 项），与 `proposal` 组成最多 4 个相关元素；总框面积不超过 0.24，任一成员无效则整组拒绝。可选 `anchor: {x,y,width,height}` 标记主体框，`placement` 为 `above / below / left / right / inside / near`。前端修正物理比例并依据主体限制大小，仅附近避让或等比缩小；确认一次提交全组，移动、缩放和换色同步作用于全组，撤销也只需一次。
-单元素响应可能包含 `alternatives`，至多一个不同模板的备选；组合响应不返回备选。备选同样需要本地碰撞检查和孩子确认。
+响应可包含 `additions`（最多 3 项），与 `proposal` 组成最多 4 个相关元素，可混合模板和自定义物体；总框面积不超过 0.24，整组最多 64 条最终笔迹、192 条自定义几何指令，任一成员无效或超预算则整组拒绝。同一个物体的轮廓与部件放在一个 `sketch` 内，不能靠拆成多对象绕过限制。可选 `anchor: {x,y,width,height}` 标记主体框，`placement` 为 `above / below / left / right / inside / near`。前端修正物理比例并依据主体限制大小，仅附近避让或等比缩小；确认一次提交全组，移动、缩放和换色同步作用于全组，撤销也只需一次。
+单元素响应可能包含 `alternatives`，至多一个不同模板或不同自定义物体的备选；组合响应不返回备选。备选同样需要本地碰撞检查和孩子确认。
 `echo` 额外返回 `echoPoints`，由服务端直接取经过校验的 `lastStroke.points`（2–24个归一化点），不会采用模型生成的路径。前端按原笔迹物理方向与比例缩小投射，缺少可靠原始笔迹则拒绝 echo。
 未找到合适方案时返回 `status: "clarify"`、一个具体问题和可选 `theme`，绝不生成随机形状兜底。`requestDrawing: false` 或明确拒绝时不返回任何 proposal；绘画请求缺图时返回 `unavailable / missing_image`。
 新主题只能来自孩子最新话语的原文片段，否则保留已有主题。模型提示词约束语义关系，但语义质量仍需真实儿童画评测；服务端校验不能证明模型对对象的理解完全正确。
 
-单次请求只调用一次视觉或文本模型，输出上限 1800 tokens，不重试付费调用。DeepSeek 共创调用显式关闭深度思考，仅接受最终输出，其他业务的推理设置不变。`NILO_DIALOGUE_BUDGET_MS` 默认 18000，最多 25000 ms，前端请求超时为 28000 ms。客户端断开连接会中止供应商请求（已产生的上游用量不保证能退回）。
+单次请求只调用一次视觉或文本模型，绘画输出上限 3600 tokens，纯对话 1800 tokens，不重试付费调用；本地移动、缩放、换色和确认不请求模型。上限不是固定消耗，简洁曲线用于减少逐点坐标输出，实际用量随复杂度变化。DeepSeek 共创调用显式关闭深度思考，仅接受最终输出，其他业务的推理设置不变。`NILO_DIALOGUE_BUDGET_MS` 默认 18000，最多 25000 ms，前端请求超时为 28000 ms。客户端断开连接会中止供应商请求（已产生的上游用量不保证能退回）。
 
 `status` 区分正常回应 `ready`、需补充想法 `clarify`、服务异常 `unavailable`。服务异常另外返回 `reason`：`model_unavailable`（未配置）、`timeout`、`provider_error`、`invalid_response` 或 `missing_image`，以及 `retryable`。未配置时不可重试，其他情况允许孩子主动重试；前端不会自动重试，也会停止连续语音，避免反复念同一条故障提示。参数或鉴权错误仍使用相应 HTTP 状态码。
 

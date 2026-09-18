@@ -1,4 +1,4 @@
-// 情绪评分 + 置信度 v2.3（严格按 docs/RAG设计.md「评分与置信度 v2」+ Step 6 完整决策序）
+// 情绪评分与参考分值：公式和决策顺序见 docs/AI解读与知识库.md。
 //
 //   w_eff = min(s·r, 0.9)         —— LLM 置信度 c 只做 ≥0.5 门控（在 extractFeatures），不入权重
 //   簇内取 max → 簇间 noisy-OR: E = 1-Π(1-w_cluster)
@@ -89,7 +89,7 @@ export function score(matches, features, config = DEFAULT_CONFIG) {
     // Step 2/3：簇内 max → 簇间 noisy-OR
     const weights = [...g.clusterMax.values()]
     let E = weights.length ? 1 - weights.reduce((acc, w) => acc * (1 - w), 1) : 0
-    // 调度规则 1（知识库调度.md）：该组命中全部来自 L2+L3 → E 强制截断
+    // 低层证据限制（docs/AI解读与知识库.md）：全部来自 L2+L3 → E 强制截断
     // （Buck/Koppitz 体系再好也不能单独定案，Lilienfeld 2000 效度质疑）
     if (g.hits.length > 0 && !g.hits.some(h => h.entry.tier === 1)) {
       E = Math.min(E, config.l23Cap)

@@ -59,6 +59,16 @@ export function useCompanion(options: Options) {
     const { ownerId, artworkId } = ref.current
     if (artworkId) saveMemory(ownerId, artworkId, next)
   }, [])
+  const rememberPlan = useCallback((items: DrawingProposal[], accepted: boolean) => {
+    const previous = memoryRef.current
+    const templates = items.filter(item => item.template !== 'custom').map(item => item.template)
+    const subjects = items.flatMap(item => item.template === 'custom' && item.subject ? [item.subject] : [])
+    // Rejecting a robot must not disable every future custom drawing.
+    const recent = (old: string[], next: string[]) => [...new Set([...old, ...next])].slice(-4)
+    remember(accepted
+      ? { ...previous, recentTemplates: recent(previous.recentTemplates, templates), recentSubjects: recent(previous.recentSubjects, subjects) }
+      : { ...previous, rejectedTemplates: recent(previous.rejectedTemplates, templates), rejectedSubjects: recent(previous.rejectedSubjects, subjects) })
+  }, [remember])
   const setProjection = useCallback((value: Projection | null) => { current.current = value; setProjectionState(value) }, [])
   const say = useCallback((text: string, speak = true) => {
     setMessage(text)
@@ -148,6 +158,7 @@ export function useCompanion(options: Options) {
           imageProvenance: provenance === 'unknown' ? 'unknown' : provenance === 'co-created' ? 'composite' : 'child',
           theme: memoryRef.current.theme, history: previous,
           recentTemplates: memoryRef.current.recentTemplates, rejectedTemplates: memoryRef.current.rejectedTemplates,
+          recentSubjects: memoryRef.current.recentSubjects, rejectedSubjects: memoryRef.current.rejectedSubjects,
           currentProposal: pending?.proposal, currentAdditions: pending?.additions,
           inkGrid: canvas.getInkGrid(8), lastStroke: summarizeStroke(canvas.getLastStroke()), canvasAspect: aspect,
           scene: canvas.getCompanionScene(), canvasSize: opt.surfaceSize?.(),
@@ -184,6 +195,8 @@ export function useCompanion(options: Options) {
         if (prepared) show({ id: crypto.randomUUID(), revision, proposal: prepared[0], additions: prepared.slice(1), alternatives: cached, aspect }, reply, speak)
         else if (cached.length) show({ id: crypto.randomUUID(), revision, proposal: cached[0], additions: [], alternatives: [], aspect }, t('先看看这个小主意，喜欢的话就留下来。', opt.locale), speak)
         else { setPhase('idle'); say('这组小主意放在这里有点挤。你可以让我换个位置，或添别的内容。', speak) }
+      } else if (requestDrawing && result.proposal != null) {
+        setPhase('idle'); say('这次绘画建议没准备完整。你可以再叫我试一次。', speak)
       } else if (!requestDrawing && pending && valid(pending) && memoryRef.current.theme === previousTheme) {
         // Conversation and praise do not discard or silently replace an existing preview.
         setProjection(pending); setPhase('projected'); say(reply, speak)
@@ -212,29 +225,29 @@ export function useCompanion(options: Options) {
       cancel(); say('画面已经变了，我们重新看一下吧。', speak); return
     }
     metrics.current.accepted++
-    remember({ ...memoryRef.current, recentTemplates: [...memoryRef.current.recentTemplates, ...planItems(p).map(item => item.template)].slice(-4) })
+    rememberPlan(planItems(p), true)
     cancel(false); ref.current.onCommitted(); say('留下啦，接下来轮到你。', speak)
-  }, [cancel, remember, say, valid])
+  }, [cancel, rememberPlan, say, valid])
   const dismiss = useCallback((feedback: { speak?: boolean } = {}) => {
     if (current.current) {
-      remember({ ...memoryRef.current, rejectedTemplates: [...memoryRef.current.rejectedTemplates, ...planItems(current.current).map(item => item.template)].slice(-4) })
+      rememberPlan(planItems(current.current), false)
       metrics.current.rejected++
     }
     cancel(false); say('收起来啦，你的画没有改变。', feedback.speak !== false)
-  }, [cancel, remember, say])
+  }, [cancel, rememberPlan, say])
   const alternative = useCallback((feedback: { speak?: boolean } = {}) => {
     const speak = feedback.speak !== false
     if (!ref.current.enabled) return
     if (phaseRef.current !== 'projected') { if (speak) ref.current.onSpeak(''); return }
     const p = current.current
     if (!p || !valid(p)) { cancel(); say('画面已经变了，我们重新看一下吧。', speak); return }
-    remember({ ...memoryRef.current, rejectedTemplates: [...memoryRef.current.rejectedTemplates, ...planItems(p).map(item => item.template)].slice(-4) })
+    rememberPlan(planItems(p), false)
     metrics.current.rejected++
     if (p.alternatives.length) {
       cancel(false)
       show({ ...p, id: crypto.randomUUID(), proposal: p.alternatives[0], additions: [], alternatives: p.alternatives.slice(1) }, t('换个小主意，看看这个怎么样。', ref.current.locale), speak)
     } else void ask(t('请换一个和我的画有关的小主意。', ref.current.locale), true, feedback)
-  }, [ask, cancel, remember, say, show, valid])
+  }, [ask, cancel, rememberPlan, say, show, valid])
   const edit = useCallback((patch: Partial<DrawingProposal>, speak = false) => {
     if (!ref.current.enabled) return
     if (phaseRef.current !== 'projected') { ref.current.onSpeak(''); return }
@@ -279,7 +292,7 @@ export function useCompanion(options: Options) {
       else if (command === 'up' || command === 'down') edit({ y: p.y + (command === 'up' ? -.035 : .035) }, speak)
       return
     }
-    const requestsDrawing = /帮.*画|请.*画|你.*画|你来|轮到你|添|加.*(点|个|一)|画.*给我|\b(draw|add)\b|your turn|help.*(paint|sketch)/i.test(text)
+    const requestsDrawing = /帮.*画|请.*画|你.*画|你来|轮到你|添|加.*(点|个|一)|画.*给我|^(?:请|帮我|给我)?\s*(?:画|绘制)(?:一|个|只|条|座|点|些|辆|架|幅|张)|\b(draw|add)\b|your turn|help.*(paint|sketch)/i.test(text)
     const editsPreview = !!p && /放到|移到|挪到|改成|换成|换一|变成|变大|变小|靠近|\b(move|make|change|replace|put)\b/i.test(text)
     const requestDrawing = requestsDrawing || editsPreview
     void ask(text, requestDrawing, feedback)

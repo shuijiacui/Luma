@@ -20,7 +20,7 @@ test('one visual request returns a grounded preview and child-authored theme wit
   expect(result.theme).toBe('去月球的飞船')
   expect(vision).toHaveBeenCalledTimes(1)
   expect(text).not.toHaveBeenCalled()
-  expect(vision.mock.calls[0][2]).toMatchObject({ maxTokens: 1800, retries: 0, privateContent: true, kind: 'nilo_companion_vision' })
+  expect(vision.mock.calls[0][2]).toMatchObject({ maxTokens: 3600, retries: 0, privateContent: true, kind: 'nilo_companion_vision' })
   expect(vision.mock.calls[0][1]).toContain('never invent a theme from Nilo')
 })
 
@@ -29,6 +29,7 @@ test('text-only dialogue cannot invent a placement and does not call vision', as
   const text = vi.fn(async () => RESPONSE)
   const result = await generateNiloDialogue({ context: { ...CONTEXT, requestDrawing: false }, chatWithImage: vision, chatText: text })
   expect(text).toHaveBeenCalledTimes(1)
+  expect(text.mock.calls[0][1]).toMatchObject({ maxTokens: 1800, retries: 0 })
   expect(vision).not.toHaveBeenCalled()
   expect(result.proposal).toBeUndefined()
   expect(result.alternatives).toBeUndefined()
@@ -243,7 +244,7 @@ test('a coherent preview can include up to three additions in one model call wit
   expect(result.alternatives).toBeUndefined()
   expect(model).toHaveBeenCalledTimes(1)
   expect(model.mock.calls[0][1]).toContain('AS A GROUP')
-  expect(model.mock.calls[0][2]).toMatchObject({ retries: 0, maxTokens: 1800 })
+  expect(model.mock.calls[0][2]).toMatchObject({ retries: 0, maxTokens: 3600 })
 })
 
 test('invalid groups fail atomically; chat, stop and image absence cannot leak additions', () => {
@@ -330,4 +331,99 @@ test('model-call timeout defaults to 18 seconds and cannot exceed 25 seconds', a
     await generateNiloDialogue({ imageBase64: PNG, context: CONTEXT, timeoutMs: 100000, chatWithImage: async () => RESPONSE })
     expect(schedule.mock.calls.at(-1)[1]).toBe(25000)
   } finally { schedule.mockRestore() }
+})
+
+const ROCKET = {
+  ...PROPOSAL, template: 'custom', subject: '火箭', width: .13, height: .2, x: .2, y: .2,
+  target: '孩子要画的火箭', relation: '在空白区域预览火箭的轮廓、舷窗和尾翼',
+  sketch: { aspect: .65, paths: [
+    [['M', .5, .05], ['Q', .12, .3, .22, .78], ['L', .78, .78], ['Q', .88, .3, .5, .05], ['Z']],
+    [['E', .5, .4, .12, .09]],
+    [['M', .22, .6], ['L', .05, .92], ['L', .27, .83]],
+    [['M', .78, .6], ['L', .95, .92], ['L', .73, .83]],
+  ] },
+}
+
+test('custom preview preserves subject, curves, inherited style and strict confirmation boundary through the route', async () => {
+  const vision = vi.fn(async () => ({ reply: '先看看这个火箭投影，你想留下吗？', proposal: { ...ROCKET, subject: '  火箭  ' } }))
+  const response = await request(app({ chatWithImage: vision })).post('/nilo/companion').send({ imageBase64: PNG, context: { ...CONTEXT, utterance: '帮我画一个火箭', drawingStyle: { brushKind: 'crayon', color: '#c85624', brushSize: 11.5 } } })
+  expect(response.status).toBe(200)
+  expect(response.body).toMatchObject({ status: 'ready', proposal: { template: 'custom', subject: '火箭', color: '#c85624', strokeWidth: 11.5, brushKind: 'crayon', sketch: ROCKET.sketch } })
+  expect(response.body.accept).toBeUndefined()
+  expect(vision).toHaveBeenCalledTimes(1)
+  expect(vision.mock.calls[0][2]).toMatchObject({ maxTokens: 3600, retries: 0, privateContent: true })
+  expect(validateDialogue({ reply: '看看这个', proposal: ROCKET, accept: true }, CONTEXT, true)).toBeNull()
+  expect(validateDialogue({ reply: '看看这个', proposal: ROCKET }, { ...CONTEXT, requestDrawing: false }, true)).not.toHaveProperty('proposal')
+})
+
+test('custom objects require a subject and strict geometry; built-ins forbid custom-only fields', () => {
+  expect(NILO_TEMPLATES).toContain('custom')
+  for (const change of [{ subject: undefined }, { subject: '' }, { subject: ' ' }, { subject: 'a'.repeat(61) }, { subject: 'a\u0000b' }, { sketch: undefined }, { sketch: { ...ROCKET.sketch, svg: '<svg>' } }, { sketch: { aspect: .65, paths: [[['M', .2, .2], ['L', .2, .2]]] } }, { echoPoints: [{ x: .1, y: .1 }, { x: .2, y: .2 }] }, { target: '' }, { relation: '' }, { color: 'red' }, { x: -.1 }]) expect(validateProposal({ ...ROCKET, ...change })).toBeNull()
+  expect(validateProposal({ ...ROCKET, subject: 'a'.repeat(60) })).not.toBeNull()
+  expect(validateProposal({ ...PROPOSAL, subject: 'flame' })).toBeNull()
+  expect(validateProposal({ ...PROPOSAL, sketch: ROCKET.sketch })).toBeNull()
+  expect(validateProposal({ ...PROPOSAL, subject: undefined })).toBeNull()
+})
+
+test('subject memory is bounded and exact rejection of one object never disables all custom drawings', () => {
+  const context = sanitizeDialogueContext({ ...CONTEXT, recentSubjects: ['老虎', '火箭', '  恐龙  ', '房车', '机器人', ' ', 2, 'x'.repeat(61)], rejectedSubjects: ['  火箭  ', '火箭', ''], recentTemplates: ['custom', 'boat'], rejectedTemplates: ['custom', 'fish'], currentProposal: ROCKET, currentAdditions: [{ ...ROCKET, subject: '卫星' }] })
+  expect(context.recentSubjects).toEqual(['火箭', '恐龙', '房车', '机器人'])
+  expect(context.rejectedSubjects).toEqual(['火箭'])
+  expect(context.recentTemplates).toEqual(['boat'])
+  expect(context.rejectedTemplates).toEqual(['fish'])
+  expect(context.currentProposal.sketch).toEqual(ROCKET.sketch)
+  expect(context.currentAdditions[0].subject).toBe('卫星')
+  expect(validateProposal(ROCKET, context)).toBeNull()
+  expect(validateProposal({ ...ROCKET, subject: '卫星' }, context)).not.toBeNull()
+  expect(validateProposal(ROCKET, { ...context, utterance: '还是帮我画火箭吧' })).not.toBeNull()
+  expect(validateProposal(ROCKET, { ...context, utterance: '不要火箭' })).toBeNull()
+  expect(validateProposal(ROCKET, { rejectedTemplates: ['custom'] })).not.toBeNull()
+  const english = { ...ROCKET, subject: 'robot' }
+  expect(validateProposal(english, { rejectedSubjects: ['robot'], utterance: 'draw a robot again' })).not.toBeNull()
+  expect(validateProposal(english, { rejectedSubjects: ['robot'], utterance: 'do not draw a robot' })).toBeNull()
+})
+
+test('custom subjects support distinct alternatives and editing retains each member sketch and style', () => {
+  const other = { ...ROCKET, subject: '卫星', color: '#7755aa', brushKind: 'pencil', strokeWidth: 8.5 }
+  const result = validateDialogue({ reply: '先看看投影', proposal: ROCKET, alternatives: [other] }, CONTEXT, true)
+  expect(result.alternatives[0].subject).toBe('卫星')
+  expect(validateDialogue({ reply: '先看看投影', proposal: ROCKET, alternatives: [ROCKET] }, CONTEXT, true)).not.toHaveProperty('alternatives')
+  const context = sanitizeDialogueContext({ ...CONTEXT, currentProposal: ROCKET, currentAdditions: [other] })
+  const edited = validateDialogue({ reply: '调好了投影', proposal: { ...ROCKET, x: .4 }, additions: [{ ...other, color: '#ff0000', strokeWidth: 2, brushKind: 'marker' }] }, context, true)
+  expect(edited.additions[0]).toMatchObject({ subject: '卫星', color: '#7755aa', strokeWidth: 8.5, brushKind: 'pencil', sketch: other.sketch })
+})
+
+test('custom group command and final-stroke limits reject the entire response rather than drop object parts', () => {
+  const line = () => [['M', .1, .1], ['L', .8, .8]]
+  const withPaths = count => ({ ...ROCKET, sketch: { aspect: .65, paths: Array.from({ length: count }, line) } })
+  const response = { reply: '看看这一组投影', proposal: withPaths(24), additions: [withPaths(24), withPaths(16)] }
+  expect(validateDialogue(response, CONTEXT, true).additions).toHaveLength(2)
+  expect(validateDialogue({ ...response, additions: [withPaths(24), withPaths(17)] }, CONTEXT, true)).toBeNull()
+  const path = [['M', .1, .1], ...Array.from({ length: 31 }, (_, i) => ['L', i % 2 ? .1 : .9, .8])]
+  const full = { ...ROCKET, sketch: { aspect: .65, paths: [path, path, path] } }
+  expect(validateDialogue({ ...response, proposal: full, additions: [full] }, CONTEXT, true)).not.toBeNull()
+  expect(validateDialogue({ ...response, proposal: full, additions: [full, withPaths(1)] }, CONTEXT, true)).toBeNull()
+  expect(validateDialogue({ ...response, proposal: ROCKET, additions: [{ ...ROCKET, subject: '' }] }, CONTEXT, true)).toBeNull()
+})
+
+test('prompt asks for recognizable non-template subjects and screen-aware detail without silently thinning the brush', () => {
+  const prompt = buildDialoguePrompt(sanitizeDialogueContext({ ...CONTEXT, utterance: '帮我画只恐龙', drawingStyle: { brushKind: 'crayon', color: '#00aabb', brushSize: 24 }, canvasSize: { width: 500, height: 300 }, rejectedSubjects: ['火箭'] }), true)
+  expect(prompt).toContain('dinosaur request needs the dinosaur\'s real recognizable structure, never a fish standing in for it')
+  expect(prompt).toContain('clear outer silhouette plus 2–5 identifying details')
+  expect(prompt).toContain('never secretly switch to a thinner brush')
+  expect(prompt).toContain('rx*sketch.aspect == ry')
+  expect(prompt).toContain('localWidth*sketch.aspect == localHeight')
+  expect(prompt).toContain('no more than 192 custom commands')
+  expect(prompt).toContain('Rejecting one custom subject NEVER disables all custom objects')
+  expect(prompt).toContain('"rejectedSubjects":["火箭"]')
+  expect(prompt).not.toContain('Never output arbitrary paths')
+})
+
+test('an invalid custom generation fails once with no arbitrary template fallback or paid retry', async () => {
+  const model = vi.fn(async () => ({ reply: '我给你画好了恐龙', proposal: { ...ROCKET, subject: '恐龙', sketch: { aspect: 1, paths: [['M .1 .2 L .5 .5']] } } }))
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: CONTEXT, chatWithImage: model })
+  expect(result).toMatchObject({ status: 'unavailable', reason: 'invalid_response' })
+  expect(result).not.toHaveProperty('proposal')
+  expect(result.reply).not.toContain('画好了')
+  expect(model).toHaveBeenCalledTimes(1)
 })
