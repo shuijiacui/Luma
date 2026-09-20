@@ -62,7 +62,18 @@ function render(points, size = 512) {
   const header = Buffer.alloc(13); header.writeUInt32BE(size); header.writeUInt32BE(size, 4); header[8] = 8; header[9] = 6
   const rows = Buffer.alloc((size * 4 + 1) * size)
   for (let y = 0; y < size; y++) pixels.copy(rows, y * (size * 4 + 1) + 1, y * size * 4, (y + 1) * size * 4)
-  return { png: Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]), grid: grid(8), occupancy: grid(64) }
+  const hasInkAt = (point, radius) => {
+    const cx = point.x * size, cy = point.y * size
+    for (let y = Math.max(0, Math.floor(cy-radius)); y < Math.min(size, Math.ceil(cy+radius)); y++) {
+      for (let x = Math.max(0, Math.floor(cx-radius)); x < Math.min(size, Math.ceil(cx+radius)); x++) {
+        if (pixels[(y*size+x)*4] >= 242) continue
+        const dx = Math.max(x-cx,cx-x-1,0), dy = Math.max(y-cy,cy-y-1,0)
+        if (Math.hypot(dx,dy) <= radius) return true
+      }
+    }
+    return false
+  }
+  return { png: Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]), grid: grid(8), occupancy: grid(256), hasInkAt }
 }
 const circle = Array.from({ length: 121 }, (_, i) => ({ x: .5 + .23 * Math.cos(i * Math.PI / 60), y: .5 + .23 * Math.sin(i * Math.PI / 60) }))
 const heart = Array.from({ length: 161 }, (_, i) => {
@@ -141,10 +152,11 @@ for (const [name, points] of Object.entries(cases).flatMap(entry => Array.from({
         const p = canvasTools.validateProposal(result?.proposal)
         if (!p) break
         const grounded = canvasTools.refineAttachment(p, document, 1)
-        prepared = canvasTools.prepareTurnProposal(grounded, raster.occupancy, 1, context.canvasSize)
+        const connected = !grounded.attachment || raster.hasInkAt(grounded.attachment, grounded.strokeWidth / 2 + .5)
+        prepared = connected ? canvasTools.prepareTurnProposal(grounded, raster.occupancy, 1, context.canvasSize) : null
         if (prepared || voice || attempt) break
         repairs++
-        result = await requestPlan({ ...context,renderFeedback:{reason:'ink_collision',proposal:grounded} })
+        result = await requestPlan({ ...context,renderFeedback:{reason:connected?'ink_collision':'detached_attachment',proposal:grounded} })
       }
       if (prepared) {
         if (!canvasTools.drawingPlanFits([prepared],raster.occupancy,1,context.canvasSize)) throw new Error('Prepared geometry failed final canvas check')

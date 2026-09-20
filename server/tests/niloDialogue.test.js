@@ -1,4 +1,5 @@
 import express from 'express'
+import { readFileSync } from 'node:fs'
 import request from 'supertest'
 import { expect, test, vi, afterEach } from 'vitest'
 import { createNiloRouter } from '../src/routes/nilo.js'
@@ -14,6 +15,44 @@ const REVIEW = { targetVisible: true, usesExistingDrawing: true, detailRelated: 
 const TURN_PROPOSAL = { ...PROPOSAL, anchor: { x: .3, y: .3, width: .3, height: .3 }, placement: 'below' }
 const TURN_RESPONSE = { ...RESPONSE, sceneType: 'object', grounding: GROUNDING, proposal: TURN_PROPOSAL }
 const turnVision = raw => vi.fn().mockResolvedValueOnce(raw).mockResolvedValueOnce(REVIEW)
+
+const drawingSkillNames = ['nilo-line-art', 'nilo-composition']
+function expectDrawingSkills(prompt, mode) {
+  expect(prompt).toContain(`<drawing-skills mode="${mode}">`)
+  for (const name of drawingSkillNames) {
+    const body = readFileSync(new URL(`../skills/${name}/SKILL.md`, import.meta.url), 'utf8')
+      .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trim()
+    expect(prompt.split(body)).toHaveLength(2)
+  }
+}
+
+test('runtime drawing skills reach initial planning, correction and visual review requests', async () => {
+  const vision = vi.fn().mockResolvedValueOnce(TURN_RESPONSE)
+    .mockResolvedValueOnce({ ...REVIEW, placementCorrect: false })
+    .mockResolvedValueOnce(TURN_RESPONSE).mockResolvedValueOnce(REVIEW)
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true }, chatWithImage: vision })
+  expect(result.proposal).toBeTruthy()
+  expect(vision).toHaveBeenCalledTimes(4)
+  for (const index of [0, 2]) expectDrawingSkills(vision.mock.calls[index][1], 'plan')
+  for (const index of [1, 3]) expectDrawingSkills(vision.mock.calls[index][1], 'review')
+})
+
+test.each([true, false])('voice drawing loads runtime skills with explicit permission=%s', async requestDrawing => {
+  const vision = vi.fn().mockResolvedValue({ ...RESPONSE, intent: 'draw', confidence: .9 })
+  const result = await generateNiloDialogue({ imageBase64: PNG,
+    context: { ...CONTEXT, utterance: '帮飞船加一点尾焰', requestDrawing, inferDrawingIntent: !requestDrawing }, chatWithImage: vision })
+  expect(result.proposal).toBeTruthy()
+  expectDrawingSkills(vision.mock.calls[0][1], 'plan')
+})
+
+test.each([true, false])('drawing skills do not turn ordinary conversation into drawing (image=%s)', async hasImage => {
+  const model = vi.fn().mockResolvedValue({ intent: 'chat', reply: '我在看你画。' })
+  const result = await generateNiloDialogue({ ...(hasImage ? { imageBase64: PNG } : {}),
+    context: { ...CONTEXT, requestDrawing: false, utterance: '你好' }, chatWithImage: model, chatText: model })
+  expect(result.proposal).toBeUndefined()
+  expect(model).toHaveBeenCalledOnce()
+  expect(model.mock.calls[0][hasImage ? 1 : 0]).not.toContain('<drawing-skills')
+})
 
 test.each([undefined, 'chat', 'clarify', 'draw'])('drawing requests never return an execution claim without geometry (%s)', intent => {
   const caption = '我在右边的形状上加了一个小翻页，它看起来更像一本打开的书了。'
@@ -31,12 +70,12 @@ test('a text-only click result is repaired within the same turn and reviewed bef
   expect(vision.mock.calls[1][1]).toContain('missing_proposal')
 })
 
-test('a rejected canvas placement is supplied to repair and cannot bypass visual review', async () => {
-  const context = { ...CONTEXT, takeTurn: true, renderFeedback: { reason: 'ink_collision', proposal: TURN_PROPOSAL } }
-  expect(sanitizeDialogueContext(context).renderFeedback).toMatchObject({ reason: 'ink_collision', proposal: { template: 'flame' } })
+test.each(['ink_collision', 'detached_attachment'])('a rejected canvas placement (%s) is supplied to repair and cannot bypass visual review', async reason => {
+  const context = { ...CONTEXT, takeTurn: true, renderFeedback: { reason, proposal: TURN_PROPOSAL } }
+  expect(sanitizeDialogueContext(context).renderFeedback).toMatchObject({ reason, proposal: { template: 'flame' } })
   const vision = vi.fn().mockResolvedValueOnce(TURN_RESPONSE).mockResolvedValueOnce({ ...REVIEW, placementCorrect: false })
   const result = await generateNiloDialogue({ imageBase64: PNG, context, chatWithImage: vision })
-  expect(vision.mock.calls[0][1]).toContain('ink_collision')
+  expect(vision.mock.calls[0][1]).toContain(reason)
   expect(vision.mock.calls[0][1]).toContain('REJECTED_CANDIDATE_DATA')
   expect(result.proposal).toBeUndefined()
   expect(vision).toHaveBeenCalledTimes(2)

@@ -5,6 +5,30 @@ const proposal: DrawingProposal = { template: 'flame', x: .3, y: .5, width: .15,
 const empty = () => Array(32 * 32).fill(0)
 vi.mock('../../server/src/services/tracing.js', () => ({traceNode:vi.fn(),traceLLM:vi.fn()}))
 
+test('an open click can grow the same attached part on the clear side without moving its joint', () => {
+  const grid = Array(256 * 256).fill(0)
+  for (let row = 26; row < 103; row++) grid[row * 256 + 128] = 1
+  for (let row = 38; row < 82; row++) for (let col = 135; col < 190; col++) grid[row * 256 + col] = 1
+  const leaf: DrawingProposal = { ...proposal, template: 'custom', subject: '叶片', target: '梗', relation: '从梗向右伸展',
+    x: .5, y: .225, width: .16, height: .1, strokeWidth: 4,
+    anchor: { x: .4, y: .1, width: .2, height: .4 }, placement: 'right', attachment: { x: .5, y: .3 },
+    sketch: { aspect: 1.6, paths: [[['M', 0, .75], ['L', .25, .65]],
+      [['M', .25, .65], ['Q', .45, .15, 1, .15], ['Q', .9, .85, .25, .65], ['Z']]] } }
+  const size = { width: 512, height: 512 }
+  expect(prepareProposal(leaf, grid, 1, size)).toBeNull() // Explicit voice/edit direction stays fixed.
+  const fitted = prepareTurnProposal(leaf, grid, 1, size)!
+  expect(fitted).not.toBeNull()
+  expect(fitted.placement).toBe('left')
+  expect(fitted.target).toBe(leaf.target)
+  expect(fitted.attachment).toEqual(leaf.attachment)
+  const strokes = proposalStrokes(fitted)
+  expect(strokes[0].points[0].x).toBeCloseTo(.5)
+  expect(strokes[0].points[0].y).toBeCloseTo(.3)
+  expect(strokes.flatMap(s => s.points).every(p => p.x <= .5)).toBe(true)
+  expect(drawingPlanFits([fitted], grid, 1, size)).toBe(true)
+  expect(prepareTurnProposal(leaf, Array(256 * 256).fill(1), 1, size)).toBeNull()
+})
+
 test('a server-compiled leaf at the top edge reaches a drawable, connected client plan', async () => {
   const { compileTurnReply } = await import('../../server/src/services/niloDialogue.js')
   const compiled = compileTurnReply({sceneType:'object',grounding:{confidence:.9},reply:'添一片叶子',proposal:{

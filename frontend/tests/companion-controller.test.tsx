@@ -44,6 +44,7 @@ function setup(initial = { ownerId: 'child-a', artworkId: 'work-a' as string | u
   const onSpeak = vi.fn(), onCommitted = vi.fn(), onUnavailable = vi.fn()
   const commit = vi.fn(() => { state.revision++; return true })
   const canvas = { current: {
+    hasInkAt: vi.fn(() => true),
     getRevision: () => state.revision, getOccupancy: vi.fn(() => state.occupancy), getInkGrid: vi.fn((size = 8) => Array(size * size).fill(0)),
     getLastStroke: () => ({ points: Array.from({ length: 120 }, (_, i) => ({ x: i / 200, y: i / 200 })), color: '#123456', width: 4 }),
     getDocument: () => state.document, getCompanionScene: vi.fn(() => state.scene),
@@ -61,6 +62,47 @@ async function project(hook: ReturnType<typeof setup>) {
   act(() => vi.advanceTimersByTime(550))
   expect(hook.result.current.phase).toBe('projected')
 }
+
+test('an apparent grid contact with a visible pixel gap is repaired instead of committed', async () => {
+  const hook = setup()
+  const detached: DrawingProposal = { ...proposal, template: 'custom', subject: '叶片',
+    x: .332, y: .2, width: .15, height: .1, strokeWidth: 2,
+    anchor: { x: .45, y: .1, width: .1, height: .3 }, placement: 'left', attachment: { x: .482, y: .3 },
+    sketch: { aspect: 2.25, paths: [[['M', 1, 1], ['L', 0, 0]]] } }
+  hook.state.occupancy[19 * 64 + 31] = .1
+  vi.mocked(hook.canvas.current.hasInkAt).mockReturnValue(false)
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '接叶片', proposal: detached })
+    .mockResolvedValueOnce({ reply: '连接位置不确定', status: 'clarify' })
+  await act(async () => { await hook.result.current.takeTurn() })
+  act(() => vi.advanceTimersByTime(1200))
+  expect(authFetch).toHaveBeenCalledTimes(2)
+  expect(vi.mocked(authFetch).mock.calls[1][1]?.body).toMatchObject({ context: { renderFeedback: { reason: 'detached_attachment' } } })
+  expect(hook.commit).not.toHaveBeenCalled()
+  expect(hook.result.current.projection).toBeNull()
+})
+
+test('a slightly misplaced model joint snaps to actual child ink and commits without another API call', async () => {
+  const hook = setup()
+  hook.state.document.operations = [{ type: 'stroke', owner: 'child', groupId: 'stem', eraser: false,
+    brushKind: 'round', color: '#20352f', size: 6, referenceWidth: 900, referenceHeight: 600,
+    points: [{ x: .5, y: .15 }, { x: .5, y: .4 }] }]
+  hook.state.occupancy = Array(256 * 256).fill(0)
+  for (let row = 38; row < 103; row++) hook.state.occupancy[row * 256 + 128] = .8
+  vi.mocked(hook.canvas.current.hasInkAt).mockImplementation(point => Math.abs(point.x - .5) < .001)
+  const p: DrawingProposal = { ...proposal, template: 'custom', subject: '叶片',
+    x: .485, y: .21, width: .12, height: .12, strokeWidth: 2,
+    anchor: { x: .45, y: .1, width: .1, height: .35 }, placement: 'right', attachment: { x: .485, y: .3 },
+    sketch: { aspect: 1.5, paths: [[['M', 0, .75], ['L', 1, 0]]] } }
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '接一片叶子', proposal: p })
+    .mockResolvedValueOnce({ reply: '没有找到', status: 'clarify' })
+  await act(async () => { await hook.result.current.takeTurn() })
+  act(() => vi.advanceTimersByTime(1200))
+  expect(hook.commit).toHaveBeenCalledOnce()
+  expect(authFetch).toHaveBeenCalledOnce()
+  expect(hook.canvas.current.getOccupancy).toHaveBeenCalledWith(256)
+  expect(hook.commit.mock.calls[0][0][0].points[0].x).toBeCloseTo(.5)
+  expect(hook.commit.mock.calls[0][0][0].points[0].y).toBeCloseTo(.3)
+})
 
 test('an explicit Nilo click animates then commits one checked contribution without confirmation or speech', async () => {
   const hook = setup()
@@ -352,7 +394,7 @@ test('co-creation requests use the confirmed composite image and scene with sepa
   expect(body.context.inkGrid).toHaveLength(64)
   expect(hook.canvas.current.exportObservation).not.toHaveBeenCalled()
   expect(hook.canvas.current.exportCompanionObservation).toHaveBeenCalledOnce()
-  expect(hook.canvas.current.getOccupancy).toHaveBeenCalledWith(64)
+  expect(hook.canvas.current.getOccupancy).toHaveBeenCalledWith(256)
 })
 
 test('cancelled, revised and hidden-canvas requests never expose a stale projection', async () => {

@@ -23,10 +23,11 @@ export interface DrawingProposal {
   /** Child-authored source samples, supplied by the server for echo only. */
   echoPoints?: { x: number; y: number }[]
 }
+export const clarificationReasons = ['unclear_target', 'misplaced_detail', 'duplicate_detail', 'unrelated_detail', 'uncertain_review', 'invalid_review', 'wrong_target'] as const
 export interface CompanionReply {
   reply: string
   status?: 'ready' | 'clarify' | 'unavailable'
-  reason?: 'model_unavailable' | 'timeout' | 'provider_error' | 'invalid_response' | 'missing_image'
+  reason?: 'model_unavailable' | 'timeout' | 'provider_error' | 'invalid_response' | 'missing_image' | typeof clarificationReasons[number]
   retryable?: boolean
   theme?: string
   proposal?: DrawingProposal
@@ -239,8 +240,11 @@ export function projectionFits(p: DrawingProposal, occupancy: number[], aspect =
   const start = proposalStrokes(p, aspect)[0]?.points[0]
   if (!start || Math.hypot(start.x - p.attachment.x, start.y - p.attachment.y) > .0001) return false
   const margin = brushMargins(p, n, surfaceSize)
-  const atJoin = (cell: number) => Math.abs((cell % n + .5) / n - p.attachment!.x) <= margin.x + 1 / n
-    && Math.abs((Math.floor(cell / n) + .5) / n - p.attachment!.y) <= margin.y + 1 / n
+  // Each of the two rasterized strokes can occupy a boundary cell at the
+  // intended joint. Outside this small joint region collisions still fail.
+  // The controller separately verifies exact pixel contact before committing.
+  const atJoin = (cell: number) => Math.abs((cell % n + .5) / n - p.attachment!.x) <= margin.x + 2 / n
+    && Math.abs((Math.floor(cell / n) + .5) / n - p.attachment!.y) <= margin.y + 2 / n
   // Declaring an attachment is not enough: its start must actually meet ink.
   if (![...cells].some(cell => occupancy[cell] > .025 && atJoin(cell))) return false
   // Only the join may touch old ink; the rest of the new part remains collision checked.
@@ -338,7 +342,20 @@ export function prepareProposal(value: DrawingProposal, occupancy: number[], asp
 export function prepareTurnProposal(value: DrawingProposal, occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize): DrawingProposal | null {
   let p = validateProposal(value)
   if (!p || !Number.isFinite(aspect) || aspect <= 0 || !occupancySize(occupancy)) return null
-  if (p.attachment) return prepareAttachedProposal(p, occupancy, aspect, surfaceSize)
+  if (p.attachment) {
+    const fitted = prepareAttachedProposal(p, occupancy, aspect, surfaceSize)
+    if (fitted || !['left', 'right'].includes(p.placement ?? '')) return fitted
+    // An open click permits the same part to grow on the other side of its
+    // fixed joint. Explicit voice/edit plans use prepareProposal and never flip.
+    // No new subject, new junction, or unchecked collision is introduced.
+    const sketch = validateSketch({ aspect: p.sketch!.aspect, paths: p.sketch!.paths.map(path => path.map(command =>
+      command[0] === 'E' ? ['E', 1 - command[1], command[2], command[3], command[4]]
+        : command.map((value, index) => index % 2 === 1 && typeof value === 'number' ? 1 - value : value))) })
+    if (!sketch) return null
+    const mirrored: DrawingProposal = { ...p, sketch, placement: p.placement === 'left' ? 'right' : 'left',
+      relation: /[\u3400-\u9fff]/.test(p.relation ?? p.subject ?? '') ? '从同一连接点向另一侧延伸，避开已有线条' : 'Extend from the same joint on the other side, clear of existing lines.' }
+    return prepareAttachedProposal(mirrored, occupancy, aspect, surfaceSize)
+  }
   if (p.template === 'echo' && p.echoPoints) {
     // The actual source stroke is authoritative for an echo's bounds. A model
     // often labels just an endpoint as its anchor, shrinking the echo to a dot.

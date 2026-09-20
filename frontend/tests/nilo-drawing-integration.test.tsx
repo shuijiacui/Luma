@@ -113,6 +113,22 @@ function pointer(canvas: HTMLCanvasElement, type: string) {
 }
 function draw(canvas: HTMLCanvasElement) { pointer(canvas, 'pointerdown'); pointer(canvas, 'pointerup') }
 
+test('a recognition failure shows its specific question, releases the button, and permits the next drawing', async () => {
+  localStorage.setItem('luma_companion_mode:guest-child', 'together')
+  draw(prepare())
+  const question = '我还没看清刚画的这一部分。它是什么呀？'
+  companionReply = async () => ({ status: 'clarify', reason: 'unclear_target', reply: question })
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Nilo，你来画' })))
+  expect(screen.getByText(question)).toBeTruthy()
+  expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(false)
+  expect(operations().some(op => op.owner === 'nilo')).toBe(false)
+  companionReply = async () => proposed
+  await act(async () => vi.advanceTimersByTimeAsync(1600))
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Nilo，你来画' })))
+  await act(async () => vi.advanceTimersByTimeAsync(1200))
+  expect(operations().some(op => op.owner === 'nilo')).toBe(true)
+})
+
 test('ordinary undo removes the latest contribution in order, including all of Nilo’s paths, and persists it', async () => {
   localStorage.setItem('luma_companion_mode:guest-child', 'together')
   const canvas = prepare()
