@@ -1,0 +1,2350 @@
+{
+  "fixtureVersion": "nilo-ablation-v1",
+  "fixtureHash": "0e90fa27645ca238e535c5a246cafd9304de3d1e9f8c0990a02c072abafe4b76",
+  "runId": "2026-09-20T16-35-18-635Z",
+  "split": "first_live_frozen",
+  "live": true,
+  "modelEndpointPolicy": "All explicit model IDs use the existing configured provider; no automatic discovery or provider changes.",
+  "fixtureManifest": {
+    "version": "nilo-ablation-v1",
+    "sha256": "0e90fa27645ca238e535c5a246cafd9304de3d1e9f8c0990a02c072abafe4b76",
+    "source": "new synthetic paths authored for layered evaluation",
+    "privacy": "No child images, prompts, accounts or stored conversations.",
+    "freezePolicy": "Freeze before the first live run; any geometry/label change requires a new version and hash. Reruns are regression, not fresh holdout.",
+    "goldLabelStatus": "author_supplied_control_not_independent_human_review",
+    "cases": [
+      {
+        "id": "round_face",
+        "group": "person",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          },
+          {
+            "id": "contact_hat_points",
+            "expected": "accept",
+            "requires": "contact"
+          },
+          {
+            "id": "contact_hat_contour",
+            "expected": "accept",
+            "requires": "contact"
+          },
+          {
+            "id": "wrong_semantics",
+            "expected": "human_reject"
+          }
+        ]
+      },
+      {
+        "id": "wide_face",
+        "group": "person",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          },
+          {
+            "id": "contact_hat_points",
+            "expected": "accept",
+            "requires": "contact"
+          },
+          {
+            "id": "contact_hat_contour",
+            "expected": "accept",
+            "requires": "contact"
+          }
+        ]
+      },
+      {
+        "id": "tilted_face",
+        "group": "person",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          },
+          {
+            "id": "contact_hat_points",
+            "expected": "accept",
+            "requires": "contact"
+          },
+          {
+            "id": "contact_hat_contour",
+            "expected": "accept",
+            "requires": "contact"
+          }
+        ]
+      },
+      {
+        "id": "pointy_cat",
+        "group": "animal",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          },
+          {
+            "id": "attached_whisker",
+            "expected": "accept"
+          }
+        ]
+      },
+      {
+        "id": "long_dog",
+        "group": "animal",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "branch_tree",
+        "group": "plant",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tall_planter",
+        "group": "plant",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dining_chair",
+        "group": "object",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "small_bus",
+        "group": "vehicle",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sail_hull",
+        "group": "vehicle",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "invented_friend",
+        "group": "imaginary",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "linked_loops",
+        "group": "abstract",
+        "controls": [
+          {
+            "id": "positive",
+            "expected": "accept"
+          },
+          {
+            "id": "invalid_reference",
+            "expected": "reject",
+            "expectedCodes": [
+              "intent_reference"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "groups": [
+    {
+      "mode": "full",
+      "model": "deepseek-v4-flash-vision-exp",
+      "total": 12,
+      "executed": 12,
+      "notRun": 0,
+      "canvasPasses": 5,
+      "failures": {
+        "invalid_response": 2,
+        "unclear_target": 5
+      },
+      "latencyP50Ms": 4199,
+      "latencyP95Ms": 6850,
+      "calls": 32,
+      "tokenUsage": {
+        "knownCalls": 32,
+        "missingCalls": 0,
+        "totalTokens": 79627
+      },
+      "semanticPasses": null,
+      "semanticEvaluation": "Independent human review required; model self-review and geometry are not semantic accuracy."
+    },
+    {
+      "mode": "full",
+      "model": "deepseek-v4-pro",
+      "total": 12,
+      "executed": 12,
+      "notRun": 0,
+      "canvasPasses": 1,
+      "failures": {
+        "invalid_response": 6,
+        "unclear_target": 5
+      },
+      "latencyP50Ms": 10737,
+      "latencyP95Ms": 13612,
+      "calls": 39,
+      "tokenUsage": {
+        "knownCalls": 39,
+        "missingCalls": 0,
+        "totalTokens": 74470
+      },
+      "semanticPasses": null,
+      "semanticEvaluation": "Independent human review required; model self-review and geometry are not semantic accuracy."
+    },
+    {
+      "mode": "gold-scene",
+      "model": "deepseek-v4-flash-vision-exp",
+      "total": 12,
+      "executed": 12,
+      "notRun": 0,
+      "canvasPasses": 9,
+      "failures": {
+        "invalid_response": 1,
+        "unclear_target": 2
+      },
+      "latencyP50Ms": 2919,
+      "latencyP95Ms": 5631,
+      "calls": 31,
+      "tokenUsage": {
+        "knownCalls": 31,
+        "missingCalls": 0,
+        "totalTokens": 64463
+      },
+      "semanticPasses": null,
+      "semanticEvaluation": "Independent human review required; model self-review and geometry are not semantic accuracy."
+    },
+    {
+      "mode": "gold-scene",
+      "model": "deepseek-v4-pro",
+      "total": 12,
+      "executed": 12,
+      "notRun": 0,
+      "canvasPasses": 0,
+      "failures": {
+        "invalid_response": 9,
+        "unclear_target": 3
+      },
+      "latencyP50Ms": 7731,
+      "latencyP95Ms": 11792,
+      "calls": 35,
+      "tokenUsage": {
+        "knownCalls": 35,
+        "missingCalls": 0,
+        "totalTokens": 62328
+      },
+      "semanticPasses": null,
+      "semanticEvaluation": "Independent human review required; model self-review and geometry are not semantic accuracy."
+    }
+  ],
+  "notes": [
+    "full includes observation, planning and review; gold-scene receives the author-supplied scene, so its total latency/tokens cannot be directly compared with full.",
+    "All model turns share 14 seconds, at most 2 plans and 2 reviews: full normally 3, at most 5 provider calls; gold-scene normally 2, at most 4.",
+    "Gold-plan does not call a provider. It measures deterministic acceptance of author-designed geometry and known malformed controls, not model skill.",
+    "Every failure remains in its executed denominator. Missing usage stays null. No prices or cost estimates are invented.",
+    "Semantic negatives can pass geometry: this is reported as unreviewed, never semantic success."
+  ],
+  "assistantVisualInspection": {
+    "status": "not_independent_blind_review",
+    "samples": {
+      "round_face": "Bow on a stalk touches the head; recognizable decoration, naturalness needs child review.",
+      "wide_face": "Large hollow circle is described as a tiny mole; scale/style weak.",
+      "tall_planter": "Vein lies inside the visible right leaf and is plausibly related.",
+      "dining_chair": "Despite plausible rectangle placement, model calls the chair an easel/frame and the addition paper: identity error.",
+      "sail_hull": "Flag floats beside the sail rather than being attached to the mast: relation/placement error."
+    },
+    "conclusion": "Geometry 5/12 is not semantic success; the 80% meaningful co-creation target has NOT been demonstrated."
+  },
+  "decisions": {
+    "productionModel": "unchanged",
+    "reason": "Candidate model did not improve this bounded comparison; even with supplied correct scene it passed 0/12.",
+    "enabled": [
+      "measured multi-point/contour contact",
+      "semantic versus format repair",
+      "review without planner object names"
+    ],
+    "experimentalOnly": [
+      "32-grid waypoint compiler",
+      "relation before/after examples"
+    ],
+    "remaining": [
+      "observation and supporting-region mistakes",
+      "coarse contact-grid false rejection",
+      "self-review semantic misses"
+    ]
+  },
+  "contactResolutionExperiment": {
+    "experiment": "finer_contact_occupancy_readonly",
+    "fixtureVersion": "nilo-ablation-v1",
+    "fixtureHash": "0e90fa27645ca238e535c5a246cafd9304de3d1e9f8c0990a02c072abafe4b76",
+    "createdAt": "2026-09-20T16:41:00.480Z",
+    "methodology": [
+      "Production source, thresholds, wire API and frozen fixtures were not edited.",
+      "Each resolution comparison retains the exact compiled proposal and original raster within its source-size group.",
+      "512-source compares 256/512 grids; 1024-source is re-rendered from original synthetic vectors and compares 256/512/1024 grids. No upscaling or fake 1024 occupancy from a 512 image.",
+      "1024 scenes are remeasured/recompiled once, using canvasSize=1024 and the same CSS brush widths. Between-source differences therefore include physical stroke scale and remeasured contacts; compare map resolutions within each source group.",
+      "Original raster uses 4px round stroke at each source size; negatives are authored synthetic controls, not model quality claims."
+    ],
+    "groups": [
+      {
+        "sourceAndMap": "512/256",
+        "positivePass": 5,
+        "positives": 8,
+        "negativeFalseAccept": 0,
+        "negatives": 9
+      },
+      {
+        "sourceAndMap": "512/512",
+        "positivePass": 3,
+        "positives": 8,
+        "negativeFalseAccept": 0,
+        "negatives": 9
+      },
+      {
+        "sourceAndMap": "1024/256",
+        "positivePass": 5,
+        "positives": 8,
+        "negativeFalseAccept": 0,
+        "negatives": 9
+      },
+      {
+        "sourceAndMap": "1024/512",
+        "positivePass": 5,
+        "positives": 8,
+        "negativeFalseAccept": 0,
+        "negatives": 9
+      },
+      {
+        "sourceAndMap": "1024/1024",
+        "positivePass": 4,
+        "positives": 8,
+        "negativeFalseAccept": 0,
+        "negatives": 9
+      }
+    ],
+    "rows": [
+      {
+        "id": "round_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 6,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 1,
+          "cellCentersOutsideActualRoundBrush": 1,
+          "examples": [
+            {
+              "pixelX": 305,
+              "pixelY": 137,
+              "distanceToContactPx": 7.906,
+              "distanceToNewPathPx": 4.441
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 2.67
+      },
+      {
+        "id": "round_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4.5,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 5,
+          "cellCentersOutsideActualRoundBrush": 5,
+          "examples": [
+            {
+              "pixelX": 205.5,
+              "pixelY": 139.5,
+              "distanceToContactPx": 5.385,
+              "distanceToNewPathPx": 3.943
+            },
+            {
+              "pixelX": 205.5,
+              "pixelY": 140.5,
+              "distanceToContactPx": 5.099,
+              "distanceToNewPathPx": 4.304
+            },
+            {
+              "pixelX": 306.5,
+              "pixelY": 138.5,
+              "distanceToContactPx": 5.831,
+              "distanceToNewPathPx": 3.583
+            },
+            {
+              "pixelX": 306.5,
+              "pixelY": 139.5,
+              "distanceToContactPx": 5.385,
+              "distanceToNewPathPx": 3.943
+            },
+            {
+              "pixelX": 306.5,
+              "pixelY": 140.5,
+              "distanceToContactPx": 5.099,
+              "distanceToNewPathPx": 4.304
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 1.99
+      },
+      {
+        "id": "round_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 1.75
+      },
+      {
+        "id": "round_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4.5,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 1,
+          "cellCentersOutsideActualRoundBrush": 1,
+          "examples": [
+            {
+              "pixelX": 229.5,
+              "pixelY": 134.5,
+              "distanceToContactPx": 4.502,
+              "distanceToNewPathPx": 4.336
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 3.57
+      },
+      {
+        "id": "wide_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 0.62
+      },
+      {
+        "id": "wide_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4.5,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 2,
+          "cellCentersOutsideActualRoundBrush": 2,
+          "examples": [
+            {
+              "pixelX": 204.5,
+              "pixelY": 152.5,
+              "distanceToContactPx": 5.099,
+              "distanceToNewPathPx": 4.304
+            },
+            {
+              "pixelX": 307.5,
+              "pixelY": 152.5,
+              "distanceToContactPx": 5.099,
+              "distanceToNewPathPx": 4.304
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 2.12
+      },
+      {
+        "id": "wide_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 0.59
+      },
+      {
+        "id": "wide_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 2.52
+      },
+      {
+        "id": "tilted_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 6,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 4,
+          "cellCentersOutsideActualRoundBrush": 4,
+          "examples": [
+            {
+              "pixelX": 209,
+              "pixelY": 135,
+              "distanceToContactPx": 8.515,
+              "distanceToNewPathPx": 3.092
+            },
+            {
+              "pixelX": 209,
+              "pixelY": 137,
+              "distanceToContactPx": 7.106,
+              "distanceToNewPathPx": 3.742
+            },
+            {
+              "pixelX": 209,
+              "pixelY": 139,
+              "distanceToContactPx": 6.042,
+              "distanceToNewPathPx": 4.391
+            },
+            {
+              "pixelX": 303,
+              "pixelY": 113,
+              "distanceToContactPx": 6.042,
+              "distanceToNewPathPx": 4.128
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 1.05
+      },
+      {
+        "id": "tilted_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4.5,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 11,
+          "cellCentersOutsideActualRoundBrush": 11,
+          "examples": [
+            {
+              "pixelX": 207.5,
+              "pixelY": 137.5,
+              "distanceToContactPx": 5.657,
+              "distanceToNewPathPx": 2.485
+            },
+            {
+              "pixelX": 207.5,
+              "pixelY": 138.5,
+              "distanceToContactPx": 5,
+              "distanceToNewPathPx": 2.81
+            },
+            {
+              "pixelX": 208.5,
+              "pixelY": 136.5,
+              "distanceToContactPx": 7.071,
+              "distanceToNewPathPx": 3.106
+            },
+            {
+              "pixelX": 208.5,
+              "pixelY": 137.5,
+              "distanceToContactPx": 6.403,
+              "distanceToNewPathPx": 3.431
+            },
+            {
+              "pixelX": 208.5,
+              "pixelY": 138.5,
+              "distanceToContactPx": 5.831,
+              "distanceToNewPathPx": 3.756
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 2.3
+      },
+      {
+        "id": "tilted_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 0.57
+      },
+      {
+        "id": "tilted_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 2.15
+      },
+      {
+        "id": "round_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 9,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 2,
+          "cellCentersOutsideActualRoundBrush": 2,
+          "examples": [
+            {
+              "pixelX": 410,
+              "pixelY": 278,
+              "distanceToContactPx": 10.7,
+              "distanceToNewPathPx": 5.586
+            },
+            {
+              "pixelX": 614,
+              "pixelY": 278,
+              "distanceToContactPx": 10.7,
+              "distanceToNewPathPx": 5.586
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 1.35
+      },
+      {
+        "id": "round_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 6,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 3,
+          "cellCentersOutsideActualRoundBrush": 3,
+          "examples": [
+            {
+              "pixelX": 407,
+              "pixelY": 281,
+              "distanceToContactPx": 6.519,
+              "distanceToNewPathPx": 3.869
+            },
+            {
+              "pixelX": 615,
+              "pixelY": 279,
+              "distanceToContactPx": 9.301,
+              "distanceToNewPathPx": 5.014
+            },
+            {
+              "pixelX": 617,
+              "pixelY": 281,
+              "distanceToContactPx": 6.519,
+              "distanceToNewPathPx": 3.869
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 2.12
+      },
+      {
+        "id": "round_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4.5,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 8,
+          "cellCentersOutsideActualRoundBrush": 8,
+          "examples": [
+            {
+              "pixelX": 406.5,
+              "pixelY": 281.5,
+              "distanceToContactPx": 5.831,
+              "distanceToNewPathPx": 3.583
+            },
+            {
+              "pixelX": 406.5,
+              "pixelY": 282.5,
+              "distanceToContactPx": 5.385,
+              "distanceToNewPathPx": 3.943
+            },
+            {
+              "pixelX": 406.5,
+              "pixelY": 283.5,
+              "distanceToContactPx": 5.099,
+              "distanceToNewPathPx": 4.304
+            },
+            {
+              "pixelX": 616.5,
+              "pixelY": 280.5,
+              "distanceToContactPx": 7.211,
+              "distanceToNewPathPx": 4.155
+            },
+            {
+              "pixelX": 617.5,
+              "pixelY": 281.5,
+              "distanceToContactPx": 5.831,
+              "distanceToNewPathPx": 3.583
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 7.65
+      },
+      {
+        "id": "round_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 0.63
+      },
+      {
+        "id": "round_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 3.28
+      },
+      {
+        "id": "round_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 8.18
+      },
+      {
+        "id": "wide_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 0.33
+      },
+      {
+        "id": "wide_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 1.19
+      },
+      {
+        "id": "wide_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4.5,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 2,
+          "cellCentersOutsideActualRoundBrush": 2,
+          "examples": [
+            {
+              "pixelX": 404.5,
+              "pixelY": 307.5,
+              "distanceToContactPx": 5.099,
+              "distanceToNewPathPx": 4.304
+            },
+            {
+              "pixelX": 619.5,
+              "pixelY": 307.5,
+              "distanceToContactPx": 5.099,
+              "distanceToNewPathPx": 4.304
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 7.57
+      },
+      {
+        "id": "wide_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 0.72
+      },
+      {
+        "id": "wide_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 4.15
+      },
+      {
+        "id": "wide_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 9.01
+      },
+      {
+        "id": "tilted_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 9,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 2,
+          "cellCentersOutsideActualRoundBrush": 2,
+          "examples": [
+            {
+              "pixelX": 414,
+              "pixelY": 274,
+              "distanceToContactPx": 12.104,
+              "distanceToNewPathPx": 3.99
+            },
+            {
+              "pixelX": 414,
+              "pixelY": 278,
+              "distanceToContactPx": 9.301,
+              "distanceToNewPathPx": 5.295
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 0.7
+      },
+      {
+        "id": "tilted_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 6,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 3,
+          "cellCentersOutsideActualRoundBrush": 3,
+          "examples": [
+            {
+              "pixelX": 411,
+              "pixelY": 279,
+              "distanceToContactPx": 6.364,
+              "distanceToNewPathPx": 2.785
+            },
+            {
+              "pixelX": 413,
+              "pixelY": 277,
+              "distanceToContactPx": 9.192,
+              "distanceToNewPathPx": 4.023
+            },
+            {
+              "pixelX": 413,
+              "pixelY": 279,
+              "distanceToContactPx": 7.906,
+              "distanceToNewPathPx": 4.676
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 2.15
+      },
+      {
+        "id": "tilted_face/contact_hat_points",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4.5,
+          "roundBrushRadiusPx": 2,
+          "squareFootprintOutsideCells": 9,
+          "cellCentersOutsideActualRoundBrush": 9,
+          "examples": [
+            {
+              "pixelX": 410.5,
+              "pixelY": 280.5,
+              "distanceToContactPx": 5,
+              "distanceToNewPathPx": 2.802
+            },
+            {
+              "pixelX": 411.5,
+              "pixelY": 279.5,
+              "distanceToContactPx": 6.403,
+              "distanceToNewPathPx": 3.421
+            },
+            {
+              "pixelX": 411.5,
+              "pixelY": 280.5,
+              "distanceToContactPx": 5.831,
+              "distanceToNewPathPx": 3.747
+            },
+            {
+              "pixelX": 411.5,
+              "pixelY": 281.5,
+              "distanceToContactPx": 5.385,
+              "distanceToNewPathPx": 4.074
+            },
+            {
+              "pixelX": 412.5,
+              "pixelY": 278.5,
+              "distanceToContactPx": 7.81,
+              "distanceToNewPathPx": 4.04
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 9.63
+      },
+      {
+        "id": "tilted_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 0.64
+      },
+      {
+        "id": "tilted_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 2.05
+      },
+      {
+        "id": "tilted_face/contact_hat_contour",
+        "origin": "frozen_gold_plan",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 8.78
+      },
+      {
+        "id": "unit_hat_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 5.5,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 2,
+          "cellCentersOutsideActualRoundBrush": 2,
+          "examples": [
+            {
+              "pixelX": 159,
+              "pixelY": 229,
+              "distanceToContactPx": 5.579,
+              "distanceToNewPathPx": 3.48
+            },
+            {
+              "pixelX": 301,
+              "pixelY": 229,
+              "distanceToContactPx": 6.356,
+              "distanceToNewPathPx": 4.12
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 0.99
+      },
+      {
+        "id": "unit_hat_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 13,
+          "cellCentersOutsideActualRoundBrush": 13,
+          "examples": [
+            {
+              "pixelX": 157.5,
+              "pixelY": 228.5,
+              "distanceToContactPx": 4.338,
+              "distanceToNewPathPx": 1.98
+            },
+            {
+              "pixelX": 157.5,
+              "pixelY": 229.5,
+              "distanceToContactPx": 4.002,
+              "distanceToNewPathPx": 2.58
+            },
+            {
+              "pixelX": 157.5,
+              "pixelY": 231.5,
+              "distanceToContactPx": 4.052,
+              "distanceToNewPathPx": 3.78
+            },
+            {
+              "pixelX": 158.5,
+              "pixelY": 228.5,
+              "distanceToContactPx": 5.255,
+              "distanceToNewPathPx": 2.78
+            },
+            {
+              "pixelX": 158.5,
+              "pixelY": 229.5,
+              "distanceToContactPx": 4.982,
+              "distanceToNewPathPx": 3.38
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 2.13
+      },
+      {
+        "id": "unit_brim_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 0.52
+      },
+      {
+        "id": "unit_brim_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 1.82
+      },
+      {
+        "id": "unrelated_ink_crossing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 5.5,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 11,
+          "cellCentersOutsideActualRoundBrush": 9,
+          "examples": [
+            {
+              "pixelX": 159,
+              "pixelY": 229,
+              "distanceToContactPx": 5.579,
+              "distanceToNewPathPx": 3.48
+            },
+            {
+              "pixelX": 223,
+              "pixelY": 139,
+              "distanceToContactPx": 114.762,
+              "distanceToNewPathPx": 0.68
+            },
+            {
+              "pixelX": 223,
+              "pixelY": 141,
+              "distanceToContactPx": 113.176,
+              "distanceToNewPathPx": 1.88
+            },
+            {
+              "pixelX": 223,
+              "pixelY": 143,
+              "distanceToContactPx": 111.603,
+              "distanceToNewPathPx": 3.08
+            },
+            {
+              "pixelX": 223,
+              "pixelY": 145,
+              "distanceToContactPx": 110.043,
+              "distanceToNewPathPx": 4.28
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 0.57
+      },
+      {
+        "id": "unrelated_ink_crossing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 34,
+          "cellCentersOutsideActualRoundBrush": 30,
+          "examples": [
+            {
+              "pixelX": 157.5,
+              "pixelY": 228.5,
+              "distanceToContactPx": 4.338,
+              "distanceToNewPathPx": 1.98
+            },
+            {
+              "pixelX": 157.5,
+              "pixelY": 229.5,
+              "distanceToContactPx": 4.002,
+              "distanceToNewPathPx": 2.58
+            },
+            {
+              "pixelX": 157.5,
+              "pixelY": 231.5,
+              "distanceToContactPx": 4.052,
+              "distanceToNewPathPx": 3.78
+            },
+            {
+              "pixelX": 158.5,
+              "pixelY": 228.5,
+              "distanceToContactPx": 5.255,
+              "distanceToNewPathPx": 2.78
+            },
+            {
+              "pixelX": 158.5,
+              "pixelY": 229.5,
+              "distanceToContactPx": 4.982,
+              "distanceToNewPathPx": 3.38
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 2.06
+      },
+      {
+        "id": "no_original_ink",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.74
+      },
+      {
+        "id": "no_original_ink",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 1.81
+      },
+      {
+        "id": "one_missing_join",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.45
+      },
+      {
+        "id": "one_missing_join",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 1.74
+      },
+      {
+        "id": "shifted_proposal",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.43
+      },
+      {
+        "id": "shifted_proposal",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 1.68
+      },
+      {
+        "id": "one_path_contact_missing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.48
+      },
+      {
+        "id": "one_path_contact_missing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 1.48
+      },
+      {
+        "id": "majority_retrace",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "majority_overlap",
+        "latencyMs": 0.53
+      },
+      {
+        "id": "majority_retrace",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "majority_overlap",
+        "latencyMs": 1.95
+      },
+      {
+        "id": "contour_gap",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.51
+      },
+      {
+        "id": "contour_gap",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 1.87
+      },
+      {
+        "id": "arbitrary_radius_permission",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0.01
+      },
+      {
+        "id": "arbitrary_radius_permission",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0
+      },
+      {
+        "id": "contact_and_attachment",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0
+      },
+      {
+        "id": "contact_and_attachment",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 512,
+        "canvasPixels": 512,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0
+      },
+      {
+        "id": "unit_hat_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 8.5,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 1,
+          "cellCentersOutsideActualRoundBrush": 1,
+          "examples": [
+            {
+              "pixelX": 606,
+              "pixelY": 458,
+              "distanceToContactPx": 8.854,
+              "distanceToNewPathPx": 5.04
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 3.43
+      },
+      {
+        "id": "unit_hat_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 5.5,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 2,
+          "cellCentersOutsideActualRoundBrush": 2,
+          "examples": [
+            {
+              "pixelX": 313,
+              "pixelY": 459,
+              "distanceToContactPx": 6.073,
+              "distanceToNewPathPx": 3.56
+            },
+            {
+              "pixelX": 609,
+              "pixelY": 459,
+              "distanceToContactPx": 5.692,
+              "distanceToNewPathPx": 3.24
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 1.44
+      },
+      {
+        "id": "unit_hat_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 8,
+          "cellCentersOutsideActualRoundBrush": 8,
+          "examples": [
+            {
+              "pixelX": 311.5,
+              "pixelY": 459.5,
+              "distanceToContactPx": 4.492,
+              "distanceToNewPathPx": 2.66
+            },
+            {
+              "pixelX": 311.5,
+              "pixelY": 460.5,
+              "distanceToContactPx": 4.31,
+              "distanceToNewPathPx": 3.26
+            },
+            {
+              "pixelX": 311.5,
+              "pixelY": 461.5,
+              "distanceToContactPx": 4.357,
+              "distanceToNewPathPx": 3.86
+            },
+            {
+              "pixelX": 312.5,
+              "pixelY": 459.5,
+              "distanceToContactPx": 5.457,
+              "distanceToNewPathPx": 3.46
+            },
+            {
+              "pixelX": 608.5,
+              "pixelY": 459.5,
+              "distanceToContactPx": 6.042,
+              "distanceToNewPathPx": 3.94
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 7.47
+      },
+      {
+        "id": "unit_brim_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 0.41
+      },
+      {
+        "id": "unit_brim_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 1.45
+      },
+      {
+        "id": "unit_brim_positive",
+        "origin": "authored_contact_unit_controls",
+        "expected": "accept",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": true,
+        "reason": null,
+        "latencyMs": 6.83
+      },
+      {
+        "id": "unrelated_ink_crossing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 8.5,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 4,
+          "cellCentersOutsideActualRoundBrush": 4,
+          "examples": [
+            {
+              "pixelX": 450,
+              "pixelY": 274,
+              "distanceToContactPx": 235.13,
+              "distanceToNewPathPx": 2.16
+            },
+            {
+              "pixelX": 450,
+              "pixelY": 278,
+              "distanceToContactPx": 231.965,
+              "distanceToNewPathPx": 4.56
+            },
+            {
+              "pixelX": 454,
+              "pixelY": 274,
+              "distanceToContactPx": 237.58,
+              "distanceToNewPathPx": 5.36
+            },
+            {
+              "pixelX": 606,
+              "pixelY": 458,
+              "distanceToContactPx": 8.854,
+              "distanceToNewPathPx": 5.04
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 0.48
+      },
+      {
+        "id": "unrelated_ink_crossing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 5.5,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 5,
+          "cellCentersOutsideActualRoundBrush": 5,
+          "examples": [
+            {
+              "pixelX": 313,
+              "pixelY": 459,
+              "distanceToContactPx": 6.073,
+              "distanceToNewPathPx": 3.56
+            },
+            {
+              "pixelX": 449,
+              "pixelY": 277,
+              "distanceToContactPx": 232.142,
+              "distanceToNewPathPx": 3.16
+            },
+            {
+              "pixelX": 449,
+              "pixelY": 279,
+              "distanceToContactPx": 230.561,
+              "distanceToNewPathPx": 4.36
+            },
+            {
+              "pixelX": 451,
+              "pixelY": 275,
+              "distanceToContactPx": 234.947,
+              "distanceToNewPathPx": 3.56
+            },
+            {
+              "pixelX": 609,
+              "pixelY": 459,
+              "distanceToContactPx": 5.692,
+              "distanceToNewPathPx": 3.24
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 1.46
+      },
+      {
+        "id": "unrelated_ink_crossing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "collision_outside_contact",
+        "diagnostic": {
+          "allowanceRadiusPx": 4,
+          "roundBrushRadiusPx": 1.5,
+          "squareFootprintOutsideCells": 13,
+          "cellCentersOutsideActualRoundBrush": 13,
+          "examples": [
+            {
+              "pixelX": 311.5,
+              "pixelY": 459.5,
+              "distanceToContactPx": 4.492,
+              "distanceToNewPathPx": 2.66
+            },
+            {
+              "pixelX": 311.5,
+              "pixelY": 460.5,
+              "distanceToContactPx": 4.31,
+              "distanceToNewPathPx": 3.26
+            },
+            {
+              "pixelX": 311.5,
+              "pixelY": 461.5,
+              "distanceToContactPx": 4.357,
+              "distanceToNewPathPx": 3.86
+            },
+            {
+              "pixelX": 312.5,
+              "pixelY": 459.5,
+              "distanceToContactPx": 5.457,
+              "distanceToNewPathPx": 3.46
+            },
+            {
+              "pixelX": 449.5,
+              "pixelY": 276.5,
+              "distanceToContactPx": 232.843,
+              "distanceToNewPathPx": 3.26
+            }
+          ],
+          "caveat": "Cell-center distance is a diagnosis of conservative rasterization, not an alternative collision acceptance criterion."
+        },
+        "latencyMs": 7.48
+      },
+      {
+        "id": "no_original_ink",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.56
+      },
+      {
+        "id": "no_original_ink",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 1.55
+      },
+      {
+        "id": "no_original_ink",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 6.96
+      },
+      {
+        "id": "one_missing_join",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.41
+      },
+      {
+        "id": "one_missing_join",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 1.3
+      },
+      {
+        "id": "one_missing_join",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 6.83
+      },
+      {
+        "id": "shifted_proposal",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.44
+      },
+      {
+        "id": "shifted_proposal",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 3.96
+      },
+      {
+        "id": "shifted_proposal",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 7.2
+      },
+      {
+        "id": "one_path_contact_missing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.42
+      },
+      {
+        "id": "one_path_contact_missing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 4.14
+      },
+      {
+        "id": "one_path_contact_missing",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 6.73
+      },
+      {
+        "id": "majority_retrace",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "majority_overlap",
+        "latencyMs": 0.96
+      },
+      {
+        "id": "majority_retrace",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "majority_overlap",
+        "latencyMs": 1.49
+      },
+      {
+        "id": "majority_retrace",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "majority_overlap",
+        "latencyMs": 7.05
+      },
+      {
+        "id": "contour_gap",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 0.88
+      },
+      {
+        "id": "contour_gap",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 1.62
+      },
+      {
+        "id": "contour_gap",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "required_contact_unsupported",
+        "latencyMs": 7.58
+      },
+      {
+        "id": "arbitrary_radius_permission",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0.01
+      },
+      {
+        "id": "arbitrary_radius_permission",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0.01
+      },
+      {
+        "id": "arbitrary_radius_permission",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0.01
+      },
+      {
+        "id": "contact_and_attachment",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 256,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0
+      },
+      {
+        "id": "contact_and_attachment",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 512,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0
+      },
+      {
+        "id": "contact_and_attachment",
+        "origin": "authored_contact_unit_controls",
+        "expected": "reject",
+        "sourcePixels": 1024,
+        "canvasPixels": 1024,
+        "mapResolution": 1024,
+        "fits": false,
+        "reason": "placement_failed",
+        "latencyMs": 0.01
+      }
+    ]
+  },
+  "localDeploymentCheck": {
+    "synthetic": true,
+    "explicitHatRequest": true,
+    "latencyMs": 5540,
+    "result": {
+      "status": "clarify",
+      "reason": "invalid_response",
+      "reply": "我们一起选个小主意吧。",
+      "protocolVersion": 2,
+      "drawingMetrics": {
+        "plans": 3,
+        "compiled": 2,
+        "preflight": 0,
+        "reviews": 0,
+        "repairs": 1
+      }
+    }
+  },
+  "drawingPilots": [
+    {
+      "pilot": "waypoints",
+      "runId": "2026-09-20T16-55-46-300Z",
+      "split": "regression_frozen_six_case_gold_scene_subset",
+      "fixtureHash": "0e90fa27645ca238e535c5a246cafd9304de3d1e9f8c0990a02c072abafe4b76",
+      "source": "server/.tmp/nilo-drawing-pilots/2026-09-20T16-55-46-300Z-waypoints",
+      "baseline": [
+        {
+          "mode": "gold-scene",
+          "model": "deepseek-v4-flash-vision-exp",
+          "total": 6,
+          "executed": 6,
+          "notRun": 0,
+          "canvasPasses": 4,
+          "failures": {
+            "invalid_response": 1,
+            "unclear_target": 1
+          },
+          "latencyP50Ms": 2946,
+          "latencyP95Ms": 5515,
+          "calls": 15,
+          "tokenUsage": {
+            "knownCalls": 15,
+            "missingCalls": 0,
+            "totalTokens": 33665
+          },
+          "semanticPasses": null,
+          "semanticEvaluation": "Independent human review required; model self-review and geometry are not semantic accuracy."
+        }
+      ],
+      "groups": [
+        {
+          "mode": "gold-scene",
+          "model": "deepseek-v4-flash-vision-exp",
+          "total": 6,
+          "executed": 6,
+          "notRun": 0,
+          "canvasPasses": 2,
+          "failures": {
+            "invalid_response": 3,
+            "unclear_target": 1
+          },
+          "latencyP50Ms": 3870,
+          "latencyP95Ms": 6191,
+          "calls": 17,
+          "tokenUsage": {
+            "knownCalls": 17,
+            "missingCalls": 0,
+            "totalTokens": 38986
+          },
+          "semanticPasses": null,
+          "semanticEvaluation": "Independent human review required; model self-review and geometry are not semantic accuracy."
+        }
+      ],
+      "cases": [
+        {
+          "case": "round_face",
+          "canvasFits": false,
+          "failureCode": "invalid_response",
+          "latencyMs": 3753,
+          "calls": 2,
+          "detail": null,
+          "relation": null
+        },
+        {
+          "case": "tilted_face",
+          "canvasFits": true,
+          "failureCode": null,
+          "latencyMs": 2547,
+          "calls": 2,
+          "detail": "头顶小卷毛",
+          "relation": "从头顶长出一小撮头发，贴合歪头人物的头部轮廓，是角色特征而不会遮住脸。"
+        },
+        {
+          "case": "pointy_cat",
+          "canvasFits": true,
+          "failureCode": null,
+          "latencyMs": 6191,
+          "calls": 4,
+          "detail": "猫的胡须",
+          "relation": "胡须长在猫脸上、鼻子两侧，是猫脸应有的细节，能保持孩子的脸型故事"
+        },
+        {
+          "case": "branch_tree",
+          "canvasFits": false,
+          "failureCode": "invalid_response",
+          "latencyMs": 4697,
+          "calls": 3,
+          "detail": null,
+          "relation": null
+        },
+        {
+          "case": "dining_chair",
+          "canvasFits": false,
+          "failureCode": "invalid_response",
+          "latencyMs": 4037,
+          "calls": 3,
+          "detail": null,
+          "relation": null
+        },
+        {
+          "case": "linked_loops",
+          "canvasFits": false,
+          "failureCode": "unclear_target",
+          "latencyMs": 3870,
+          "calls": 3,
+          "detail": null,
+          "relation": null
+        }
+      ],
+      "semanticPasses": null,
+      "decision": "Remain experimental: this small nonrandomized regression does not establish a co-creation improvement."
+    },
+    {
+      "pilot": "relations",
+      "runId": "2026-09-20T16-55-56-677Z",
+      "split": "regression_frozen_six_case_gold_scene_subset",
+      "fixtureHash": "0e90fa27645ca238e535c5a246cafd9304de3d1e9f8c0990a02c072abafe4b76",
+      "source": "server/.tmp/nilo-drawing-pilots/2026-09-20T16-55-56-677Z-relations",
+      "baseline": [
+        {
+          "mode": "gold-scene",
+          "model": "deepseek-v4-flash-vision-exp",
+          "total": 6,
+          "executed": 6,
+          "notRun": 0,
+          "canvasPasses": 4,
+          "failures": {
+            "invalid_response": 1,
+            "unclear_target": 1
+          },
+          "latencyP50Ms": 2946,
+          "latencyP95Ms": 5515,
+          "calls": 15,
+          "tokenUsage": {
+            "knownCalls": 15,
+            "missingCalls": 0,
+            "totalTokens": 33665
+          },
+          "semanticPasses": null,
+          "semanticEvaluation": "Independent human review required; model self-review and geometry are not semantic accuracy."
+        }
+      ],
+      "groups": [
+        {
+          "mode": "gold-scene",
+          "model": "deepseek-v4-flash-vision-exp",
+          "total": 6,
+          "executed": 6,
+          "notRun": 0,
+          "canvasPasses": 4,
+          "failures": {
+            "invalid_response": 2
+          },
+          "latencyP50Ms": 2759,
+          "latencyP95Ms": 4308,
+          "calls": 12,
+          "tokenUsage": {
+            "knownCalls": 12,
+            "missingCalls": 0,
+            "totalTokens": 31746
+          },
+          "semanticPasses": null,
+          "semanticEvaluation": "Independent human review required; model self-review and geometry are not semantic accuracy."
+        }
+      ],
+      "cases": [
+        {
+          "case": "round_face",
+          "canvasFits": false,
+          "failureCode": "invalid_response",
+          "latencyMs": 4114,
+          "calls": 2,
+          "detail": null,
+          "relation": null
+        },
+        {
+          "case": "tilted_face",
+          "canvasFits": true,
+          "failureCode": null,
+          "latencyMs": 2627,
+          "calls": 2,
+          "detail": "翘起的小眉毛（歪头一侧略高）",
+          "relation": "画在已画好的眼睛上方，强化歪头人物的表情与头部倾斜感"
+        },
+        {
+          "case": "pointy_cat",
+          "canvasFits": true,
+          "failureCode": null,
+          "latencyMs": 2742,
+          "calls": 2,
+          "detail": "猫嘴下方的小下巴弧线",
+          "relation": "补充猫脸下半部，让脸型更完整，紧接鼻子下方的位置"
+        },
+        {
+          "case": "branch_tree",
+          "canvasFits": false,
+          "failureCode": "invalid_response",
+          "latencyMs": 4308,
+          "calls": 2,
+          "detail": null,
+          "relation": null
+        },
+        {
+          "case": "dining_chair",
+          "canvasFits": true,
+          "failureCode": null,
+          "latencyMs": 2759,
+          "calls": 2,
+          "detail": "椅背内侧一条小横木",
+          "relation": "椅背内侧留有空白，横木属于椅背结构，能加强靠背而不改变原轮廓。"
+        },
+        {
+          "case": "linked_loops",
+          "canvasFits": true,
+          "failureCode": null,
+          "latencyMs": 2820,
+          "calls": 2,
+          "detail": "环内小圆点",
+          "relation": "大环内部空白处点一个小圆点，与两环相扣的结构呼应，形成像小珠子嵌在环中的感觉，留出周围空白。"
+        }
+      ],
+      "semanticPasses": null,
+      "decision": "Remain experimental: this small nonrandomized regression does not establish a co-creation improvement."
+    }
+  ],
+  "pilotVisualInspection": {
+    "assessor": "coding assistant; not an independent human blind review",
+    "inspected": 6,
+    "observations": [
+      {
+        "pilot": "waypoints",
+        "case": "tilted_face",
+        "finding": "Hair curl includes a disconnected floating stroke."
+      },
+      {
+        "pilot": "waypoints",
+        "case": "pointy_cat",
+        "finding": "Recognizable whisker strokes only on one side; does not match the stated both-sides intent."
+      },
+      {
+        "pilot": "relations",
+        "case": "tilted_face",
+        "finding": "Brow positioned between eyes rather than clearly above an eye."
+      },
+      {
+        "pilot": "relations",
+        "case": "pointy_cat",
+        "finding": "Arc near nose/mouth is related, though the claimed chin role is ambiguous."
+      },
+      {
+        "pilot": "relations",
+        "case": "dining_chair",
+        "finding": "Claimed structural crossbar is a tiny disconnected arc, not a connected chair part."
+      },
+      {
+        "pilot": "relations",
+        "case": "linked_loops",
+        "finding": "Dot inside ring is understandable decoration; limited semantic evidence."
+      }
+    ]
+  },
+  "automatedValidation": {
+    "backend": {
+      "fullSuitePassed": 431,
+      "laterIsolatedExperimentalTestsPassed": 54,
+      "coveredCurrentTests": 485
+    },
+    "frontend": {
+      "fullSuitePassed": 379,
+      "productionBuild": "passed",
+      "lintErrors": 0,
+      "existingLintWarnings": 3
+    },
+    "experimentalCli": "Both dry runs and injected-provider smoke tests passed.",
+    "browserAndDeviceChecks": "not performed this iteration"
+  }
+}

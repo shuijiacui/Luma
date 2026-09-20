@@ -113,15 +113,18 @@ function pointer(canvas: HTMLCanvasElement, type: string) {
 }
 function draw(canvas: HTMLCanvasElement) { pointer(canvas, 'pointerdown'); pointer(canvas, 'pointerup') }
 
-test('a recognition failure shows its specific question, releases the button, and permits the next drawing', async () => {
+test('a recognition failure draws a local response, releases the button, and permits the next drawing', async () => {
   localStorage.setItem('luma_companion_mode:guest-child', 'together')
   draw(prepare())
   const question = '我还没看清刚画的这一部分。它是什么呀？'
   companionReply = async () => ({ status: 'clarify', reason: 'unclear_target', reply: question })
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Nilo，你来画' })))
-  expect(screen.getByText(question)).toBeTruthy()
-  expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(false)
+  expect(screen.queryByText(question)).toBeNull()
+  expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(true)
   expect(operations().some(op => op.owner === 'nilo')).toBe(false)
+  await act(async () => vi.advanceTimersByTimeAsync(1200))
+  expect(operations().some(op => op.owner === 'nilo')).toBe(true)
+  expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(false)
   companionReply = async () => proposed
   await act(async () => vi.advanceTimersByTimeAsync(1600))
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Nilo，你来画' })))
@@ -163,7 +166,7 @@ test('undo during Nilo animation cancels the temporary drawing without erasing t
   expect(operations()).toEqual(before)
 })
 
-test('a prose-only execution claim leaves no Nilo ink and is never shown as completion', async () => {
+test('a prose-only claim is replaced by a real local contribution that persists and undoes as a group', async () => {
   localStorage.setItem('luma_companion_mode:guest-child', 'together')
   const caption = '我在右边的形状上加了一个小翻页，它看起来更像一本打开的书了。'
   companionReply = async () => ({ status: 'clarify', reply: caption })
@@ -172,9 +175,12 @@ test('a prose-only execution claim leaves no Nilo ink and is never shown as comp
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Nilo，你来画' })))
   await act(async () => vi.advanceTimersByTimeAsync(1500))
   expect(screen.queryByText(caption)).toBeNull()
-  expect(screen.getByText(/这次还没有画上/)).toBeTruthy()
+  expect(screen.getByText(/已经画上/)).toBeTruthy()
+  expect(operations().filter(op => op.owner === 'child')).toEqual(before)
+  expect(operations().filter(op => op.owner === 'nilo').length).toBeGreaterThan(0)
+  expect(readStoredDraft('guest-child', null)?.canvas.document?.operations).toEqual(operations())
+  fireEvent.click(screen.getByRole('button', { name: '撤销', exact: true }))
   expect(operations()).toEqual(before)
-  expect(readStoredDraft('guest-child', null)?.canvas.document?.operations).toEqual(before)
 })
 
 test('refresh offers a choice before mounting the canvas, then restores child and Nilo strokes with independent undo', async () => {
@@ -443,6 +449,9 @@ test('four projected elements commit and save as one contribution; the next turn
   expect(body.context.scene.recentContributions.map(group => ({ owner: group.owner, strokeCount: group.strokeCount })))
     .toEqual([{ owner: 'child', strokeCount: 1 }, { owner: 'nilo', strokeCount: 36 }])
   expect(JSON.stringify(body.context.scene)).not.toMatch(/groupId|points|referenceWidth/)
+  // The new click starts a local response. Undo first cancels that animation.
+  fireEvent.click(screen.getByRole('button', { name: '撤销', exact: true }))
+  expect(operations().filter(op => op.owner === 'nilo')).toHaveLength(36)
   fireEvent.click(screen.getByRole('button', { name: '撤销', exact: true }))
   expect(operations()).toEqual(childOperations)
   expect(ink.get(canvas)).toEqual(new Set(['#20352f']))
@@ -561,6 +570,28 @@ test('without a microphone, clicking Nilo draws one undoable contribution direct
   expect(new Set(contribution.map(op => op.groupId)).size).toBe(1)
   fireEvent.click(screen.getByRole('button', { name: '撤销', exact: true }))
   expect(operations().every(operation => operation.owner === 'child')).toBe(true)
+})
+
+test('failed scene co-creation offers clickable ideas, previews without a microphone and undoes as one group',async()=>{
+  vi.stubGlobal('SpeechRecognition',undefined)
+  const canvas=prepare();draw(canvas);draw(canvas);draw(canvas)
+  const before=JSON.stringify(operations())
+  fireEvent.click(screen.getByRole('button',{name:'和 Nilo 一起画'}))
+  companionReply=()=>Promise.resolve({status:'unavailable',reason:'invalid_response',reply:'小主意没准备好'})
+  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'Nilo，你来画'})))
+  const choices=screen.getByRole('group',{name:'一起选个小主意'})
+  expect(within(choices).getByRole('button',{name:'一朵云'})).toBeTruthy()
+  fireEvent.click(within(choices).getByRole('button',{name:'一片叶子'}))
+  await act(async()=>vi.advanceTimersByTimeAsync(550))
+  expect(screen.getByLabelText('Nilo 的投影，尚未加入画作')).toBeTruthy()
+  expect(JSON.stringify(operations())).toBe(before)
+  fireEvent.click(screen.getByRole('button',{name:'留下来'}))
+  const contribution=operations().filter(op=>op.owner==='nilo')
+  expect(contribution.length).toBeGreaterThan(0)
+  expect(new Set(contribution.map(op=>op.groupId)).size).toBe(1)
+  expect(requests()).toHaveLength(1)
+  fireEvent.click(screen.getByRole('button',{name:'撤销',exact:true}))
+  expect(JSON.stringify(operations())).toBe(before)
 })
 
 test('a restored legacy work skips onboarding and is saved without inventing a child-only analysis', async () => {

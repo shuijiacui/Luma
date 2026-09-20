@@ -1,0 +1,733 @@
+{
+  "date": "2026-09-21",
+  "scope": "Existing-provider contact correction; no new image service configured.",
+  "productionFixes": [
+    "Original-pixel refinement of round/pencil contact boundary collisions",
+    "Require actual shared old/new ink near each joint when pixel evidence is available",
+    "Common filtered-region IDs for planning and measured contacts"
+  ],
+  "invariants": [
+    "No new collision exemption from model fields",
+    "No post-review geometry changes",
+    "Required supports, bounded contact corridor and majority-retrace rejection retained",
+    "Original pixels cannot exempt collisions within multi-proposal plans",
+    "Textured brush boundary decisions remain conservative"
+  ],
+  "deterministicControls": {
+    "source": "server/.tmp/nilo-contact-fixed/2026-09-20T17-37-50-993Z",
+    "positivePassed": 19,
+    "positiveTotal": 19,
+    "invalidReferencesRejected": 12,
+    "invalidReferencesTotal": 12,
+    "semanticallyWrongGeometryControl": [
+      {
+        "canvasFits": true,
+        "semanticPass": false
+      }
+    ],
+    "note": "Author plans exercise geometry, not model ability. Two previously rejected hats now pass without moving their geometry."
+  },
+  "comparison": {
+    "runId": "2026-09-20T17-38-03-839Z",
+    "fixtureVersion": "nilo-fresh-scenes-v1",
+    "fixtureHash": "f9332f12e59d5263ef86529a97d70acdae6ba54680e1c2c3ebf6e8af550adda6",
+    "split": "first_live_frozen",
+    "live": true,
+    "model": "deepseek-v4-flash-vision-exp",
+    "manifest": {
+      "version": "nilo-fresh-scenes-v1",
+      "sha256": "f9332f12e59d5263ef86529a97d70acdae6ba54680e1c2c3ebf6e8af550adda6",
+      "count": 20,
+      "source": "20 original author-drawn synthetic scenes; no previous 12-case ablation or child canvas reused",
+      "privacy": "Synthetic images only. No child images, prompts, accounts, or conversations.",
+      "freezePolicy": "Frozen before provider execution. Geometry, labels, or rubric changes require a new version and manifest. Repeated runs are regression, not fresh holdout.",
+      "semanticLabelStatus": "Author checklist, not independent human scores. All semantic fields remain null until reviewed.",
+      "cases": [
+        {
+          "id": "spiky_full_person",
+          "group": "person",
+          "aspect": 1
+        },
+        {
+          "id": "profile_long_nose",
+          "group": "person",
+          "aspect": 0.75
+        },
+        {
+          "id": "tiny_head_large_coat",
+          "group": "proportion",
+          "aspect": 1
+        },
+        {
+          "id": "forked_cactus",
+          "group": "plant",
+          "aspect": 1
+        },
+        {
+          "id": "cup_tulip",
+          "group": "plant",
+          "aspect": 0.75
+        },
+        {
+          "id": "broad_mushroom",
+          "group": "plant",
+          "aspect": 1
+        },
+        {
+          "id": "walking_turtle",
+          "group": "animal",
+          "aspect": 1.5
+        },
+        {
+          "id": "fish_with_top_fin",
+          "group": "animal",
+          "aspect": 1.5
+        },
+        {
+          "id": "long_leg_bird",
+          "group": "animal",
+          "aspect": 1
+        },
+        {
+          "id": "bare_bicycle",
+          "group": "vehicle",
+          "aspect": 1.5
+        },
+        {
+          "id": "rocket_with_flame",
+          "group": "vehicle",
+          "aspect": 0.75
+        },
+        {
+          "id": "two_car_train",
+          "group": "vehicle",
+          "aspect": 1.5
+        },
+        {
+          "id": "round_teapot",
+          "group": "object",
+          "aspect": 1
+        },
+        {
+          "id": "leaning_boot",
+          "group": "tilted",
+          "aspect": 1
+        },
+        {
+          "id": "house_and_garden",
+          "group": "dense",
+          "aspect": 1.5
+        },
+        {
+          "id": "jellyfish_and_coral",
+          "group": "dense",
+          "aspect": 1
+        },
+        {
+          "id": "one_eye_tripod",
+          "group": "imaginary",
+          "aspect": 1
+        },
+        {
+          "id": "winged_mailbox_friend",
+          "group": "imaginary",
+          "aspect": 1
+        },
+        {
+          "id": "zigzag_enclosure",
+          "group": "abstract",
+          "aspect": 1
+        },
+        {
+          "id": "offset_nested_boxes",
+          "group": "abstract",
+          "aspect": 1
+        }
+      ]
+    },
+    "budget": {
+      "perTurnMs": 14000,
+      "maxProviderCalls": 5,
+      "repetitions": 1
+    },
+    "selectedCases": [
+      "spiky_full_person",
+      "profile_long_nose",
+      "tiny_head_large_coat",
+      "forked_cactus",
+      "cup_tulip",
+      "broad_mushroom",
+      "walking_turtle",
+      "fish_with_top_fin",
+      "long_leg_bird",
+      "bare_bicycle",
+      "rocket_with_flame",
+      "two_car_train",
+      "round_teapot",
+      "leaning_boot",
+      "house_and_garden",
+      "jellyfish_and_coral",
+      "one_eye_tripod",
+      "winged_mailbox_friend",
+      "zigzag_enclosure",
+      "offset_nested_boxes"
+    ],
+    "variants": [
+      "baseline",
+      "numbered"
+    ],
+    "groups": [
+      {
+        "variant": "baseline",
+        "total": 20,
+        "executed": 20,
+        "notRun": 0,
+        "canvasPasses": 10,
+        "failures": {
+          "unclear_target": 5,
+          "invalid_response": 5
+        },
+        "calls": 57,
+        "latencyP50Ms": 4616,
+        "latencyP95Ms": 6923,
+        "tokenUsage": {
+          "knownCalls": 57,
+          "missingCalls": 0,
+          "totalTokens": 141583
+        },
+        "semanticPasses": null
+      },
+      {
+        "variant": "numbered",
+        "total": 20,
+        "executed": 20,
+        "notRun": 0,
+        "canvasPasses": 7,
+        "failures": {
+          "unclear_target": 9,
+          "invalid_response": 4
+        },
+        "calls": 48,
+        "latencyP50Ms": 4532,
+        "latencyP95Ms": 6405,
+        "tokenUsage": {
+          "knownCalls": 48,
+          "missingCalls": 0,
+          "totalTokens": 111732
+        },
+        "semanticPasses": null
+      }
+    ],
+    "notes": [
+      "Both variants run full production observation → planning → review. The numbered variant changes only observation input and deterministic region-ID decoding.",
+      "One attempt per case and variant; no best-of-N selection. Every failure stays in the denominator. Deadline 14 s, at most 5 model calls, unchanged per-stage token limits.",
+      "Author observations, expected ideas and checklists never enter model prompts. Semantic pass rate remains null until independent before/after review.",
+      "This small first run is an experiment, not a general accuracy claim. Subsequent runs on any previously executed cases are regression."
+    ]
+  },
+  "perCase": [
+    {
+      "case": "spiky_full_person",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 4616,
+      "detail": "衣服上的小口袋",
+      "target": "crown-wearing character",
+      "relation": "属于身体区域，是衣服上可放小东西的功能细节"
+    },
+    {
+      "case": "spiky_full_person",
+      "variant": "numbered",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 9221,
+      "detail": "身体左侧的小口袋",
+      "target": "crowned figure",
+      "relation": "口袋贴在三角形身体的左腰处，是衣服上新增的功能细节。"
+    },
+    {
+      "case": "profile_long_nose",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1607,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "profile_long_nose",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1759,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "tiny_head_large_coat",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "invalid_response",
+      "latencyMs": 5248,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "tiny_head_large_coat",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "invalid_response",
+      "latencyMs": 4861,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "forked_cactus",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "invalid_response",
+      "latencyMs": 6923,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "forked_cactus",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "invalid_response",
+      "latencyMs": 5034,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "cup_tulip",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "invalid_response",
+      "latencyMs": 4529,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "cup_tulip",
+      "variant": "numbered",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 5070,
+      "detail": "叶脉",
+      "target": "flower with pot",
+      "relation": "这片斜着的叶子已经画出来了，在叶面上加一条中脉能让叶子更像真实的植物，同时保留孩子原本的叶形。"
+    },
+    {
+      "case": "broad_mushroom",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 4285,
+      "detail": "菌盖上的斑点",
+      "target": "mushroom",
+      "relation": "这些斑点长在菌盖表面，是蘑菇本来就会有的天然花纹，不会改变孩子画好的轮廓。"
+    },
+    {
+      "case": "broad_mushroom",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1511,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "walking_turtle",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 6062,
+      "detail": "龟壳上的连接纹线",
+      "target": "turtle",
+      "relation": "这是一只乌龟，在它已有的椭圆形龟壳内部添加两条连接线，可以表现出龟壳甲片的结构，与已有的壳轮廓相呼应。"
+    },
+    {
+      "case": "walking_turtle",
+      "variant": "numbered",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 5574,
+      "detail": "龟壳上的小生长纹",
+      "target": "turtle-like creature",
+      "relation": "放在大椭圆龟壳表面，是壳的一部分，不改变外形和故事。"
+    },
+    {
+      "case": "fish_with_top_fin",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 5230,
+      "detail": "鳃线",
+      "target": "fish",
+      "relation": "鳃线位于头部后方，从鱼身轮廓上端弯向下方，表现头部与身体的分界。"
+    },
+    {
+      "case": "fish_with_top_fin",
+      "variant": "numbered",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 4099,
+      "detail": "鱼鳃弧线",
+      "target": "fish-like outline drawing",
+      "relation": "在椭圆身体前部、眼睛后方补一条弧形鳃线，属于鱼体的解剖细节，不改变原有造型。"
+    },
+    {
+      "case": "long_leg_bird",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 4944,
+      "detail": "翅膀",
+      "target": "bird",
+      "relation": "身体上还缺一只翅膀，画在身体内部能让小鸟看起来更完整，也不遮挡已有的头和眼睛。"
+    },
+    {
+      "case": "long_leg_bird",
+      "variant": "numbered",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 5650,
+      "detail": "尾部小羽尖",
+      "target": "bird-like drawing",
+      "relation": "三角形尾巴已存在，尾端加一个小分叉让尾巴更像鸟尾，保持左右不对称"
+    },
+    {
+      "case": "bare_bicycle",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "invalid_response",
+      "latencyMs": 4765,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "bare_bicycle",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1955,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "rocket_with_flame",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 5787,
+      "detail": "机身的小圆点铆钉",
+      "target": "火箭",
+      "relation": "点在机身靠左下的空白处，像火箭外壳上的铆钉，保持画面左右不对称"
+    },
+    {
+      "case": "rocket_with_flame",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "invalid_response",
+      "latencyMs": 4682,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "two_car_train",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 4889,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "two_car_train",
+      "variant": "numbered",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 4660,
+      "detail": "车厢侧面的小窗户",
+      "target": "train",
+      "relation": "在车厢体的空白表面上加一扇小窗，让车厢更像载人的客车，也保持画面简洁"
+    },
+    {
+      "case": "round_teapot",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 4206,
+      "detail": "壶身装饰点",
+      "target": "teapot",
+      "relation": "一个小的装饰点，位于茶壶主体的空白表面，与壶身曲线相配。"
+    },
+    {
+      "case": "round_teapot",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 6405,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "leaning_boot",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1502,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "leaning_boot",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1531,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "house_and_garden",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 4442,
+      "detail": "花瓣中心",
+      "target": "flowers",
+      "relation": "左侧花朵的椭圆花心是空的，加一个小中心圆能确认花蕊位置"
+    },
+    {
+      "case": "house_and_garden",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "invalid_response",
+      "latencyMs": 5205,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "jellyfish_and_coral",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 6971,
+      "detail": "水母伞盖上的斑点",
+      "target": "jellyfish",
+      "relation": "斑点长在水母伞盖表面，是水母身体的一部分，让伞盖更生动。"
+    },
+    {
+      "case": "jellyfish_and_coral",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1868,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "one_eye_tripod",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "invalid_response",
+      "latencyMs": 4907,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "one_eye_tripod",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1441,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "winged_mailbox_friend",
+      "variant": "baseline",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 4020,
+      "detail": "胸口小圆扣",
+      "target": "square-bodied character",
+      "relation": "方块角色身体中央常有的功能性小纽扣，落在方形躯干空白处，不遮挡眼睛和嘴巴"
+    },
+    {
+      "case": "winged_mailbox_friend",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1402,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "zigzag_enclosure",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1400,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "zigzag_enclosure",
+      "variant": "numbered",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1402,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "offset_nested_boxes",
+      "variant": "baseline",
+      "canvasFits": false,
+      "failureCode": "unclear_target",
+      "latencyMs": 1637,
+      "detail": null,
+      "target": null,
+      "relation": null
+    },
+    {
+      "case": "offset_nested_boxes",
+      "variant": "numbered",
+      "canvasFits": true,
+      "failureCode": null,
+      "latencyMs": 4532,
+      "detail": "内框里加一条细连接短桥",
+      "target": "two nested skewed rectangles with two short lines extending",
+      "relation": "把内外两个歪四边形在内部钩住，让原本分离的框变成有联动关系的一体结构"
+    }
+  ],
+  "inspection": {
+    "assessor": "coding assistants; not independent human blind review",
+    "reviewedAfterImages": 17,
+    "semanticPasses": null,
+    "baseline": [
+      {
+        "case": "spiky_full_person",
+        "finding": "Recognizable shirt pocket; hair is described as a crown."
+      },
+      {
+        "case": "broad_mushroom",
+        "finding": "Three recognizable spots on cap; sensible placement."
+      },
+      {
+        "case": "walking_turtle",
+        "finding": "Intersecting arc and vertical line on shell; weak resemblance to intended scute structure."
+      },
+      {
+        "case": "fish_with_top_fin",
+        "finding": "Plausible gill curve behind eye."
+      },
+      {
+        "case": "long_leg_bird",
+        "finding": "Simple inner-body arc is plausible as a wing."
+      },
+      {
+        "case": "rocket_with_flame",
+        "finding": "Small circular body decoration/rivet; related but modest semantic contribution."
+      },
+      {
+        "case": "round_teapot",
+        "finding": "A central circular decoration; correctly inside body but minimal creative contribution."
+      },
+      {
+        "case": "house_and_garden",
+        "finding": "Circle inside one flower head, offset above its centre."
+      },
+      {
+        "case": "jellyfish_and_coral",
+        "finding": "Three small spots inside bell; related decoration."
+      },
+      {
+        "case": "winged_mailbox_friend",
+        "finding": "Claimed chest button placed between eyes and mouth, visually a nose; intent-location mismatch."
+      }
+    ],
+    "numbered": [
+      {
+        "case": "spiky_full_person",
+        "finding": "Recognizable pocket but centred rather than planned left waist."
+      },
+      {
+        "case": "cup_tulip",
+        "finding": "Claimed leaf vein is in blank space above the leaf, not on its surface."
+      },
+      {
+        "case": "walking_turtle",
+        "finding": "Two small shell curves; plausible decoration but weak structural detail."
+      },
+      {
+        "case": "fish_with_top_fin",
+        "finding": "Plausible gill curve behind eye."
+      },
+      {
+        "case": "long_leg_bird",
+        "finding": "Zigzag inside tail, not the promised connected tail-tip fork."
+      },
+      {
+        "case": "two_car_train",
+        "finding": "Recognizable window correctly inside left carriage."
+      },
+      {
+        "case": "offset_nested_boxes",
+        "finding": "Claimed bridge is an isolated arc inside inner frame; connects neither frame."
+      }
+    ]
+  },
+  "decisions": {
+    "numberedObservation": "experimental only; 7/20 versus baseline 10/20 does not support enabling it",
+    "confidenceThresholds": "unchanged",
+    "provider": "unchanged",
+    "imageEditing": "deferred per user; offline validator only"
+  },
+  "evaluationLimits": [
+    "Synthetic scenes, one turn per variant; no real-child or device acceptance test.",
+    "Common region-ID correction was finalized after the comparison and regression-tested separately; comparison is for experiment selection, not final production accuracy.",
+    "Prior 12-scene scores are not directly comparable. First-use fresh scenes are now regression fixtures."
+  ],
+  "validation": {
+    "backendTestsPassed": 563,
+    "frontendTestsPassed": 384,
+    "frontendBuild": "passed",
+    "lint": {
+      "errors": 0,
+      "existingWarnings": 3
+    },
+    "localBackend": {
+      "health": "ok",
+      "latestProductionFileAt": "2026-09-21T01:43:51+08:00",
+      "watchWorkerStartedAt": "2026-09-21T01:43:56+08:00"
+    },
+    "browserAndMobileChecks": "not performed"
+  }
+}

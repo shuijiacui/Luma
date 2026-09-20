@@ -1050,5 +1050,15 @@
   "暂时无法清除草稿，请先继续画布。": "The draft could not be cleared. Please continue your drawing first.",
   "草稿暂存失败，请先保存或下载，再刷新页面。": "Your draft could not be stored. Save or download before refreshing.",
   "这笔的位置还不合适，我调整一下…": "That position does not fit yet. I’m adjusting it…",
-  "这次还没有画上，我还没找到合适的接法。你可以告诉我从哪里接。": "I haven’t added a mark yet. You can tell me where you’d like me to continue."
+  "这次还没有画上，我还没找到合适的接法。你可以告诉我从哪里接。": "I haven’t added a mark yet. You can tell me where you’d like me to continue.",
+  "我顺着你的线条接一小笔。": "I’ll add a little mark inspired by your lines.",
+  "我在找一个能接上你这幅画的小主意…": "I’m finding a little idea to grow your drawing…",
+  "我先起一笔，接下来交给你。": "I’ll start with a little line. Then it’s your turn!",
+  "这里已经画得很满啦，可以撤销一笔或换张画纸再接着画。": "It’s crowded around here! We can undo a mark or start on a fresh page.",
+  "这次的小主意还没准备好，再点我试试。你的画会好好留在这里。": "My little idea is not ready yet. Tap me to try again. Your drawing will stay just as it is.",
+  "一起选个小主意吧，点一下就能看看！": "Let's pick an idea together. Tap to see it!",
+  "一起选个小主意": "Pick an idea together",
+  "一片叶子": "A leaf",
+  "一朵云": "A cloud",
+  "先看看，喜欢就留下来，也可以调整位置。": "Take a look! Keep it if you like, or adjust its position."
 }

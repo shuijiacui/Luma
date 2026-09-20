@@ -118,6 +118,17 @@ export async function chatWithImage(imageBase64, prompt, opts = {}) {
       content: [
         { type: 'text', text: prompt },
         { type: 'image_url', image_url: { url: `data:image/png;base64,${imageBase64}` } },
+        ...(opts.reviewImage ? [
+          { type: 'text', text: 'Image 2 is the AFTER preview of the SAME full canvas. Image 1 is BEFORE. Only the proposed new strokes have been composited. Coordinates and scale are identical. Judge the actual visible change; this is not a second child drawing. Brush texture is approximated; geometry and colour follow the final paths.' },
+          { type: 'image_url', image_url: { url: `data:image/png;base64,${opts.reviewImage}` } },
+        ] : opts.focusImage ? [
+          { type: 'text', text: `Image 2 is a magnified crop of Image 1 at full-canvas normalized bounds ${JSON.stringify(opts.focusImage.bounds)}. It is NOT another drawing. All anchor and attachment coordinates must use Image 1. Crop-local (u,v) maps to (bounds.x+u*bounds.width, bounds.y+v*bounds.height).` },
+          { type: 'image_url', image_url: { url: `data:image/png;base64,${opts.focusImage.imageBase64}` } },
+        ] : []),
+        ...(opts.referenceSheet && !opts.reviewImage ? [
+          { type:'text',text:opts.referenceSheet.description },
+          { type:'image_url',image_url:{url:`data:image/png;base64,${opts.referenceSheet.imageBase64}`} },
+        ] : []),
       ],
     },
   ], { ...opts, model: opts.model ?? config.visionModel, config, kind: opts.kind ?? 'vision' })

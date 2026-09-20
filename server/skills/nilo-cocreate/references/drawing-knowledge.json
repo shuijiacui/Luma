@@ -1,0 +1,819 @@
+{
+  "version": 1,
+  "authorship": "Luma original co-creation guidance; external sketch attribution is stored separately in drawing-library.json.",
+  "cards": [
+    {
+      "id": "person",
+      "label": "人物／脸 / person or face",
+      "categories": [
+        "face",
+        "hat"
+      ],
+      "cues": "Head outline with eyes or mouth; body/limbs may be schematic.",
+      "ideas": [
+        "A fringe or hair bow on empty forehead when eyes/mouth already exist; hat only with headroom.",
+        "A small button only on visible clothing; nose only if missing."
+      ],
+      "avoid": "Do not turn a smiling person into a balloon or duplicate eyes. Follow the child's own character identity."
+    },
+    {
+      "id": "cat",
+      "label": "猫 / cat",
+      "categories": [
+        "cat"
+      ],
+      "cues": "Face/body plus pointed ears or feline muzzle; a plain circle is not enough.",
+      "ideas": [
+        "One or two short whiskers growing outward from the visible OUTER cheek contour. Start at actual cheek ink, not blank muzzle space; keep eyes clear.",
+        "One curved tail joined to the rear body if absent; an internal paw detail on a visible paw."
+      ],
+      "avoid": "Do not add ears when already present or attach a tail to the face.",
+      "exampleAddition": {
+        "subject": "one outward cheek whisker",
+        "placement": "left or right",
+        "requires": "First M must touch the ACTUAL OUTER cheek outline, never empty space near the mouth. Mirror for left growth. The whole head is the anchor.",
+        "sketch": {
+          "aspect": 2.5,
+          "paths": [
+            [
+              [
+                "M",
+                0,
+                0.65
+              ],
+              [
+                "Q",
+                0.45,
+                0.25,
+                1,
+                0.2
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "dog",
+      "label": "狗 / dog",
+      "categories": [
+        "dog"
+      ],
+      "cues": "Visible muzzle and floppy/pointed ears with a head or body.",
+      "ideas": [
+        "A little nose in the visible muzzle if missing.",
+        "A collar at a visible neck; a tail joined to the rear body if missing."
+      ],
+      "avoid": "A collar needs a neck; do not draw one across eyes or add detached bones by default."
+    },
+    {
+      "id": "rabbit",
+      "label": "兔子 / rabbit",
+      "categories": [
+        "rabbit"
+      ],
+      "cues": "Long ears above a recognizable animal head.",
+      "ideas": [
+        "A short inner-ear line inside one existing ear.",
+        "A small nose between eyes and mouth, or a round tail attached to the rear body."
+      ],
+      "avoid": "Do not add a second set of long ears or assume every oval is a rabbit.",
+      "exampleAddition": {
+        "subject": "inner ear line",
+        "placement": "inside",
+        "requires": "Anchor the existing ear; align with its long direction, not the whole head.",
+        "sketch": {
+          "aspect": 0.3,
+          "paths": [
+            [
+              [
+                "M",
+                0.45,
+                0.95
+              ],
+              [
+                "Q",
+                0.1,
+                0.35,
+                0.5,
+                0.08
+              ],
+              [
+                "Q",
+                0.8,
+                0.4,
+                0.58,
+                0.85
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "fish",
+      "label": "鱼 / fish",
+      "categories": [
+        "fish"
+      ],
+      "cues": "Body and a visible tail establish direction; head is opposite the tail.",
+      "ideas": [
+        "One eye inside the head if absent.",
+        "A triangular fin joined to the body contour, or one gill curve behind the head."
+      ],
+      "avoid": "Never put the eye beside the tail; do not surround unrelated shapes with bubbles."
+    },
+    {
+      "id": "bird",
+      "label": "鸟 / bird",
+      "categories": [
+        "bird"
+      ],
+      "cues": "A body/head plus beak, wing or feet; infer direction from real features.",
+      "ideas": [
+        "A small wing curve inside the body if missing.",
+        "A beak attached to the front head contour, or feet joined below the body."
+      ],
+      "avoid": "Do not add a beak at the tail or duplicate existing wings.",
+      "exampleAddition": {
+        "subject": "wing curve",
+        "placement": "inside",
+        "requires": "Anchor the visible body; keep the curve behind the head and above legs.",
+        "sketch": {
+          "aspect": 1.8,
+          "paths": [
+            [
+              [
+                "M",
+                0.05,
+                0.15
+              ],
+              [
+                "Q",
+                0.8,
+                1,
+                0.95,
+                0.2
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "butterfly",
+      "label": "蝴蝶 / butterfly",
+      "categories": [
+        "butterfly"
+      ],
+      "cues": "A central body with wings on both sides.",
+      "ideas": [
+        "A small spot inside an empty wing.",
+        "One curling antenna joined to the head if absent."
+      ],
+      "avoid": "Keep original wing asymmetry; do not redraw both wings or force perfect symmetry.",
+      "exampleAddition": {
+        "subject": "one wing spot",
+        "placement": "inside",
+        "requires": "Anchor ONE existing empty wing, not the central body.",
+        "sketch": {
+          "aspect": 1,
+          "paths": [
+            [
+              [
+                "E",
+                0.5,
+                0.5,
+                0.3,
+                0.3
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "turtle",
+      "label": "乌龟 / turtle",
+      "categories": [
+        "sea turtle"
+      ],
+      "cues": "Shell/body with distinct head and short flippers or legs.",
+      "ideas": [
+        "Two short connected shell-panel lines inside clear shell space.",
+        "A small eye inside the existing head if missing."
+      ],
+      "avoid": "Do not identify any oval as a shell or add facial details inside the shell.",
+      "exampleAddition": {
+        "subject": "shell panel junction",
+        "placement": "inside",
+        "requires": "Anchor empty shell space, away from head and limbs.",
+        "sketch": {
+          "aspect": 1,
+          "paths": [
+            [
+              [
+                "M",
+                0.1,
+                0.1
+              ],
+              [
+                "L",
+                0.5,
+                0.5
+              ],
+              [
+                "L",
+                0.9,
+                0.15
+              ]
+            ],
+            [
+              [
+                "M",
+                0.5,
+                0.5
+              ],
+              [
+                "L",
+                0.5,
+                0.9
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "snail",
+      "label": "蜗牛 / snail",
+      "categories": [
+        "snail"
+      ],
+      "cues": "Round shell on an extended body, with head at one end.",
+      "ideas": [
+        "A short spiral inside an empty shell.",
+        "A tentacle attached at the visible head if missing."
+      ],
+      "avoid": "A spiral belongs inside the shell, not the body or an unrelated circle.",
+      "exampleAddition": {
+        "subject": "shell spiral",
+        "placement": "inside",
+        "requires": "Only inside an existing empty shell; do not duplicate an existing spiral.",
+        "sketch": {
+          "aspect": 1,
+          "paths": [
+            [
+              [
+                "M",
+                0.95,
+                0.6
+              ],
+              [
+                "C",
+                1,
+                0.05,
+                0.05,
+                0.05,
+                0.08,
+                0.6
+              ],
+              [
+                "C",
+                0.1,
+                1,
+                0.82,
+                1,
+                0.78,
+                0.55
+              ],
+              [
+                "Q",
+                0.65,
+                0.2,
+                0.4,
+                0.5
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "tree",
+      "label": "树 / tree",
+      "categories": [
+        "tree",
+        "leaf"
+      ],
+      "cues": "Trunk with crown or visible branches.",
+      "ideas": [
+        "For a broad empty trunk, add one small oval bark knot inside its lower or middle region. Use custom paths, never part=string.",
+        "A leaf may join a clearly visible branch tip. A scallop on a solid cloud-like canopy is NOT a visible branch tip."
+      ],
+      "avoid": "Do not float leaves far from branches, attach leaves blindly to canopy scallops, or use every open line as a plant stem. A bark knot belongs between the two trunk sides, not in the canopy or V-shaped crotch.",
+      "exampleAddition": {
+        "subject": "small bark knot",
+        "placement": "inside",
+        "requires": "Anchor the actual empty trunk interior below its fork, not the whole tree. Select position and scale from its visible width. Omit attachment. Only use when no knot already exists and there is room for two separated curves.",
+        "sketch": { "aspect": 0.65, "paths": [ [["E", 0.5, 0.5, 0.42, 0.43]], [["E", 0.5, 0.5, 0.18, 0.2]] ] },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "flower",
+      "label": "花 / flower",
+      "categories": [
+        "flower"
+      ],
+      "cues": "Flower head/petals connected to a stem, or an explicitly named flower.",
+      "ideas": [
+        "One leaf connected to the visible stem.",
+        "A small centre in an empty flower head or one missing petal attached to it."
+      ],
+      "avoid": "Preserve the child's petal count and style; do not redraw the whole blossom."
+    },
+    {
+      "id": "cactus",
+      "label": "仙人掌 / cactus",
+      "categories": [
+        "cactus"
+      ],
+      "cues": "Upright succulent body with branch arms, often in a pot.",
+      "ideas": [
+        "Two short spine marks along one clear body edge.",
+        "A tiny flower attached to a visible top tip."
+      ],
+      "avoid": "Do not put spikes across a face or fill every part with detail.",
+      "exampleAddition": {
+        "subject": "two short spines",
+        "placement": "inside",
+        "requires": "Small marks inside a visible cactus body; never add to a character face.",
+        "sketch": {
+          "aspect": 1.5,
+          "paths": [
+            [
+              [
+                "M",
+                0.15,
+                0.2
+              ],
+              [
+                "L",
+                0.25,
+                0.5
+              ]
+            ],
+            [
+              [
+                "M",
+                0.65,
+                0.45
+              ],
+              [
+                "L",
+                0.8,
+                0.8
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "house",
+      "label": "房子 / house",
+      "categories": [
+        "house"
+      ],
+      "cues": "Roof above wall enclosure; distinguish roof and wall.",
+      "ideas": [
+        "One window in empty wall space.",
+        "A door on the lower wall, or a chimney joined to the roof if room remains."
+      ],
+      "avoid": "Never put windows in the roof unless the child explicitly asks for a roof window; preserve existing doors."
+    },
+    {
+      "id": "castle",
+      "label": "城堡 / castle",
+      "categories": [
+        "castle"
+      ],
+      "cues": "Towers or battlements plus wall body.",
+      "ideas": [
+        "A small flag attached by a pole to a visible tower top.",
+        "An arch doorway in an empty wall panel or a tower window."
+      ],
+      "avoid": "Do not draw a second castle or place flags floating beside it.",
+      "exampleAddition": {
+        "subject": "tower flag",
+        "placement": "above",
+        "requires": "Attach the first M at an actual tower top; the pole grows into free space above it.",
+        "sketch": {
+          "aspect": 0.65,
+          "paths": [
+            [
+              [
+                "M",
+                0.1,
+                1
+              ],
+              [
+                "L",
+                0.1,
+                0.05
+              ],
+              [
+                "L",
+                0.9,
+                0.22
+              ],
+              [
+                "L",
+                0.1,
+                0.4
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "car",
+      "label": "汽车 / car",
+      "categories": [
+        "car",
+        "wheel"
+      ],
+      "cues": "Body above visible wheels; cabin and direction may be simple.",
+      "ideas": [
+        "A hub in an existing wheel.",
+        "A window inside the cabin, or a headlight inside the front body edge."
+      ],
+      "avoid": "Do not turn an explicitly named wheel into a sun or add extra wheels arbitrarily."
+    },
+    {
+      "id": "train",
+      "label": "火车 / train",
+      "categories": [
+        "train"
+      ],
+      "cues": "Engine or connected carriages with wheels.",
+      "ideas": [
+        "One carriage window inside an empty side panel.",
+        "A short coupling attached between two existing carriages; a hub in a visible wheel."
+      ],
+      "avoid": "Do not extend a whole new train across the page or draw rails through the body."
+    },
+    {
+      "id": "boat",
+      "label": "船 / boat",
+      "categories": [
+        "sailboat"
+      ],
+      "cues": "Hull with a mast, sail, deck or water context.",
+      "ideas": [
+        "A small flag on a visible mast.",
+        "One sail attached to a bare mast, or a short ripple just under the hull when water makes sense."
+      ],
+      "avoid": "A standalone heart does not imply a boat or water. Do not put a sail below the hull.",
+      "exampleAddition": {
+        "subject": "mast flag",
+        "placement": "above",
+        "requires": "Attach first M to a visible mast top; do not draw a new boat or mast through an existing sail.",
+        "sketch": {
+          "aspect": 1.4,
+          "paths": [
+            [
+              [
+                "M",
+                0.05,
+                1
+              ],
+              [
+                "L",
+                0.05,
+                0.05
+              ],
+              [
+                "L",
+                0.95,
+                0.3
+              ],
+              [
+                "L",
+                0.05,
+                0.55
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "airplane",
+      "label": "飞机 / airplane",
+      "categories": [
+        "airplane"
+      ],
+      "cues": "Fuselage with wings or a tail; establish nose direction.",
+      "ideas": [
+        "A window along the fuselage.",
+        "A small tail fin joined to the rear if missing."
+      ],
+      "avoid": "Do not add a second pair of wings or misplace a cockpit at the tail."
+    },
+    {
+      "id": "rocket",
+      "label": "火箭／飞船 / rocket or spacecraft",
+      "categories": [],
+      "cues": "Child-declared spacecraft, or pointed body with fins/nozzle; do not overrule imaginative shapes.",
+      "ideas": [
+        "A porthole inside the body.",
+        "One flame joined to the visible exhaust end, opposite the nose."
+      ],
+      "avoid": "Do not copy an airplane onto a rocket; choose custom curves when no reference sample exists.",
+      "exampleAddition": {
+        "subject": "one exhaust flame",
+        "placement": "below",
+        "requires": "Attach first M to the actual nozzle; orient away from the nose, adapt to the craft direction.",
+        "sketch": {
+          "aspect": 0.6,
+          "paths": [
+            [
+              [
+                "M",
+                0.3,
+                0
+              ],
+              [
+                "Q",
+                0.1,
+                0.45,
+                0.5,
+                0.95
+              ],
+              [
+                "Q",
+                0.9,
+                0.45,
+                0.7,
+                0
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "sun",
+      "label": "太阳 / sun",
+      "categories": [
+        "sun"
+      ],
+      "cues": "A circular centre with rays or child's explicit sun story.",
+      "ideas": [
+        "A short missing ray at the rim, with the same spacing as existing rays.",
+        "A face detail only if the child has already made it a character."
+      ],
+      "avoid": "A wheel or person's face must not become a sun because it is round."
+    },
+    {
+      "id": "moon",
+      "label": "月亮 / moon",
+      "categories": [
+        "moon"
+      ],
+      "cues": "A crescent, or child's explicit moon story.",
+      "ideas": [
+        "One small crater inside the visible moon body.",
+        "A character detail only when supported by the child's story."
+      ],
+      "avoid": "Do not cover the crescent's cutout or add unrelated stars as universal decoration.",
+      "exampleAddition": {
+        "subject": "one crater",
+        "placement": "inside",
+        "requires": "Only in solid moon body, never its crescent cutout.",
+        "sketch": {
+          "aspect": 1.3,
+          "paths": [
+            [
+              [
+                "E",
+                0.5,
+                0.5,
+                0.35,
+                0.27
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "cloud",
+      "label": "云 / cloud",
+      "categories": [
+        "cloud"
+      ],
+      "cues": "A lobed cloud outline in sky context or explicitly named cloud.",
+      "ideas": [
+        "A short rain line below the cloud if the child wants rainy weather.",
+        "A small internal curl that develops an existing cloud lobe."
+      ],
+      "avoid": "Do not change cheerful weather into rain by default or add rain to unrelated shapes."
+    },
+    {
+      "id": "rainbow",
+      "label": "彩虹 / rainbow",
+      "categories": [
+        "rainbow"
+      ],
+      "cues": "Several large nested arches or an explicitly declared rainbow.",
+      "ideas": [
+        "One parallel arc that follows the existing arch, without crossing its bands.",
+        "A small cloud at a visible rainbow endpoint if absent."
+      ],
+      "avoid": "Do not fill the whole rainbow or rescale the child's arches."
+    },
+    {
+      "id": "apple",
+      "label": "苹果／水果 / apple or fruit",
+      "categories": [
+        "apple"
+      ],
+      "cues": "Fruit outline with a top notch/stem, or a child-declared fruit.",
+      "ideas": [
+        "A leaf joined to a visible stem.",
+        "A short stem joined at the fruit's top notch if missing."
+      ],
+      "avoid": "No detached leaf; do not join at the fruit's bottom tip."
+    },
+    {
+      "id": "cake",
+      "label": "蛋糕 / cake",
+      "categories": [
+        "cake",
+        "candle"
+      ],
+      "cues": "Cake layers/top surface, often with candles or icing.",
+      "ideas": [
+        "One candle standing on the top surface if absent.",
+        "A small icing curve on an empty cake side."
+      ],
+      "avoid": "Do not place candles beneath the cake or cover existing decorations.",
+      "exampleAddition": {
+        "subject": "one candle",
+        "placement": "above",
+        "requires": "Attach base to visible cake top, only with sufficient headroom. Keep flame separate above the wick.",
+        "sketch": {
+          "aspect": 0.3,
+          "paths": [
+            [
+              [
+                "M",
+                0.5,
+                1
+              ],
+              [
+                "L",
+                0.2,
+                1
+              ],
+              [
+                "L",
+                0.2,
+                0.35
+              ],
+              [
+                "L",
+                0.8,
+                0.35
+              ],
+              [
+                "L",
+                0.8,
+                1
+              ],
+              [
+                "L",
+                0.5,
+                1
+              ]
+            ],
+            [
+              [
+                "M",
+                0.5,
+                0.35
+              ],
+              [
+                "L",
+                0.5,
+                0.22
+              ]
+            ],
+            [
+              [
+                "M",
+                0.5,
+                0.2
+              ],
+              [
+                "Q",
+                0.15,
+                0.08,
+                0.5,
+                0.01
+              ],
+              [
+                "Q",
+                0.85,
+                0.12,
+                0.5,
+                0.2
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "umbrella",
+      "label": "雨伞 / umbrella",
+      "categories": [
+        "umbrella"
+      ],
+      "cues": "Canopy with ribs and a central handle.",
+      "ideas": [
+        "A curved handle connected under the canopy if missing.",
+        "One rib inside the existing canopy from its crown to an edge."
+      ],
+      "avoid": "Do not treat every semicircle as an umbrella or draw ribs outside the canopy.",
+      "exampleAddition": {
+        "subject": "hooked handle",
+        "placement": "below",
+        "requires": "Attach first M to the visible central underside of a canopy with no existing handle.",
+        "sketch": {
+          "aspect": 0.4,
+          "paths": [
+            [
+              [
+                "M",
+                0.55,
+                0
+              ],
+              [
+                "L",
+                0.55,
+                0.72
+              ],
+              [
+                "Q",
+                0.55,
+                1,
+                0.2,
+                0.9
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "imaginary",
+      "label": "幻想角色／混合生物 / imaginary character",
+      "categories": [],
+      "cues": "Child's named invented creature, or visible character combining unusual features.",
+      "ideas": [
+        "A small accessory on a real head/neck/body region, respecting the child's story.",
+        "An attached antenna, wing or tail only when it expands the existing character without changing its identity."
+      ],
+      "avoid": "Do not force it into the nearest known animal or correct the child's anatomy."
+    },
+    {
+      "id": "abstract",
+      "label": "抽象图案／尚未成形 / abstract or unknown",
+      "categories": [],
+      "cues": "Lines or shapes without reliable object identity.",
+      "ideas": [
+        "A deliberate connected extension that develops an existing rhythm or enclosure, only if visually meaningful.",
+        "Use general attachment, repetition and contrast principles with a clearly chosen new shape; custom paths remain available."
+      ],
+      "avoid": "Do not invent an object label to fit the catalogue. No detached copied last stroke just to produce ink."
+    }
+  ]
+}

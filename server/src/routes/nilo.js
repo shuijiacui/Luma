@@ -3,7 +3,7 @@
 import { Router } from 'express'
 import { asyncRoute } from '../services/http.js'
 import { NILO_STROKE_KINDS, generateNiloPraise, generateNiloStroke } from '../services/niloCompanion.js'
-import { generateNiloDialogue, sanitizeDialogueContext } from '../services/niloDialogue.js'
+import { generateNiloDialogue, sanitizeDialogueContext, validateBounds } from '../services/niloDialogue.js'
 import { voiceCapabilities, voiceConfig, transcribeVoice, synthesizeVoice } from '../services/voice.js'
 import { defaultLimits, rateLimit } from '../services/security.js'
 
@@ -106,7 +106,18 @@ export function createNiloRouter({
       if (image.error) throw Object.assign(new Error(image.error), { status: image.status })
       imageBase64 = image.encoded
     }
-    return generateDialogue({ imageBase64, context: sanitizeDialogueContext(req.body.context), chatWithImage, chatText, timeoutMs, signal })
+    let focusImage
+    if (req.body.focusImage !== undefined) {
+      const focus = req.body.focusImage
+      const bounds = validateBounds(focus?.bounds)
+      if (!imageBase64 || !bounds || typeof focus?.imageBase64 !== 'string' || focus.imageBase64.length > 1024 * 1024) {
+        throw Object.assign(new Error('invalid focus image'), { status: 400 })
+      }
+      const image = readImage(focus)
+      if (image.error) throw Object.assign(new Error(image.error), { status: image.status })
+      focusImage = { imageBase64: image.encoded, bounds }
+    }
+    return generateDialogue({ imageBase64, focusImage, context: sanitizeDialogueContext(req.body.context), chatWithImage, chatText, timeoutMs, signal })
   }))
 
   router.get('/voice/config', childOnly, capabilitiesLimit, (_req, res) => {

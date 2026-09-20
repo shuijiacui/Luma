@@ -1,11 +1,58 @@
+// Dialogue unit tests isolate rasterisation; niloPreview.test.js exercises real PNG composition.
+vi.mock('../src/services/niloPreview.js', () => ({ renderReviewCandidate: (_image, proposal) => ({proposal, imageBase64:'composited-preview'}) }))
 import { expect, test, vi } from 'vitest'
-import { attachedLeafDetail, contourDetail, groundAttachment, normalizeTurnSketch } from '../src/services/niloCoCreation.js'
+import { attachedLeafDetail, contourDetail, groundAttachment, normalizeTurnSketch, coCreationReviewFailure, turnAttentionFailure } from '../src/services/niloCoCreation.js'
 import { compileTurnReply, generateNiloDialogue, turnFailureCode, validateProposal } from '../src/services/niloDialogue.js'
 import { LLMParseError } from '../src/services/llmClient.js'
 
 const points = Array.from({ length: 24 }, (_, i) => ({ x: .5 + .23 * Math.cos(i * Math.PI * 2 / 23), y: .5 + .23 * Math.sin(i * Math.PI * 2 / 23) }))
 const context = { locale: 'zh', takeTurn: true, requestDrawing: true, canvasAspect: 1, lastStroke: { points }, utterance: '轮到你了' }
 const review = { targetVisible: true, usesExistingDrawing: true, detailRelated: true, placementCorrect: true, alreadyPresent: false, confidence: .9 }
+
+test('whole-picture turns may develop a prior child tree despite the final separate sky mark',()=>{
+  const tree={x:.15,y:.2,width:.4,height:.75},sky={x:.75,y:.7,width:.15,height:.1}
+  const scene={recentContributions:[{owner:'child',bounds:tree},{owner:'nilo',bounds:{x:.72,y:.1,width:.1,height:.1}},{owner:'child',bounds:sky}]}
+  expect(turnAttentionFailure({scene},{anchor:tree})).toBe('wrong_target')
+  expect(turnAttentionFailure({scene,turnScope:'scene'},{anchor:tree})).toBeNull()
+  expect(turnAttentionFailure({scene,turnScope:'scene'},{anchor:{x:.72,y:.1,width:.1,height:.1}})).toBe('wrong_target')
+  expect(turnAttentionFailure({scene,turnScope:'scene'},{anchor:{x:.6,y:.4,width:.05,height:.05}})).toBe('wrong_target')
+})
+
+test('review separates an unknown name from a clear and relevant geometric continuation',()=>{
+  expect(coCreationReviewFailure({...review,confidence:.2,geometryConfidence:.9,relationConfidence:.9})).toBeNull()
+  expect(coCreationReviewFailure({...review,confidence:.99,geometryConfidence:.6,relationConfidence:.9})).toBe('uncertain_review')
+  expect(coCreationReviewFailure({...review,confidence:.99,geometryConfidence:.9,relationConfidence:.6})).toBe('uncertain_review')
+  expect(coCreationReviewFailure({...review,geometryConfidence:.9})).toBe('invalid_review')
+  expect(coCreationReviewFailure({...review,geometryConfidence:.99,relationConfidence:.99,placementCorrect:false})).toBe('misplaced_detail')
+  expect(coCreationReviewFailure({...review,geometryConfidence:.99,relationConfidence:.99,alreadyPresent:true})).toBe('duplicate_detail')
+})
+
+test.each(['geometric','line'])('a clearly visible unnamed %s can develop without inventing object certainty', async sceneType => {
+  const raw = {sceneType,grounding:{visible:'一条清晰的轮廓，末端朝下',confidence:.2,geometryConfidence:.9},reply:'接一小段曲线',
+    proposal:{template:'custom',subject:'延伸曲线',target:'现有轮廓',relation:'从末端延伸',anchor:{x:.27,y:.27,width:.46,height:.46},placement:'below',attachment:{x:.5,y:.73},
+      sketch:{aspect:.4,paths:[[['M',.5,0],['Q',0,.5,.8,1]]]}}}
+  const focusImage={imageBase64:'crop',bounds:{x:.2,y:.2,width:.6,height:.6}}
+  const vision=vi.fn().mockResolvedValueOnce(raw).mockResolvedValueOnce(review)
+  const result=await generateNiloDialogue({imageBase64:'full',focusImage,context,chatWithImage:vision})
+  expect(result.status).toBe('ready')
+  expect(result.proposal.subject).toBe('延伸曲线')
+  expect(vision).toHaveBeenCalledTimes(2)
+  for(const [image,prompt,opts] of vision.mock.calls) {
+    expect(image).toBe('full'); expect(opts.focusImage).toEqual(focusImage)
+    expect(prompt).toContain('"focusBounds":{"x":0.2,"y":0.2,"width":0.6,"height":0.6}')
+    expect(prompt).not.toContain('imageBase64')
+  }
+})
+
+test.each([
+  ['object',.2,.99], ['geometric',.9,.3], ['line',.9,'0.99'], ['line','invalid',.99],
+])('geometry cannot bypass evidence for %s identity=%s geometry=%s', async(sceneType,confidence,geometryConfidence)=>{
+  const raw={sceneType,grounding:{visible:'已有线条',confidence,geometryConfidence},reply:'接一笔',proposal:{template:'echo'}}
+  const vision=vi.fn().mockResolvedValue(raw)
+  const result=await generateNiloDialogue({imageBase64:'full',context,chatWithImage:vision})
+  expect(result.status).toBe('clarify'); expect(result.proposal).toBeUndefined()
+  expect(vision).toHaveBeenCalledOnce()
+})
 
 test('after a new separate apple, a click corrects a plan on the older heart before drawing', async () => {
   const heartPlan={sceneType:'object',grounding:{visible:'左边是心形，右边新画了苹果',confidence:.9},reply:'接一片叶子',proposal:{template:'leaf',target:'旧心形的梗',relation:'从梗上长出叶子',anchor:{x:.1,y:.1,width:.3,height:.5},placement:'right',attachment:{x:.3,y:.2}}}
@@ -285,7 +332,7 @@ test('compact single paths retain topology and proportions while becoming visibl
 
 test('path normalization never repairs unsafe commands, empty paths or oversized contributions', () => {
   for (const paths of [[], [['M', .5, .5], ['Q', .5, .5, .5, .5]], [['RUN', 'code']],
-    Array.from({ length: 5 }, () => [['M', 0, 0], ['L', 1, 1]]), [['M', 0, 0], ['L', 2, 2]],
+    Array.from({ length: 9 }, () => [['M', 0, 0], ['L', 1, 1]]), [['M', 0, 0], ['L', 2, 2]],
   ]) expect(normalizeTurnSketch({ aspect: 1, paths })).toBeNull()
   expect(normalizeTurnSketch({ aspect: 1, paths: [[['M', 0, 0], ['L', 1, 1]]], script: 'x' })).toBeNull()
 })
@@ -308,7 +355,7 @@ test('a circle can develop into a balloon without being replaced by an inset con
   expect(vision).toHaveBeenCalledTimes(2)
 })
 
-test('up to four paths retain their layout as one new part', () => {
+test('up to eight paths retain their layout as one new part', () => {
   const paths = [[['M', .2, .2], ['L', .4, .4]], [['M', .6, .2], ['L', .8, .4]]]
   const result = normalizeTurnSketch({ aspect: 2, paths })
   expect(result.paths).toHaveLength(2)
@@ -321,5 +368,5 @@ test('two separate moves become two strokes without inserting a connecting line'
   const second = [['M', 1, .5], ['Q', .55, .5, 0, .38]]
   expect(normalizeTurnSketch({ aspect: 1.6, paths: [[...first, ...second]] })).toEqual({ aspect: 1.6, paths: [first, second] })
   expect(normalizeTurnSketch({ aspect: 1.6, paths: [[...first, ['RUN', 'unsafe'], ...second]] })).toBeNull()
-  expect(normalizeTurnSketch({ aspect: 1, paths: [Array.from({ length: 5 }, () => first).flat()] })).toBeNull()
+  expect(normalizeTurnSketch({ aspect: 1, paths: [Array.from({ length: 9 }, () => first).flat()] })).toBeNull()
 })

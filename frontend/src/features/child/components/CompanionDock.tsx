@@ -35,7 +35,14 @@ export function CompanionDock({ companion, voice, mode, visible, enabled, isDraw
   const inviteLabel = visible ? 'Nilo，你来画' : '显示 Nilo'
 
   return <div className="nilo-footer-companion" role="group" aria-label={t('Nilo 与声音')}>
-    {visible && !isDrawing && caption && <p className="nilo-bottom-caption" role="status" title={caption}>{caption}</p>}
+    {visible && !isDrawing && companion.recovery ? <div className="nilo-recovery" role="group" aria-label={t('一起选个小主意')}>
+      <p role="status">{t(companion.message)}</p>
+      <div>{companion.recovery.ideas.map(idea => <button key={idea.id} type="button" disabled={!enabled || mode !== 'together'} onClick={() => { voice.cancel(); companion.chooseRecovery(idea.id) }}>
+        <svg viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+          <path d={idea.id === 'leaf' ? 'M5 20Q3 3 27 3Q29 21 5 20ZM5 20Q14 13 24 6' : 'M7 19C0 19 0 9 8 10C7 0 21 0 21 9C30 2 34 18 27 19Q17 22 7 19Z'} />
+        </svg><span>{t(idea.label)}</span>
+      </button>)}<button type="button" className="nilo-recovery-close" onClick={() => companion.cancel()} aria-label={t('先不要')}>×</button></div>
+    </div> : visible && !isDrawing && caption && <p className="nilo-bottom-caption" role="status" title={caption}>{caption}</p>}
     <div className="nilo-footer-icons">
       {projected && <div className="nilo-bottom-projection" role="group" aria-label={t('决定这个小主意')}>
         <button type="button" className="nilo-dock-button bg-luma-teal-700 !text-white" onClick={() => { voice.cancel(); companion.accept({ speak: false }) }}>{t('留下来')}</button>

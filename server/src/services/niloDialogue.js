@@ -1,9 +1,20 @@
+import { drawingReferenceSheet } from './niloDrawingReferences.js'
+import { decodeOccupancy } from '../../../shared/niloOccupancy.mjs'
+import { validateContact } from '../../../shared/niloContact.mjs'
+import { generateProtocolTurn } from './niloProtocolTurn.js'
+import { drawingInkContacts } from './niloContactPlacement.js'
+import { readDrawingLayout } from './niloDrawingLayout.js'
+import { drawingInkAnchors, resolveInkAnchor } from './niloInkAnchors.js'
+import { knowledgeObservationPrompt, sanitizeKnowledgeObservation, retrieveDrawingKnowledge, knowledgePlanningPrompt } from './niloDrawingKnowledge.js'
+import { renderReviewCandidate } from './niloPreview.js'
+import { readStructure, structureFailure, fitStructuralPart } from './niloStructure.js'
 import { chatWithImage as defaultVision, chatText as defaultText, llmConfig, LLMParseError } from './llmClient.js'
 import { traceNode } from './tracing.js'
 import { validateCustomSketch, withinDrawingGroupBudget } from './niloSketch.js'
 import { parseSimpleDrawingRequest, planSimpleDrawing } from './simpleDrawing.js'
 import { buildDrawingSkillPrompt } from './niloDrawingSkills.js'
-import { approvesCoCreation, attachedLeafDetail, buildCoCreationPrompt, buildCoCreationReviewPrompt, buildCoCreationCorrectionPrompt, coCreationReviewFailure, turnAttentionFailure, continuationFailure, contourDetail, groundAttachment, hasGroundedTurn, normalizeTurnSketch, uncertainTurnReply } from './niloCoCreation.js'
+import { expandDrawingPart } from './niloParts.js'
+import { approvesCoCreation, attachedLeafDetail, buildCoCreationPrompt, buildCoCreationReviewPrompt, buildCoCreationCorrectionPrompt, coCreationReviewFailure, turnAttentionFailure, continuationFailure, contourDetail, groundAttachment, hasGroundedTurn, normalizeTurnSketch, uncertainTurnReply, turnGroundingConfidence } from './niloCoCreation.js'
 
 export const NILO_TEMPLATES = ['waves', 'fish', 'leaf', 'window', 'stars', 'cloud', 'flower', 'trail', 'flame', 'rain', 'grass', 'echo', 'sun', 'moon', 'tree', 'mountain', 'house', 'boat', 'bird', 'butterfly', 'heart', 'custom']
 export const NILO_BRUSH_KINDS = ['round', 'pencil', 'marker', 'crayon', 'star']
@@ -98,6 +109,10 @@ export function sanitizeDialogueContext(input = {}) {
     }) : [],
     requestDrawing: input?.requestDrawing === true,
     takeTurn: input?.takeTurn === true && input?.requestDrawing === true,
+    useDrawingKnowledge: input?.useDrawingKnowledge === true && input?.takeTurn === true && input?.requestDrawing === true,
+    turnScope: input?.turnScope === 'scene' && input?.takeTurn === true && input?.requestDrawing === true ? 'scene' : 'latest',
+    drawingProtocol: input?.drawingProtocol === 2 && input?.takeTurn === true && input?.requestDrawing === true ? 2 : 1,
+    collisionMap: input?.drawingProtocol === 2 && input?.takeTurn === true && input?.requestDrawing === true && decodeOccupancy(input?.collisionMap) ? {size:256,bits:input.collisionMap.bits} : undefined,
     inferDrawingIntent: input?.inferDrawingIntent === true,
     imageProvenance: ['child', 'unknown', 'composite'].includes(input?.imageProvenance) ? input.imageProvenance : 'unknown',
     revision: Number.isSafeInteger(input?.revision) && input.revision >= 0 ? input.revision : 0,
@@ -176,10 +191,15 @@ CONTEXT: ${JSON.stringify(context)}`
 export function compileTurnReply(raw, context) {
   if (!raw || typeof raw !== 'object') return raw
   if (raw.sceneType !== undefined && !['object', 'geometric', 'line', 'blank'].includes(raw.sceneType)) return raw
-  const { sceneType, grounding, ...reply } = raw
+  const { sceneType, grounding, structure: _structure, ...reply } = raw
   if (sceneType === 'blank') return { ...reply, proposal: undefined }
   if (!raw.proposal || typeof raw.proposal !== 'object') return reply
-  const p = { ...raw.proposal }
+  const part = raw.proposal.template === 'part' ? expandDrawingPart(raw.proposal, context.locale) : null
+  if (raw.proposal.template === 'part' && !part) return { ...reply, proposal: undefined }
+  const p = { ...(part?.proposal ?? raw.proposal) }
+  // A missing descriptive label is recoverable from the model's existing
+  // evidence. This cannot add certainty, change geometry or skip review.
+  if (p.target === undefined && hasGroundedTurn(raw)) p.target = clean(raw.grounding.visible, 100)
   if (p.template === 'leaf' && p.attachment) {
     const detail = attachedLeafDetail(p.placement, context.locale)
     if (detail) Object.assign(p, detail)
@@ -187,7 +207,7 @@ export function compileTurnReply(raw, context) {
   if (sceneType === 'geometric' && p.template === 'contour') {
     const detail = contourDetail(context), style = preferredStyle(context)
     if (detail) return { ...reply, reply: context.locale === 'en' ? 'I’ll follow this outline with a short inset line.' : '我顺着这个轮廓接一小段。',
-      intent: 'draw', confidence: grounding?.confidence, proposal: { ...p, ...detail,
+      intent: 'draw', confidence: turnGroundingConfidence(raw), proposal: { ...p, ...detail,
         color: style.color ?? '#5f7065', strokeWidth: style.strokeWidth ?? 4, brushKind: style.brushKind ?? 'round' } }
   }
   if (sceneType === 'line' && p.template !== 'custom' && context.lastStroke?.points?.length) {
@@ -195,11 +215,27 @@ export function compileTurnReply(raw, context) {
     delete p.subject; delete p.sketch
   }
   if (p.template === 'custom') p.sketch = normalizeTurnSketch(p.sketch)
+  const customLayout=p.template==='custom' && (p.position!==undefined||p.scale!==undefined) ? readDrawingLayout(p):null
+  if(p.template==='custom' && (p.position!==undefined||p.scale!==undefined)
+    && (!customLayout||!validateCustomSketch(p.sketch)))return {...reply,proposal:undefined}
+  const layout=part?.layout??customLayout
+  if(customLayout){delete p.position;delete p.scale}
   const anchor = validateBounds(p.anchor)
   if (!anchor || !NILO_PLACEMENTS.includes(p.placement)) return reply
-  if (p.attachment && p.sketch) p.attachment = groundAttachment(p.attachment, anchor, context)
+  if (p.attachment && p.sketch) {
+    const a=p.attachment, x=Math.max(anchor.x,Math.min(anchor.x+anchor.width,a.x)), y=Math.max(anchor.y,Math.min(anchor.y+anchor.height,a.y))
+    if (Math.hypot(a.x-x,a.y-y)<=.003) p.attachment={x,y}
+    p.attachment = groundAttachment(p.attachment, anchor, context)
+  }
   const aspect = context.canvasAspect || 1
   let height = .18, width = Math.min(.35, height / aspect)
+  if (layout) {
+    const ratio = p.sketch.aspect
+    const minimum = Math.max(.026 * aspect / Math.min(1,ratio), .026 * Math.max(1,ratio))
+    const span = Math.max(minimum, Math.min(.32, Math.max(anchor.width * aspect, anchor.height) * layout.scale))
+    width = span * Math.min(1, ratio) / aspect
+    height = span / Math.max(1, ratio)
+  }
   if (p.attachment && p.sketch) {
     // Fit physical proportions BEFORE validating the box. A leaf near the top
     // used to be rejected as an oversized square before the client could fit it.
@@ -219,6 +255,10 @@ export function compileTurnReply(raw, context) {
   }
   const gapX = .03 / aspect, gapY = .03
   let x = anchor.x + (anchor.width - width) / 2, y = anchor.y + (anchor.height - height) / 2
+  if (layout && !layout.joined && p.placement==='inside') {
+    x = anchor.x + anchor.width * layout.position.u - width / 2
+    y = anchor.y + anchor.height * layout.position.v - height / 2
+  }
   if (p.placement === 'above') y = anchor.y - height - gapY
   if (p.placement === 'below') y = anchor.y + anchor.height + gapY
   if (p.placement === 'left') x = anchor.x - width - gapX
@@ -228,7 +268,7 @@ export function compileTurnReply(raw, context) {
     y = p.attachment.y - p.sketch.paths[0][0][2] * height
   }
   const style = preferredStyle(context)
-  return { ...reply, intent: 'draw', confidence: grounding?.confidence ?? raw.confidence, proposal: { ...p,
+  return { ...reply, intent: 'draw', confidence: turnGroundingConfidence(raw) ?? raw.confidence, proposal: { ...p,
     x: p.attachment ? x : Math.max(.02, Math.min(1 - width - .02, x)), y: p.attachment ? y : Math.max(.02, Math.min(1 - height - .02, y)), width, height, rotation: 0,
     color: style.color ?? '#5f7065', strokeWidth: style.strokeWidth ?? 4, brushKind: style.brushKind ?? 'round',
   } }
@@ -258,7 +298,7 @@ export function validateProposal(raw, context = {}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !NILO_TEMPLATES.includes(raw.template)) return null
   const simpleRequest = parseSimpleDrawingRequest(context.utterance)
   if (raw.template !== 'custom' && context.rejectedTemplates?.includes(raw.template) && !explicitlyRequests(raw.template, context.utterance) && simpleRequest?.template !== raw.template) return null
-  const allowed = new Set(['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'echoPoints', 'anchor', 'placement', 'subject', 'sketch', 'attachment'])
+  const allowed = new Set(['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'echoPoints', 'anchor', 'placement', 'subject', 'sketch', 'attachment', 'contact'])
   if (Object.keys(raw).some(key => !allowed.has(key))) return null
   let subject, sketch
   if (raw.template === 'custom') {
@@ -301,6 +341,8 @@ export function validateProposal(raw, context = {}) {
       || a.x < anchor.x || a.x > anchor.x + anchor.width || a.y < anchor.y || a.y > anchor.y + anchor.height) return null
     attachment = { x: a.x, y: a.y }
   }
+  const contact = raw.contact === undefined ? null : validateContact(raw.contact, anchor, aspect)
+  if (raw.contact !== undefined && (!contact || !anchor || !sketch || rotation !== 0 || raw.attachment !== undefined)) return null
   let echoPoints
   if (raw.template === 'echo') {
     const source = context.lastStroke?.points ?? raw.echoPoints
@@ -312,7 +354,7 @@ export function validateProposal(raw, context = {}) {
   const color = !changes.color && validColor(style.color) ? style.color : normalized.color
   const finalWidth = !changes.strokeWidth && validBrushSize(style.strokeWidth) ? style.strokeWidth : strokeWidth
   const brushKind = !changes.brushKind && validBrushKind(style.brushKind) ? style.brushKind : raw.brushKind ?? style.brushKind
-  return { template: raw.template, x, y, width, height, rotation, color: color.toLowerCase(), strokeWidth: finalWidth, ...(brushKind ? { brushKind } : {}), target, relation, ...(sketch ? { subject, sketch } : {}), ...(echoPoints ? { echoPoints } : {}), ...(anchor ? { anchor } : {}), ...(raw.placement ? { placement: raw.placement } : {}), ...(attachment ? { attachment } : {}) }
+  return { template: raw.template, x, y, width, height, rotation, color: color.toLowerCase(), strokeWidth: finalWidth, ...(brushKind ? { brushKind } : {}), target, relation, ...(sketch ? { subject, sketch } : {}), ...(echoPoints ? { echoPoints } : {}), ...(anchor ? { anchor } : {}), ...(raw.placement ? { placement: raw.placement } : {}), ...(attachment ? { attachment } : {}), ...(contact ? { contact } : {}) }
 }
 
 export function validateDialogue(raw, context, hasImage) {
@@ -351,7 +393,7 @@ export function validateDialogue(raw, context, hasImage) {
   if (raw.proposal != null) {
     const proposal = validateProposal(raw.proposal, context)
     if (!proposal) return null
-    if (context.takeTurn && (!proposal.anchor || !proposal.placement || (proposal.template === 'custom' && proposal.sketch.paths.length > 4))) return null
+    if (context.takeTurn && (!proposal.anchor || !proposal.placement || (proposal.template === 'custom' && (proposal.sketch.paths.length > 8 || (proposal.sketch.paths.length > 4 && proposal.width * proposal.height > .06))))) return null
     if (proposal.template === 'echo' && !context.lastStroke?.points?.length) return null
     // A group is atomic: never return a partial drawing while the reply describes the whole scene.
     const additions = (raw.additions ?? []).map((item, index) => validateProposal(item, {
@@ -414,8 +456,18 @@ export function turnFailureCode(raw, compiled, context) {
   return 'invalid_contract'
 }
 
-export async function generateNiloDialogue({ imageBase64, context: input, chatWithImage = defaultVision, chatText = defaultText, timeoutMs, signal } = {}) {
+function rawPartCorrection(raw) {
+  if(raw?.proposal?.template!=='part')return ''
+  if(['hat','crown'].includes(raw.proposal.part))return 'The hat/crown renderer requires placement=above and attachment at the TOP head outline. When the head top is too close to the canvas edge, choose part=fringe or hair_bow with placement=inside and position.u/v between 0.1 and 0.9 on the empty FOREHEAD instead. Do not put a hat inside the face or shrink it into a dot.'
+  if(['string','balloon_string'].includes(raw.proposal.part))return 'part=balloon_string means a balloon string, requires placement=below and attachment on a visible balloon. It is NOT a generic line tool. For bark texture or another internal stroke, use template=custom, subject, target, relation, anchor, placement=inside and sketch. Keep the observed subject and draw the intended detail, not a balloon string.'
+  return 'Use the named part contract: inside parts have position.u/v in 0.1..0.9 and NO attachment; connected parts require attachment and the permitted direction. Omit subject/sketch for part.'
+}
+
+export async function generateNiloDialogue({ imageBase64, focusImage, context: input, chatWithImage = defaultVision, chatText = defaultText, timeoutMs, signal } = {}) {
   const context = sanitizeDialogueContext(input)
+  const focus = imageBase64 && typeof focusImage?.imageBase64 === 'string' && focusImage.imageBase64.length <= 1024 * 1024
+    && validateBounds(focusImage.bounds) ? { imageBase64: focusImage.imageBase64, bounds: validateBounds(focusImage.bounds) } : undefined
+  if (focus) context.focusBounds = focus.bounds
   const hasImage = typeof imageBase64 === 'string' && imageBase64.length > 0
   if ((context.requestDrawing || context.inferDrawingIntent) && !hasImage) return dialogueFallback(context, 'missing_image')
   if (signal?.aborted) return dialogueFallback(context, 'timeout')
@@ -433,7 +485,7 @@ export async function generateNiloDialogue({ imageBase64, context: input, chatWi
     traceNode('nilo_companion', { kind: hasImage ? 'vision' : 'text', outcome: 'model_unavailable', revision: context.revision })
     return dialogueFallback(context, 'model_unavailable')
   }
-  const budget = dialogueBudgetMs(timeoutMs ?? (context.takeTurn ? process.env.NILO_DIALOGUE_BUDGET_MS ?? 24000 : undefined))
+  const budget = dialogueBudgetMs(timeoutMs ?? (context.takeTurn ? process.env.NILO_DIALOGUE_BUDGET_MS ?? 14000 : undefined))
   const controller = new AbortController()
   const abort = () => controller.abort(signal?.reason ?? new Error('request_cancelled'))
   signal?.addEventListener('abort', abort, { once: true })
@@ -444,17 +496,18 @@ export async function generateNiloDialogue({ imageBase64, context: input, chatWi
   try {
     controller.signal.throwIfAborted()
     const opts = { signal: controller.signal, maxTokens: context.takeTurn ? 1400 : context.requestDrawing || context.inferDrawingIntent ? NILO_DIALOGUE_MAX_TOKENS : NILO_CONVERSATION_MAX_TOKENS, retries: 0, privateContent: true, disableThinking: true, requireFinalContent: true, kind: hasImage ? 'nilo_companion_vision' : 'nilo_companion_text', responseFormat: { type: 'json_object' } }
-    // Both calls share one deadline and cancellation signal. A hanging injected
+    // Observation, planning and review share one deadline and cancellation signal. A hanging injected
     // provider is also bounded, and JSON recovery never bypasses the review.
     const aborted = new Promise((_, reject) => {
       abortListener = () => reject(new Error('request_cancelled'))
       controller.signal.addEventListener('abort', abortListener, { once: true })
       timer = setTimeout(() => controller.abort(new Error('nilo_timeout')), budget)
     })
+    let knowledge
     const call = async (prompt, options = opts) => {
       controller.signal.throwIfAborted()
       try {
-        return await Promise.race([hasImage ? model(imageBase64, prompt, options) : model(prompt, options), aborted])
+        return await Promise.race([hasImage ? model(imageBase64, prompt, { ...options, ...(focus ? { focusImage: focus } : {}), ...(context.takeTurn && options.kind === 'nilo_companion_vision' ? { referenceSheet: knowledge ? knowledge.referenceSheet : drawingReferenceSheet(context) } : {}) }) : model(prompt, options), aborted])
       } catch (error) {
         if (!controller.signal.aborted && error instanceof LLMParseError) {
           const parsed = extractDialogueJson(error.raw)
@@ -463,9 +516,22 @@ export async function generateNiloDialogue({ imageBase64, context: input, chatWi
         throw error
       }
     }
+    if(context.useDrawingKnowledge || context.drawingProtocol===2) {
+      let observed
+      const regions=context.drawingProtocol===2?'\nAlso return regions:[{name:"actual visible part such as head, face, trunk, wall or wing",bounds:{x,y,width,height},confidence:0..1}] for each subject, at most FOUR inside its whole bounds. These are existing supporting regions, not intended additions. Describe a usable empty surface between its visible edges; do not put a tree trunk region in the canopy or a fish head near its tail. Give small face/trunk/wall regions when actually visible. Do not invent absent anatomy.':''
+      try { observed=await call(knowledgeObservationPrompt(context)+regions,{...opts,kind:'nilo_knowledge_observe',maxTokens:context.drawingProtocol===2?1100:650}) }
+      catch(error) {if(!(error instanceof LLMParseError))throw error}
+      knowledge=retrieveDrawingKnowledge(sanitizeKnowledgeObservation(observed))
+      knowledge.inkAnchors=drawingInkAnchors(imageBase64,knowledge.observation)
+      if(context.drawingProtocol===2)knowledge.inkContacts=drawingInkContacts(imageBase64,knowledge.observation)
+      // Aggregate diagnostics only: no child text, images or coordinates.
+      traceNode('nilo_knowledge',{outcome:'retrieved',cardCount:knowledge.cards.length,hasReference:!!knowledge.referenceSheet})
+    }
+    if(context.drawingProtocol===2)return await generateProtocolTurn({imageBase64,context,knowledge,call,opts,validateProposal})
+    const basePrompt=knowledge?knowledgePlanningPrompt(context,knowledge):buildDialoguePrompt(context,hasImage)
     const prompt = context.renderFeedback
-      ? buildCoCreationCorrectionPrompt(context, NILO_TEMPLATES, context.renderFeedback.proposal, context.renderFeedback.reason)
-      : buildDialoguePrompt(context, hasImage)
+      ? buildCoCreationCorrectionPrompt(context, NILO_TEMPLATES, context.renderFeedback.proposal, context.renderFeedback.reason,basePrompt)
+      : basePrompt
     let result
     let failureCode = 'invalid_json'
     let rejectedContinuation = false
@@ -479,7 +545,7 @@ export async function generateNiloDialogue({ imageBase64, context: input, chatWi
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       let raw
       try {
-        raw = await call(rejectedReview ? buildCoCreationCorrectionPrompt(context, NILO_TEMPLATES, rejectedReview.proposal, rejectedReview.reason) : attempt ? `${prompt}\nFORMAT CORRECTION (${failureCode}): ${rejectedContinuation ? 'The previous plan was detached decoration. An external custom part MUST have attachment on actual ink and its first M at the connecting end. Alternatively choose a genuinely internal feature with placement inside. Do not merely rename the rejected decoration or reclassify the same shape as an object to bypass this rule.' : 'The previous output was not valid drawing data.'} Inspect the image again and return one complete JSON object. A reply describing an addition without proposal does not draw anything. Custom requires subject and sketch, e.g. sketch:{"aspect":1,"paths":[[["M",0.1,0.1],["Q",0.5,0.4,0.9,0.9]]]}; replace these illustrative points with the actual new part. Use at most four paths, coordinates in [0,1], attachment within anchor. A leaf requires template leaf, attachment on a visible stem, and left/right/above/below growth direction; omit subject/sketch. Output no prose, code fences or extra fields.\nFAILED_CANDIDATE_DATA: ${JSON.stringify(failedRaw)}` : prompt,
+        raw = await call(rejectedReview ? buildCoCreationCorrectionPrompt(context, NILO_TEMPLATES, rejectedReview.proposal, rejectedReview.reason, basePrompt) : attempt ? `${prompt}\nFORMAT CORRECTION (${failureCode}): grounding.visible must describe the observed marks as a STRING, never a boolean. Every custom proposal requires subject, sketch and placement; relation does not replace placement. ${rawPartCorrection(failedRaw)} ${rejectedContinuation ? 'The previous plan was detached decoration. An external custom part MUST have attachment on actual ink and its first M at the connecting end. Alternatively choose a genuinely internal feature with placement inside. Do not merely rename the rejected decoration or reclassify the same shape as an object to bypass this rule.' : 'The previous output was not valid drawing data.'} Inspect the image again and return one complete JSON object. A reply describing an addition without proposal does not draw anything. Custom requires subject and sketch, e.g. sketch:{"aspect":1,"paths":[[["M",0.1,0.1],["Q",0.5,0.4,0.9,0.9]]]}; replace these illustrative points with the actual new part. Use at most eight paths for one small contribution, coordinates in [0,1], attachment within anchor. A leaf requires template leaf, attachment on a visible stem, and left/right/above/below growth direction; omit subject/sketch. Output no prose, code fences or extra fields.\nFAILED_CANDIDATE_DATA: ${JSON.stringify(failedRaw)}` : prompt,
           attempt ? { ...opts, maxTokens: 2200 } : opts)
       } catch (error) {
         if (context.takeTurn && error instanceof LLMParseError) {
@@ -490,11 +556,21 @@ export async function generateNiloDialogue({ imageBase64, context: input, chatWi
         throw error
       }
       controller.signal.throwIfAborted()
+      // Lists of observed features preserve the same evidence as prose.
+      // Never turn a visibility boolean into a made-up description.
+      if(context.takeTurn && Array.isArray(raw?.grounding?.visible) && raw.grounding.visible.length>0
+        && raw.grounding.visible.length<=8 && raw.grounding.visible.every(v=>typeof v==='string'&&v.trim())) {
+        raw={...raw,grounding:{...raw.grounding,visible:raw.grounding.visible.join('; ').slice(0,300)}}
+      }
       if (context.takeTurn && !raw?.proposal) {
         // An explicit blank/uncertain observation is legitimate. A prose-only
         // execution report is a missing tool plan, not a successful chat turn.
-        const uncertain = raw?.sceneType === 'blank' || (typeof raw?.grounding?.confidence === 'number' && raw.grounding.confidence < .75)
-        if (uncertain) return uncertainTurnReply(context)
+        const confidence = turnGroundingConfidence(raw)
+        const uncertain = raw?.sceneType === 'blank' || (typeof confidence === 'number' && confidence < .75)
+        if (uncertain) {
+          traceNode('nilo_companion', {kind:'vision',outcome:'recognition_rejected',failureCode:raw?.sceneType === 'blank' ? 'blank_canvas' : 'unclear_geometry',attempt:attempt+1,revision:context.revision})
+          return uncertainTurnReply(context)
+        }
         failureCode = 'missing_proposal'
         failedRaw = raw
         traceNode('nilo_companion', { kind: 'vision', outcome: 'invalid_plan', failureCode, attempt: attempt + 1, revision: context.revision })
@@ -509,11 +585,19 @@ export async function generateNiloDialogue({ imageBase64, context: input, chatWi
         return uncertainConnectionReply(context)
       }
       if (context.takeTurn && raw?.proposal && !hasGroundedTurn(raw)) {
+        const confidence=turnGroundingConfidence(raw)
+        if(['object','geometric','line'].includes(raw.sceneType) && typeof confidence==='number' && confidence>=.75 && confidence<=1
+          && (typeof raw.grounding?.visible!=='string'||raw.grounding.visible.trim().length<2)) {
+          failureCode='invalid_grounding_format';failedRaw=raw
+          traceNode('nilo_companion',{kind:'vision',outcome:'invalid_plan',failureCode,attempt:attempt+1,revision:context.revision})
+          if(attempt+1<maxAttempts)continue
+          return dialogueFallback(context,'invalid_response')
+        }
         traceNode('nilo_companion', { kind: 'vision', outcome: 'ungrounded_turn', revision: context.revision })
         return uncertainTurnReply(context)
       }
       if (rejectedReview?.sceneType === 'geometric' && raw?.proposal) raw = {...raw,sceneType:'geometric'}
-      const compiled = context.takeTurn ? compileTurnReply(raw, context) : compileVoiceDetails(raw, context)
+      const compiled = context.takeTurn ? compileTurnReply(knowledge?resolveInkAnchor(raw,knowledge.inkAnchors):raw, context) : compileVoiceDetails(raw, context)
       const continuationIssue = context.takeTurn ? continuationFailure(rejectedContinuation ? { ...raw, sceneType: 'geometric' } : raw, compiled) : null
       if (continuationIssue) {
         failureCode = continuationIssue
@@ -522,7 +606,7 @@ export async function generateNiloDialogue({ imageBase64, context: input, chatWi
         traceNode('nilo_companion', { kind: 'vision', outcome: 'unrelated_plan', failureCode, attempt: attempt + 1, revision: context.revision })
         continue
       }
-      result = validateDialogue(compiled, context, hasImage)
+      result = context.takeTurn && raw?.proposal && !compiled?.proposal ? null : validateDialogue(compiled, context, hasImage)
       if (context.takeTurn && result?.proposal) {
         const attentionIssue = turnAttentionFailure(context, result.proposal)
         if (attentionIssue) {
@@ -532,7 +616,24 @@ export async function generateNiloDialogue({ imageBase64, context: input, chatWi
           if (attempt + 1 < maxAttempts) continue
           return uncertainTurnReply(context, attentionIssue)
         }
-        const review = await call(buildCoCreationReviewPrompt(context, result.proposal), {...opts,maxTokens:300,kind:'nilo_companion_review'})
+        let preview
+        try {
+          preview = renderReviewCandidate(imageBase64, fitStructuralPart(raw, result.proposal), context)
+        } catch {
+          traceNode('nilo_companion', {kind:'vision',outcome:'preview_rejected',failureCode:'invalid_preview',revision:context.revision})
+          return dialogueFallback(context, 'invalid_response')
+        }
+        result.proposal = validateProposal(preview.proposal, context)
+        if (!result.proposal) return dialogueFallback(context, 'invalid_response')
+        const structureIssue = structureFailure(raw, result.proposal)
+        if (structureIssue) {
+          traceNode('nilo_companion', {kind:'vision',outcome:'structure_rejected',failureCode:structureIssue,attempt:attempt+1,revision:context.revision})
+          rejectedReview = {proposal:result.proposal,reason:structureIssue,sceneType:raw.sceneType}
+          result = null
+          if (attempt + 1 < maxAttempts) continue
+          return uncertainTurnReply(context, 'misplaced_detail')
+        }
+        const review = await call(buildCoCreationReviewPrompt(context, result.proposal, readStructure(raw.structure), true), {...opts,maxTokens:350,kind:'nilo_companion_review',reviewImage:preview.imageBase64})
         controller.signal.throwIfAborted()
         const reason = coCreationReviewFailure(review)
         if (reason) {
@@ -542,6 +643,7 @@ export async function generateNiloDialogue({ imageBase64, context: input, chatWi
           if (attempt + 1 < maxAttempts && !['unclear_target','invalid_review'].includes(reason)) { rejectedReview = failed; continue }
           return uncertainTurnReply(context, reason)
         }
+        result.geometryReviewed = true
         reviewedTurn = true
       }
       if (result) break

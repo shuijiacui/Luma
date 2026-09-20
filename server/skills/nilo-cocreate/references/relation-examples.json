@@ -1,0 +1,61 @@
+{
+  "version": "nilo-relation-examples-v1",
+  "status": "offline-prototype-not-enabled-in-production",
+  "source": {"kind": "original-synthetic", "note": "Original vector examples authored for this repository. No downloaded child artwork, accounts or conversations; independent of the frozen ablation fixtures."},
+  "examples": [
+    {
+      "id": "kite-inset-emblem", "title": "风筝表面的菱形小纹样", "relation": "inside", "source": "original-synthetic",
+      "before": {"aspect": 1, "paths": [[["M",0.5,0.18],["L",0.72,0.42],["L",0.5,0.67],["L",0.28,0.42],["Z"]],[["M",0.5,0.67],["Q",0.43,0.76,0.5,0.85]]]},
+      "supportRegion": {"name": "风筝中部的空白表面", "bounds": {"x":0.35,"y":0.29,"width":0.3,"height":0.28}, "allowedContact": "none"},
+      "addition": {"sketch": {"aspect":1,"paths":[[["M",0.5,0.08],["L",0.92,0.5],["L",0.5,0.92],["L",0.08,0.5],["Z"]]]}, "placement":{"mode":"inside","x":0.43,"y":0.35,"width":0.14,"height":0.14}},
+      "scaleConstraints": {"relativeSpan":[0.2,0.5],"supportAspect":[0.65,1.6],"minimumFreeSpan":0.06},
+      "lesson": "在已有封闭表面的空白中加小纹样，保留边界和周围留白；示例物体身份不应照搬。",
+      "wrongExamples": [{"description":"把纹样画得和风筝一样大，穿过边框。","reason":"内部细节必须留在支持区域中，不能覆盖原轮廓。"}]
+    },
+    {
+      "id": "umbrella-hook-end", "title": "伞柄末端接一个弯钩", "relation": "single-point", "source": "original-synthetic",
+      "before": {"aspect":1,"paths":[[["M",0.2,0.4],["C",0.24,0.12,0.76,0.12,0.8,0.4],["Q",0.7,0.33,0.6,0.4],["Q",0.5,0.33,0.4,0.4],["Q",0.3,0.33,0.2,0.4]],[["M",0.5,0.37],["L",0.5,0.68]]]},
+      "supportRegion":{"name":"伞柄下端","bounds":{"x":0.45,"y":0.4,"width":0.1,"height":0.3},"allowedContact":"single-point"},
+      "addition":{"sketch":{"aspect":1,"paths":[[["M",0.5,0],["L",0.5,0.55],["Q",0.5,1,0.15,0.85]]]},"placement":{"mode":"single-point","point":{"x":0.5,"y":0.68},"side":"bottom","width":0.16,"height":0.16}},
+      "scaleConstraints":{"relativeSpan":[0.15,0.55],"supportAspect":[0.15,5],"minimumFreeSpan":0.08,"allowedSides":["bottom"]},
+      "lesson":"从真实线条末端接出一段有用途的弯线，连接处连续，向空白方向生长。",
+      "wrongExamples":[{"description":"在伞柄旁边独立画一个钩子，留下可见间隙。","reason":"单点续画必须从原有端点起笔，不能只放在附近。"}]
+    },
+    {
+      "id":"mug-two-join-handle","title":"杯身侧面接出双点把手","relation":"two-points","source":"original-synthetic",
+      "before":{"aspect":1,"paths":[[["E",0.45,0.32,0.16,0.06]],[["M",0.29,0.32],["L",0.29,0.66],["Q",0.45,0.73,0.61,0.66],["L",0.61,0.32]]]},
+      "supportRegion":{"name":"杯身右侧边缘","bounds":{"x":0.28,"y":0.26,"width":0.34,"height":0.47},"allowedContact":"two-points"},
+      "addition":{"sketch":{"aspect":1.3,"paths":[[["M",0,1],["C",0,0.1,1,0.1,1,1]]]},"placement":{"mode":"contact","kind":"points","side":"right","points":[{"x":0.61,"y":0.43},{"x":0.61,"y":0.61}]}},
+      "scaleConstraints":{"relativeSpan":[0.15,0.6],"supportAspect":[0.25,4],"minimumFreeSpan":0.08,"allowedSides":["left","right"]},
+      "lesson":"拱形部件的两端分别接到真实边缘的两个位置，中间向外鼓出，不能穿过主体内部。",
+      "wrongExamples":[{"description":"把把手的弧线朝杯子内部弯，或只接上一个端点。","reason":"双点附着既要求两个实际接点，也要求正确的外侧方向。"}]
+    },
+    {
+      "id":"mitten-contour-cuff","title":"顺着手套腕口贴一圈袖口","relation":"contour","source":"original-synthetic",
+      "before":{"aspect":1,"paths":[[["M",0.4,0.72],["L",0.38,0.44],["C",0.26,0.42,0.23,0.35,0.31,0.31],["L",0.4,0.37],["L",0.39,0.2],["C",0.41,0.13,0.46,0.15,0.47,0.21],["L",0.48,0.31],["L",0.49,0.19],["C",0.51,0.12,0.56,0.15,0.56,0.22],["L",0.57,0.33],["L",0.59,0.25],["C",0.63,0.18,0.68,0.24,0.67,0.31],["L",0.62,0.62],["L",0.61,0.72],["Q",0.505,0.78,0.4,0.72]]]},
+      "supportRegion":{"name":"手套腕口及邻近支撑区域","bounds":{"x":0.27,"y":0.14,"width":0.42,"height":0.62},"allowedContact":"contour"},
+      "addition":{"sketch":{"aspect":3,"paths":[[["M",0,1],["L",0,0.1],["L",1,0.1],["L",1,1],["L",0,1]]]},"placement":{"mode":"contact","kind":"contour","side":"bottom","points":[{"x":0.4,"y":0.72},{"x":0.442,"y":0.7392},{"x":0.484,"y":0.7488},{"x":0.526,"y":0.7488},{"x":0.568,"y":0.7392},{"x":0.61,"y":0.72}]}},
+      "scaleConstraints":{"relativeSpan":[0.15,0.65],"supportAspect":[0.2,5],"minimumFreeSpan":0.04,"allowedSides":["top","bottom"]},
+      "lesson":"长接触边跟随原有短轮廓连续贴合；新部件向外展开，接触弧以外的笔迹仍受保护。",
+      "wrongExamples":[{"description":"用水平直线替代弯曲腕口，使中间悬空或切进手套。","reason":"轮廓贴合需要保留实际曲率，不能只对齐首尾两个点。"}]
+    },
+    {
+      "id":"ribbon-open-end","title":"让开放曲线继续转一个弯","relation":"abstract-continuation","source":"original-synthetic",
+      "before":{"aspect":1,"paths":[[["M",0.18,0.52],["Q",0.3,0.27,0.42,0.49],["Q",0.5,0.64,0.61,0.49]]]},
+      "supportRegion":{"name":"开放曲线的右端","bounds":{"x":0.17,"y":0.36,"width":0.45,"height":0.24},"allowedContact":"single-point"},
+      "addition":{"sketch":{"aspect":1.461538,"paths":[[["M",0,0.5],["Q",0.35,0.9,0.65,0.4],["Q",0.85,0.1,1,0.35]]]},"placement":{"mode":"single-point","point":{"x":0.61,"y":0.49},"side":"right","width":0.19,"height":0.13}},
+      "scaleConstraints":{"relativeSpan":[0.2,0.45],"supportAspect":[0.2,5],"minimumFreeSpan":0.08,"allowedSides":["left","right"]},
+      "lesson":"保持抽象身份，从可见开放端点延续节奏和走向，不擅自把曲线解释成人或动物。",
+      "wrongExamples":[{"description":"在曲线旁边复制一个相同弯曲，完全没有接上。","reason":"延续关系依赖真实端点和留白；复制最后一笔不等于有效延续。"}]
+    },
+    {
+      "id":"drum-inset-zigzag","title":"鼓身表面添一条小锯齿纹","relation":"inside","source":"original-synthetic",
+      "before":{"aspect":1,"paths":[[["E",0.5,0.34,0.24,0.085]],[["M",0.26,0.34],["L",0.26,0.66],["Q",0.5,0.83,0.74,0.66],["L",0.74,0.34]]]},
+      "supportRegion":{"name":"鼓身中部表面","bounds":{"x":0.3,"y":0.44,"width":0.4,"height":0.2},"allowedContact":"none"},
+      "addition":{"sketch":{"aspect":2.4,"paths":[[["M",0.08,0.25],["L",0.3,0.75],["L",0.53,0.25],["L",0.75,0.75],["L",0.95,0.25]]]},"placement":{"mode":"inside","x":0.38,"y":0.49,"width":0.24,"height":0.1}},
+      "scaleConstraints":{"relativeSpan":[0.25,0.6],"supportAspect":[1.4,4],"minimumFreeSpan":0.07},
+      "lesson":"横向空白适合短而有节奏的表面纹样，笔画数量和尺寸服从已有表面的比例。",
+      "wrongExamples":[{"description":"让锯齿纹超出鼓身，或为了填空铺满多层线条。","reason":"装饰应清晰小巧、留有余地，不抢走原有主体。"}]
+    }
+  ]
+}

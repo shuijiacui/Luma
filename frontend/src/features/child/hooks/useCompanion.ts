@@ -5,15 +5,26 @@ import { ApiError } from '@/lib/api/client'
 import type { DrawingCanvasHandle } from '../components/DrawingCanvas'
 import { getCanvasProvenance } from '../canvasDocument'
 import { refineAttachment } from '../companion/attachmentGrounding'
+import { planLocalTurn } from '../companion/localTurn'
+import { recoveryIdeas, type RecoveryIdea } from '../companion/recoveryIdeas'
+import { encodeOccupancy } from '../../../../../shared/niloOccupancy.mjs'
+import { contactSamples } from '../../../../../shared/niloContact.mjs'
+import { recordTurnOutcome } from '../companion/diagnostics'
 import type { BrushKind } from '../brushes'
 import { clarificationReasons, emptyMemory, localCommand, drawingPlanFits, prepareDrawingPlan, prepareTurnProposal, proposalStrokes, readMemory, saveMemory, summarizeStroke, validateProposal, type CompanionReply, type DrawingProposal, type StoryMemory } from '../companion/proposals'
 
+// Reserve space for the child's words even after many Nilo-only turns.
+function retainHistory(items: {role:'user'|'assistant';text:string}[]) {
+  let child=0,assistant=0
+  return [...items].reverse().filter(item=>item.role==='user'?++child<=4:++assistant<=2).reverse()
+}
 type Phase = 'idle' | 'thinking' | 'sketching' | 'projected'
-export interface Projection { id: string; revision: number; proposal: DrawingProposal; additions: DrawingProposal[]; alternatives: DrawingProposal[]; aspect: number; turn?: boolean; durationMs?: number }
+export interface Projection { id: string; revision: number; proposal: DrawingProposal; additions: DrawingProposal[]; alternatives: DrawingProposal[]; aspect: number; turn?: boolean; durationMs?: number; turnSource?: 'ai' | 'local'; recovery?: boolean }
 const planItems = (preview: Projection) => [preview.proposal, ...preview.additions]
-function attachmentFits(p: DrawingProposal, canvas: DrawingCanvasHandle) {
-  if (!p.attachment) return true
+function attachmentFits(p: DrawingProposal, canvas: DrawingCanvasHandle, aspect = 1) {
   const tipScale = { round: 1, pencil: .4, marker: 1.8, crayon: 1, star: 2.5 }[p.brushKind ?? 'round']
+  if (p.contact) return contactSamples(p.contact, aspect).every(point => canvas.hasInkAt(point, p.strokeWidth * tipScale / 2 + .5))
+  if (!p.attachment) return true
   return canvas.hasInkAt(p.attachment, p.strokeWidth * tipScale / 2 + .5)
 }
 interface Options {
@@ -48,6 +59,7 @@ export function useCompanion(options: Options) {
   const setPhase = useCallback((next: Phase) => { phaseRef.current = next; setPhaseState(next) }, [])
   const [message, setMessage] = useState('')
   const [projection, setProjectionState] = useState<Projection | null>(null)
+  const [recovery, setRecovery] = useState<{ revision: number; aspect: number; ideas: RecoveryIdea[] } | null>(null)
   const current = useRef<Projection | null>(null)
   const [memory, setMemoryState] = useState<StoryMemory>(() => readMemory(options.ownerId, options.artworkId))
   const memoryRef = useRef(memory)
@@ -86,7 +98,7 @@ export function useCompanion(options: Options) {
     if (timer.current) clearTimeout(timer.current)
     timer.current = null
     busy.current = false
-    setProjection(null); setPhase('idle')
+    setProjection(null); setRecovery(null); setPhase('idle')
     if (clearMessage) setMessage('')
   }, [setProjection, setPhase])
   useEffect(() => {
@@ -97,7 +109,8 @@ export function useCompanion(options: Options) {
     const previous = identity.current
     if (previous.ownerId === options.ownerId && previous.artworkId === options.artworkId) return
     identity.current = { ownerId: options.ownerId, artworkId: options.artworkId }
-    cancel(); history.current = []; lastRequest.current = -Infinity
+    cancel(); lastRequest.current = -Infinity
+    if (!(previous.ownerId === options.ownerId && !previous.artworkId && options.artworkId)) history.current = []
     // Saving a fresh draft assigns its first artwork id; retain that draft's own story.
     if (previous.ownerId === options.ownerId && !previous.artworkId && options.artworkId) remember(memoryRef.current)
     else remember(readMemory(options.ownerId, options.artworkId))
@@ -115,8 +128,8 @@ export function useCompanion(options: Options) {
 
   const valid = useCallback((p: Projection) => {
     const canvas = ref.current.canvas.current
-    return !!canvas && canvas.getRevision() === p.revision && planItems(p).every(item => attachmentFits(item, canvas))
-      && drawingPlanFits(planItems(p), canvas.getOccupancy(256), p.aspect, ref.current.surfaceSize?.())
+    return !!canvas && canvas.getRevision() === p.revision && planItems(p).every(item => attachmentFits(item, canvas, p.aspect))
+      && drawingPlanFits(planItems(p), canvas.getOccupancy(256), p.aspect, ref.current.surfaceSize?.(), p.proposal.contact ? canvas.getCollisionPixels?.() : undefined)
   }, [])
   const commit = useCallback((p: Projection, speak = false) => {
     const opt = ref.current, canvas = opt.canvas.current
@@ -125,7 +138,8 @@ export function useCompanion(options: Options) {
       cancel(false); say('画面已经变了，我们重新看一下吧。', speak); return false
     }
     metrics.current.accepted++; rememberPlan(planItems(p), true)
-    history.current = [...history.current, { role: 'assistant' as const, text: `已落笔：${planItems(p).map(item => item.subject ?? item.relation ?? item.template).join('、')}` }].slice(-6)
+    if (p.turn) recordTurnOutcome(p.turnSource === 'local' ? 'local_committed' : 'ai_committed')
+    history.current = retainHistory([...history.current, { role: 'assistant' as const, text: `已落笔：${planItems(p).map(item => item.subject ?? item.relation ?? item.template).join('、')}` }])
     cancel(false); opt.onCommitted(); say('已经画上啦，接着画吧。不喜欢可以撤销我的这一笔。', speak)
     return true
   }, [cancel, rememberPlan, say, valid])
@@ -150,6 +164,17 @@ export function useCompanion(options: Options) {
     }, window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 550)
   }, [cancel, say, setPhase, setProjection, valid])
 
+  const drawTurn = useCallback((proposal: DrawingProposal, revision: number, aspect: number, caption = 'Nilo 正在接着画…', turnSource: 'ai' | 'local' = 'ai') => {
+    const version = generation.current
+    const durationMs = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 1200
+    const turn: Projection = { id: crypto.randomUUID(), revision, proposal, additions: [], alternatives: [], aspect, turn: true, durationMs, turnSource }
+    setProjection(turn); setPhase('sketching'); say(caption, false)
+    timer.current = setTimeout(() => {
+      timer.current = null
+      if (generation.current === version && current.current?.id === turn.id) commit(turn)
+    }, durationMs)
+  }, [commit, say, setPhase, setProjection])
+
   const ask = useCallback(async (utterance: string, requestDrawing = false, feedback: { speak?: boolean; inferDrawingIntent?: boolean; takeTurn?: boolean; commitDrawing?: boolean } = {}) => {
     const speak = feedback.speak !== false
     const opt = ref.current
@@ -157,7 +182,7 @@ export function useCompanion(options: Options) {
     const canvas = opt.canvas.current
     if (!canvas) return
     if (busy.current) cancel(false)
-    if (Date.now() - lastRequest.current < 1500) { say('我在这里，稍等一下再说吧。', speak); return }
+    if (!feedback.takeTurn && Date.now() - lastRequest.current < 1500) { say('我在这里，稍等一下再说吧。', speak); return }
     requestDrawing = requestDrawing && opt.allowDrawing !== false
     const inferDrawingIntent = feedback.inferDrawingIntent === true && opt.allowDrawing !== false
     const canPropose = requestDrawing || inferDrawingIntent
@@ -168,20 +193,58 @@ export function useCompanion(options: Options) {
     const revision = canvas.getRevision()
     const aspect = opt.aspect()
     const controller = new AbortController(); active.current = controller
-    // At most one geometry repair, sharing the snapshot and cancellation signal.
-    const timeout = setTimeout(() => controller.abort(), takeTurn ? 52000 : 28000)
+    // A click gets one bounded request. Local gesture feedback is only for
+    // simple marks, never a substitute for understanding a multi-stroke scene.
+    const timeout = setTimeout(() => controller.abort(), takeTurn ? 16000 : 28000)
+    const progress = takeTurn ? setTimeout(() => {
+      if (version === generation.current && phaseRef.current === 'thinking') say('我在找一个能接上你这幅画的小主意…', false)
+    }, 3500) : undefined
+    if (takeTurn) recordTurnOutcome('requested')
     busy.current = true; setPhase('thinking'); say(speak ? '我在认真听，也在看看你的画。' : '轮到我啦，我先看看你的画。', false)
     lastRequest.current = Date.now(); metrics.current.requests++
     const userText = utterance.trim().slice(0, 400)
     const previous = history.current.slice(-6)
     const previousTheme = memoryRef.current.theme
-    history.current = [...previous, { role: 'user', text: userText }]
+    if (!takeTurn) history.current = [...previous, { role: 'user', text: userText }]
+    const localTurn = (reason = 'invalid_response') => {
+      if (!takeTurn || version !== generation.current || canvas.getRevision() !== revision
+        || !ref.current.enabled || ref.current.allowDrawing === false || document.visibilityState === 'hidden') return false
+      recordTurnOutcome(reason)
+      const scene=canvas.getCompanionScene()
+      const childStrokes=scene.recentContributions.filter(item=>item.owner==='child').reduce((n,item)=>n+item.strokeCount,0)
+      if(childStrokes>=3 || (scene.childBounds && !scene.recentContributions.length)) {
+        history.current=previous
+        setPhase('idle')
+        const ideas = recoveryIdeas(canvas.getOccupancy(256), aspect,
+          opt.drawingStyle?.() ?? { color: '#568570', brushSize: 4, brushKind: 'round' }, opt.surfaceSize?.())
+        setRecovery(ideas.length ? { revision, aspect, ideas } : null)
+        recordTurnOutcome(ideas.length ? 'recovery_offered' : 'no_space')
+        say(ideas.length ? '一起选个小主意吧，点一下就能看看！' : '这里已经画得很满啦，可以撤销一笔或换张画纸再接着画。', false)
+        return true
+      }
+      const recent = canvas.getLastStroke()
+      const sampled = summarizeStroke(recent)
+      const visible = (sampled?.points ?? recent?.points ?? []).filter(point => canvas.hasInkAt(point, Math.max(1, (recent?.width ?? 4) / 2)))
+      const source = recent && visible.length ? { ...recent, points: visible } : null
+      const proposal = planLocalTurn({ stroke: source, occupancy: canvas.getOccupancy(256), aspect, surfaceSize: opt.surfaceSize?.(),
+        style: opt.drawingStyle?.() ?? { color: recent?.color ?? '#568570', brushSize: recent?.width ?? 4, brushKind: 'round' } })
+      history.current = previous
+      if (!proposal) {
+        recordTurnOutcome('no_space')
+        setPhase('idle'); say('这里已经画得很满啦，可以撤销一笔或换张画纸再接着画。', false)
+        return true
+      }
+      drawTurn(proposal, revision, aspect, source ? '我顺着你的线条接一小笔。' : '我先起一笔，接下来交给你。', 'local')
+      return true
+    }
     let onAbort: (() => void) | undefined
     try {
       const image = canPropose || /画|这里|这个|这边|picture|drawing|here|this/i.test(utterance) ? canvas.exportCompanionObservation() : null
       const provenance = getCanvasProvenance(canvas.getDocument())
-      const requestBody = { imageBase64: image?.split(',')[1], context: {
-          locale: opt.locale, utterance: userText, requestDrawing, inferDrawingIntent, takeTurn, revision,
+      const focusImage = image && canPropose ? canvas.exportCompanionFocus?.() : null
+      const requestBody = { imageBase64: image?.split(',')[1], ...(focusImage ? { focusImage } : {}), context: {
+          locale: opt.locale, utterance: userText, requestDrawing, inferDrawingIntent, takeTurn, useDrawingKnowledge:takeTurn, turnScope: takeTurn ? 'scene' : undefined, revision,
+          drawingProtocol: takeTurn ? 2 : undefined, collisionMap: takeTurn ? encodeOccupancy(canvas.getOccupancy(256)) : undefined,
           imageProvenance: provenance === 'unknown' ? 'unknown' : provenance === 'co-created' ? 'composite' : 'child',
           theme: memoryRef.current.theme, history: previous,
           recentTemplates: memoryRef.current.recentTemplates, rejectedTemplates: memoryRef.current.rejectedTemplates,
@@ -196,29 +259,22 @@ export function useCompanion(options: Options) {
         controller.signal.addEventListener('abort', onAbort, { once: true })
         if (controller.signal.aborted) onAbort()
       })
-      const fetchPlan = (renderFeedback?: { reason: 'ink_collision' | 'detached_attachment'; proposal: DrawingProposal }) => Promise.race([
+      const fetchPlan = () => Promise.race([
         authFetch<CompanionReply>('/nilo/companion', {
           method: 'POST', token: opt.token, signal: controller.signal,
-          body: { ...requestBody, context: { ...requestBody.context, ...(renderFeedback ? { renderFeedback } : {}) } },
+          body: requestBody,
         }), aborted,
       ])
-      let result = await fetchPlan()
-      if (takeTurn && !controller.signal.aborted && version === generation.current && canvas.getRevision() === revision
-        && result.status !== 'unavailable' && !result.additions?.length) {
-        const candidate = validateProposal(result.proposal)
-        const grounded = candidate && refineAttachment(candidate, canvas.getDocument(), aspect)
-        if (grounded && (!attachmentFits(grounded, canvas) || !prepareTurnProposal(grounded, canvas.getOccupancy(256), aspect, opt.surfaceSize?.()))) {
-          say('这笔的位置还不合适，我调整一下…', false)
-          result = await fetchPlan({ reason: attachmentFits(grounded, canvas) ? 'ink_collision' : 'detached_attachment', proposal: grounded })
-        }
-      }
+      const result = await fetchPlan()
       if (controller.signal.aborted || version !== generation.current || !ref.current.enabled) { metrics.current.stale++; return }
       if (canvas.getRevision() !== revision) { metrics.current.stale++; setPhase('idle'); say('你又添了新内容，等你画好再叫我吧。', speak); return }
       if (result.status === 'unavailable') {
         // Transport/model failures are not part of the child's story. Stop an
         // ongoing voice session so failures cannot create a spoken retry loop.
         history.current = previous
-        setPhase('idle'); ref.current.onUnavailable?.()
+        ref.current.onUnavailable?.()
+        if (localTurn(result.reason)) return
+        setPhase('idle')
         say(typeof result.reply === 'string' && result.reply.trim() ? result.reply.slice(0, 400) : '画画伙伴暂时没连上，稍后再点我试试。', speak)
         return
       }
@@ -229,45 +285,38 @@ export function useCompanion(options: Options) {
       if (canPropose && !result.proposal && result.status === 'clarify'
         && clarificationReasons.some(reason => reason === result.reason) && result.reply?.trim()) {
         history.current = previous
+        if (localTurn(result.reason)) return
         setPhase('idle'); say(result.reply.slice(0, 400), speak)
         return
       }
       if (typeof result.theme === 'string' && result.theme.trim()) remember({ ...memoryRef.current, theme: result.theme.trim().slice(0, 160) })
       const reply = typeof result.reply === 'string' ? result.reply.slice(0, 400) : t('你先画，我在这里陪你。', opt.locale)
       // Drawing prose is a plan, never an execution receipt or story evidence.
-      if (!requestDrawing && !result.proposal) history.current = [...history.current, { role: 'assistant' as const, text: reply }].slice(-6)
+      if (!requestDrawing && !result.proposal) history.current = retainHistory([...history.current, { role: 'assistant' as const, text: reply }])
       const document = canvas.getDocument()
       const prepareCandidate = (raw: unknown) => {
         const p = validateProposal(raw)
-        const grounded = p ? refineAttachment(p, document, aspect) : null
-        return grounded && attachmentFits(grounded, canvas) ? grounded : null
+        const grounded = p ? takeTurn && result.geometryReviewed ? p : refineAttachment(p, document, aspect) : null
+        return grounded && attachmentFits(grounded, canvas, aspect) ? grounded : null
       }
       const proposed = canPropose ? prepareCandidate(result.proposal) : null
       const alternatives = (Array.isArray(result.alternatives) ? result.alternatives : []).map(prepareCandidate).filter((p): p is DrawingProposal => p !== null).slice(0, 1)
+      if (takeTurn) {
+        const prepared = proposed && !result.additions?.length
+          ? result.geometryReviewed
+            ? drawingPlanFits([proposed], canvas.getOccupancy(256), aspect, opt.surfaceSize?.(), proposed.contact ? canvas.getCollisionPixels?.() : undefined) ? proposed : null
+            : prepareTurnProposal(proposed, canvas.getOccupancy(256), aspect, opt.surfaceSize?.(), proposed.contact ? canvas.getCollisionPixels?.() : undefined) : null
+        if (prepared) drawTurn(prepared, revision, aspect)
+        else localTurn(result.proposal ? 'geometry_rejected' : 'invalid_response')
+        return
+      }
       if (proposed) {
-        if (takeTurn) {
-          // This click permits only one contribution, never a hidden group.
-          if (result.additions?.length) { setPhase('idle'); say('这次想法太多了，再点我一次，我只接一小笔。', false); return }
-          const prepared = prepareTurnProposal(proposed, canvas.getOccupancy(256), aspect, opt.surfaceSize?.())
-          if (!prepared) { setPhase('idle'); say('这次还没有画上，我还没找到合适的接法。你可以告诉我从哪里接。', false); return }
-          // Show the actual paths being drawn, then commit the same contribution
-          // atomically. Starting a child stroke cancels this temporary layer.
-          const durationMs = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 1200
-          const turn: Projection = { id: crypto.randomUUID(), revision, proposal: prepared, additions: [], alternatives: [], aspect, turn: true, durationMs }
-          setProjection(turn); setPhase('sketching'); say('Nilo 正在接着画…', false)
-          timer.current = setTimeout(() => {
-            timer.current = null
-            if (generation.current !== version || current.current?.id !== turn.id) return
-            commit(turn)
-          }, durationMs)
-          return
-        }
         const rawAdditions = result.additions ?? []
         const additions = Array.isArray(rawAdditions) && rawAdditions.length <= 3 ? rawAdditions.map(prepareCandidate) : [null]
         const occupancy = canvas.getOccupancy(256)
         const prepared = additions.every((p): p is DrawingProposal => p !== null)
-          ? prepareDrawingPlan([proposed, ...additions], occupancy, aspect, opt.surfaceSize?.()) : null
-        const cached = additions.length === 0 ? alternatives.flatMap(item => prepareDrawingPlan([item], occupancy, aspect, opt.surfaceSize?.()) ?? []) : []
+          ? prepareDrawingPlan([proposed, ...additions], occupancy, aspect, opt.surfaceSize?.(), proposed.contact ? canvas.getCollisionPixels?.() : undefined) : null
+        const cached = additions.length === 0 ? alternatives.flatMap(item => prepareDrawingPlan([item], occupancy, aspect, opt.surfaceSize?.(), item.contact ? canvas.getCollisionPixels?.() : undefined) ?? []) : []
         if (prepared) {
           const plan = { id: crypto.randomUUID(), revision, proposal: prepared[0], additions: prepared.slice(1), alternatives: cached, aspect }
           if (feedback.commitDrawing) commit(plan, speak)
@@ -288,20 +337,36 @@ export function useCompanion(options: Options) {
     } catch (error) {
       if (version === generation.current && ref.current.enabled) {
         history.current = previous
-        setPhase('idle'); ref.current.onUnavailable?.()
+        ref.current.onUnavailable?.()
+        if (localTurn(controller.signal.aborted ? 'timeout' : 'network_error')) return
+        setPhase('idle')
         say(requestFailureMessage(error, controller.signal.aborted), speak)
       }
     } finally {
       clearTimeout(timeout)
+      clearTimeout(progress)
       if (onAbort) controller.signal.removeEventListener('abort', onAbort)
       if (version === generation.current) { busy.current = false; active.current = null }
     }
-  }, [cancel, commit, remember, say, setPhase, setProjection, show, valid])
+  }, [cancel, commit, drawTurn, remember, say, setPhase, setProjection, show, valid])
 
   const takeTurn = useCallback(() => {
     if (ref.current.allowDrawing === false || phaseRef.current !== 'idle') return
     return ask(t('轮到你了，请接着我的画继续创作。', ref.current.locale), true, { speak: false, takeTurn: true })
   }, [ask])
+
+  const chooseRecovery = useCallback((id: RecoveryIdea['id']) => {
+    const opt = ref.current, canvas = opt.canvas.current
+    if (!recovery || !opt.enabled || opt.allowDrawing === false || !canvas || phaseRef.current !== 'idle' || document.visibilityState === 'hidden') return
+    const idea = recovery.ideas.find(item => item.id === id)
+    if (!idea) return
+    if (canvas.getRevision() !== recovery.revision) { cancel(false); say('画面已经变了，我们重新看一下吧。', false); return }
+    cancel(false)
+    recordTurnOutcome('recovery_previewed')
+    show({ id: crypto.randomUUID(), revision: recovery.revision, aspect: recovery.aspect,
+      recovery:true, proposal: idea.proposal, additions: [], alternatives: recovery.ideas.filter(item => item.id !== id).map(item => item.proposal) },
+      '先看看，喜欢就留下来，也可以调整位置。', false)
+  }, [recovery, cancel, say, show])
 
   const accept = useCallback((feedback: { speak?: boolean } = {}) => {
     const speak = feedback.speak !== false
@@ -314,6 +379,7 @@ export function useCompanion(options: Options) {
       cancel(); say('画面已经变了，我们重新看一下吧。', speak); return
     }
     metrics.current.accepted++
+    if(p.recovery)recordTurnOutcome('recovery_accepted')
     rememberPlan(planItems(p), true)
     cancel(false); ref.current.onCommitted(); say('留下啦，接下来轮到你。', speak)
   }, [cancel, rememberPlan, say, valid])
@@ -351,7 +417,7 @@ export function useCompanion(options: Options) {
       ...(patch.brushKind !== undefined ? { brushKind: patch.brushKind } : {}),
       ...(patch.strokeWidth !== undefined ? { strokeWidth: patch.strokeWidth } : {}),
     })) : []
-    if (!main || additions.some(item => !item) || !drawingPlanFits([main, ...additions as DrawingProposal[]], ref.current.canvas.current!.getOccupancy(64), p.aspect, ref.current.surfaceSize?.())) { say('这个位置会碰到你的画，换个位置试试吧。', speak); if (!speak) ref.current.onSpeak(''); return }
+    if (!main || additions.some(item => !item) || !drawingPlanFits([main, ...additions as DrawingProposal[]], ref.current.canvas.current!.getOccupancy(main.contact ? 256 : 64), p.aspect, ref.current.surfaceSize?.(), main.contact ? ref.current.canvas.current!.getCollisionPixels?.() : undefined)) { say('这个位置会碰到你的画，换个位置试试吧。', speak); if (!speak) ref.current.onSpeak(''); return }
     metrics.current.localEdits++
     setProjection({ ...p, id: crypto.randomUUID(), proposal: main, additions: additions as DrawingProposal[], alternatives: [] })
     setPhase('projected'); say('调整好啦，喜欢的话就留下来。', speak)
@@ -389,5 +455,5 @@ export function useCompanion(options: Options) {
     const previewRequested = /预览|先.*(?:看看|看一下)|给我看看|\bpreview\b|show me first/i.test(text)
     void ask(text, requestDrawing, { ...feedback, inferDrawingIntent: !requestDrawing, commitDrawing: !previewRequested && !current.current })
   }, [accept, alternative, ask, cancel, dismiss, edit, forget, say])
-  return { phase, message, projection, memory, metrics: metrics.current, ask, takeTurn, receive, accept, dismiss, alternative, edit, cancel, finishTurn, say, forget }
+  return { phase, message, projection, recovery, chooseRecovery, memory, metrics: metrics.current, ask, takeTurn, receive, accept, dismiss, alternative, edit, cancel, finishTurn, say, forget }
 }

@@ -49,6 +49,16 @@ test('sends image and parses json content', async () => {
   expect(body.max_tokens).toBeGreaterThanOrEqual(2000)
 })
 
+test('sends full canvas and labelled crop without confusing their coordinate systems', async () => {
+  const mock = vi.fn().mockResolvedValue({ok:true,json:async()=>({choices:[{message:{content:'{}'}}]})})
+  vi.stubGlobal('fetch',mock)
+  await chatWithImage('FULL','plan',{focusImage:{imageBase64:'CROP',bounds:{x:.5,y:.2,width:.2,height:.3}}})
+  const content = JSON.parse(mock.mock.calls[0][1].body).messages[0].content
+  expect(content.filter(x=>x.type==='image_url').map(x=>x.image_url.url)).toEqual(['data:image/png;base64,FULL','data:image/png;base64,CROP'])
+  expect(content[2].text).toContain('NOT another drawing')
+  expect(content[2].text).toContain('bounds.x+u*bounds.width')
+})
+
 test('parses fenced ```json block', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
     ok: true,
@@ -84,3 +94,21 @@ test('throws on non-ok http response', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, text: async () => 'boom' }))
   await expect(chatWithImage('img', 'prompt')).rejects.toThrow(/500/)
 }, 20_000)
+
+test('review replaces the crop with a labelled full-canvas after image',async()=>{
+  const mock=vi.fn().mockResolvedValue({ok:true,json:async()=>({choices:[{message:{content:'{}'}}]})})
+  vi.stubGlobal('fetch',mock)
+  await chatWithImage('BEFORE','review',{focusImage:{imageBase64:'CROP',bounds:{}},referenceSheet:{imageBase64:'REF',description:'REFERENCE ONLY'},reviewImage:'AFTER',privateContent:true})
+  const content=JSON.parse(mock.mock.calls[0][1].body).messages[0].content
+  expect(content.filter(x=>x.type==='image_url').map(x=>x.image_url.url)).toEqual(['data:image/png;base64,BEFORE','data:image/png;base64,AFTER'])
+  expect(content[2].text).toContain('AFTER preview')
+})
+
+test('reference drawings are labelled separately from the real canvas and focus crop',async()=>{
+  const mock=vi.fn().mockResolvedValue({ok:true,json:async()=>({choices:[{message:{content:'{}'}}]})})
+  vi.stubGlobal('fetch',mock)
+  await chatWithImage('FULL','plan',{focusImage:{imageBase64:'CROP',bounds:{}},referenceSheet:{imageBase64:'REF',description:'REFERENCE ONLY, not child canvas'}})
+  const content=JSON.parse(mock.mock.calls[0][1].body).messages[0].content
+  expect(content.filter(x=>x.type==='image_url').map(x=>x.image_url.url)).toEqual(['data:image/png;base64,FULL','data:image/png;base64,CROP','data:image/png;base64,REF'])
+  expect(content.at(-2).text).toContain('not child canvas')
+})

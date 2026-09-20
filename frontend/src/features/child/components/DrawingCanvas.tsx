@@ -1,8 +1,11 @@
+import { pixelOccupancy } from '../../../../../shared/niloOccupancy.mjs'
+import type { InkPixels } from '../../../../../shared/niloContact.mjs'
 import { t, useLocale } from '@/i18n'
 import type { NiloStrokeSpec } from '@/lib/api/lumaApi'
 import { BRUSHES, createStrokePainter, type BrushKind } from '../brushes'
 import { canvasUndoCounts, cloneCanvasDocument, getCanvasProvenance, paintCanvasOperation, undoCanvasOwner, type CanvasDocument, type CanvasOperation } from '../canvasDocument'
 import { getCompanionScene, type CompanionScene } from '../companionScene'
+import { exportCompanionFocus } from '../companion/focus'
 import type { CanvasDraft } from '../draft'
 import { forwardRef, useEffect, useImperativeHandle, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 
@@ -19,6 +22,7 @@ export interface DrawingCanvasHandle {
   exportObservation: () => string | null
   /** Confirmed child + Nilo image for collaboration; never used for child-only analysis. */
   exportCompanionObservation: () => string | null
+  exportCompanionFocus?: () => ReturnType<typeof exportCompanionFocus>
   getCompanionScene: () => CompanionScene
   getDocument: () => CanvasDocument
   getRevision: () => number
@@ -29,6 +33,8 @@ export interface DrawingCanvasHandle {
   getLastDrawingStyle: () => { brushKind: BrushKind; color: string; size: number } | null
   getInkGrid: (size?: number) => number[]
   getOccupancy: (size?: number) => number[]
+  /** Current original pixels, read only for contact-boundary refinement. */
+  getCollisionPixels?: () => InkPixels | undefined
   /** Exact visible-ink contact at a normalized point; radius is in CSS pixels. */
   hasInkAt: (point: { x: number; y: number }, radius: number) => boolean
   undoCompanionStroke: () => boolean
@@ -186,18 +192,10 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     const context = canvas?.getContext('2d')
     const cells = Math.max(2, Math.min(256, Number.isFinite(size) ? Math.round(size) : 32))
     const hits = new Array<number>(cells * cells).fill(0)
-    const totals = new Array<number>(cells * cells).fill(0)
+
     if (!canvas || !context) return hits
     try {
-      const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height)
-      const step = Math.max(1, Math.floor(Math.min(width, height) / (cells * 6)))
-      for (let y = 0; y < height; y += step) for (let x = 0; x < width; x += step) {
-        const index = Math.floor(y / height * cells) * cells + Math.floor(x / width * cells)
-        const pixel = (y * width + x) * 4
-        totals[index]++
-        if (data[pixel + 3] > 8 && Math.min(data[pixel], data[pixel + 1], data[pixel + 2]) < 242) hits[index]++
-      }
-      return hits.map((hit, index) => hit / Math.max(1, totals[index]))
+      return pixelOccupancy(context.getImageData(0, 0, canvas.width, canvas.height), cells)
     } catch { return hits }
   }
 
@@ -271,6 +269,12 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     exportChildImage: () => makeCanvas(true)?.toDataURL('image/png').split(',')[1] ?? null,
     exportObservation: () => makeCanvas(getCanvasProvenance(documentRef.current) !== 'unknown', 768)?.toDataURL('image/png') ?? null,
     exportCompanionObservation: () => makeCanvas(false, 768)?.toDataURL('image/png') ?? null,
+    exportCompanionFocus: () => {
+      try {
+        const source = makeCanvas(false)
+        return source ? exportCompanionFocus(source, getCompanionScene(documentRef.current)) : null
+      } catch { return null } // Optional magnification must not block the full view.
+    },
     getCompanionScene: () => getCompanionScene(documentRef.current),
     exportSnapshot: () => restoringRef.current || pointerRef.current !== null ? null : canvasRef.current?.toDataURL('image/png') ?? null,
     getLastStroke() {
@@ -282,6 +286,13 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
       return op ? { brushKind: op.brushKind, color: op.color, size: strokeCssSize(op) } : null
     },
     getOccupancy,
+    getCollisionPixels: () => {
+      const canvas = canvasRef.current
+      if (!canvas || restoringRef.current || pointerRef.current !== null
+        || canvas.width * canvas.height > 4194304 || canvas.width > 4096 || canvas.height > 4096) return undefined
+      try { return canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height) }
+      catch { return undefined }
+    },
     hasInkAt,
     getInkGrid(size = 4) {
       const grid = getOccupancy(size)

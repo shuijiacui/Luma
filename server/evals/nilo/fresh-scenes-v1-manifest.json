@@ -1,0 +1,111 @@
+{
+  "version": "nilo-fresh-scenes-v1",
+  "sha256": "f9332f12e59d5263ef86529a97d70acdae6ba54680e1c2c3ebf6e8af550adda6",
+  "count": 20,
+  "source": "20 original author-drawn synthetic scenes; no previous 12-case ablation or child canvas reused",
+  "privacy": "Synthetic images only. No child images, prompts, accounts, or conversations.",
+  "freezePolicy": "Frozen before provider execution. Geometry, labels, or rubric changes require a new version and manifest. Repeated runs are regression, not fresh holdout.",
+  "semanticLabelStatus": "Author checklist, not independent human scores. All semantic fields remain null until reviewed.",
+  "cases": [
+    {
+      "id": "spiky_full_person",
+      "group": "person",
+      "aspect": 1
+    },
+    {
+      "id": "profile_long_nose",
+      "group": "person",
+      "aspect": 0.75
+    },
+    {
+      "id": "tiny_head_large_coat",
+      "group": "proportion",
+      "aspect": 1
+    },
+    {
+      "id": "forked_cactus",
+      "group": "plant",
+      "aspect": 1
+    },
+    {
+      "id": "cup_tulip",
+      "group": "plant",
+      "aspect": 0.75
+    },
+    {
+      "id": "broad_mushroom",
+      "group": "plant",
+      "aspect": 1
+    },
+    {
+      "id": "walking_turtle",
+      "group": "animal",
+      "aspect": 1.5
+    },
+    {
+      "id": "fish_with_top_fin",
+      "group": "animal",
+      "aspect": 1.5
+    },
+    {
+      "id": "long_leg_bird",
+      "group": "animal",
+      "aspect": 1
+    },
+    {
+      "id": "bare_bicycle",
+      "group": "vehicle",
+      "aspect": 1.5
+    },
+    {
+      "id": "rocket_with_flame",
+      "group": "vehicle",
+      "aspect": 0.75
+    },
+    {
+      "id": "two_car_train",
+      "group": "vehicle",
+      "aspect": 1.5
+    },
+    {
+      "id": "round_teapot",
+      "group": "object",
+      "aspect": 1
+    },
+    {
+      "id": "leaning_boot",
+      "group": "tilted",
+      "aspect": 1
+    },
+    {
+      "id": "house_and_garden",
+      "group": "dense",
+      "aspect": 1.5
+    },
+    {
+      "id": "jellyfish_and_coral",
+      "group": "dense",
+      "aspect": 1
+    },
+    {
+      "id": "one_eye_tripod",
+      "group": "imaginary",
+      "aspect": 1
+    },
+    {
+      "id": "winged_mailbox_friend",
+      "group": "imaginary",
+      "aspect": 1
+    },
+    {
+      "id": "zigzag_enclosure",
+      "group": "abstract",
+      "aspect": 1
+    },
+    {
+      "id": "offset_nested_boxes",
+      "group": "abstract",
+      "aspect": 1
+    }
+  ]
+}

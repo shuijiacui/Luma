@@ -1,0 +1,252 @@
+{
+  "version": "nilo-ablation-v1",
+  "sha256": "0e90fa27645ca238e535c5a246cafd9304de3d1e9f8c0990a02c072abafe4b76",
+  "source": "new synthetic paths authored for layered evaluation",
+  "privacy": "No child images, prompts, accounts or stored conversations.",
+  "freezePolicy": "Freeze before the first live run; any geometry/label change requires a new version and hash. Reruns are regression, not fresh holdout.",
+  "goldLabelStatus": "author_supplied_control_not_independent_human_review",
+  "cases": [
+    {
+      "id": "round_face",
+      "group": "person",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        },
+        {
+          "id": "contact_hat_points",
+          "expected": "accept",
+          "requires": "contact"
+        },
+        {
+          "id": "contact_hat_contour",
+          "expected": "accept",
+          "requires": "contact"
+        },
+        {
+          "id": "wrong_semantics",
+          "expected": "human_reject"
+        }
+      ]
+    },
+    {
+      "id": "wide_face",
+      "group": "person",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        },
+        {
+          "id": "contact_hat_points",
+          "expected": "accept",
+          "requires": "contact"
+        },
+        {
+          "id": "contact_hat_contour",
+          "expected": "accept",
+          "requires": "contact"
+        }
+      ]
+    },
+    {
+      "id": "tilted_face",
+      "group": "person",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        },
+        {
+          "id": "contact_hat_points",
+          "expected": "accept",
+          "requires": "contact"
+        },
+        {
+          "id": "contact_hat_contour",
+          "expected": "accept",
+          "requires": "contact"
+        }
+      ]
+    },
+    {
+      "id": "pointy_cat",
+      "group": "animal",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        },
+        {
+          "id": "attached_whisker",
+          "expected": "accept"
+        }
+      ]
+    },
+    {
+      "id": "long_dog",
+      "group": "animal",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "branch_tree",
+      "group": "plant",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tall_planter",
+      "group": "plant",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dining_chair",
+      "group": "object",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "small_bus",
+      "group": "vehicle",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sail_hull",
+      "group": "vehicle",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "invented_friend",
+      "group": "imaginary",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "linked_loops",
+      "group": "abstract",
+      "controls": [
+        {
+          "id": "positive",
+          "expected": "accept"
+        },
+        {
+          "id": "invalid_reference",
+          "expected": "reject",
+          "expectedCodes": [
+            "intent_reference"
+          ]
+        }
+      ]
+    }
+  ]
+}

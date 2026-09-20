@@ -22,6 +22,7 @@ import { CompanionProjection } from '../components/CompanionProjection'
 import { CompanionDock } from '../components/CompanionDock'
 import { DrawingSurface } from '../components/DrawingSurface'
 import { useCompanion } from '../hooks/useCompanion'
+import { recordTurnOutcome } from '../companion/diagnostics'
 import { useCompanionVoice } from '../hooks/useCompanionVoice'
 import { hasWelcomed, markWelcomed, readMode, saveMemory, saveMode, localCommand } from '../companion/proposals'
 import { readNiloVisible, saveNiloVisible } from '../niloCodraw'
@@ -202,7 +203,11 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     // The visible in-progress/preview drawing is the latest action. Removing
     // that layer must not also remove an earlier committed child contribution.
     if (hasTemporaryDrawing) return
-    if (canvasRef.current?.undo()) invalidateDrawing()
+    const owner = canvasRef.current?.getDocument().operations.at(-1)?.owner
+    if (canvasRef.current?.undo()) {
+      if (owner === 'nilo') recordTurnOutcome('nilo_undone')
+      invalidateDrawing()
+    }
   }
   function changeMode(next: 'off' | 'together') {
     companion.cancel(); voice.cancel(); setMode(next); saveMode(ownerId, next)

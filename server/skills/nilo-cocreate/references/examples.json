@@ -1,0 +1,154 @@
+[
+  {
+    "id": "closed-to-balloon",
+    "shape": "closed",
+    "words": [
+      "圆",
+      "心形",
+      "气球",
+      "circle",
+      "heart",
+      "balloon"
+    ],
+    "before": "A closed round or heart-shaped outline; no identity stated and no string yet.",
+    "addition": "Let the original outline become a balloon by adding only a gently curved string.",
+    "connection": "Attach at the visible bottom of the actual outline, then grow downward into space. Adapt to that outline, never copy example canvas coordinates.",
+    "sketch": {
+      "aspect": 0.4,
+      "paths": [
+        [
+          [
+            "M",
+            0.5,
+            0
+          ],
+          [
+            "C",
+            0.9,
+            0.3,
+            0.1,
+            0.6,
+            0.5,
+            1
+          ]
+        ]
+      ]
+    },
+    "wrong": "Drawing a second balloon, putting waves nearby, or adding another string when one exists.",
+    "nextChildTurn": "The child can add a passenger, decorate the balloon, or extend its journey.",
+    "exclude": "If the child called this a wheel or another object, preserve that identity."
+  },
+  {
+    "id": "wheel-hub",
+    "shape": "closed",
+    "words": [
+      "车轮",
+      "轮子",
+      "车",
+      "wheel",
+      "car",
+      "bike"
+    ],
+    "before": "The child explicitly calls a rough closed loop a wheel; its centre is empty.",
+    "addition": "Add a small hub inside the original loop, preserving its uneven outline.",
+    "connection": "Place inside the visible loop; size relative to that wheel, not the whole canvas.",
+    "sketch": {
+      "aspect": 1,
+      "paths": [
+        [
+          [
+            "E",
+            0.5,
+            0.5,
+            0.4,
+            0.4
+          ]
+        ]
+      ]
+    },
+    "wrong": "Turning a declared wheel into a sun or balloon, or redrawing a perfect outer circle.",
+    "nextChildTurn": "Leave the spokes or vehicle body for the child."
+  },
+  {
+    "id": "stem-leaf",
+    "shape": "open",
+    "words": [
+      "梗",
+      "茎",
+      "树",
+      "苹果",
+      "叶",
+      "stem",
+      "tree",
+      "apple",
+      "leaf"
+    ],
+    "before": "An actual visible stem or branch with room on one side, even if the plant's name is unknown.",
+    "addition": "Add one attached leaf using the connected leaf renderer.",
+    "connection": "Pick a visible point ON the stem and grow left/right/up/down; use template=leaf with attachment and placement.",
+    "wrong": "A leaf floating at the bottom of a fruit; treating an unrelated smile as a stem.",
+    "nextChildTurn": "Leave the next branch, fruit or another leaf for the child."
+  },
+  {
+    "id": "boat-ripples",
+    "shape": "any",
+    "words": [
+      "船",
+      "海",
+      "湖",
+      "boat",
+      "sea",
+      "lake"
+    ],
+    "before": "A boat is visibly identifiable or the child has explicitly described the shape as a boat on water.",
+    "addition": "Add a short group of ripples immediately under the hull, not a new boat or a whole sea.",
+    "connection": "Use below placement with the hull as anchor; keep the strip shallow and avoid crossing the hull.",
+    "wrong": "Assuming any heart or abstract loop represents a water scene.",
+    "nextChildTurn": "Leave the destination, passenger or another wave for the child."
+  },
+  {
+    "id": "open-gesture",
+    "shape": "open",
+    "words": [
+      "线",
+      "弯",
+      "line",
+      "curve"
+    ],
+    "before": "An unnamed open curve with a clearly visible endpoint and direction.",
+    "addition": "Continue the gesture from its endpoint with a short compatible bend, leaving it open. A name is unnecessary.",
+    "connection": "Use custom with attachment on the actual endpoint, grow away along its tangent, matching scale and brush. Inspect both views before choosing the side.",
+    "wrong": "Insisting on an object name, closing every gesture, or scattering unrelated icons.",
+    "nextChildTurn": "Leave an open endpoint the child can continue or reinterpret."
+  },
+  {
+    "id": "new-subject-after-turn",
+    "shape": "multiple",
+    "words": [],
+    "before": "A heart has already received Nilo's string. The child then draws a separate fruit with a stem.",
+    "addition": "Develop the new fruit, for example one leaf when its stem is visible.",
+    "connection": "Use the latest CHILD bounds and crop to find the new subject; inspect its whole shape in the full view.",
+    "wrong": "Adding a second string to the old heart, or mistaking Nilo's string for the latest child stroke.",
+    "nextChildTurn": "Return the turn with most of the new subject still open to the child's decisions."
+  },
+  {
+    "id": "whole-person-not-last-leg",
+    "shape": "composite",
+    "words": [
+      "人物",
+      "小人",
+      "人脸",
+      "帽子",
+      "头发",
+      "person",
+      "face",
+      "hat",
+      "hair"
+    ],
+    "before": "A recognizable person assembled from a head outline, eyes and a smile; the latest stroke is a short leg or neck line.",
+    "addition": "Inspect the WHOLE person. With an already expressive face, try a hat if there is headroom, a forehead fringe/hair bow if the head nearly touches the top, or a clothing detail where clothing is visible.",
+    "connection": "Head features use the head as anchor even when the latest stroke is lower down on this SAME connected person. Do not switch to an older separate object. Use the appropriate part renderer; keep facial features clear.",
+    "wrong": "Treating the final leg as an unnamed abstract gesture, copying a short line beside it, adding duplicate eyes, or putting a hat outside the canvas.",
+    "nextChildTurn": "Let the child decide who this character is, decorate the accessory, or continue the body."
+  }
+]

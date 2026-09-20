@@ -1,3 +1,5 @@
+// Dialogue unit tests isolate rasterisation; niloPreview.test.js exercises real PNG composition.
+vi.mock('../src/services/niloPreview.js', () => ({ renderReviewCandidate: (_image, proposal) => ({proposal, imageBase64:'composited-preview'}) }))
 import express from 'express'
 import { readFileSync } from 'node:fs'
 import request from 'supertest'
@@ -15,6 +17,20 @@ const REVIEW = { targetVisible: true, usesExistingDrawing: true, detailRelated: 
 const TURN_PROPOSAL = { ...PROPOSAL, anchor: { x: .3, y: .3, width: .3, height: .3 }, placement: 'below' }
 const TURN_RESPONSE = { ...RESPONSE, sceneType: 'object', grounding: GROUNDING, proposal: TURN_PROPOSAL }
 const turnVision = raw => vi.fn().mockResolvedValueOnce(raw).mockResolvedValueOnce(REVIEW)
+
+test('companion API validates the optional crop and strips client-injected focus coordinates', async()=>{
+  const generateDialogue=vi.fn(async()=>({status:'clarify',reply:'test'}))
+  const app=express(); app.use(express.json({limit:'4mb'})); app.use('/api/nilo',createNiloRouter({generateDialogue,limits:{nilo:{max:100,windowMs:60000}}}))
+  const focusImage={imageBase64:PNG,bounds:{x:.5,y:.2,width:.2,height:.3}}
+  await request(app).post('/api/nilo/companion').send({imageBase64:PNG,focusImage,context:{...CONTEXT,focusBounds:{x:0,y:0,width:1,height:1}}}).expect(200)
+  expect(generateDialogue.mock.calls[0][0].focusImage).toEqual(focusImage)
+  expect(generateDialogue.mock.calls[0][0].context).not.toHaveProperty('focusBounds')
+  for(const invalid of [{...focusImage,bounds:{x:.9,y:0,width:.5,height:.1}},{...focusImage,imageBase64:'bad'}, {...focusImage,imageBase64:'A'.repeat(1024*1024+1)}]) {
+    await request(app).post('/api/nilo/companion').send({imageBase64:PNG,focusImage:invalid,context:CONTEXT}).expect(400)
+  }
+  await request(app).post('/api/nilo/companion').send({focusImage,context:CONTEXT}).expect(400)
+  expect(generateDialogue).toHaveBeenCalledOnce()
+})
 
 const drawingSkillNames = ['nilo-line-art', 'nilo-composition']
 function expectDrawingSkills(prompt, mode) {
@@ -105,7 +121,7 @@ test('click-to-draw compiles semantic placement into bounded geometry with the c
   expect(result.proposal.x + result.proposal.width).toBeLessThan(1)
   expect(vision).toHaveBeenCalledTimes(2)
   expect(vision.mock.calls[1][0]).toBe(PNG)
-  expect(vision.mock.calls[1][2]).toMatchObject({ kind: 'nilo_companion_review', maxTokens: 300, retries: 0, privateContent: true })
+  expect(vision.mock.calls[1][2]).toMatchObject({ kind: 'nilo_companion_review', maxTokens: 350, reviewImage: 'composited-preview', retries: 0, privateContent: true })
 })
 
 test('an explicitly abstract scene echoes the actual gesture instead of inventing water', async () => {
@@ -659,4 +675,13 @@ test('an invalid custom generation fails once with no arbitrary template fallbac
   expect(result).not.toHaveProperty('proposal')
   expect(result.reply).not.toContain('画好了')
   expect(model).toHaveBeenCalledTimes(1)
+})
+
+test('a compact click contribution allows eight paths, rejecting nine or an oversized detailed addition',()=>{
+ const paths=Array.from({length:8},(_,i)=>[['M',.1,i/10],['L',.9,i/10]])
+ const proposal={...TURN_PROPOSAL,template:'custom',subject:'小细节',width:.2,height:.2,sketch:{aspect:1,paths}}
+ const context=sanitizeDialogueContext({...CONTEXT,takeTurn:true})
+ expect(validateDialogue({reply:'添一笔',proposal},context,true)?.proposal).toBeDefined()
+ expect(validateDialogue({reply:'添一笔',proposal:{...proposal,width:.3,height:.3}},context,true)).toBeNull()
+ expect(validateDialogue({reply:'添一笔',proposal:{...proposal,sketch:{aspect:1,paths:[...paths,paths[0]]}}},context,true)).toBeNull()
 })
