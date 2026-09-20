@@ -37,7 +37,7 @@ export function ChildHomePage() {
     setOpening(true)
     play('door')
     // Navigation also works if animation events or images fail to load.
-    // 从大门进入 = 画一张新的：清掉上一次留在内存里的草稿（恢复旧画请走「历史图画」）
+    // Release memory; the editor offers recovery before discarding a stored draft.
     navigationTimer.current = window.setTimeout(() => { clearChildDraft(); navigate('/child/create') }, reduceMotion ? 160 : 1100)
   }
 

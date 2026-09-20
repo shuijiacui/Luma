@@ -17,7 +17,8 @@ export interface ChildDraft {
   artworkRevision?: number
   savedSnapshot?: string
 }
-// Memory only: no artwork survives a reload, logout or switch to another account.
+// The active document stays in memory. Recovery is explicit and scoped to the
+// account + editor URL in this browser tab, so another tab cannot overwrite it.
 let current: { owner: string; value: ChildDraft } | null = null
 export function getChildDraft(owner: string): ChildDraft {
   if (current?.owner !== owner) {
@@ -26,6 +27,7 @@ export function getChildDraft(owner: string): ChildDraft {
   return current.value
 }
 export function clearChildDraft() { current = null }
+export function resumeChildDraft(owner: string, value: ChildDraft) { current = { owner, value } }
 export function restoreChildArtwork(owner: string, artwork: Artwork): ChildDraft {
   clearChildDraft()
   const draft = getChildDraft(owner)

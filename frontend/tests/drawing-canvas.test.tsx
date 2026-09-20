@@ -110,7 +110,7 @@ test('两套撤销互相独立，可连续撤销各自的笔迹', async () => {
   await act(async () => {})
   expect(ref.current?.getUndoCounts()).toEqual({ child: 2, nilo: 0 })
 
-  // 孩子的撤销只减少孩子自己的笔
+  // Nilo 的笔迹已撤回，此时普通撤销回退最后一笔孩子的画。
   expect(ref.current?.undo()).toBe(true)
   await act(async () => {})
   expect(ref.current?.getUndoCounts()).toEqual({ child: 1, nilo: 0 })

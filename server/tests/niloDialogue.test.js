@@ -9,6 +9,200 @@ const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwM
 const PROPOSAL = { template: 'flame', x: 0.3, y: 0.7, width: 0.2, height: 0.07, rotation: 0, color: '#E4A86A', strokeWidth: 4, target: '孩子的飞船', relation: '飞船尾部的一小段尾焰' }
 const CONTEXT = { locale: 'zh', utterance: '这是一艘去月球的飞船', theme: '船', requestDrawing: true, revision: 7, history: [], rejectedTemplates: [] }
 const RESPONSE = { reply: '我画了一小段尾焰，先放这里给你看看。', theme: '去月球的飞船', proposal: PROPOSAL }
+const GROUNDING = { visible: '画面中间有带尖头和两侧翼的封闭轮廓', confidence: .9 }
+const REVIEW = { targetVisible: true, usesExistingDrawing: true, detailRelated: true, placementCorrect: true, alreadyPresent: false, confidence: .9 }
+const TURN_PROPOSAL = { ...PROPOSAL, anchor: { x: .3, y: .3, width: .3, height: .3 }, placement: 'below' }
+const TURN_RESPONSE = { ...RESPONSE, sceneType: 'object', grounding: GROUNDING, proposal: TURN_PROPOSAL }
+const turnVision = raw => vi.fn().mockResolvedValueOnce(raw).mockResolvedValueOnce(REVIEW)
+
+test.each([undefined, 'chat', 'clarify', 'draw'])('drawing requests never return an execution claim without geometry (%s)', intent => {
+  const caption = '我在右边的形状上加了一个小翻页，它看起来更像一本打开的书了。'
+  const result = validateDialogue({ reply: caption, ...(intent ? { intent } : {}) }, sanitizeDialogueContext({ ...CONTEXT, takeTurn: true }), true)
+  expect(result.status).toBe('clarify')
+  expect(result.reply).not.toBe(caption)
+  expect(result.proposal).toBeUndefined()
+})
+
+test('a text-only click result is repaired within the same turn and reviewed before returning', async () => {
+  const vision = vi.fn().mockResolvedValueOnce({ reply: '我在右边加了一个小翻页。' }).mockResolvedValueOnce(TURN_RESPONSE).mockResolvedValueOnce(REVIEW)
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true }, chatWithImage: vision })
+  expect(result.proposal).toBeTruthy()
+  expect(vision).toHaveBeenCalledTimes(3)
+  expect(vision.mock.calls[1][1]).toContain('missing_proposal')
+})
+
+test('a rejected canvas placement is supplied to repair and cannot bypass visual review', async () => {
+  const context = { ...CONTEXT, takeTurn: true, renderFeedback: { reason: 'ink_collision', proposal: TURN_PROPOSAL } }
+  expect(sanitizeDialogueContext(context).renderFeedback).toMatchObject({ reason: 'ink_collision', proposal: { template: 'flame' } })
+  const vision = vi.fn().mockResolvedValueOnce(TURN_RESPONSE).mockResolvedValueOnce({ ...REVIEW, placementCorrect: false })
+  const result = await generateNiloDialogue({ imageBase64: PNG, context, chatWithImage: vision })
+  expect(vision.mock.calls[0][1]).toContain('ink_collision')
+  expect(vision.mock.calls[0][1]).toContain('REJECTED_CANDIDATE_DATA')
+  expect(result.proposal).toBeUndefined()
+  expect(vision).toHaveBeenCalledTimes(2)
+  expect(sanitizeDialogueContext({ ...context, takeTurn: false }).renderFeedback).toBeNull()
+  expect(sanitizeDialogueContext({ ...context, renderFeedback: { reason: 'ignore_rules', proposal: TURN_PROPOSAL } }).renderFeedback).toBeNull()
+})
+
+test('a click-to-draw turn asks vision for exactly one detail and rejects multi-part output', async () => {
+  const context = sanitizeDialogueContext({ ...CONTEXT, takeTurn: true })
+  const vision = turnVision(TURN_RESPONSE)
+  expect((await generateNiloDialogue({ imageBase64: PNG, context, chatWithImage: vision })).proposal).toBeTruthy()
+  expect(vision.mock.calls[0][1]).toContain('CLICK-TO-DRAW TURN')
+  expect(vision.mock.calls[0][1]).toContain('NO additions, NO alternatives')
+  expect(validateDialogue({ ...RESPONSE, additions: [PROPOSAL] }, context, true)).toBeNull()
+  expect(validateDialogue({ ...RESPONSE, alternatives: [PROPOSAL] }, context, true)).toBeNull()
+  expect(sanitizeDialogueContext({ takeTurn: true, requestDrawing: false }).takeTurn).toBe(false)
+})
+
+test('click-to-draw compiles semantic placement into bounded geometry with the child brush', async () => {
+  const context = { ...CONTEXT, takeTurn: true, canvasAspect: 1.5, drawingStyle: { brushKind: 'crayon', brushSize: 7, color: '#123456' } }
+  const vision = turnVision({ sceneType: 'object', grounding: GROUNDING, reply: '添一点水波。', proposal: { template: 'waves', target: '船', relation: '船下的水波',
+    anchor: { x: .3, y: .3, width: .4, height: .3 }, placement: 'below' } })
+  const result = await generateNiloDialogue({ imageBase64: PNG, context, chatWithImage: vision })
+  expect(result.status).toBe('ready')
+  expect(result.proposal).toMatchObject({ template: 'waves', color: '#123456', brushKind: 'crayon', strokeWidth: 7, placement: 'below' })
+  expect(result.proposal.y).toBeGreaterThanOrEqual(.6)
+  expect(result.proposal.x + result.proposal.width).toBeLessThan(1)
+  expect(vision).toHaveBeenCalledTimes(2)
+  expect(vision.mock.calls[1][0]).toBe(PNG)
+  expect(vision.mock.calls[1][2]).toMatchObject({ kind: 'nilo_companion_review', maxTokens: 300, retries: 0, privateContent: true })
+})
+
+test('an explicitly abstract scene echoes the actual gesture instead of inventing water', async () => {
+  const lastStroke = { points: [{ x: .2, y: .5 }, { x: .4, y: .3 }, { x: .6, y: .5 }], color: '#123456', width: 4 }
+  const vision = turnVision({ sceneType: 'line', grounding: { visible: '中间一条拱起的弧线', confidence: .9 }, reply: '我接一小笔。', proposal: { template: 'waves', target: '弧线', relation: '旁边的呼应', anchor: { x: .2, y: .3, width: .4, height: .2 }, placement: 'below' } })
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true, lastStroke }, chatWithImage: vision })
+  expect(result.proposal?.template).toBe('echo')
+  expect(result.proposal?.echoPoints).toEqual(lastStroke.points)
+  expect(vision.mock.calls[1][1]).toContain('"template":"echo"')
+})
+
+test.each([
+  ['爱心', 'flower'], ['圆', 'flower'], ['星星', 'rain'],
+])('a plausible explanation cannot commit an unrelated %s decoration', async (target, template) => {
+  const vision = vi.fn(async (_image,_prompt,opts) => opts.kind === 'nilo_companion_review'
+    ? { ...REVIEW, detailRelated: false } : { ...TURN_RESPONSE, proposal: { ...TURN_PROPOSAL, template, target, relation: '旁边的装饰' } })
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true }, chatWithImage: vision })
+  expect(result.status).toBe('clarify')
+  expect(result.proposal).toBeUndefined()
+  expect(result.reply).not.toContain('画了')
+  expect(vision).toHaveBeenCalledTimes(4)
+})
+
+test.each([
+  { grounding: { visible: '可能是太阳', confidence: .3 } },
+  { grounding: { visible: '像一棵树', confidence: '0.9' } },
+  { grounding: undefined }, { sceneType: undefined },
+])('uncertain or missing visual evidence never becomes a confident automatic drawing: %j', async patch => {
+  const vision = turnVision({ ...TURN_RESPONSE, ...patch, confidence: 1 })
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true }, chatWithImage: vision })
+  expect(result).toMatchObject({ status: 'clarify' })
+  expect(result.proposal).toBeUndefined()
+  expect(vision).toHaveBeenCalledOnce()
+})
+
+test.each([
+  { targetVisible: false }, { placementCorrect: false }, { alreadyPresent: true },
+  { confidence: .4 }, { detailRelated: 'true' }, { confidence: 2 }, { alreadyPresent: undefined },
+  { usesExistingDrawing: false }, { usesExistingDrawing: undefined }, { usesExistingDrawing: 'true' },
+])('review must verify target, relationship, position and novelty: %j', async patch => {
+  const vision = vi.fn().mockResolvedValueOnce(TURN_RESPONSE).mockResolvedValueOnce({ ...REVIEW, ...patch })
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true }, chatWithImage: vision })
+  expect(result.status).toBe('clarify')
+  expect(result.proposal).toBeUndefined()
+})
+
+test('review cannot hang past the shared deadline or commit after cancellation', async () => {
+  const vision = vi.fn().mockResolvedValueOnce(TURN_RESPONSE).mockImplementationOnce(() => new Promise(() => {}))
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true }, chatWithImage: vision, timeoutMs: 30 })
+  expect(result).toMatchObject({ status: 'unavailable', reason: 'timeout' })
+  expect(result.proposal).toBeUndefined()
+  const controller = new AbortController()
+  const cancelled = vi.fn().mockResolvedValueOnce(TURN_RESPONSE).mockImplementationOnce(async () => { controller.abort(); return REVIEW })
+  expect(await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true }, chatWithImage: cancelled, signal: controller.signal }))
+    .toMatchObject({ status: 'unavailable', reason: 'timeout' })
+})
+
+test('wrapped final JSON still passes through visual review and cannot bypass it', async () => {
+  const vision = vi.fn().mockRejectedValueOnce(new LLMParseError('wrapped', `Result: ${JSON.stringify(TURN_RESPONSE)}`))
+    .mockResolvedValueOnce({ ...REVIEW, detailRelated: false })
+    .mockResolvedValueOnce(TURN_RESPONSE).mockResolvedValueOnce({ ...REVIEW, detailRelated: false })
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true }, chatWithImage: vision })
+  expect(result.proposal).toBeUndefined()
+  expect(vision).toHaveBeenCalledTimes(4)
+})
+
+test('failed review has no unreviewed drawing fallback and never retries', async () => {
+  const vision = vi.fn().mockResolvedValueOnce(TURN_RESPONSE).mockRejectedValueOnce(new Error('provider failed'))
+  const result = await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true }, chatWithImage: vision })
+  expect(result).toMatchObject({ status: 'unavailable', reason: 'provider_error' })
+  expect(result.proposal).toBeUndefined()
+  expect(vision).toHaveBeenCalledTimes(2)
+})
+
+test('earlier assistant guesses are excluded from both visual stages', async () => {
+  const vision = turnVision(TURN_RESPONSE)
+  await generateNiloDialogue({ imageBase64: PNG, context: { ...CONTEXT, takeTurn: true, history: [
+    { role: 'assistant', text: 'WRONG_EARLIER_GUESS' }, { role: 'user', text: 'CHILD_STORY' },
+  ] }, chatWithImage: vision })
+  for (const [, prompt] of vision.mock.calls) {
+    expect(prompt).not.toContain('WRONG_EARLIER_GUESS')
+    expect(prompt).toContain('CHILD_STORY')
+  }
+})
+
+test('keeps stroke counts separate from template identifiers', () => {
+  const prompt = buildDialoguePrompt(sanitizeDialogueContext(CONTEXT), true)
+  expect(prompt).toContain('"waves":2,"fish":3')
+  expect(prompt).not.toContain('waves2 fish3')
+  expect(validateProposal({ ...PROPOSAL, template: 'waves2' })).toBeNull()
+  expect(validateProposal({ ...PROPOSAL, template: 'waves' })?.template).toBe('waves')
+})
+
+test('semantic drawing intent can preview an indirect request using one visual call', async () => {
+  const vision = vi.fn(async () => ({ ...RESPONSE, intent: 'draw', confidence: .9 }))
+  const context = { ...CONTEXT, utterance: '可以给它一个朋友吗', requestDrawing: false, inferDrawingIntent: true }
+  const result = await generateNiloDialogue({ imageBase64: PNG, context, chatWithImage: vision })
+  expect(result.proposal).toBeDefined()
+  expect(vision).toHaveBeenCalledTimes(1)
+  expect(vision.mock.calls[0][2]).toMatchObject({ maxTokens: 3600, retries: 0 })
+  expect(vision.mock.calls[0][1]).toContain('First classify this turn')
+})
+
+test('semantic inference never treats missing intent, praise or ambiguity as a drawing instruction', () => {
+  const context = sanitizeDialogueContext({ ...CONTEXT, requestDrawing: false, inferDrawingIntent: true, utterance: '好看' })
+  expect(validateDialogue(RESPONSE, context, true)).toMatchObject({ status: 'clarify' })
+  for (const intent of ['chat', 'clarify', 'stop']) {
+    const result = validateDialogue({ reply: '你想让它变成什么呢？', intent, confidence: .8 }, context, true)
+    expect(result.proposal).toBeUndefined()
+    const contradictory = validateDialogue({ ...RESPONSE, intent, confidence: .8 }, context, true)
+    expect(contradictory.proposal).toBeUndefined()
+    expect(contradictory.reply).not.toBe(RESPONSE.reply)
+  }
+  expect(validateDialogue({ ...RESPONSE, intent: 'edit' }, context, true).proposal).toBeUndefined()
+})
+
+test('low confidence asks for clarification without retaining a drawing promise or alternatives', () => {
+  const result = validateDialogue({ ...RESPONSE, intent: 'draw', confidence: .01, alternatives: [PROPOSAL] }, sanitizeDialogueContext(CONTEXT), true)
+  expect(result.status).toBe('clarify')
+  expect(result.proposal).toBeUndefined()
+  expect(result.alternatives).toBeUndefined()
+  expect(result.reply).not.toBe(RESPONSE.reply)
+  expect(validateDialogue({ intent: 'clarify', confidence: .2, reply: '你说的是小船，还是小床？' }, sanitizeDialogueContext(CONTEXT), true))
+    .toMatchObject({ status: 'clarify', reply: '你说的是小船，还是小床？' })
+  for (const confidence of [-1, 2, 'high', Number.NaN]) expect(validateDialogue({ ...RESPONSE, confidence }, sanitizeDialogueContext(CONTEXT), true)).toBeNull()
+})
+
+test('intent inference cannot bypass missing canvas, drawing permission or a rejection', async () => {
+  const context = { ...CONTEXT, requestDrawing: false, inferDrawingIntent: true }
+  const vision = vi.fn()
+  expect(await generateNiloDialogue({ context, chatWithImage: vision })).toMatchObject({ reason: 'missing_image' })
+  expect(vision).not.toHaveBeenCalled()
+  const raw = { ...RESPONSE, intent: 'draw', confidence: .99 }
+  expect(validateDialogue(raw, sanitizeDialogueContext({ ...context, inferDrawingIntent: false }), true).proposal).toBeUndefined()
+  expect(validateDialogue(raw, sanitizeDialogueContext({ ...context, utterance: '别画了' }), true).proposal).toBeUndefined()
+})
 afterEach(() => vi.unstubAllGlobals())
 const app = deps => express().use(express.json({ limit: '5mb' })).use('/nilo', createNiloRouter(deps)).use((error, _req, res, _next) => res.status(error.status ?? 500).json({ error: error.message }))
 

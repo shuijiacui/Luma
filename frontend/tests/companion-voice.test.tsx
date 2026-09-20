@@ -5,6 +5,7 @@ import { useCompanionVoice } from '@/features/child/hooks/useCompanionVoice'
 import { useDrawingMusic } from '@/features/child/hooks/useDrawingMusic'
 import { convertVoiceBuffer, encodeVoiceWav } from '@/features/child/hooks/voiceAudio'
 import { selectCompanionVoice } from '@/features/child/hooks/voiceProfile'
+import { createSpeechEndpoint, recognitionContext, recognitionVocabulary, SPEECH_PAUSE_MS } from '@/features/child/hooks/voiceRecognition'
 
 vi.mock('@/lib/api/authFetch', () => ({ authFetch: vi.fn() }))
 
@@ -14,7 +15,8 @@ class FakeRecognition {
   onresult: ((event: { results: { isFinal: boolean; 0: { transcript: string } }[] }) => void) | null = null
   onerror: ((event: { error: string }) => void) | null = null
   onend: (() => void) | null = null
-  start = vi.fn()
+  onstart: (() => void) | null = null
+  start = vi.fn(() => this.onstart?.())
   stop = vi.fn(() => this.onend?.())
   abort = vi.fn()
   constructor() { FakeRecognition.instances.push(this) }
@@ -226,7 +228,8 @@ test.each([
   expect(FakeRecognition.instances).toHaveLength(2)
 })
 
-test('final recognition is delivered without waiting for end but interim words never become commands', async () => {
+test('final recognition waits for a pause without requiring end; interim words never become commands', async () => {
+  vi.useFakeTimers()
   const opts = baseOptions()
   const { result } = renderHook(() => useCompanionVoice(opts))
   await ready()
@@ -238,12 +241,122 @@ test('final recognition is delivered without waiting for end but interim words n
   expect(result.current.transcript).toBe('留下来')
   expect(opts.onTranscript).not.toHaveBeenCalled()
   act(() => recognition.onresult?.({ results: [{ isFinal: true, 0: { transcript: '留下来' } }] }))
+  expect(opts.onTranscript).not.toHaveBeenCalled()
+  act(() => vi.advanceTimersByTime(SPEECH_PAUSE_MS))
   expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('留下来')
   expect(result.current.status).toBe('idle')
   expect(recognition.abort).toHaveBeenCalledOnce()
   act(() => { lateEnd?.(); lateError?.({ error: 'aborted' }) })
   expect(opts.onTranscript).toHaveBeenCalledTimes(1)
   expect(result.current.error).toBeNull()
+})
+
+test('a thinking pause and revised interim tail are kept in one Chinese utterance', async () => {
+  vi.useFakeTimers()
+  const opts = baseOptions()
+  const { result } = renderHook(() => useCompanionVoice(opts))
+  await ready()
+  act(() => result.current.start())
+  const recognition = FakeRecognition.instances[0]
+  expect(recognition.continuous).toBe(true)
+  const first = { isFinal: true, 0: { transcript: '帮我画一个' } }
+  act(() => recognition.onresult?.({ results: [first] }))
+  act(() => vi.advanceTimersByTime(1500))
+  expect(opts.onTranscript).not.toHaveBeenCalled()
+  act(() => recognition.onresult?.({ results: [first, { isFinal: false, 0: { transcript: '篮子的' } }] }))
+  act(() => vi.advanceTimersByTime(2500))
+  expect(opts.onTranscript).not.toHaveBeenCalled()
+  act(() => recognition.onresult?.({ results: [first, { isFinal: true, 0: { transcript: '蓝色的小汽车' } }] }))
+  act(() => vi.advanceTimersByTime(SPEECH_PAUSE_MS))
+  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('帮我画一个蓝色的小汽车')
+})
+
+test('an unfinished trailing correction is never dropped to execute the earlier fragment', async () => {
+  vi.useFakeTimers()
+  const opts = baseOptions()
+  const { result } = renderHook(() => useCompanionVoice(opts))
+  await ready()
+  act(() => result.current.start())
+  const recognition = FakeRecognition.instances[0]
+  act(() => recognition.onresult?.({ results: [
+    { isFinal: true, 0: { transcript: '留下来' } },
+    { isFinal: false, 0: { transcript: '不，等一下' } },
+  ] }))
+  act(() => recognition.onend?.())
+  expect(opts.onTranscript).not.toHaveBeenCalled()
+  expect(result.current.error).toContain('没听完整')
+})
+
+test('manual stop submits a complete sentence immediately and cancellation discards a pending one', async () => {
+  vi.useFakeTimers()
+  const opts = baseOptions()
+  const { result } = renderHook(() => useCompanionVoice(opts))
+  await ready()
+  act(() => result.current.start())
+  act(() => FakeRecognition.instances[0].onresult?.({ results: [{ isFinal: true, 0: { transcript: '画太阳' } }] }))
+  act(() => result.current.stop())
+  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('画太阳')
+  act(() => result.current.start())
+  act(() => FakeRecognition.instances[1].onresult?.({ results: [{ isFinal: true, 0: { transcript: '留下来' } }] }))
+  act(() => result.current.cancel())
+  act(() => vi.advanceTimersByTime(SPEECH_PAUSE_MS))
+  expect(opts.onTranscript).toHaveBeenCalledTimes(1)
+})
+
+test('English fragments retain word boundaries', async () => {
+  vi.useFakeTimers()
+  const opts = { ...baseOptions(), locale: 'en' as const }
+  const { result } = renderHook(() => useCompanionVoice(opts))
+  await ready()
+  act(() => result.current.start())
+  act(() => FakeRecognition.instances[0].onresult?.({ results: [
+    { isFinal: true, 0: { transcript: 'Draw a' } }, { isFinal: true, 0: { transcript: 'blue boat' } },
+  ] }))
+  act(() => vi.advanceTimersByTime(SPEECH_PAUSE_MS))
+  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('Draw a blue boat')
+})
+
+test('an engine that rejects contextual phrases retries once without biasing', async () => {
+  class BiasedRecognition extends FakeRecognition { phrases: unknown[] = [] }
+  vi.stubGlobal('SpeechRecognition', BiasedRecognition)
+  vi.stubGlobal('SpeechRecognitionPhrase', class { constructor(public phrase: string, public boost: number) {} })
+  const opts = { ...baseOptions(), drawingContext: { theme: '小恐龙', subjects: ['火箭'] } }
+  const { result } = renderHook(() => useCompanionVoice(opts))
+  await ready()
+  act(() => result.current.start())
+  expect((FakeRecognition.instances[0] as BiasedRecognition).phrases).toEqual(expect.arrayContaining([expect.objectContaining({ phrase: '小恐龙' })]))
+  act(() => FakeRecognition.instances[0].onerror?.({ error: 'phrases-not-supported' }))
+  expect(FakeRecognition.instances).toHaveLength(2)
+  expect((FakeRecognition.instances[1] as BiasedRecognition).phrases).toEqual([])
+  act(() => FakeRecognition.instances[1].say('画火箭'))
+  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('画火箭')
+})
+
+test('endpointing accepts quiet speech and preserves a pause before the next word', () => {
+  const endpoint = createSpeechEndpoint(0)
+  for (let now = 100; now <= 1000; now += 100) expect(endpoint(.002, now)).toBe('listening')
+  expect(endpoint(.012, 1100)).toBe('listening')
+  expect(endpoint(.012, 1200)).toBe('listening')
+  expect(endpoint(.002, 2700)).toBe('listening')
+  expect(endpoint(.012, 2800)).toBe('listening')
+  expect(endpoint(.012, 2900)).toBe('listening')
+  expect(endpoint(.002, 5099)).toBe('listening')
+  expect(endpoint(.002, 5100)).toBe('silence')
+})
+
+test('separate clicks and background noise do not count as speech', () => {
+  const endpoint = createSpeechEndpoint(0)
+  for (let now = 100; now <= 6900; now += 100) expect(endpoint(now % 1000 === 0 ? .1 : .002, now)).toBe('listening')
+  expect(endpoint(.002, 7000)).toBe('no-speech')
+})
+
+test('recognition vocabulary carries bounded drawing context without inventing transcript text', () => {
+  const context = recognitionContext({ theme: '恐龙\n世界' + 'x'.repeat(200), subjects: Array(20).fill('火箭') })
+  expect(context.theme).toHaveLength(120)
+  expect(context.theme).not.toContain('\n')
+  expect(context.subjects).toEqual(['火箭'])
+  expect(recognitionVocabulary('zh', context)).toEqual(expect.arrayContaining(['Nilo', '恐龙', '火箭']))
+  expect(recognitionVocabulary('en')).toContain('spaceship')
 })
 
 test('a browser that never replies after stop cannot leave transcription stuck', async () => {
@@ -421,6 +534,31 @@ test('continuous server recording closes an idle microphone without sending sile
   expect(authFetch).toHaveBeenCalledTimes(1)
 })
 
+test('server recording keeps quiet speech across a thinking pause and stops after a completed turn', async () => {
+  vi.useFakeTimers()
+  vi.mocked(authFetch).mockResolvedValue({ asr: true, tts: false })
+  let amplitude = .012
+  vi.stubGlobal('AudioContext', class extends FakeAudioContext {
+    createAnalyser() { return { ...super.createAnalyser(), getFloatTimeDomainData: (samples: Float32Array) => samples.fill(amplitude) } }
+  })
+  microphone.mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] })
+  const { result } = renderHook(() => useCompanionVoice(baseOptions()))
+  await ready()
+  await act(async () => result.current.setContinuous(true))
+  act(() => vi.advanceTimersByTime(300))
+  amplitude = .002
+  act(() => vi.advanceTimersByTime(1500))
+  expect(result.current.status).toBe('listening')
+  expect(FakeRecorder.instances[0].state).toBe('recording')
+  amplitude = .012
+  act(() => vi.advanceTimersByTime(300))
+  amplitude = .002
+  act(() => vi.advanceTimersByTime(2200))
+  expect(result.current.status).toBe('transcribing')
+  expect(FakeRecorder.instances[0].state).toBe('inactive')
+  act(() => result.current.cancel())
+})
+
 test('hidden page ends the session and never restarts it on return', async () => {
   const visibility = vi.spyOn(document, 'visibilityState', 'get')
   const { result } = renderHook(() => useCompanionVoice(baseOptions()))
@@ -457,11 +595,29 @@ test('late microphone permission resolves into a released stream after cancellat
   const { result } = renderHook(() => useCompanionVoice(baseOptions()))
   await ready()
   act(() => result.current.start())
+  expect(result.current.status).toBe('preparing')
   act(() => result.current.stop()) // Also cancels while the permission sheet is open.
   await act(async () => release({ getTracks: () => [{ stop: stopTrack }] } as unknown as MediaStream))
   expect(stopTrack).toHaveBeenCalledOnce()
   expect(FakeRecorder.instances).toHaveLength(0)
   expect(result.current.status).toBe('idle')
+})
+
+test('the browser only shows listening after its microphone starts; late start cannot revive cancellation', async () => {
+  class SlowRecognition extends FakeRecognition { start = vi.fn() }
+  vi.stubGlobal('SpeechRecognition', SlowRecognition)
+  const { result } = renderHook(() => useCompanionVoice(baseOptions()))
+  await ready()
+  act(() => result.current.start())
+  expect(result.current.status).toBe('preparing')
+  const lateStart = FakeRecognition.instances[0].onstart
+  act(() => result.current.stop())
+  act(() => lateStart?.())
+  expect(result.current.status).toBe('idle')
+  act(() => result.current.start())
+  expect(result.current.status).toBe('preparing')
+  act(() => FakeRecognition.instances[1].onstart?.())
+  expect(result.current.status).toBe('listening')
 })
 
 test('server recognition converts recordings to 16 kHz mono WAV and ignores a response after disable', async () => {
@@ -471,14 +627,14 @@ test('server recognition converts recordings to 16 kHz mono WAV and ignores a re
     : new Promise(resolve => { finish = resolve }))
   const stopTrack = vi.fn()
   microphone.mockResolvedValue({ getTracks: () => [{ stop: stopTrack }] })
-  const opts = baseOptions()
+  const opts = { ...baseOptions(), drawingContext: { theme: '海上的小船', subjects: ['帆船'] } }
   const { result, rerender } = renderHook(({ enabled }) => useCompanionVoice({ ...opts, enabled }), { initialProps: { enabled: true } })
   await ready()
   await act(async () => result.current.start())
   act(() => result.current.stop())
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 15)) })
   const call = vi.mocked(authFetch).mock.calls.find(([path]) => path.endsWith('/transcribe'))
-  expect(call?.[1]?.body).toMatchObject({ mimeType: 'audio/wav', locale: 'zh' })
+  expect(call?.[1]?.body).toMatchObject({ mimeType: 'audio/wav', locale: 'zh', context: { theme: '海上的小船', subjects: ['帆船'] } })
   const body = call?.[1]?.body as { audioBase64: string }
   const bytes = Uint8Array.from(atob(body.audioBase64), char => char.charCodeAt(0))
   const header = new DataView(bytes.buffer)
