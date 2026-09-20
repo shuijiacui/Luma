@@ -5,6 +5,7 @@ import { DrawingCanvas, type DrawingCanvasHandle } from '@/features/child/compon
 import type { CanvasDraft } from '@/features/child/draft'
 import { cloneCanvasDocument, getCanvasProvenance, paintCanvasOperation } from '@/features/child/canvasDocument'
 import { createStrokePainter } from '@/features/child/brushes'
+import { prepareTurnProposal, type DrawingProposal } from '@/features/child/companion/proposals'
 
 let ctx: CanvasRenderingContext2D
 beforeEach(() => {
@@ -20,6 +21,43 @@ beforeEach(() => {
   vi.stubGlobal('Image', class { onload?: () => void; set src(_value: string) { this.onload?.() } })
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+
+test('a connected diagonal detail fits beside a stem using actual fine canvas occupancy', () => {
+  const { canvas, ref } = prepare()
+  canvas.width = 900; canvas.height = 600
+  const data = new Uint8ClampedArray(900 * 600 * 4)
+  for (let y = 90; y < 240; y++) for (let x = 448; x < 452; x++) data[(y * 900 + x) * 4 + 3] = 255
+  ctx.getImageData = vi.fn(() => ({ data, width: 900, height: 600 } as ImageData))
+  const p: DrawingProposal = { template: 'custom', subject: '叶片', target: '茎', relation: '从茎向右长出',
+    x: .5, y: .21, width: .12, height: .12, rotation: 0, strokeWidth: 2, color: '#20352f',
+    anchor: { x: .45, y: .1, width: .1, height: .35 }, placement: 'right', attachment: { x: .5, y: .3 },
+    sketch: { aspect: 1.5, paths: [[['M', 0, .75], ['L', 1, 0]]] } }
+  const prepared = prepareTurnProposal(p, ref.current!.getOccupancy(256), 1.5, { width: 900, height: 600 })
+  expect(prepared).not.toBeNull()
+})
+
+test.each([1, 2])('attachment contact checks real ink pixels in CSS space at pixel ratio %s', ratio => {
+  const { canvas, ref } = prepare()
+  canvas.width = 320 * ratio; canvas.height = 240 * ratio
+  // The requested joint is x=156, the actual ink starts at x=160. Both are
+  // in neighbouring coarse grid cells, but a 1px-radius brush does not touch.
+  ctx.getImageData = vi.fn((left: number, top: number, width: number, height: number) => {
+    const data = new Uint8ClampedArray(width * height * 4)
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+      const px = (left + x + .5) / ratio, py = (top + y + .5) / ratio
+      if (px >= 160 && px < 162 && py >= 70 && py < 90) data[(y * width + x) * 4 + 3] = 255
+    }
+    return { data, width, height } as ImageData
+  }) as typeof ctx.getImageData
+  expect(ref.current!.hasInkAt({ x: 156 / 320, y: 80 / 240 }, 1)).toBe(false)
+  expect(ref.current!.hasInkAt({ x: 160 / 320, y: 80 / 240 }, 1)).toBe(true)
+  expect(ref.current!.hasInkAt({ x: 156 / 320, y: 80 / 240 }, 5)).toBe(true)
+  // Erased ink and inaccessible pixels must not be treated as a connection.
+  ctx.getImageData = vi.fn(() => ({ data: new Uint8ClampedArray(4), width: 1, height: 1 } as ImageData))
+  expect(ref.current!.hasInkAt({ x: .5, y: 1 / 3 }, 5)).toBe(false)
+  ctx.getImageData = vi.fn(() => { throw new Error('unavailable') })
+  expect(ref.current!.hasInkAt({ x: .5, y: 1 / 3 }, 5)).toBe(false)
+})
 
 function pointer(canvas: HTMLCanvasElement, name: string, overrides: Record<string, unknown> = {}) {
   const event = new Event(name, {bubbles:true})

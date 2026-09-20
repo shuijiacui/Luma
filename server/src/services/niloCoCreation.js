@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { validateCustomSketch } from './niloSketch.js'
+import { buildDrawingSkillPrompt } from './niloDrawingSkills.js'
 
 // The application loads this skill, rather than leaving it as unused agent docs.
 let cachedSkill
@@ -18,6 +19,7 @@ function visualContext(context) {
 
 export function buildCoCreationPrompt(context, templates) {
   return `${coCreationSkill()}
+${buildDrawingSkillPrompt('plan')}
 CLICK-TO-DRAW TURN. Apply the skill to the attached current canvas. NO additions, NO alternatives.
 FOCUS THIS TURN: attentionBounds locates the latest child contribution, not the previous Nilo detail. If a child drew a NEW separate object after your last contribution, develop that newer object now. Inspect the image around those bounds to find its whole subject; a small stroke can be part of a larger object. Do not keep decorating an older heart merely because you recognized it first, and do not repeat its existing string while a newly drawn fruit waits elsewhere. If the latest mark edits an existing subject, continue that subject instead. Bounds are geometric attention hints, not proof of the object's identity.
 For a standalone geometric shape, develop the existing shape with an attached part (attachment required outside the shape) or an internal feature (placement inside), using custom or contour. The connected leaf renderer is also allowed when a real stem/junction is visible: it compiles to attached custom geometry. A geometric label never forbids that real connection. Do not choose a detached stock icon or add unrelated scenery. A heart with water lines beside it does not become a coherent shared drawing. Do not rename waves as ribbons to evade this rule: the new geometry must actually serve the original shape. Water is appropriate only when an actual water-related scene or the child's explicit story supports it. Classify what is visible, not the story you invented to justify the addition.
@@ -68,6 +70,7 @@ export function coCreationReviewFailure(review) {
 
 export function buildCoCreationCorrectionPrompt(context, templates, previous, reason) {
   return `${buildCoCreationPrompt(context, templates)}
+${reason === 'detached_attachment' ? 'CONNECTION REPAIR: Exact canvas pixels show that the attachment does NOT touch visible ink. Nothing was drawn. Re-locate the actual junction on the SAME target and change attachment accordingly; shrinking the part or changing its name cannot close this gap. Keep the first M pinned to the corrected junction. If that joint cannot be located, choose a genuinely internal detail or ask where to connect. Do not move to another subject or repeat the failed coordinates.' : ''}
 ${reason === 'ink_collision' ? 'CANVAS PLACEMENT REPAIR: The actual rendered paths collided with existing ink, even after shrinking at the same junction. Nothing was drawn. Inspect the original image and the failed geometry. Change the growth direction or choose another meaningful junction on the SAME latest subject, or a small internal feature in clear space. Do not repeat the same geometry, detach the part, move to another object, or ask the child to clear their drawing. Keep this one contribution.' : ''}
 DRAWING CORRECTION (${reason}). The prior candidate below was NOT drawn. Produce one revised plan and inspect the SAME image again. For wrong_target, the prior target is spatially separate from attentionBounds: switch to the actual NEW child subject at those bounds, never merely enlarge the old target box to cover both objects. For misplaced_detail, fix the actual junction/direction or choose a simpler connected detail. For duplicate_detail, choose a genuinely different missing part on the child's latest subject, not the old Nilo contribution. For unrelated_detail, develop the existing marks rather than putting scenery beside them. For uncertain_review, choose a simpler, clearly grounded part. Do not merely rename the same bad geometry, raise confidence, or reclassify the subject to evade review. Preserve the scene classification unless the image provides a concrete reason otherwise. All normal rules and a new review still apply. If no grounded alternative exists, omit proposal and ask a specific question.
 REJECTED_CANDIDATE_DATA: ${JSON.stringify(previous)}`
@@ -86,6 +89,7 @@ export function turnAttentionFailure(context, proposal) {
 
 export function buildCoCreationReviewPrompt(context, proposal) {
   return `${coCreationSkill()}
+${buildDrawingSkillPrompt('review')}
 VISUAL REVIEW ONLY. Look at the attached original canvas yourself. The candidate below has NOT been drawn. Do not trust its target or relation merely because they sound plausible. Do not propose a replacement or another drawing.
 Return ONLY JSON: {"targetVisible":boolean,"detailRelated":boolean,"usesExistingDrawing":boolean,"placementCorrect":boolean,"alreadyPresent":boolean,"confidence":number}. All booleans must be real JSON booleans. confidence is 0..1 about your visual review, not a measured accuracy rate.
 usesExistingDrawing: the original marks are a necessary structural part of the resulting idea, or participate in an interaction already supported by the visible scene or the child's words. Imagine removing the child's target: if the new addition is still just the same standalone decoration, set false. Curvy lines near a heart are not evidence of water, a reflection, ribbons, or motion. The candidate's explanation cannot create that evidence. A balloon string joined to the original heart outline can be true; unrelated water lines beside it are false. A visible boat interacting with water can be true. Check the actual geometry rather than trusting its subject label.
@@ -123,10 +127,11 @@ export function groundAttachment(attachment, anchor, context) {
     && p.y >= anchor.y && p.y <= anchor.y + anchor.height
   if (!validPoint(attachment) || !inside(attachment) || !Array.isArray(points)) return attachment
   const aspect = context.canvasAspect || 1
-  // At most 1.2% of the shorter canvas dimension. Longer moves require a new
-  // visual decision, not a nearest-line guess. Ignore long sparse segments.
-  const radius = .012 * Math.min(1, aspect)
-  let best = attachment, distance = radius
+  // Repair modest vision error on one unambiguous line, bounded by both the
+  // target size and 3% of the short side. Never bridge long sparse segments.
+  const shortSide = Math.min(1, aspect)
+  const radius = Math.min(.03 * shortSide, .2 * Math.max(anchor.width * aspect, anchor.height))
+  const candidates = []
   for (let i = 1; i < points.length; i++) {
     const a = points[i - 1], b = points[i]
     if (!validPoint(a) || !validPoint(b)) continue
@@ -135,9 +140,13 @@ export function groundAttachment(attachment, anchor, context) {
     const t = Math.max(0, Math.min(1, ((attachment.x - a.x) * aspect * dx + (attachment.y - a.y) * dy) / length2))
     const candidate = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }
     const d = Math.hypot((candidate.x - attachment.x) * aspect, candidate.y - attachment.y)
-    if (inside(candidate) && d < distance) { best = { ...attachment, ...candidate }; distance = d }
+    if (inside(candidate) && d <= radius) candidates.push({ point: candidate, distance: d })
   }
-  return best
+  candidates.sort((a,b) => a.distance - b.distance)
+  const best = candidates[0]
+  if (!best || (best.distance > .012 * shortSide && candidates.some(other => other.distance <= best.distance + .004 * shortSide
+    && Math.hypot((other.point.x-best.point.x)*aspect,other.point.y-best.point.y) > .018 * shortSide))) return attachment
+  return { ...attachment, ...best.point }
 }
 
 /** A leaf is a connected part: petiole, outline and one vein, with a common base. */

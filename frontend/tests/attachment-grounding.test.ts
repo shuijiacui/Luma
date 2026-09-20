@@ -17,6 +17,21 @@ test('a leaf joins the actual older stem tip even when the most recent child str
   expect(result.sketch).toEqual(leaf.sketch)
 })
 
+test.each([.65, 1, 2.4])('a modest visual estimate snaps to an unambiguous stem at aspect %s', aspect => {
+  const offset = .02 * Math.min(1, aspect) / aspect
+  const p = { ...leaf, attachment: { x: .48 + offset, y: .24 }, x: .48 + offset, y: .155625 }
+  const result = refineAttachment(p, document, aspect)
+  expect(result.attachment).toEqual({ x: .48, y: .24 })
+  expect(result.x).toBeCloseTo(.48)
+})
+
+test('a larger correction cannot choose arbitrarily between two nearby stems', () => {
+  const left = { ...stem, points: [{ x: .46, y: .15 }, { x: .46, y: .3 }] }
+  const right = { ...stem, groupId: 'second-stem', points: [{ x: .5, y: .15 }, { x: .5, y: .3 }] }
+  const p = { ...leaf, attachment: { x: .48, y: .24 }, x: .48, y: .155625 }
+  expect(refineAttachment(p, { ...document, operations: [left, right] }, 1)).toBe(p)
+})
+
 test('attachment refinement cannot revive erased/cleared marks or jump to distant or outside-anchor ink', () => {
   expect(refineAttachment(leaf,{...document,operations:[stem,{type:'clear',owner:'child',groupId:'clear'},face]},1)).toEqual(leaf)
   expect(refineAttachment(leaf,{...document,operations:[stem,{...face,eraser:true}]},1)).toEqual(leaf)

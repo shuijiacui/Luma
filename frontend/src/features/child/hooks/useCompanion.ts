@@ -6,11 +6,16 @@ import type { DrawingCanvasHandle } from '../components/DrawingCanvas'
 import { getCanvasProvenance } from '../canvasDocument'
 import { refineAttachment } from '../companion/attachmentGrounding'
 import type { BrushKind } from '../brushes'
-import { emptyMemory, localCommand, drawingPlanFits, prepareDrawingPlan, prepareTurnProposal, proposalStrokes, readMemory, saveMemory, summarizeStroke, validateProposal, type CompanionReply, type DrawingProposal, type StoryMemory } from '../companion/proposals'
+import { clarificationReasons, emptyMemory, localCommand, drawingPlanFits, prepareDrawingPlan, prepareTurnProposal, proposalStrokes, readMemory, saveMemory, summarizeStroke, validateProposal, type CompanionReply, type DrawingProposal, type StoryMemory } from '../companion/proposals'
 
 type Phase = 'idle' | 'thinking' | 'sketching' | 'projected'
 export interface Projection { id: string; revision: number; proposal: DrawingProposal; additions: DrawingProposal[]; alternatives: DrawingProposal[]; aspect: number; turn?: boolean; durationMs?: number }
 const planItems = (preview: Projection) => [preview.proposal, ...preview.additions]
+function attachmentFits(p: DrawingProposal, canvas: DrawingCanvasHandle) {
+  if (!p.attachment) return true
+  const tipScale = { round: 1, pencil: .4, marker: 1.8, crayon: 1, star: 2.5 }[p.brushKind ?? 'round']
+  return canvas.hasInkAt(p.attachment, p.strokeWidth * tipScale / 2 + .5)
+}
 interface Options {
   ownerId: string; artworkId?: string; token?: string; locale: 'zh' | 'en'; enabled: boolean
   allowDrawing?: boolean
@@ -110,7 +115,8 @@ export function useCompanion(options: Options) {
 
   const valid = useCallback((p: Projection) => {
     const canvas = ref.current.canvas.current
-    return !!canvas && canvas.getRevision() === p.revision && drawingPlanFits(planItems(p), canvas.getOccupancy(64), p.aspect, ref.current.surfaceSize?.())
+    return !!canvas && canvas.getRevision() === p.revision && planItems(p).every(item => attachmentFits(item, canvas))
+      && drawingPlanFits(planItems(p), canvas.getOccupancy(256), p.aspect, ref.current.surfaceSize?.())
   }, [])
   const commit = useCallback((p: Projection, speak = false) => {
     const opt = ref.current, canvas = opt.canvas.current
@@ -190,7 +196,7 @@ export function useCompanion(options: Options) {
         controller.signal.addEventListener('abort', onAbort, { once: true })
         if (controller.signal.aborted) onAbort()
       })
-      const fetchPlan = (renderFeedback?: { reason: 'ink_collision'; proposal: DrawingProposal }) => Promise.race([
+      const fetchPlan = (renderFeedback?: { reason: 'ink_collision' | 'detached_attachment'; proposal: DrawingProposal }) => Promise.race([
         authFetch<CompanionReply>('/nilo/companion', {
           method: 'POST', token: opt.token, signal: controller.signal,
           body: { ...requestBody, context: { ...requestBody.context, ...(renderFeedback ? { renderFeedback } : {}) } },
@@ -201,9 +207,9 @@ export function useCompanion(options: Options) {
         && result.status !== 'unavailable' && !result.additions?.length) {
         const candidate = validateProposal(result.proposal)
         const grounded = candidate && refineAttachment(candidate, canvas.getDocument(), aspect)
-        if (grounded && !prepareTurnProposal(grounded, canvas.getOccupancy(64), aspect, opt.surfaceSize?.())) {
+        if (grounded && (!attachmentFits(grounded, canvas) || !prepareTurnProposal(grounded, canvas.getOccupancy(256), aspect, opt.surfaceSize?.()))) {
           say('这笔的位置还不合适，我调整一下…', false)
-          result = await fetchPlan({ reason: 'ink_collision', proposal: grounded })
+          result = await fetchPlan({ reason: attachmentFits(grounded, canvas) ? 'ink_collision' : 'detached_attachment', proposal: grounded })
         }
       }
       if (controller.signal.aborted || version !== generation.current || !ref.current.enabled) { metrics.current.stale++; return }
@@ -216,6 +222,16 @@ export function useCompanion(options: Options) {
         say(typeof result.reply === 'string' && result.reply.trim() ? result.reply.slice(0, 400) : '画画伙伴暂时没连上，稍后再点我试试。', speak)
         return
       }
+      // These reason codes and questions are authored by the server after a
+      // failed review. Preserve the actionable question instead of replacing
+      // every failure with the same generic caption. Unreasoned model prose
+      // still cannot pretend that a drawing was committed.
+      if (canPropose && !result.proposal && result.status === 'clarify'
+        && clarificationReasons.some(reason => reason === result.reason) && result.reply?.trim()) {
+        history.current = previous
+        setPhase('idle'); say(result.reply.slice(0, 400), speak)
+        return
+      }
       if (typeof result.theme === 'string' && result.theme.trim()) remember({ ...memoryRef.current, theme: result.theme.trim().slice(0, 160) })
       const reply = typeof result.reply === 'string' ? result.reply.slice(0, 400) : t('你先画，我在这里陪你。', opt.locale)
       // Drawing prose is a plan, never an execution receipt or story evidence.
@@ -223,7 +239,8 @@ export function useCompanion(options: Options) {
       const document = canvas.getDocument()
       const prepareCandidate = (raw: unknown) => {
         const p = validateProposal(raw)
-        return p ? refineAttachment(p, document, aspect) : null
+        const grounded = p ? refineAttachment(p, document, aspect) : null
+        return grounded && attachmentFits(grounded, canvas) ? grounded : null
       }
       const proposed = canPropose ? prepareCandidate(result.proposal) : null
       const alternatives = (Array.isArray(result.alternatives) ? result.alternatives : []).map(prepareCandidate).filter((p): p is DrawingProposal => p !== null).slice(0, 1)
@@ -231,7 +248,7 @@ export function useCompanion(options: Options) {
         if (takeTurn) {
           // This click permits only one contribution, never a hidden group.
           if (result.additions?.length) { setPhase('idle'); say('这次想法太多了，再点我一次，我只接一小笔。', false); return }
-          const prepared = prepareTurnProposal(proposed, canvas.getOccupancy(64), aspect, opt.surfaceSize?.())
+          const prepared = prepareTurnProposal(proposed, canvas.getOccupancy(256), aspect, opt.surfaceSize?.())
           if (!prepared) { setPhase('idle'); say('这次还没有画上，我还没找到合适的接法。你可以告诉我从哪里接。', false); return }
           // Show the actual paths being drawn, then commit the same contribution
           // atomically. Starting a child stroke cancels this temporary layer.
@@ -247,7 +264,7 @@ export function useCompanion(options: Options) {
         }
         const rawAdditions = result.additions ?? []
         const additions = Array.isArray(rawAdditions) && rawAdditions.length <= 3 ? rawAdditions.map(prepareCandidate) : [null]
-        const occupancy = canvas.getOccupancy(64)
+        const occupancy = canvas.getOccupancy(256)
         const prepared = additions.every((p): p is DrawingProposal => p !== null)
           ? prepareDrawingPlan([proposed, ...additions], occupancy, aspect, opt.surfaceSize?.()) : null
         const cached = additions.length === 0 ? alternatives.flatMap(item => prepareDrawingPlan([item], occupancy, aspect, opt.surfaceSize?.()) ?? []) : []
@@ -259,7 +276,9 @@ export function useCompanion(options: Options) {
         else if (cached.length) show({ id: crypto.randomUUID(), revision, proposal: cached[0], additions: [], alternatives: [], aspect }, t('先看看这个小主意，喜欢的话就留下来。', opt.locale), speak)
         else { setPhase('idle'); say('这组小主意放在这里有点挤。你可以让我换个位置，或添别的内容。', speak) }
       } else if (canPropose && result.proposal != null) {
-        setPhase('idle'); say('这次绘画建议没准备完整。你可以再叫我试一次。', speak)
+        setPhase('idle'); say(result.proposal.attachment
+          ? '这次还没接到你的线条上。你可以告诉我从哪里接。'
+          : '这次绘画建议没准备完整。你可以再叫我试一次。', speak)
       } else if (requestDrawing) {
         setPhase('idle'); say('这次还没有画上，我还没找到合适的接法。你可以告诉我从哪里接。', speak)
       } else if (!requestDrawing && pending && valid(pending) && memoryRef.current.theme === previousTheme) {

@@ -7,7 +7,9 @@ export function refineAttachment(p: DrawingProposal, document: CanvasDocument, a
   if (!join || !anchor || !Number.isFinite(aspect) || aspect <= 0) return p
   const inside = (point: {x:number;y:number}) => point.x >= anchor.x && point.x <= anchor.x + anchor.width
     && point.y >= anchor.y && point.y <= anchor.y + anchor.height
-  let distance = .012 * Math.min(1, aspect), best = join
+  const shortSide = Math.min(1, aspect)
+  const radius = Math.min(.03 * shortSide, .2 * Math.max(anchor.width * aspect, anchor.height))
+  const candidates: { point: { x: number; y: number }; distance: number }[] = []
   // Erasure cannot be reconstructed from source segments alone. Conservatively
   // use only ink added after the last clear/eraser; the raster collision check
   // still decides whether the final join meets visible ink.
@@ -21,8 +23,15 @@ export function refineAttachment(p: DrawingProposal, document: CanvasDocument, a
       const t = length2 ? Math.max(0, Math.min(1, ((join.x-a.x)*aspect*dx + (join.y-a.y)*dy)/length2)) : 0
       const point = {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}
       const d = Math.hypot((point.x-join.x)*aspect,point.y-join.y)
-      if (d < distance && inside(point)) { best = point; distance = d }
+      if (d <= radius && inside(point)) candidates.push({ point, distance: d })
     }
   }
-  return best === join ? p : {...p,attachment:best,x:p.x+best.x-join.x,y:p.y+best.y-join.y}
+  candidates.sort((a, b) => a.distance - b.distance)
+  const best = candidates[0]
+  if (!best) return p
+  // A small vision error can be repaired locally. A larger move must have one
+  // clear nearby line, rather than arbitrarily choosing between two branches.
+  if (best.distance > .012 * shortSide && candidates.some(other => other.distance <= best.distance + .004 * shortSide
+    && Math.hypot((other.point.x - best.point.x) * aspect, other.point.y - best.point.y) > .018 * shortSide)) return p
+  return {...p,attachment:best.point,x:p.x+best.point.x-join.x,y:p.y+best.point.y-join.y}
 }

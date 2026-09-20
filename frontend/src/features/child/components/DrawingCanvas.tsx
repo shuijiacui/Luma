@@ -29,6 +29,8 @@ export interface DrawingCanvasHandle {
   getLastDrawingStyle: () => { brushKind: BrushKind; color: string; size: number } | null
   getInkGrid: (size?: number) => number[]
   getOccupancy: (size?: number) => number[]
+  /** Exact visible-ink contact at a normalized point; radius is in CSS pixels. */
+  hasInkAt: (point: { x: number; y: number }, radius: number) => boolean
   undoCompanionStroke: () => boolean
   getUndoCounts: () => { child: number; nilo: number }
 }
@@ -182,7 +184,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
   function getOccupancy(size = 32) {
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d')
-    const cells = Math.max(2, Math.min(64, Number.isFinite(size) ? Math.round(size) : 32))
+    const cells = Math.max(2, Math.min(256, Number.isFinite(size) ? Math.round(size) : 32))
     const hits = new Array<number>(cells * cells).fill(0)
     const totals = new Array<number>(cells * cells).fill(0)
     if (!canvas || !context) return hits
@@ -197,6 +199,33 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
       }
       return hits.map((hit, index) => hit / Math.max(1, totals[index]))
     } catch { return hits }
+  }
+
+  function hasInkAt(point: { x: number; y: number }, radius: number) {
+    const canvas = canvasRef.current
+    if (!canvas || restoringRef.current || pointerRef.current !== null || !canvas.width || !canvas.height
+      || ![point.x, point.y, radius].every(Number.isFinite) || point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1
+      || radius <= 0 || radius > 64) return false
+    const rect = canvas.getBoundingClientRect(), context = canvas.getContext('2d')
+    if (!context || rect.width <= 0 || rect.height <= 0) return false
+    const sx = canvas.width / rect.width, sy = canvas.height / rect.height
+    const cx = point.x * canvas.width, cy = point.y * canvas.height
+    const left = Math.max(0, Math.floor(cx - radius * sx)), top = Math.max(0, Math.floor(cy - radius * sy))
+    const right = Math.min(canvas.width, Math.ceil(cx + radius * sx)), bottom = Math.min(canvas.height, Math.ceil(cy + radius * sy))
+    if (right <= left || bottom <= top) return false
+    try {
+      // Read only the brush-sized patch. Coarse occupancy cells cannot establish
+      // a real connection, especially after erasure or on high-DPI canvases.
+      const { data, width, height } = context.getImageData(left, top, right - left, bottom - top)
+      for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4
+        if (data[i + 3] <= 8 || Math.min(data[i], data[i + 1], data[i + 2]) >= 242) continue
+        const dx = Math.max(left + x - cx, cx - left - x - 1, 0) / sx
+        const dy = Math.max(top + y - cy, cy - top - y - 1, 0) / sy
+        if (Math.hypot(dx, dy) <= radius) return true
+      }
+    } catch { /* An unreadable canvas is not proof of a joint. */ }
+    return false
   }
 
   function lastChildStroke() {
@@ -253,6 +282,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
       return op ? { brushKind: op.brushKind, color: op.color, size: strokeCssSize(op) } : null
     },
     getOccupancy,
+    hasInkAt,
     getInkGrid(size = 4) {
       const grid = getOccupancy(size)
       const maximum = Math.max(0.001, ...grid)

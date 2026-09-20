@@ -151,6 +151,15 @@ test('junction refinement cannot jump to another object, cross the target anchor
   expect(groundAttachment({...a,unknown:'reject me'},anchor,ctx)).toHaveProperty('unknown')
 })
 
+test('a modest visual coordinate error is grounded before model review', () => {
+  const anchor = {x:.44,y:.1,width:.12,height:.3}
+  const ctx = {canvasAspect:1,lastStroke:{points:[{x:.48,y:.1},{x:.48,y:.2},{x:.48,y:.3}]}}
+  expect(groundAttachment({x:.5,y:.24},anchor,ctx)).toEqual({x:.48,y:.24})
+  const twoStems = {...ctx,lastStroke:{points:[{x:.46,y:.15},{x:.46,y:.3},{x:.5,y:.3},{x:.5,y:.15}]}}
+  const join = {x:.48,y:.2}
+  expect(groundAttachment(join,anchor,twoStems)).toBe(join)
+})
+
 test.each([.65, 1, 2.4])('attached parts fit near each canvas edge before validation, at aspect %s', canvasAspect => {
   for (const [placement, x, y] of [['right',.5,.07],['left',.09,.5],['above',.5,.14],['below',.5,.86]]) {
     const request = { sceneType:'object', grounding:{confidence:.9},reply:'接一片叶子',proposal:{template:'leaf',target:'梗',relation:'从梗上长出叶片',
@@ -205,7 +214,8 @@ test('a detached stock leaf is corrected into a custom part joined to the stem b
   const corrected = { ...raw, proposal: { ...raw.proposal, template: 'custom', subject: '梗上的叶片', placement: 'near',
     attachment: { x: .5, y: .3 }, sketch: { aspect: 1, paths: [[['M', 0, 1], ['Q', 0, .15, 1, 0], ['Q', 1, .8, 0, 1], ['Z']]] } } }
   const vision = vi.fn().mockResolvedValueOnce(raw).mockResolvedValueOnce(corrected).mockResolvedValueOnce(review)
-  const result = await generateNiloDialogue({ imageBase64: 'synthetic', context, chatWithImage: vision })
+  const result = await generateNiloDialogue({ imageBase64: 'synthetic', context: { ...context,
+    lastStroke: { points: [{ x: .5, y: .2 }, { x: .5, y: .3 }, { x: .5, y: .4 }] } }, chatWithImage: vision })
   expect(vision).toHaveBeenCalledTimes(3)
   expect(result.proposal).toMatchObject({ template: 'custom', subject: '梗上的叶片', attachment: { x: .5, y: .3 } })
   expect(vision.mock.calls[2][1]).toContain('VISIBLE junction')
