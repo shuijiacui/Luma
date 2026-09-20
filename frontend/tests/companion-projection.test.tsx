@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { CompanionProjection } from '@/features/child/components/CompanionProjection'
 import { proposalStrokes, type DrawingProposal } from '@/features/child/companion/proposals'
@@ -36,4 +36,31 @@ test('an empty compiled proposal does not expose an invalid projection or start 
   render(<CompanionProjection proposal={proposal} aspect={4 / 3} />)
   expect(screen.queryByLabelText('Nilo 的投影，尚未加入画作')).toBeNull()
   expect(createStrokePainter).not.toHaveBeenCalled()
+})
+
+test('a turn paints a growing stroke and cancels animation when the child takes over', () => {
+  let now = 0
+  let nextFrame!: FrameRequestCallback
+  vi.spyOn(performance, 'now').mockImplementation(() => now)
+  vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { nextFrame = callback; return 7 }))
+  const cancel = vi.fn()
+  vi.stubGlobal('cancelAnimationFrame', cancel)
+  const move = vi.fn()
+  vi.mocked(createStrokePainter).mockReturnValue({ moveTo: move })
+  vi.mocked(proposalStrokes).mockReturnValue([{ kind: 'custom', color: '#4aa5d8', width: 3,
+    points: [{ x: .2, y: .4 }, { x: .8, y: .4 }] }])
+  const view = render(<CompanionProjection proposal={proposal} aspect={4 / 3} turnDuration={1200} />)
+  expect(createStrokePainter).not.toHaveBeenCalled()
+  expect(screen.queryByText('Nilo 的想法')).toBeNull()
+  now = 600
+  act(() => nextFrame(now))
+  const overlay = screen.getByLabelText('Nilo 正在画，接着你的这一笔')
+  const canvas = overlay.querySelector('canvas')!
+  expect(move.mock.calls.at(-1)![0].x).toBeCloseTo(.5 * canvas.width)
+  expect(overlay.querySelector<HTMLSpanElement>('.nilo-drawing-pen')!.style.opacity).toBe('1')
+  now = 1200
+  act(() => nextFrame(now))
+  expect(move.mock.calls.at(-1)![0].x).toBeCloseTo(.8 * canvas.width)
+  view.unmount()
+  expect(cancel).toHaveBeenCalledWith(7)
 })

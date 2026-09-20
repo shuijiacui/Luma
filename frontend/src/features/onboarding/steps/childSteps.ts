@@ -8,7 +8,7 @@ export const canvasSteps: OnboardingStep[] = [
   { id: 'canvas-color', target: '[data-onboarding="canvas-colors"]', title: '挑一个喜欢的颜色', body: '点一下颜色，就能用它画画啦。', interaction: 'click' },
   { id: 'canvas-stroke', target: '[data-onboarding="canvas-paper"] canvas', title: '试着画一笔', body: '用手指或画笔，在亮起来的纸上画一笔吧。', interaction: 'stroke', focusArea: { x: .3, y: .25, width: .35, height: .25 } },
   { id: 'canvas-undo', target: '[data-onboarding="canvas-undo"]', title: '画错了也没关系', body: '点底部中间的「撤销」，就能退回刚才那一笔，再试一次。', interaction: 'click' },
-  { id: 'canvas-nilo', target: '[data-onboarding="canvas-nilo"]', title: '轮到 Nilo 画啦', body: '画完一笔，点 Nilo 就轮到我画。小主意先投影在纸上，你点「留下来」才加入画作。想和我说话，再点旁边的麦克风。' },
+  { id: 'canvas-nilo', target: '[data-onboarding="canvas-nilo"]', title: '轮到 Nilo 画啦', body: '你先画，点 Nilo 交给我接着画，再轮到你。我们一起让图画长出来。' },
   { id: 'canvas-music', target: '[data-onboarding="canvas-music"]', title: '让音乐陪你画画', body: '点顶部的「音乐：关」开启背景音乐，再点一下就关闭。旁边的小箭头可以换歌、调音量。' },
   { id: 'canvas-save', target: '[data-onboarding="canvas-save"]', title: '把喜欢的画收好', body: '换图形、清除图形和保存都在底部中间。画好后点保存，下次就能从历史图画接着画。' },
 ]

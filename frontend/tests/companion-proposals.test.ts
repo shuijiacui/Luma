@@ -1,8 +1,94 @@
-import { beforeEach, expect, test } from 'vitest'
-import { drawingPlanFits, localCommand, prepareDrawingPlan, prepareProposal, projectionFits, proposalStrokes, readMemory, saveMemory, summarizeStroke, templates, validateProposal, type DrawingProposal } from '@/features/child/companion/proposals'
+import { beforeEach, expect, test, vi } from 'vitest'
+import { drawingPlanFits, localCommand, prepareDrawingPlan, prepareProposal, prepareTurnProposal, projectionFits, proposalStrokes, readMemory, saveMemory, summarizeStroke, templates, validateProposal, type DrawingProposal } from '@/features/child/companion/proposals'
 
 const proposal: DrawingProposal = { template: 'flame', x: .3, y: .5, width: .15, height: .15, rotation: 0, color: '#e4a86a', strokeWidth: 4, target: '飞船', relation: '尾部的火焰' }
 const empty = () => Array(32 * 32).fill(0)
+vi.mock('../../server/src/services/tracing.js', () => ({traceNode:vi.fn(),traceLLM:vi.fn()}))
+
+test('a server-compiled leaf at the top edge reaches a drawable, connected client plan', async () => {
+  const { compileTurnReply } = await import('../../server/src/services/niloDialogue.js')
+  const compiled = compileTurnReply({sceneType:'object',grounding:{confidence:.9},reply:'添一片叶子',proposal:{
+    template:'leaf',target:'梗',relation:'从梗向右伸展',anchor:{x:.45,y:.06,width:.1,height:.3},placement:'right',attachment:{x:.5,y:.07},
+  }},{locale:'zh',canvasAspect:1}).proposal
+  const grid=Array(4096).fill(0)
+  for(let row=4;row<23;row++) grid[row*64+32]=1
+  const p=prepareTurnProposal(compiled,grid,1,{width:512,height:512})!
+  expect(p).not.toBeNull()
+  expect(drawingPlanFits([p],grid,1,{width:512,height:512})).toBe(true)
+  expect(proposalStrokes(p)[0].points[0].y).toBeCloseTo(.07)
+})
+
+test('a leaf can attach midway along a stem without being forced outside the whole subject box', () => {
+  const grid = Array(4096).fill(0)
+  for (let row = 8; row < 32; row++) grid[row * 64 + 32] = 1
+  const leaf: DrawingProposal = { ...proposal, template:'custom', subject:'连接梗的叶片',
+    x:.5,y:.165,width:.18,height:.18,anchor:{x:.3,y:.1,width:.4,height:.6},placement:'above',attachment:{x:.5,y:.3},
+    sketch:{aspect:1.6,paths:[
+      [['M',0,.75],['L',.25,.65]],
+      [['M',.25,.65],['Q',.45,.15,1,.15],['Q',.9,.85,.25,.65],['Z']],
+      [['M',.25,.65],['Q',.55,.5,.86,.28]],
+    ]} }
+  const prepared = prepareTurnProposal(leaf,grid,1,{width:512,height:512})!
+  expect(prepared).not.toBeNull()
+  expect(drawingPlanFits([prepared],grid,1,{width:512,height:512})).toBe(true)
+  expect(proposalStrokes(prepared)[0].points[0].y).toBeCloseTo(.3)
+  expect(prepared.y).toBeGreaterThan(leaf.anchor!.y)
+})
+
+test('a connected part stays pinned to the child outline through fitting while checking the remaining ink', () => {
+  const grid = Array(4096).fill(0)
+  for (let x = 28; x <= 36; x++) grid[32 * 64 + x] = 1
+  const string: DrawingProposal = { ...proposal, template: 'custom', subject: '气球绳', target: '圆', relation: '给圆接上绳子变成气球',
+    x: .42, y: .5, width: .2, height: .2, anchor: { x: .3, y: .1, width: .4, height: .4 }, placement: 'below',
+    attachment: { x: .5, y: .5 }, sketch: { aspect: .4, paths: [[['M', .5, 0], ['Q', .1, .5, .7, 1]]] } }
+  const surface = { width: 800, height: 400 }
+  const prepared = prepareTurnProposal(string, grid, 2, surface)!
+  expect(prepared).not.toBeNull()
+  expect(proposalStrokes(prepared, 2)[0].points[0]).toEqual({ x: .5, y: .5 })
+  expect(prepared.width * 2 / prepared.height).toBeCloseTo(.4)
+  expect(drawingPlanFits([prepared], grid, 2, surface)).toBe(true)
+  expect(prepareTurnProposal(string, Array(4096).fill(0), 2, surface)).toBeNull()
+  expect(prepareTurnProposal({ ...string, anchor: { ...string.anchor!, height: .41 } }, grid, 2, surface)).not.toBeNull()
+  expect(projectionFits({ ...prepared, attachment: undefined }, grid, 2, surface)).toBe(false)
+  expect(projectionFits({ ...prepared, x: prepared.x + .05 }, grid, 2, surface)).toBe(false)
+  const end = proposalStrokes(prepared, 2)[0].points.at(-1)!
+  grid[Math.floor(end.y * 64) * 64 + Math.floor(end.x * 64)] = 1
+  expect(drawingPlanFits([prepared], grid, 2, surface)).toBe(false)
+  const shrunken = prepareTurnProposal(string, grid, 2, surface)!
+  expect(shrunken).not.toBeNull()
+  expect(shrunken.height).toBeLessThan(prepared.height)
+  expect(proposalStrokes(shrunken, 2)[0].points[0].x).toBeCloseTo(.5)
+  expect(proposalStrokes(shrunken, 2)[0].points[0].y).toBeCloseTo(.5)
+  expect(prepareTurnProposal(string, Array(4096).fill(1), 2, surface)).toBeNull()
+  for (const patch of [{ rotation: 20 }, { attachment: { x: .9, y: .9 } }, { attachment: { x: NaN, y: .5 } }, { attachment: { x: .5, y: .5, ignoreInk: true } }]) {
+    expect(validateProposal({ ...string, ...patch })).toBeNull()
+  }
+})
+
+test('a click-to-draw detail is aligned below its target when the model box overlaps it', () => {
+  const grid = Array(4096).fill(0)
+  for (let y = 20; y < 38; y++) for (let x = 18; x < 43; x++) grid[y * 64 + x] = 1
+  const waves: DrawingProposal = { ...proposal, template: 'waves', x: .4, y: .46, width: .22, height: .09,
+    anchor: { x: .28, y: .31, width: .4, height: .29 }, placement: 'below' }
+  expect(prepareProposal(waves, grid, 1.5)).toBeNull()
+  const placed = prepareTurnProposal(waves, grid, 1.5, { width: 600, height: 400 })!
+  expect(placed).not.toBeNull()
+  expect(placed.y).toBeGreaterThanOrEqual(.6)
+  expect(placed.template).toBe('waves')
+  expect(drawingPlanFits([placed], grid, 1.5, { width: 600, height: 400 })).toBe(true)
+  expect(prepareTurnProposal(waves, Array(4096).fill(1), 1.5)).toBeNull()
+})
+
+test('an abstract echo uses the actual stroke bounds and remains visible instead of shrinking to an endpoint dot', () => {
+  const echo: DrawingProposal = { ...proposal, template: 'echo', width: .04, height: .04,
+    echoPoints: [{ x: .27, y: .65 }, { x: .44, y: .4 }, { x: .67, y: .59 }],
+    anchor: { x: .67, y: .59, width: .01, height: .01 }, placement: 'near' }
+  const placed = prepareTurnProposal(echo, Array(4096).fill(0), 1.5, { width: 600, height: 400 })!
+  expect(placed).not.toBeNull()
+  expect(placed.anchor?.width).toBeCloseTo(.4)
+  const xs = proposalStrokes(placed, 1.5)[0].points.map(p => p.x * 600)
+  expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(35)
+})
 beforeEach(() => localStorage.clear())
 
 test('only complete affirmative statements accept; questions, praise and negation never commit', () => {

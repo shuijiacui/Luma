@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { authFetch } from '@/lib/api/authFetch'
 import { convertVoiceBuffer, readVoiceRecording } from './voiceAudio'
 import { companionSpeechProfile, selectCompanionVoice } from './voiceProfile'
+import { createSpeechEndpoint, recognitionContext, recognitionVocabulary, SPEECH_PAUSE_MS, type DrawingSpeechContext } from './voiceRecognition'
 
-export type CompanionVoiceStatus = 'idle' | 'listening' | 'transcribing' | 'speaking'
+export type CompanionVoiceStatus = 'idle' | 'preparing' | 'listening' | 'transcribing' | 'speaking'
 export interface CompanionVoiceController {
   status: CompanionVoiceStatus
   error: string | null
@@ -26,6 +27,7 @@ interface VoiceOptions {
   token?: string
   locale: 'zh' | 'en'
   enabled: boolean
+  drawingContext?: DrawingSpeechContext
   onTranscript: (text: string) => void
 }
 interface RecognitionResultEvent {
@@ -35,6 +37,8 @@ interface Recognition {
   lang: string
   continuous: boolean
   interimResults: boolean
+  phrases?: unknown[]
+  onstart: (() => void) | null
   onresult: ((event: RecognitionResultEvent) => void) | null
   onerror: ((event: { error: string }) => void) | null
   onend: (() => void) | null
@@ -47,6 +51,7 @@ type VoiceWindow = Window & {
   SpeechRecognition?: RecognitionConstructor
   webkitSpeechRecognition?: RecognitionConstructor
   webkitAudioContext?: typeof AudioContext
+  SpeechRecognitionPhrase?: new (phrase: string, boost: number) => unknown
 }
 type Actions = Pick<CompanionVoiceController, 'start' | 'stop' | 'cancel' | 'speak' | 'toggleSound' | 'setContinuous'>
 
@@ -70,6 +75,8 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
   const { ownerId, token, locale, enabled } = options
   const onTranscript = useRef(options.onTranscript)
   onTranscript.current = options.onTranscript
+  const drawingContext = useRef(options.drawingContext)
+  drawingContext.current = options.drawingContext
   const actions = useRef<Actions | null>(null)
   const [status, setStatus] = useState<CompanionVoiceStatus>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -102,6 +109,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
     let utterance: SpeechSynthesisUtterance | null = null
     let releaseVoiceWait: (() => void) | null = null
     let request: AbortController | null = null
+    let turnContext: DrawingSpeechContext = {}
     const timers = new Set<ReturnType<typeof setTimeout>>()
     const capabilityRequest = new AbortController()
     const voiceWindow = window as VoiceWindow
@@ -147,7 +155,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         recorder = null
       }
       if (recognition) {
-        recognition.onend = null; recognition.onerror = null; recognition.onresult = null
+        recognition.onstart = null; recognition.onend = null; recognition.onerror = null; recognition.onresult = null
         try { recognition.abort() } catch { /* Already stopped. */ }
         recognition = null
       }
@@ -244,13 +252,14 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         if (!valid(turn) || controller.signal.aborted) return
         const result = await authFetch<{ text: string }>('/nilo/voice/transcribe', {
           method: 'POST', token, signal: controller.signal,
-          body: { audioBase64: base64, mimeType: 'audio/wav', locale },
+          body: { audioBase64: base64, mimeType: 'audio/wav', locale, context: turnContext },
         })
         deliver(result.text, turn)
       } catch { if (valid(turn)) fail('暂时没听清，可以再说一次或用按钮。') }
       finally { clearTimeout(timeout); timers.delete(timeout) }
     }
     function stop() {
+      if (currentStatus === 'preparing') { cancel(); return }
       if (currentStatus !== 'listening') return
       updateStatus('transcribing')
       if (recorder && recorder.state !== 'inactive') {
@@ -277,21 +286,21 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         context.createMediaStreamSource(stream).connect(analyser)
         void context.resume().catch(() => undefined)
         const samples = new Uint8Array(analyser.fftSize)
-        const started = Date.now()
-        let lastSound = started
-        let heardSpeech = false
-        let loudFrames = 0
+        const floatSamples = new Float32Array(analyser.fftSize)
+        const endpoint = createSpeechEndpoint(Date.now())
         analyserTimer = setInterval(() => {
           if (!valid(turn) || currentStatus !== 'listening') return
-          analyser.getByteTimeDomainData(samples)
-          const rms = Math.sqrt(samples.reduce((sum, value) => sum + ((value - 128) / 128) ** 2, 0) / samples.length)
-          if (rms > .025) {
-            lastSound = Date.now()
-            loudFrames++
-            if (loudFrames >= 2) heardSpeech = true
+          let energy = 0
+          if (typeof analyser.getFloatTimeDomainData === 'function') {
+            analyser.getFloatTimeDomainData(floatSamples)
+            energy = floatSamples.reduce((sum, value) => sum + value ** 2, 0) / floatSamples.length
+          } else {
+            analyser.getByteTimeDomainData(samples)
+            energy = samples.reduce((sum, value) => sum + ((value - 128) / 128) ** 2, 0) / samples.length
           }
-          if (!heardSpeech && Date.now() - started >= 7000) fail('没有听到声音，想说话时再点麦克风。')
-          else if (continuing && heardSpeech && Date.now() - lastSound >= 1100) stop()
+          const state = endpoint(Math.sqrt(energy), Date.now())
+          if (state === 'no-speech') fail('没有听到声音，想说话时再点麦克风。')
+          else if (continuing && state === 'silence') stop()
         }, 100)
       } catch { /* Manual stop and the segment limit still work without an analyser. */ }
     }
@@ -329,36 +338,68 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         fail(denied ? recognitionError('not-allowed') : missing ? recognitionError('audio-capture') : '麦克风暂时不可用，可以用按钮继续。')
       }
     }
-    function startRecognition(turn: number) {
+    function startRecognition(turn: number, withPhrases = true) {
       if (!RecognitionApi) { fail('当前浏览器暂不支持语音，可以用按钮继续。'); return }
       try {
         recognition = new RecognitionApi()
         recognition.lang = locale === 'zh' ? 'zh-CN' : 'en-US'
-        recognition.continuous = false
+        recognition.continuous = true
         recognition.interimResults = true
+        const Phrase = voiceWindow.SpeechRecognitionPhrase
+        let biased = false
+        if (withPhrases && Phrase && 'phrases' in recognition) {
+          try { recognition.phrases = recognitionVocabulary(locale, turnContext).map(word => new Phrase(word, 3)) }
+          catch { /* Context biasing is optional and is not supported by every engine. */ }
+          biased = Boolean(recognition.phrases?.length)
+        }
         let finalText = ''
+        let hasInterim = false
         let delivered = false
+        let settleTimer: ReturnType<typeof setTimeout> | undefined
+        function clearSettle() {
+          if (settleTimer) { clearTimeout(settleTimer); timers.delete(settleTimer) }
+          settleTimer = undefined
+        }
         function complete() {
           if (!valid(turn) || delivered) return
+          clearSettle()
           delivered = true
+          // Never silently drop an unfinished tail (especially a negation).
+          if (hasInterim) { fail('这句话还没听完整，请再说一次，或点“说完了”。'); return }
           deliver(finalText, turn)
         }
         recognition.onresult = event => {
           if (!valid(turn) || delivered) return
           const results = Array.from(event.results)
-          finalText = results.filter(result => result.isFinal).map(result => result[0].transcript).join(' ')
-          setTranscript(results.map(result => result[0].transcript).join(' '))
-          // Final results are sufficient; don't depend on a late/missing end event.
-          if (finalText.trim() && results.every(result => result.isFinal)) complete()
+          const separator = locale === 'zh' ? '' : ' '
+          finalText = results.filter(result => result.isFinal).map(result => result[0].transcript.trim()).join(separator)
+          hasInterim = results.some(result => !result.isFinal && result[0].transcript.trim())
+          setTranscript(results.map(result => result[0].transcript.trim()).join(separator))
+          clearSettle()
+          // A final fragment need not be the end of the child's sentence.
+          // New interim/final results extend the window. Manual stop stays immediate.
+          if (finalText.trim() && !hasInterim) {
+            if (currentStatus === 'transcribing') complete()
+            else settleTimer = later(complete, SPEECH_PAUSE_MS)
+          }
         }
         recognition.onerror = event => {
           if (!valid(turn) || delivered) return
+          if (event.error === 'phrases-not-supported' && biased) {
+            delivered = true
+            clearSettle(); releaseInput(); startRecognition(turn, false); return
+          }
           fail(recognitionError(event.error))
         }
         recognition.onend = complete
+        recognition.onstart = () => { if (valid(turn) && !delivered) updateStatus('listening') }
+        updateStatus('preparing')
         recognition.start()
-        updateStatus('listening')
-        later(() => { if (valid(turn)) stop() }, 20000)
+        later(() => {
+          if (!valid(turn)) return
+          if (currentStatus === 'preparing') fail('麦克风暂时不可用，可以用按钮继续。')
+          else stop()
+        }, 20000)
       } catch (reason) {
         if (!valid(turn)) return
         const denied = reason instanceof DOMException && (reason.name === 'NotAllowedError' || reason.name === 'SecurityError')
@@ -369,9 +410,10 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
       if (!enabled || disposed || document.visibilityState === 'hidden') return
       clearOperation()
       setError(null); setTranscript('')
+      turnContext = recognitionContext(drawingContext.current)
       const turn = version
       if (mode === 'server') {
-        updateStatus('listening')
+        updateStatus('preparing')
         void startRecording(turn)
       } else if (mode === 'browser') startRecognition(turn)
       else fail(unavailableMessage())

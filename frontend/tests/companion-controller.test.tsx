@@ -62,6 +62,105 @@ async function project(hook: ReturnType<typeof setup>) {
   expect(hook.result.current.phase).toBe('projected')
 }
 
+test('an explicit Nilo click animates then commits one checked contribution without confirmation or speech', async () => {
+  const hook = setup()
+  vi.mocked(authFetch).mockResolvedValueOnce(reply)
+  await act(async () => { await hook.result.current.takeTurn() })
+  expect(vi.mocked(authFetch).mock.calls[0][1]?.body).toMatchObject({ context: { takeTurn: true, requestDrawing: true } })
+  expect(hook.commit).not.toHaveBeenCalled()
+  expect(hook.result.current.phase).toBe('sketching')
+  expect(hook.result.current.projection).toMatchObject({ turn: true, durationMs: 1200 })
+  act(() => vi.advanceTimersByTime(1200))
+  expect(hook.commit).toHaveBeenCalledOnce()
+  expect(hook.onCommitted).toHaveBeenCalledOnce()
+  expect(hook.result.current.projection).toBeNull()
+  expect(hook.result.current.phase).toBe('idle')
+  expect(hook.onSpeak).not.toHaveBeenCalled()
+})
+
+test.each(['ready', 'clarify'] as const)('a text-only %s response cannot claim ink was committed or pollute the next turn', async status => {
+  const hook = setup()
+  const caption = '我在右边的形状上加了一个小翻页，它看起来更像一本打开的书了。'
+  vi.mocked(authFetch).mockResolvedValue({ status, reply: caption })
+  await act(async () => { await hook.result.current.takeTurn() })
+  expect(hook.result.current.message).not.toBe(caption)
+  expect(hook.result.current.message).toContain('还没有画上')
+  expect(hook.commit).not.toHaveBeenCalled()
+  act(() => vi.advanceTimersByTime(1600))
+  await act(async () => { await hook.result.current.takeTurn() })
+  expect(JSON.stringify(vi.mocked(authFetch).mock.calls[1][1]?.body)).not.toContain(caption)
+})
+
+test('one click repairs a blocked location once and only commits the checked replacement', async () => {
+  const hook = setup()
+  // Leave the right side free; every local placement of the first idea is blocked.
+  hook.state.occupancy = Array.from({ length: 4096 }, (_, i) => i % 64 < 40 ? 1 : 0)
+  const blocked = { ...proposal, anchor: { x: .2, y: .2, width: .2, height: .2 }, placement: 'below' as const }
+  const replacement = { ...proposal, x: .75, y: .4, width: .1, height: .1 }
+  vi.mocked(authFetch).mockResolvedValueOnce({ ...reply, proposal: blocked }).mockResolvedValueOnce({ ...reply, proposal: replacement })
+  await act(async () => { await hook.result.current.takeTurn() })
+  expect(authFetch).toHaveBeenCalledTimes(2)
+  expect(vi.mocked(authFetch).mock.calls[1][1]?.body).toMatchObject({ context: { revision: 1, renderFeedback: { reason: 'ink_collision', proposal: blocked } } })
+  expect(hook.result.current.phase).toBe('sketching')
+  expect(hook.result.current.message).not.toContain('已经画上')
+  act(() => vi.advanceTimersByTime(1200))
+  expect(hook.commit).toHaveBeenCalledOnce()
+  expect(hook.result.current.message).toContain('已经画上')
+})
+
+test('collision repair is bounded and a cancelled repair cannot leave ink', async () => {
+  const hook = setup()
+  hook.state.occupancy.fill(1)
+  vi.mocked(authFetch).mockResolvedValue(reply)
+  await act(async () => { await hook.result.current.takeTurn() })
+  expect(authFetch).toHaveBeenCalledTimes(2)
+  expect(hook.commit).not.toHaveBeenCalled()
+  expect(hook.result.current.message).toContain('还没有画上')
+  act(() => vi.advanceTimersByTime(1600))
+  let resolve!: (value: CompanionReply) => void
+  vi.mocked(authFetch).mockResolvedValueOnce(reply).mockImplementationOnce(() => new Promise(done => { resolve = done }))
+  let pending!: Promise<void> | undefined
+  await act(async () => { pending = hook.result.current.takeTurn() })
+  act(() => hook.result.current.cancel())
+  hook.state.occupancy.fill(0)
+  await act(async () => { resolve(reply); await pending })
+  act(() => vi.advanceTimersByTime(1200))
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test.each(['child stroke', 'canvas change', 'disabled'])('a %s during Nilo animation prevents stale marks being committed', async cause => {
+  const hook = setup()
+  vi.mocked(authFetch).mockResolvedValueOnce(reply)
+  await act(async () => { await hook.result.current.takeTurn() })
+  act(() => vi.advanceTimersByTime(500))
+  if (cause === 'child stroke') act(() => hook.result.current.cancel())
+  else if (cause === 'canvas change') hook.state.revision++
+  else hook.rerender({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: false })
+  act(() => vi.advanceTimersByTime(1200))
+  expect(hook.commit).not.toHaveBeenCalled()
+  expect(hook.result.current.projection).toBeNull()
+})
+
+test('a Nilo click cannot commit a group, an occupied plan, or a result after cancellation', async () => {
+  const hook = setup()
+  vi.mocked(authFetch).mockResolvedValueOnce({ ...reply, additions: [proposal] })
+  await act(async () => { await hook.result.current.takeTurn() })
+  expect(hook.commit).not.toHaveBeenCalled()
+  act(() => vi.advanceTimersByTime(1600))
+  hook.state.occupancy.fill(1)
+  vi.mocked(authFetch).mockResolvedValueOnce(reply)
+  await act(async () => { await hook.result.current.takeTurn() })
+  expect(hook.commit).not.toHaveBeenCalled()
+  hook.state.occupancy.fill(0)
+  act(() => vi.advanceTimersByTime(1600))
+  let resolve!: (value: CompanionReply) => void
+  vi.mocked(authFetch).mockImplementationOnce(() => new Promise(done => { resolve = done }))
+  act(() => { void hook.result.current.takeTurn() })
+  act(() => hook.result.current.cancel())
+  await act(async () => resolve(reply))
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
 test('no commit during sketching; explicit acceptance commits exactly the shown paths once', async () => {
   const hook = setup()
   vi.mocked(authFetch).mockResolvedValueOnce(reply)
@@ -381,6 +480,38 @@ test('solo conversation does not request drawing or accept a model-supplied prop
   expect(hook.result.current.projection).toBeNull()
   act(() => hook.result.current.accept())
   expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test.each(['画太阳', '画小猫', '给我画恐龙'])('short request %s leaves undoable ink without preview confirmation', async utterance => {
+  const hook = setup()
+  vi.mocked(authFetch).mockResolvedValueOnce(reply)
+  await act(async () => { hook.result.current.receive(utterance); await Promise.resolve() })
+  const body = vi.mocked(authFetch).mock.calls[0][1]?.body as { imageBase64: string; context: { requestDrawing: boolean } }
+  expect(body.context.requestDrawing).toBe(true)
+  expect(body.imageBase64).toBe('COMPOSITE')
+  expect(hook.commit).toHaveBeenCalledOnce()
+})
+
+test('natural requests outside the fast pattern use semantic inference in the same request', async () => {
+  const hook = setup()
+  vi.mocked(authFetch).mockResolvedValueOnce(reply)
+  await act(async () => { hook.result.current.receive('可以给它一个朋友吗'); await Promise.resolve() })
+  expect(authFetch).toHaveBeenCalledTimes(1)
+  const body = vi.mocked(authFetch).mock.calls[0][1]?.body as { imageBase64: string; context: { requestDrawing: boolean; inferDrawingIntent: boolean } }
+  expect(body.context).toMatchObject({ requestDrawing: false, inferDrawingIntent: true })
+  expect(body.imageBase64).toBe('COMPOSITE')
+  act(() => vi.advanceTimersByTime(550))
+  expect(hook.result.current.projection).toBeNull()
+  expect(hook.commit).toHaveBeenCalledOnce()
+})
+
+test('semantic inference is disabled in solo mode even for indirect requests', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: false, enabled: true })
+  vi.mocked(authFetch).mockResolvedValueOnce(reply)
+  await act(async () => { hook.result.current.receive('可以给它一个朋友吗'); await Promise.resolve() })
+  const body = vi.mocked(authFetch).mock.calls[0][1]?.body as { context: { requestDrawing: boolean; inferDrawingIntent: boolean } }
+  expect(body.context).toMatchObject({ requestDrawing: false, inferDrawingIntent: false })
+  expect(hook.result.current.projection).toBeNull()
 })
 
 test('praise about a preview stays conversation and neither accepts nor replaces that preview', async () => {

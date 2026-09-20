@@ -47,15 +47,25 @@ function previewOf(messages) {
 const LLM_TIMEOUT_MS = 90_000   // 视觉推理可能较慢，给足 90s
 const MAX_RETRIES = 2           // 5xx/网络错误重试 2 次（指数退避），4xx 不重试
 
+// Provider-specific options: never send one vendor's extension to another API.
+export function thinkingOptions(config, model, disableThinking) {
+  if (!disableThinking) return {}
+  let hostname
+  try { hostname = new URL(config.baseUrl).hostname } catch { return {} }
+  if (hostname === 'api.deepseek.com') return { thinking: { type: 'disabled' } }
+  if (hostname === 'api-inference.modelscope.cn' && /^Qwen\/Qwen3(?:[.\/-]|$)/.test(model ?? '')) {
+    return { enable_thinking: false }
+  }
+  return {}
+}
+
 async function chat(messages, { model, maxTokens = 4000, config = llmConfig(), kind = 'text', signal, responseFormat, retries = MAX_RETRIES, privateContent = false, disableThinking = false, requireFinalContent = false } = {}) {
-  let isDeepSeek = false
-  try { isDeepSeek = new URL(config.baseUrl).hostname === 'api.deepseek.com' } catch { /* fetch reports invalid provider config */ }
   const payload = {
     model,
     messages,
     max_tokens: maxTokens,
     ...(responseFormat ? { response_format: responseFormat } : {}),
-    ...(disableThinking && isDeepSeek ? { thinking: { type: 'disabled' } } : {}),
+    ...thinkingOptions(config, model, disableThinking),
   }
   const started = Date.now()
   let lastError

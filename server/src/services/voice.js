@@ -1,4 +1,16 @@
 import { traceNode } from './tracing.js'
+import { readFileSync } from 'node:fs'
+
+const vocabulary = JSON.parse(readFileSync(new URL('../../../shared/voiceVocabulary.json', import.meta.url), 'utf8'))
+
+/** ASR context is bounded background data, never a role prompt or a transcript rewrite. */
+export function voiceRecognitionContext(input = {}, locale = 'zh') {
+  const context = input && typeof input === 'object' && !Array.isArray(input) ? input : {}
+  const theme = clean(context.theme).slice(0, 120)
+  const subjects = Array.isArray(context.subjects) ? context.subjects.slice(-8).map(value => clean(value).slice(0, 40)).filter(Boolean) : []
+  const words = [...new Set([...vocabulary[locale === 'en' ? 'en' : 'zh'], ...subjects])]
+  return JSON.stringify({ vocabulary: words, ...(theme ? { drawingTheme: theme } : {}) })
+}
 
 export const MAX_AUDIO_BYTES = 3 * 1024 * 1024
 export const MAX_SPEECH_CHARS = 400
@@ -114,7 +126,10 @@ export async function transcribeVoice(input, { config = voiceConfig(), signal, f
   if (config.provider === 'dashscope') {
     return voiceRequest('/compatible-mode/v1/chat/completions', {
       model: config.asrModel,
-      messages: [{ role: 'user', content: [{ type: 'input_audio', input_audio: { data: `data:${mimeType};base64,${audio.toString('base64')}` } }] }],
+      messages: [
+        { role: 'system', content: voiceRecognitionContext(input.context, locale) },
+        { role: 'user', content: [{ type: 'input_audio', input_audio: { data: `data:${mimeType};base64,${audio.toString('base64')}` } }] },
+      ],
       stream: false,
       asr_options: { language: locale, enable_itn: false },
     }, {

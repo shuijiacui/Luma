@@ -18,6 +18,8 @@ export interface DrawingProposal {
   /** A bounded new object, distinct from its existing-scene target. */
   subject?: string
   sketch?: DrawingSketch
+  /** Pin the first custom path to this existing outline point. */
+  attachment?: { x: number; y: number }
   /** Child-authored source samples, supplied by the server for echo only. */
   echoPoints?: { x: number; y: number }[]
 }
@@ -132,7 +134,7 @@ function localPaths(template: BuiltinTemplate): Paths {
 export function validateProposal(value: unknown): DrawingProposal | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
   const raw = value as DrawingProposal
-  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints', 'subject', 'sketch'].includes(key))) return null
+  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints', 'subject', 'sketch', 'attachment'].includes(key))) return null
   const p = { ...raw, rotation: raw.rotation === undefined ? 0 : raw.rotation, strokeWidth: raw.strokeWidth === undefined ? 4 : raw.strokeWidth }
   if (!(p.template === 'custom' || templates.includes(p.template)) || !/^#[\da-f]{6}$/i.test(p.color)) return null
   if (![p.x, p.y, p.width, p.height, p.rotation, p.strokeWidth].every(Number.isFinite)) return null
@@ -154,6 +156,12 @@ export function validateProposal(value: unknown): DrawingProposal | null {
     const a = p.anchor
     if (!a || typeof a !== 'object' || Array.isArray(a) || Object.keys(a).some(key => !['x', 'y', 'width', 'height'].includes(key))) return null
     if (![a.x, a.y, a.width, a.height].every(Number.isFinite) || a.x < 0 || a.y < 0 || a.width < .01 || a.height < .01 || a.x + a.width > 1 || a.y + a.height > 1) return null
+  }
+  if (p.attachment !== undefined) {
+    const a = p.attachment, anchor = p.anchor
+    if (!a || typeof a !== 'object' || Array.isArray(a) || Object.keys(a).some(key => !['x', 'y'].includes(key))
+      || !Number.isFinite(a.x) || !Number.isFinite(a.y) || !anchor || !sketch || p.rotation !== 0 || sketch.paths[0][0][0] !== 'M'
+      || a.x < anchor.x || a.x > anchor.x + anchor.width || a.y < anchor.y || a.y > anchor.y + anchor.height) return null
   }
   if (p.template === 'echo') {
     if (!Array.isArray(p.echoPoints) || p.echoPoints.length < 2 || p.echoPoints.length > 24 || p.echoPoints.some(point => !point || !Number.isFinite(point.x) || !Number.isFinite(point.y) || point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1)) return null
@@ -226,7 +234,17 @@ export function projectionFits(p: DrawingProposal, occupancy: number[], aspect =
   const n = occupancySize(occupancy)
   if (!n) return false
   const cells = proposalFootprint(p, n, aspect, surfaceSize)
-  return !!cells && [...cells].every(cell => occupancy[cell] <= .025)
+  if (!cells) return false
+  if (!p.attachment) return [...cells].every(cell => occupancy[cell] <= .025)
+  const start = proposalStrokes(p, aspect)[0]?.points[0]
+  if (!start || Math.hypot(start.x - p.attachment.x, start.y - p.attachment.y) > .0001) return false
+  const margin = brushMargins(p, n, surfaceSize)
+  const atJoin = (cell: number) => Math.abs((cell % n + .5) / n - p.attachment!.x) <= margin.x + 1 / n
+    && Math.abs((Math.floor(cell / n) + .5) / n - p.attachment!.y) <= margin.y + 1 / n
+  // Declaring an attachment is not enough: its start must actually meet ink.
+  if (![...cells].some(cell => occupancy[cell] > .025 && atJoin(cell))) return false
+  // Only the join may touch old ink; the rest of the new part remains collision checked.
+  return [...cells].every(cell => occupancy[cell] <= .025 || atJoin(cell))
 }
 
 const naturalRatios: Record<Exclude<BuiltinTemplate, 'echo'>, number> = {
@@ -262,6 +280,10 @@ function proportionedProposal(p: DrawingProposal, aspect: number): DrawingPropos
 
 function placementFits(p: DrawingProposal, aspect: number, surfaceSize?: SurfaceSize): boolean {
   if (!p.anchor || !p.placement) return true
+  // A joined part is located by its actual junction and paths, not by a box
+  // outside the whole subject (a leaf can grow from the middle of a stem).
+  // projectionFits still requires contact at the join and clear ink elsewhere.
+  if (p.attachment) return true
   const points = proposalStrokes(p, aspect).flatMap(stroke => stroke.points)
   if (!points.length) return false
   const margin = brushMargins(p, 64, surfaceSize)
@@ -273,10 +295,10 @@ function placementFits(p: DrawingProposal, aspect: number, surfaceSize?: Surface
   const horizontalNear = right >= a.x - .12 / aspect && left <= a.x + a.width + .12 / aspect
   const verticalNear = bottom >= a.y - .12 && top <= a.y + a.height + .12
   switch (p.placement) {
-    case 'above': return bottom <= a.y && horizontalNear
-    case 'below': return top >= a.y + a.height && horizontalNear
-    case 'left': return right <= a.x && verticalNear
-    case 'right': return left >= a.x + a.width && verticalNear
+    case 'above': return bottom <= a.y + 1e-9 && horizontalNear
+    case 'below': return top >= a.y + a.height - 1e-9 && horizontalNear
+    case 'left': return right <= a.x + 1e-9 && verticalNear
+    case 'right': return left >= a.x + a.width - 1e-9 && verticalNear
     case 'inside': return left >= a.x && right <= a.x + a.width && top >= a.y && bottom <= a.y + a.height
     case 'near': {
       const dx = Math.max(a.x - right, left - (a.x + a.width), 0) * aspect
@@ -292,6 +314,7 @@ function placementFits(p: DrawingProposal, aspect: number, surfaceSize?: Surface
 export function prepareProposal(value: DrawingProposal, occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize): DrawingProposal | null {
   const p = validateProposal(value)
   if (!p || !Number.isFinite(aspect) || aspect <= 0 || !occupancySize(occupancy)) return null
+  if (p.attachment) return prepareAttachedProposal(p, occupancy, aspect, surfaceSize)
   const base = proportionedProposal(p, aspect)
   const stepY = surfaceSize && Number.isFinite(surfaceSize.height) && surfaceSize.height > 0 ? Math.min(.024, Math.max(.008, 10 / surfaceSize.height)) : .016
   const stepX = stepY / aspect
@@ -309,6 +332,81 @@ export function prepareProposal(value: DrawingProposal, occupancy: number[], asp
   return null
 }
 
+/** A Nilo turn may locate its one detail anywhere along the requested side of
+ * its target. Keep the relation and full collision checks, rather than giving
+ * up because the model's initial box was a few pixels off. */
+export function prepareTurnProposal(value: DrawingProposal, occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize): DrawingProposal | null {
+  let p = validateProposal(value)
+  if (!p || !Number.isFinite(aspect) || aspect <= 0 || !occupancySize(occupancy)) return null
+  if (p.attachment) return prepareAttachedProposal(p, occupancy, aspect, surfaceSize)
+  if (p.template === 'echo' && p.echoPoints) {
+    // The actual source stroke is authoritative for an echo's bounds. A model
+    // often labels just an endpoint as its anchor, shrinking the echo to a dot.
+    const xs = p.echoPoints.map(point => point.x), ys = p.echoPoints.map(point => point.y)
+    const left = Math.min(...xs), top = Math.min(...ys), right = Math.max(...xs), bottom = Math.max(...ys)
+    const sourceW = Math.max(.01, right - left) * aspect, sourceH = Math.max(.01, bottom - top)
+    const span = Math.min(.2, Math.max(.12, 64 / (surfaceSize?.height || 400)))
+    const scale = Math.min(.65, span / Math.max(sourceW, sourceH))
+    const width = Math.max(.04, sourceW * scale / aspect), height = Math.max(.04, sourceH * scale)
+    const anchorX = Math.min(left, .99), anchorY = Math.min(top, .99)
+    p = { ...p, width, height, rotation: 0,
+      x: p.x + (p.width - width) / 2, y: p.y + (p.height - height) / 2,
+      anchor: { x: anchorX, y: anchorY, width: Math.max(.01, right - anchorX), height: Math.max(.01, bottom - anchorY) },
+      placement: p.placement && p.placement !== 'inside' ? p.placement : 'near' }
+  }
+  const original = prepareProposal(p, occupancy, aspect, surfaceSize)
+  if (original) return original
+  const base = proportionedProposal(p, aspect)
+  const anchor = base.anchor
+  const margin = brushMargins(base, 64, surfaceSize)
+  for (const scale of [1, .82, .65]) {
+    const width = base.width * scale, height = base.height * scale
+    const centers: Point[] = []
+    if (anchor && base.placement) {
+      const centerX = anchor.x + anchor.width / 2, centerY = anchor.y + anchor.height / 2
+      for (const gap of [.015, .045, .08]) {
+        if (base.placement === 'above' || base.placement === 'below') {
+          for (const along of [0, -.25, .25, -.45, .45]) centers.push({ x: centerX + along * anchor.width,
+            y: base.placement === 'above' ? anchor.y - height / 2 - margin.y - gap : anchor.y + anchor.height + height / 2 + margin.y + gap })
+        } else if (base.placement === 'left' || base.placement === 'right') {
+          for (const along of [0, -.25, .25, -.45, .45]) centers.push({ y: centerY + along * anchor.height,
+            x: base.placement === 'left' ? anchor.x - width / 2 - margin.x - gap / aspect : anchor.x + anchor.width + width / 2 + margin.x + gap / aspect })
+        } else if (base.placement === 'inside') {
+          for (const dx of [0, -.2, .2]) for (const dy of [0, -.2, .2]) centers.push({ x: centerX + dx * anchor.width, y: centerY + dy * anchor.height })
+        } else {
+          for (const dx of [-1, 0, 1]) for (const dy of [-1, 0, 1]) if (dx || dy) centers.push({
+            x: centerX + dx * (anchor.width / 2 + width / 2 + margin.x + gap / aspect),
+            y: centerY + dy * (anchor.height / 2 + height / 2 + margin.y + gap),
+          })
+        }
+      }
+    } else {
+      // Without an anchor, stay close to the model's chosen area.
+      for (const distance of [.04, .08, .12]) for (const dx of [-1, 0, 1]) for (const dy of [-1, 0, 1]) if (dx || dy) centers.push({
+        x: base.x + base.width / 2 + dx * distance / aspect, y: base.y + base.height / 2 + dy * distance,
+      })
+    }
+    for (const center of centers) {
+      const candidate = validateProposal({ ...base, width, height, x: center.x - width / 2, y: center.y - height / 2 })
+      if (candidate && placementFits(candidate, aspect, surfaceSize) && projectionFits(candidate, occupancy, aspect, surfaceSize)) return candidate
+    }
+  }
+  return null
+}
+
+/** Shrink around the actual join, never slide a connected part off its target. */
+function prepareAttachedProposal(p: DrawingProposal, occupancy: number[], aspect: number, surfaceSize?: SurfaceSize): DrawingProposal | null {
+  const base = proportionedProposal(p, aspect)
+  const start = base.sketch!.paths[0][0]
+  for (const scale of [1, .82, .65]) {
+    const width = base.width * scale, height = base.height * scale
+    const candidate = validateProposal({ ...base, width, height,
+      x: p.attachment!.x - Number(start[1]) * width, y: p.attachment!.y - Number(start[2]) * height })
+    if (candidate && placementFits(candidate, aspect, surfaceSize) && projectionFits(candidate, occupancy, aspect, surfaceSize)) return candidate
+  }
+  return null
+}
+
 /** Validation for editing/accepting a complete plan; never adjusts its coordinates. */
 export function drawingPlanFits(proposals: DrawingProposal[], occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize): boolean {
   const n = occupancySize(occupancy)
@@ -316,7 +414,7 @@ export function drawingPlanFits(proposals: DrawingProposal[], occupancy: number[
   const occupied = [...occupancy]
   for (const p of proposals) {
     const cells = proposalFootprint(p, n, aspect, surfaceSize)
-    if (!cells || !placementFits(p, aspect, surfaceSize) || [...cells].some(cell => occupied[cell] > .025)) return false
+    if (!cells || !placementFits(p, aspect, surfaceSize) || !projectionFits(p, occupied, aspect, surfaceSize)) return false
     for (const cell of cells) occupied[cell] = 1
   }
   return true

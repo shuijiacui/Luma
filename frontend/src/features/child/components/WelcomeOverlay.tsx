@@ -24,12 +24,12 @@ export function WelcomeOverlay({ displayName, onEnter, onSkip, onBack }: Welcome
       <div className="min-w-0">
         <p className="mb-2 text-sm font-semibold text-luma-teal-600">{t('嗨～')}{name}</p>
         <h1 id="nilo-welcome-title" className="font-brand text-2xl font-bold leading-snug text-luma-teal-900 sm:text-3xl">{t('今天想自己画，还是和我一起画？')}</h1>
-        <p className="mt-3 text-sm leading-relaxed text-luma-muted">{t('我画好的小主意会先投给你看，你喜欢再留下。')}</p>
+        <p className="mt-3 text-sm leading-relaxed text-luma-muted">{t('你先画，点 Nilo 交给我接着画，再轮到你。我们一起让图画长出来。')}</p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button variant="primary" size="lg" onClick={onEnter} autoFocus>{t('和 Nilo 一起画')}</Button>
           <Button variant="ghost" size="lg" onClick={onSkip}>{t('我自己画')}</Button>
         </div>
-        <p className="mt-4 text-xs leading-relaxed text-luma-muted">{t('想聊天时再开麦，也可以一直用按钮和我交流。')}</p>
+        <p className="mt-4 text-xs leading-relaxed text-luma-muted">{t('不用说话也能一起画。不喜欢我添的内容，可以撤销。')}</p>
         <button type="button" className="mt-2 min-h-10 text-sm text-luma-teal-700" onClick={onBack}>← {t('回小屋')}</button>
       </div>
     </motion.div>

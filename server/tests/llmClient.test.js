@@ -1,7 +1,28 @@
 import { vi, test, expect, afterEach } from 'vitest'
-import { chatWithImage, llmConfig, LLMParseError } from '../src/services/llmClient.js'
+import { chatWithImage, llmConfig, LLMParseError, thinkingOptions } from '../src/services/llmClient.js'
 
 afterEach(() => vi.unstubAllGlobals())
+
+test.each([
+  ['https://api.deepseek.com', 'deepseek-v4-flash', true, { thinking: { type: 'disabled' } }],
+  ['https://api-inference.modelscope.cn/v1', 'Qwen/Qwen3.5-35B-A3B', true, { enable_thinking: false }],
+  ['https://api-inference.modelscope.cn/v1', 'Qwen/Qwen3.8-Flash-Next', true, { enable_thinking: false }],
+  ['https://api-inference.modelscope.cn/v1', 'Qwen/Qwen3.5-35B-A3B', false, {}],
+  ['https://api-inference.modelscope.cn/v1', 'OpenGVLab/InternVL3_5-241B-A28B', true, {}],
+  ['https://other.example/v1', 'Qwen/Qwen3.5-35B-A3B', true, {}],
+  ['https://api-inference.modelscope.cn.other.example/v1', 'Qwen/Qwen3.5-35B-A3B', true, {}],
+])('scopes thinking options for %s and %s (%s)', (baseUrl, model, disabled, expected) => {
+  expect(thinkingOptions({ baseUrl }, model, disabled)).toEqual(expected)
+})
+
+test('sends ModelScope non-thinking option on Nilo vision requests', async () => {
+  const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ choices: [{ message: { content: '{"ok":true}' } }] }) })
+  vi.stubGlobal('fetch', fetchMock)
+  await chatWithImage('img', 'prompt', { config: { baseUrl: 'https://api-inference.modelscope.cn/v1', visionModel: 'Qwen/Qwen3.5-35B-A3B', apiKey: 'test' }, disableThinking: true, requireFinalContent: true })
+  const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+  expect(body.enable_thinking).toBe(false)
+  expect(body).not.toHaveProperty('thinking')
+})
 
 test('uses DeepSeek defaults when env values are absent', () => {
   expect(llmConfig({})).toEqual({

@@ -7,6 +7,8 @@ import type { CanvasDraft } from '../draft'
 import { forwardRef, useEffect, useImperativeHandle, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 
 export interface DrawingCanvasHandle {
+  flushDraft: () => void
+  /** Undo the latest committed contribution, regardless of its author. */
   undo: () => boolean
   clear: () => void
   download: () => void
@@ -210,7 +212,11 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
   }
 
   useImperativeHandle(forwardedRef, () => ({
-    undo: () => undoOwner('child'),
+    flushDraft: finishStroke,
+    undo: () => {
+      const last = documentRef.current.operations.at(-1)
+      return last ? undoOwner(last.owner) : false
+    },
     undoCompanionStroke: () => undoOwner('nilo'),
     getUndoCounts: () => canvasUndoCounts(documentRef.current),
     getDocument: () => cloneCanvasDocument(documentRef.current),

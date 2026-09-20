@@ -2,7 +2,7 @@ import express from 'express'
 import request from 'supertest'
 import { expect, test, vi } from 'vitest'
 import { createNiloRouter } from '../src/routes/nilo.js'
-import { MAX_AUDIO_BYTES, readAudio, readSpeech, synthesizeVoice, transcribeVoice, trustedDashscopeAudioUrl, voiceCapabilities, voiceConfig } from '../src/services/voice.js'
+import { MAX_AUDIO_BYTES, readAudio, readSpeech, synthesizeVoice, transcribeVoice, trustedDashscopeAudioUrl, voiceCapabilities, voiceConfig, voiceRecognitionContext } from '../src/services/voice.js'
 import { rateLimit } from '../src/services/security.js'
 
 const config = { baseUrl: 'https://voice.example/v1', apiKey: 'test-only-placeholder', asrModel: 'asr', ttsModel: 'tts', voice: 'otter', timeoutMs: 1000 }
@@ -78,7 +78,26 @@ test('DashScope config uses independent Beijing credentials and native ASR paylo
   expect(fetchImpl.mock.calls[0][0]).toBe('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions')
   const payload = JSON.parse(fetchImpl.mock.calls[0][1].body)
   expect(payload.asr_options).toEqual({ language: 'zh', enable_itn: false })
-  expect(payload.messages[0].content[0]).toEqual({ type: 'input_audio', input_audio: { data: `data:audio/wav;base64,${input.audioBase64}` } })
+  expect(payload.messages[0].role).toBe('system')
+  expect(JSON.parse(payload.messages[0].content).vocabulary).toContain('Nilo')
+  expect(payload.messages[1].content[0]).toEqual({ type: 'input_audio', input_audio: { data: `data:audio/wav;base64,${input.audioBase64}` } })
+})
+
+test('DashScope receives drawing vocabulary and context as bounded background data', async () => {
+  const dashscope = voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder' })
+  const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: '画一只恐龙' } }] })))
+  await transcribeVoice({ ...input, context: { theme: '恐龙\n世界', subjects: ['霸王龙'], history: 'not sent' } }, { config: dashscope, fetchImpl })
+  const payload = JSON.parse(fetchImpl.mock.calls[0][1].body)
+  const context = JSON.parse(payload.messages[0].content)
+  expect(context.drawingTheme).toBe('恐龙 世界')
+  expect(context.vocabulary).toEqual(expect.arrayContaining(['Nilo', '蜡笔', '霸王龙']))
+  expect(payload.messages).toHaveLength(2)
+  expect(payload.messages[0].content).not.toContain('not sent')
+  const bounded = JSON.parse(voiceRecognitionContext({ theme: 'x'.repeat(10000), subjects: Array.from({ length: 20 }, (_, i) => String(i).padEnd(1000, 'x')) }))
+  expect(bounded.drawingTheme).toHaveLength(120)
+  expect(bounded.vocabulary.filter(word => word.endsWith('x'))).toHaveLength(8)
+  expect(bounded.vocabulary.every(word => word.length <= 40)).toBe(true)
+  expect(JSON.parse(voiceRecognitionContext(null, 'en')).vocabulary).toContain('crayon')
 })
 
 test.each([['en', 'Hello', 'English'], ['zh', '你好', 'Chinese']])('DashScope TTS uses the childlike voice in %s and downloads trusted WAV without authorization', async (locale, text, language) => {
