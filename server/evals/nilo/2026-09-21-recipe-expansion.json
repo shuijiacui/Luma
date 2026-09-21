@@ -1,0 +1,28 @@
+{
+  "date": "2026-09-21",
+  "scope": "Two requested additions on synthetic canvases; not an accuracy benchmark",
+  "recipeCount": 270,
+  "subjectCount": 90,
+  "cases": [
+    {
+      "id": "spiky_full_person",
+      "synthetic": true,
+      "status": "ready",
+      "subject": "恐龙",
+      "recipeId": "dinosaur-0",
+      "color": "#6aa84f",
+      "latencyMs": 2532,
+      "calls": 2
+    },
+    {
+      "id": "fish_with_top_fin",
+      "synthetic": true,
+      "status": "ready",
+      "subject": "章鱼",
+      "recipeId": "octopus-1",
+      "color": "#c96a9b",
+      "latencyMs": 2419,
+      "calls": 2
+    }
+  ]
+}

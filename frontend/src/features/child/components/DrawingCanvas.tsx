@@ -1,9 +1,11 @@
+import { editableObjects } from '../companion/objects'
+import type { DrawingProposal } from '../companion/proposals'
 import { pixelOccupancy } from '../../../../../shared/niloOccupancy.mjs'
 import type { InkPixels } from '../../../../../shared/niloContact.mjs'
 import { t, useLocale } from '@/i18n'
 import type { NiloStrokeSpec } from '@/lib/api/lumaApi'
 import { BRUSHES, createStrokePainter, type BrushKind } from '../brushes'
-import { canvasUndoCounts, cloneCanvasDocument, getCanvasProvenance, paintCanvasOperation, undoCanvasOwner, type CanvasDocument, type CanvasOperation } from '../canvasDocument'
+import { visibleOperations, canvasUndoCounts, cloneCanvasDocument, getCanvasProvenance, paintCanvasOperation, undoCanvasOwner, type CanvasDocument, type CanvasOperation } from '../canvasDocument'
 import { getCompanionScene, type CompanionScene } from '../companionScene'
 import { exportCompanionFocus } from '../companion/focus'
 import type { CanvasDraft } from '../draft'
@@ -26,7 +28,10 @@ export interface DrawingCanvasHandle {
   getCompanionScene: () => CompanionScene
   getDocument: () => CanvasDocument
   getRevision: () => number
-  commitCompanionStrokes: (specs: NiloStrokeSpec[], expectedRevision: number) => boolean
+  commitCompanionStrokes: (specs: NiloStrokeSpec[], expectedRevision: number, object?: { proposals: DrawingProposal[]; aspect: number }, targetId?: string) => boolean
+  getEditableObjects?: () => ReturnType<typeof editableObjects>
+  previewWithoutObject?: (id: string | null) => void
+  getOccupancyWithoutObject?: (id: string, size?: number) => number[]
   drawCompanionStroke: (spec: NiloStrokeSpec) => Promise<void>
   getLastStroke: () => { points: { x: number; y: number }[]; color: string; width: number; brushKind?: BrushKind } | null
   /** Most recent visible child stroke, in current CSS pixels (not backing-store pixels). */
@@ -61,6 +66,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     version: 1, baseSource: draft.history.at(-1) ? 'unknown' : 'child',
     ...(draft.history.at(-1) ? { baseImage: draft.history.at(-1) } : {}), operations: [],
   })
+  const hiddenObjectRef = useRef<string | null>(null)
   const baseImageRef = useRef<HTMLImageElement | null>(null)
   const restoringRef = useRef(false)
   const revisionRef = useRef(0)
@@ -68,14 +74,14 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
   const painterRef = useRef<ReturnType<typeof createStrokePainter> | null>(null)
   const currentStrokeRef = useRef<Extract<CanvasOperation, { type: 'stroke' }> | null>(null)
 
-  function renderDocument(context: CanvasRenderingContext2D, width: number, height: number, childOnly = false, source = documentRef.current) {
+  function renderDocument(context: CanvasRenderingContext2D, width: number, height: number, childOnly = false, source = documentRef.current, hiddenId: string | null = null) {
     context.clearRect(0, 0, width, height)
     const base = baseImageRef.current
     if (base && source.baseImage) {
       const scale = Math.min(width / base.width, height / base.height)
       context.drawImage(base, (width - base.width * scale) / 2, (height - base.height * scale) / 2, base.width * scale, base.height * scale)
     }
-    for (const op of source.operations) if (!childOnly || op.owner === 'child') paintCanvasOperation(context, width, height, op)
+    for (const op of visibleOperations(source)) if ((!hiddenId || op.owner !== 'nilo' || op.groupId !== hiddenId) && (!childOnly || op.owner === 'child')) paintCanvasOperation(context, width, height, op)
   }
 
   function makeCanvas(childOnly = false, maxSide?: number) {
@@ -152,21 +158,23 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     return true
   }
 
-  function commitCompanionStrokes(specs: NiloStrokeSpec[], expectedRevision: number) {
+  function commitCompanionStrokes(specs: NiloStrokeSpec[], expectedRevision: number, object?: { proposals: DrawingProposal[]; aspect: number }, targetId?: string) {
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d')
     if (disabled || restoringRef.current || pointerRef.current !== null || !canvas || !context || expectedRevision !== revisionRef.current
-      || !Array.isArray(specs) || !specs.length || specs.length > 64) return false
+      || !Array.isArray(specs) || (!specs.length && !targetId) || specs.length > 64) return false
     if (specs.some(spec => !/^#[0-9a-f]{6}$/i.test(spec.color) || !Number.isFinite(spec.width) || spec.width < 1 || spec.width > 32
       || (spec.brushKind !== undefined && !BRUSHES.some(brush => brush.id === spec.brushKind))
       || !Array.isArray(spec.points) || !spec.points.length || spec.points.length > 4096
       || spec.points.some(point => !Number.isFinite(point.x) || !Number.isFinite(point.y) || point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1))) return false
-    const groupId = crypto.randomUUID()
+    if (targetId && !visibleOperations(documentRef.current).some(op=>op.owner==='nilo'&&op.groupId===targetId)) return false
+    const groupId = targetId ?? crypto.randomUUID()
     const scale = canvas.width / (canvas.getBoundingClientRect().width || canvas.width)
-    const ops: CanvasOperation[] = specs.map(spec => ({ owner: 'nilo', type: 'stroke', groupId, points: spec.points.map(point => ({ ...point })),
+    const ops: Extract<CanvasOperation,{type:'stroke'}>[] = specs.map((spec, index) => ({ owner: 'nilo', type: 'stroke', groupId, points: spec.points.map(point => ({ ...point })),
+      ...(index===0&&object?{object:{...structuredClone(object),name:object.proposals.map(p=>p.subject??p.template).join('、').slice(0,240)}}:{}),
       color: spec.color, size: spec.width * scale, brushKind: spec.brushKind ?? 'round', eraser: false, referenceWidth: canvas.width, referenceHeight: canvas.height }))
     // Prepare in isolation: rejected contributions never leave partial marks.
-    const next: CanvasDocument = { ...documentRef.current, coCreated: true, operations: [...documentRef.current.operations, ...ops] }
+    const next: CanvasDocument = { ...documentRef.current, coCreated: true, operations: [...documentRef.current.operations, ...(targetId?[{type:'edit' as const, owner:'nilo' as const, groupId:crypto.randomUUID(),targetId,replacement:ops}]:ops)] }
     const staging = document.createElement('canvas')
     staging.width = canvas.width; staging.height = canvas.height
     const stagingContext = staging.getContext('2d')
@@ -179,6 +187,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
         context.globalCompositeOperation = 'copy'
         context.drawImage(staging, 0, 0)
       } finally { context.restore() }
+      hiddenObjectRef.current = null
       documentRef.current = next
       revisionRef.current++
       draft.document = cloneCanvasDocument(next)
@@ -187,7 +196,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     } catch { return false }
   }
 
-  function getOccupancy(size = 32) {
+  function getOccupancy(size = 32, hiddenId?: string) {
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d')
     const cells = Math.max(2, Math.min(256, Number.isFinite(size) ? Math.round(size) : 32))
@@ -195,7 +204,10 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
 
     if (!canvas || !context) return hits
     try {
-      return pixelOccupancy(context.getImageData(0, 0, canvas.width, canvas.height), cells)
+      const staging = document.createElement('canvas'); staging.width=canvas.width;staging.height=canvas.height
+      const ctx=staging.getContext('2d');if(!ctx)return hits
+      renderDocument(ctx,staging.width,staging.height,false,documentRef.current,hiddenId??null)
+      return pixelOccupancy(ctx.getImageData(0, 0, staging.width, staging.height), cells)
     } catch { return hits }
   }
 
@@ -227,7 +239,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
   }
 
   function lastChildStroke() {
-    const operation = [...documentRef.current.operations].reverse().find(item => item.type === 'clear' || (item.owner === 'child' && !item.eraser))
+    const operation = [...documentRef.current.operations].reverse().find(item => item.type === 'clear' || (item.owner === 'child' && item.type==='stroke' && !item.eraser))
     return operation?.type === 'stroke' ? operation : null
   }
 
@@ -249,6 +261,9 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     getDocument: () => cloneCanvasDocument(documentRef.current),
     getRevision: () => revisionRef.current,
     commitCompanionStrokes,
+    getEditableObjects: () => editableObjects(documentRef.current),
+    previewWithoutObject: id => { hiddenObjectRef.current=id; repaint() },
+    getOccupancyWithoutObject: (id, size=256) => getOccupancy(size,id),
     async drawCompanionStroke(spec) { commitCompanionStrokes([spec], revisionRef.current) },
     clear() {
       if (disabled || restoringRef.current || pointerRef.current !== null) return

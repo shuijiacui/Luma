@@ -112,7 +112,7 @@ REJECTED_CANDIDATE_DATA: ${JSON.stringify(previous)}`
 }
 
 export function turnAttentionFailure(context, proposal) {
-  const children=(context.scene?.recentContributions??[]).filter(item=>item.owner==='child' && item.bounds)
+  const children=(context.scene?.recentContributions??[]).filter(item=>(context.turnScope==='scene'||item.owner==='child') && item.bounds)
   const focus=children.at(-1)?.bounds, anchor=proposal?.anchor
   if(!focus || !anchor) return null
   const touches=(a,b)=>!(a.x+a.width+.012<b.x || b.x+b.width+.012<a.x || a.y+a.height+.012<b.y || b.y+b.height+.012<a.y)
@@ -240,11 +240,11 @@ export function contourDetail(context) {
 /** Unambiguous subpaths can be separated; all commands still pass the strict
  * data-only sketch validator. Center and fit small local coordinates so a
  * meaningful detail does not turn into a barely visible dot. */
-export function normalizeTurnSketch(value) {
+export function normalizeTurnSketch(value, maxPaths = 8) {
   if (!value || typeof value !== 'object') return null
   const flat = Array.isArray(value.paths) && value.paths.every(command => Array.isArray(command) && typeof command[0] === 'string')
   const paths = flat ? [value.paths] : value.paths
-  if (!Array.isArray(paths) || paths.length > 8 || paths.some(path => !Array.isArray(path))) return null
+  if (!Array.isArray(paths) || paths.length > maxPaths || paths.some(path => !Array.isArray(path))) return null
   // A second move starts a separate stroke, not a connecting line. Preserve
   // every command and coordinate; normal validation rejects unsafe geometry.
   const split = []
@@ -257,7 +257,7 @@ export function normalizeTurnSketch(value) {
     split.push(current)
   }
   const sketch = validateCustomSketch({ ...value, paths: split })
-  if (!sketch || sketch.paths.length > 8) return null
+  if (!sketch || sketch.paths.length > maxPaths) return null
   const xs = [], ys = []
   for (const path of sketch.paths) for (const [op, ...coords] of path) {
     if (op === 'E') {

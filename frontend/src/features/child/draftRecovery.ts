@@ -1,3 +1,4 @@
+import { validateDrawingDocument } from '../../../../shared/niloDocument.mjs'
 import { BRUSHES } from './brushes'
 import type { CanvasDocument } from './canvasDocument'
 import type { ChildDraft } from './draft'
@@ -10,18 +11,7 @@ const color = (value: unknown) => typeof value === 'string' && /^#[0-9a-f]{6}$/i
 const brush = (value: unknown) => BRUSHES.some(item => item.id === value)
 const image = (value: unknown): value is string => typeof value === 'string' && value.startsWith('data:image/png;base64,')
 
-function validDocument(value: unknown): value is CanvasDocument {
-  if (!record(value) || value.version !== 1 || !['child', 'unknown'].includes(String(value.baseSource))
-    || (value.baseImage !== undefined && !image(value.baseImage))
-    || (value.coCreated !== undefined && value.coCreated !== true)
-    || !Array.isArray(value.operations) || value.operations.length > 10000) return false
-  return value.operations.every(op => record(op) && typeof op.groupId === 'string' && op.groupId.length <= 200
-    && (op.type === 'clear' ? op.owner === 'child'
-      : op.type === 'stroke' && ['child', 'nilo'].includes(String(op.owner)) && color(op.color) && brush(op.brushKind)
-        && number(op.size, .01, 128) && number(op.referenceWidth, 1, 32768) && number(op.referenceHeight, 1, 32768)
-        && typeof op.eraser === 'boolean' && Array.isArray(op.points) && op.points.length > 0 && op.points.length <= 100000
-        && op.points.every(p => record(p) && number(p.x, 0, 1) && number(p.y, 0, 1))))
-}
+function validDocument(value: unknown): value is CanvasDocument { return validateDrawingDocument(value) }
 
 export function discardStoredDraft(owner: string, artwork: string | null): boolean {
   try { sessionStorage.removeItem(key(owner, artwork)); return true } catch { return false }

@@ -1,4 +1,4 @@
-import type { CanvasDocument } from '../canvasDocument'
+import { visibleOperations, type CanvasDocument } from '../canvasDocument'
 import type { DrawingProposal } from './proposals'
 
 /** Refine only a nearby, visually chosen join; never guess a new semantic location. */
@@ -14,8 +14,8 @@ export function refineAttachment(p: DrawingProposal, document: CanvasDocument, a
   // use only ink added after the last clear/eraser; the raster collision check
   // still decides whether the final join meets visible ink.
   let start = 0
-  document.operations.forEach((op, i) => { if (op.type === 'clear' || op.eraser) start = i + 1 })
-  for (const op of document.operations.slice(start)) {
+  visibleOperations(document).forEach((op, i) => { if (op.type === 'clear' || op.eraser) start = i + 1 })
+  for (const op of visibleOperations(document).slice(start)) {
     if (op.type !== 'stroke' || op.eraser || op.brushKind === 'star') continue
     for (let i = 0; i < op.points.length; i++) {
       const a = op.points[i], b = op.points[i + 1] ?? a

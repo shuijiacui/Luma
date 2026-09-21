@@ -5,7 +5,7 @@ import { coCreationReviewFailure, turnAttentionFailure } from './niloCoCreation.
 import { traceNode } from './tracing.js'
 import { LLMParseError } from './llmClient.js'
 
-const sameIntent=(a,b)=>['subjectId','regionId','detail','relationship'].every(k=>a[k]===b[k])
+const sameIntent=(a,b)=>['subjectId','regionId','detail','relationship','kind'].every(k=>a[k]===b[k])
 const detailKey=intent=>`${intent.subjectId}\u0000${intent.detail.trim().toLowerCase()}`
 
 /** Keep transport/geometry repairs separate from a pixel review that disputes
@@ -26,7 +26,8 @@ function reviewPrompt(context,region,proposal) {
   // Its interpretation must not become evidence for its own visual reviewer.
   const {x,y,width,height,rotation,sketch,attachment,contact}=proposal
   return `Review a child co-creation BEFORE/AFTER using the pixels FIRST. Image 1 is the untouched original; Image 2 adds one proposed mark, not committed. First describe the visible original shape and the added mark in at most 12 words each, without guessing a story. Then judge their actual relationship. The supplied boxes locate pixels, not object identities. No planner interpretation is supplied and none should be inferred from an API label.
-Does the added mark use an actually visible supporting structure, match its anatomy/function and orientation, belong to the child's stated story, stay small and leave the original intact? Reject duplicate details, detached limbs/leaves, eye near tail, window on roof and unrelated decoration. Unusual child art is allowed. No emotional/personality inference.
+${proposal.contribution==='object'?'This is a COMPLETE NEW OBJECT. It may stand separately. usesExistingDrawing means it meaningfully develops the visible scene or stated story, NOT physical attachment. A squirrel beside a tree or kite near a person can qualify. Check silhouette, distinguishing features, reasonable scale and clear space. Reject unrelated stock decoration, repeated objects and disconnected body parts pretending to be whole objects.':'This is a DETAIL. Check its actual supporting structure and necessary joins.'}
+Does the added mark relate to the actual scene, match its anatomy/function and orientation, belong to the child's stated story, stay small and leave the original intact? Reject duplicate details, detached limbs/leaves, eye near tail, window on roof and unrelated decoration. Unusual child art is allowed. No emotional/personality inference.
 Return only a JSON object {"visibleOriginal":"short pixel description","visibleAddition":"short pixel description","targetVisible":boolean,"detailRelated":boolean,"usesExistingDrawing":boolean,"placementCorrect":boolean,"alreadyPresent":boolean,"confidence":0..1,"geometryConfidence":0..1,"relationConfidence":0..1}. targetVisible means the original contains a recognizable supporting structure for this addition, not merely any ink in the box. Identity uncertainty must not masquerade as geometric certainty. No alternative geometry.
 SUPPORTING PIXEL BOX: ${JSON.stringify(region.bounds)}\nNEW INK GEOMETRY: ${JSON.stringify({x,y,width,height,rotation,sketch,attachment,contact})}\nCHILD STORY: ${JSON.stringify(context.history.filter(x=>x.role==='user'))}`
 }
@@ -52,7 +53,7 @@ export async function generateProtocolTurn({imageBase64,context,knowledge,call,o
     const semanticRepair=Array.isArray(repair)&&repair.some(r=>r.kind==='semantic')
     try {
       raw=await call(attempt?`${base}\nBOUNDED REPAIR: ${JSON.stringify(repair)}. For format/geometry/confidence errors retain a valid lockedIntent exactly and repair only its representation or placement. A semantic error disputes the idea: you may choose a genuinely different grounded candidate from the EXISTING SCENE IDs after inspecting the ORIGINAL image again. Never fabricate or reinterpret a disputed subject ID, merely rename a rejected detail, or repeat an already-present detail. Wrong target IDs cannot be used again this turn. There is no new observation request. Disputed subject IDs: ${JSON.stringify([...disputedSubjects])}. All candidates must pass the same compiler, placement and pixel review. If no grounded alternative exists, return plans:[]. Return the SAME version:2 protocol.`:base,
-        {...opts,kind:'nilo_companion_vision',maxTokens:attempt?2200:1800})
+        {...opts,kind:'nilo_companion_vision',maxTokens:attempt?2600:2400})
     }catch(e){
       if(!(e instanceof LLMParseError))throw e
       raw=recoverDrawingPlans(e.raw)
@@ -81,7 +82,7 @@ export async function generateProtocolTurn({imageBase64,context,knowledge,call,o
       const attention=turnAttentionFailure(context,compiled.proposal)
       const region=scene.subjects.find(s=>s.id===intent.subjectId).regions.find(r=>r.id===intent.regionId)
       const required=/眼|嘴|窗|\b(?:eyes?|mouth|smile|window)\b/i.test(intent.detail)
-      if(attention||(required&&region.id.endsWith('R0'))){const code=attention??'specific_region_required';emit('compile',code,{attempt,repairKind:'geometry'});repair.push({kind:'geometry',code,lockedIntent:intent});continue}
+      if(attention||(intent.kind!=='object'&&required&&region.id.endsWith('R0'))){const code=attention??'specific_region_required';emit('compile',code,{attempt,repairKind:'geometry'});repair.push({kind:'geometry',code,lockedIntent:intent});continue}
       let proposal=fitDrawingPlan(compiled.proposal,occupancy,context.canvasAspect||1,context.canvasSize,pixels)
       if(!proposal){emit('preflight','collision_or_placement',{attempt,repairKind:'geometry'});repair.push({kind:'geometry',code:'collision_or_placement',lockedIntent:intent});continue}
       // Revalidate all numeric limits after bounded local fit.
@@ -111,7 +112,7 @@ export async function generateProtocolTurn({imageBase64,context,knowledge,call,o
       }
       emit('result','ready',{attempt})
       return {status:'ready',protocolVersion:2,geometryReviewed:true,proposal,drawingMetrics:metrics,
-        reply:context.locale==='en'?`I have an idea: ${intent.detail}.`:`我想添上${intent.detail}。`}
+        reply:context.locale==='en'?`I have an idea: ${proposal.subject??intent.detail}.`:`我想添上${proposal.subject??intent.detail}。`}
     }
     if(reviews>=2)break
   }

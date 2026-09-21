@@ -80,7 +80,7 @@ export function freshReport(records,meta={}){
       tokenUsage:{knownCalls:known.length,missingCalls:calls.length-known.length,totalTokens:known.length?known.reduce((n,c)=>n+c.tokens.total_tokens,0):null},semanticPasses:null}
   }),notes:[
     'Both variants run full production observation → planning → review. The numbered variant changes only observation input and deterministic region-ID decoding.',
-    'One attempt per case and variant; no best-of-N selection. Every failure stays in the denominator. Deadline 14 s, at most 5 model calls, unchanged per-stage token limits.',
+    'One attempt per case and variant; no best-of-N selection. Every failure stays in the denominator. Deadline 14 s, at most 5 model calls, per-stage token limits recorded with each call.',
     'Author observations, expected ideas and checklists never enter model prompts. Semantic pass rate remains null until independent before/after review.',
     'This small first run is an experiment, not a general accuracy claim. Subsequent runs on any previously executed cases are regression.',
   ]}

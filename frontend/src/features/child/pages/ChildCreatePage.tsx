@@ -310,7 +310,11 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
             <DrawingSurface surfaceRef={paperRef} document={draft.canvas.document} onReady={refreshCanvasVersion}>
               <DrawingCanvas draft={draft.canvas} disabled={busy} ref={canvasRef} color={color} brushSize={brushSize} brushKind={brushKind} isEraser={isEraser} onStrokeComplete={handleStrokeComplete} onStrokeStart={handleStrokeStart} />
               <DrawingGuide shapeId={shapeId} />
-              {projected && <CompanionProjection proposal={projected.proposal} additions={projected.additions} aspect={projected.aspect} turnDuration={projected.turn ? projected.durationMs : undefined} />}
+              {companion.objectChoices?.objects.map((object,index)=>{
+                const p=object.proposals[0]
+                return <button type="button" key={object.id} className="absolute z-30 rounded-xl border-2 border-dashed border-luma-teal-600 bg-luma-teal-100/20 text-left text-sm font-bold text-luma-teal-900" style={{left:(p.x*100)+'%',top:(p.y*100)+'%',width:(p.width*100)+'%',height:(p.height*100)+'%'}} onClick={()=>companion.chooseObject(object.id)} aria-label={t('选择')+' '+(index+1)+': '+t(object.name)}>{index+1}</button>
+              })}
+              {projected && !projected.pristineEdit && !projected.deleting && <CompanionProjection proposal={projected.proposal} additions={projected.additions} aspect={projected.aspect} turnDuration={projected.turn ? projected.durationMs : undefined} onEdit={companionEnabled && !busy ? companion.edit : undefined} onInteractionStart={voice.cancel} />}
             </DrawingSurface>
           </div>
         </section>

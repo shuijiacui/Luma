@@ -1,0 +1,77 @@
+{
+  "date": "2026-09-21",
+  "protocol": 3,
+  "type": "development-regression-not-independent-evaluation",
+  "fixtures": [
+    "spiky_full_person",
+    "fish_with_top_fin"
+  ],
+  "runs": [
+    {
+      "stage": "initial",
+      "outputs": [
+        {
+          "subject": "风筝",
+          "calls": 3,
+          "ms": 4994,
+          "status": "ready"
+        },
+        {
+          "calls": 3,
+          "ms": 4558,
+          "status": "invalid_response"
+        }
+      ]
+    },
+    {
+      "stage": "format-parser",
+      "outputs": [
+        {
+          "subject": "长椅",
+          "calls": 2,
+          "ms": 3699,
+          "status": "ready",
+          "visualIssue": "Substitute inherited the wand layout; broad relocation moved the bench beside the head."
+        },
+        {
+          "subject": "小鱼吐出的泡泡",
+          "calls": 2,
+          "ms": 3624,
+          "status": "ready",
+          "visualIssue": "Nested oval bubbles appeared below the fish."
+        }
+      ]
+    },
+    {
+      "stage": "final-layout",
+      "outputs": [
+        {
+          "subject": "魔法权杖",
+          "calls": 2,
+          "ms": 3488,
+          "status": "ready",
+          "visualNote": "Readable slim wand beside the figure, separated from the hand."
+        },
+        {
+          "subject": "泡泡",
+          "calls": 2,
+          "ms": 2820,
+          "status": "ready",
+          "visualNote": "Three separate circles near the fish mouth, descending right."
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "All six requests retained, including the failure and poor placements.",
+    "Same two synthetic fixtures across development iterations; not an independent accuracy estimate.",
+    "Structural checks cannot guarantee semantic drawing quality."
+  ],
+  "validation": {
+    "backend": 598,
+    "frontendAffected": 137,
+    "productionBuild": "passed",
+    "eslintErrors": 0,
+    "existingWarnings": 3
+  }
+}

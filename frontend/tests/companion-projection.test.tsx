@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { CompanionProjection } from '@/features/child/components/CompanionProjection'
 import { proposalStrokes, type DrawingProposal } from '@/features/child/companion/proposals'
@@ -63,4 +63,50 @@ test('a turn paints a growing stroke and cancels animation when the child takes 
   expect(move.mock.calls.at(-1)![0].x).toBeCloseTo(.8 * canvas.width)
   view.unmount()
   expect(cancel).toHaveBeenCalledWith(7)
+})
+
+function dragEvent(button: HTMLElement, type: string, x: number, y: number, id = 7) {
+  const event = new Event(type, { bubbles:true, cancelable:true })
+  Object.assign(event, { pointerId:id, isPrimary:true, button:0, clientX:x, clientY:y, pointerType:'touch' })
+  fireEvent(button,event)
+}
+function controls() {
+  vi.mocked(proposalStrokes).mockReturnValue([{kind:'custom',color:'#4aa5d8',width:3,points:[{x:.2,y:.2},{x:.5,y:.4}]}])
+  const onEdit=vi.fn(), onInteractionStart=vi.fn()
+  render(<CompanionProjection proposal={proposal} aspect={4/3} onEdit={onEdit} onInteractionStart={onInteractionStart} />)
+  const move=screen.getByRole('button',{name:'拖动 Nilo 的投影'}), resize=screen.getByRole('button',{name:'调整 Nilo 投影大小'})
+  for (const button of [move,resize]) { button.setPointerCapture=vi.fn();button.hasPointerCapture=vi.fn(()=>true);button.releasePointerCapture=vi.fn() }
+  return {move,resize,onEdit,onInteractionStart}
+}
+test('touch drag uses canvas coordinates, captures the pointer and never commits',()=>{
+  const {move,onEdit,onInteractionStart}=controls()
+  dragEvent(move,'pointerdown',100,100)
+  dragEvent(move,'pointermove',132.025,124.025)
+  expect(onEdit.mock.calls.at(-1)?.[0]).toMatchObject({x:expect.closeTo(.3),y:expect.closeTo(.3),width:.3,height:.2})
+  dragEvent(move,'pointerup',132.025,124.025)
+  expect(move.setPointerCapture).toHaveBeenCalledWith(7)
+  expect(move.releasePointerCapture).toHaveBeenCalledWith(7)
+  expect(onInteractionStart).toHaveBeenCalledOnce()
+})
+test('corner resizing is proportional, ignores another finger, and pointer cancellation restores the original box',()=>{
+  const {resize,onEdit}=controls()
+  dragEvent(resize,'pointerdown',100,100)
+  dragEvent(resize,'pointermove',130,130,9)
+  expect(onEdit).not.toHaveBeenCalled()
+  dragEvent(resize,'pointermove',130,130)
+  const patch=onEdit.mock.calls.at(-1)![0]
+  expect(patch.width/patch.height).toBeCloseTo(1.5)
+  expect(patch.width).toBeGreaterThan(.3)
+  dragEvent(resize,'pointercancel',130,130)
+  expect(onEdit.mock.calls.at(-1)![0]).toEqual({x:.2,y:.2,width:.3,height:.2})
+})
+test('keyboard controls move and resize; drawing animation exposes no drag handles',()=>{
+  const {move,resize,onEdit}=controls()
+  fireEvent.keyDown(move,{key:'ArrowRight'})
+  expect(onEdit.mock.calls.at(-1)![0].x).toBeCloseTo(.21)
+  fireEvent.keyDown(resize,{key:'+'})
+  expect(onEdit.mock.calls.at(-1)![0].width).toBeCloseTo(.315)
+  cleanup()
+  render(<CompanionProjection proposal={proposal} aspect={4/3} turnDuration={1200} onEdit={onEdit} />)
+  expect(screen.queryByRole('button',{name:'拖动 Nilo 的投影'})).toBeNull()
 })

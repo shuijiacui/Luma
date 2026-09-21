@@ -79,7 +79,7 @@ test.each(['full','gold-scene'])('%s exercises the production planner with expli
     expect(result.canvasFits).toBe(true)
     expect(result.calls).toHaveLength(mode==='full'?3:2)
     expect(result.calls.every(call=>call.tokens.total_tokens===130)).toBe(true)
-    expect(sent.map(body=>body.max_tokens)).toEqual(mode==='full'?[1100,1800,350]:[1800,350])
+    expect(sent.map(body=>body.max_tokens)).toEqual(mode==='full'?[1100,2400,350]:[2400,350])
     expect(sent.every(body=>body.model==='synthetic-model')).toBe(true)
     expect(result.candidateChecks).toEqual([{attempt:0,index:0,compileCode:'compiled',preflightCode:'fit'}])
   }finally{fetcher.mockRestore()}

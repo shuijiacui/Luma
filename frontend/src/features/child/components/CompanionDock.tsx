@@ -20,7 +20,7 @@ export function CompanionDock({ companion, voice, mode, visible, enabled, isDraw
   const [editing, setEditing] = useState(false)
   const [voiceSettings, setVoiceSettings] = useState(false)
   const projected = companion.phase === 'projected' ? companion.projection : null
-  const cancellable = voice.status === 'preparing' || voice.status === 'transcribing' || companion.phase === 'thinking' || !!companion.projection?.turn
+  const cancellable = voice.status === 'preparing' || voice.status === 'transcribing' || companion.phase === 'thinking' || (companion.phase === 'sketching' && !!companion.projection?.turn)
   const micLabel = cancellable ? '停止' : voice.status === 'listening' ? '说完了' : voice.status === 'speaking' ? '打断并说话' : '和 Nilo 说话'
   function microphone() {
     if (cancellable) { companion.cancel(); voice.cancel() }
@@ -35,17 +35,14 @@ export function CompanionDock({ companion, voice, mode, visible, enabled, isDraw
   const inviteLabel = visible ? 'Nilo，你来画' : '显示 Nilo'
 
   return <div className="nilo-footer-companion" role="group" aria-label={t('Nilo 与声音')}>
-    {visible && !isDrawing && companion.recovery ? <div className="nilo-recovery" role="group" aria-label={t('一起选个小主意')}>
-      <p role="status">{t(companion.message)}</p>
-      <div>{companion.recovery.ideas.map(idea => <button key={idea.id} type="button" disabled={!enabled || mode !== 'together'} onClick={() => { voice.cancel(); companion.chooseRecovery(idea.id) }}>
-        <svg viewBox="0 0 32 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-          <path d={idea.id === 'leaf' ? 'M5 20Q3 3 27 3Q29 21 5 20ZM5 20Q14 13 24 6' : 'M7 19C0 19 0 9 8 10C7 0 21 0 21 9C30 2 34 18 27 19Q17 22 7 19Z'} />
-        </svg><span>{t(idea.label)}</span>
-      </button>)}<button type="button" className="nilo-recovery-close" onClick={() => companion.cancel()} aria-label={t('先不要')}>×</button></div>
-    </div> : visible && !isDrawing && caption && <p className="nilo-bottom-caption" role="status" title={caption}>{caption}</p>}
+    {visible && !isDrawing && caption && <p className="nilo-bottom-caption" role="status" title={caption}>{caption}</p>}
+    {visible && companion.objectChoices && <div className="nilo-object-choices" role="group" aria-label={t('选择要修改的作品')}>
+      {companion.objectChoices.objects.map((object,index)=><button type="button" key={object.id} onClick={()=>companion.chooseObject(object.id)}>{index+1}. {t(object.name)}</button>)}
+      <button type="button" onClick={()=>companion.cancel()} aria-label={t('取消')}>×</button>
+    </div>}
     <div className="nilo-footer-icons">
       {projected && <div className="nilo-bottom-projection" role="group" aria-label={t('决定这个小主意')}>
-        <button type="button" className="nilo-dock-button bg-luma-teal-700 !text-white" onClick={() => { voice.cancel(); companion.accept({ speak: false }) }}>{t('留下来')}</button>
+        <button type="button" className="nilo-dock-button bg-luma-teal-700 !text-white" onClick={() => { voice.cancel(); companion.accept({ speak: false }) }}>{t(projected.deleting ? '确认移除' : projected.editTargetId ? '确认修改' : '留下来')}</button>
         <button type="button" className="nilo-footer-mic" onClick={() => { voice.cancel(); companion.alternative({ speak: false }) }} aria-label={t('换一个')} title={t('换一个')}>↻</button>
         <button type="button" className="nilo-footer-mic" onClick={() => { voice.cancel(); setEditing(value => !value) }} aria-expanded={editing} aria-label={t('调整')} title={t('调整')}>✎</button>
         <button type="button" className="nilo-footer-mic" onClick={() => { voice.cancel(); companion.dismiss({ speak: false }) }} aria-label={t('先不要')} title={t('先不要')}>×</button>
@@ -59,6 +56,7 @@ export function CompanionDock({ companion, voice, mode, visible, enabled, isDraw
         voice.cancel(); void companion.takeTurn()
       }}><img src={niloCompanion} alt="" draggable={false} className="nilo-invite-image" /><span className="nilo-invite-label">{t(companion.phase === 'thinking' ? '看画中…' : companion.projection?.turn ? '接画中…' : '轮到 Nilo')}</span></button>}
       {visible && <>
+        {!projected && <button type="button" className="nilo-footer-mic" disabled={!enabled || isDrawing || companion.phase!=='idle'} onClick={()=>{voice.cancel();companion.openObjects()}} aria-label={t('修改 Nilo 的作品')} title={t('修改 Nilo 的作品')}>✎</button>}
         <button type="button" className="nilo-footer-mic nilo-talk-button" aria-label={t(micLabel)} title={t(micLabel)} aria-pressed={voice.status === 'listening'} disabled={!enabled} onClick={microphone}>
           {cancellable ? <span aria-hidden="true">■</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="size-5" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8" /></svg>}
         </button>

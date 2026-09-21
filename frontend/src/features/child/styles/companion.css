@@ -146,3 +146,12 @@
  .nilo-bottom-projection .nilo-dock-button { min-width:48px; padding:3px 6px; }
  .nilo-bottom-projection .nilo-footer-mic { width:30px; }
 }
+
+.nilo-object-choices{position:absolute;bottom:calc(100% + 8px);right:0;display:flex;flex-wrap:wrap;gap:6px;max-width:min(360px,85vw);max-height:130px;overflow:auto;padding:10px;background:#fffdf8;border:1px solid #d4e8df;border-radius:18px;box-shadow:0 6px 20px #244e3f15}.nilo-object-choices button{padding:8px 12px;border-radius:12px;background:#eaf5ed;color:#205e54;font-weight:600}
+
+/* Preview controls only capture the temporary object's own box. */
+.nilo-projection-move { position:absolute; inset:0; width:100%; height:100%; min-width:32px; min-height:32px; border:0; background:transparent; border-radius:12px; pointer-events:auto; touch-action:none; cursor:grab; }
+.nilo-projection-move:active { cursor:grabbing; }
+.nilo-projection-resize { position:absolute; right:-18px; bottom:-18px; display:grid; place-items:center; width:44px; height:44px; padding:6px; background:transparent; border:0; pointer-events:auto; touch-action:none; cursor:nwse-resize; }
+.nilo-projection-resize span { display:grid; place-items:center; width:30px; height:30px; border:2px solid white; border-radius:50%; color:white; background:#267f70; box-shadow:0 2px 8px #173f3a30; font-size:20px; }
+.nilo-projection-move:focus-visible,.nilo-projection-resize:focus-visible { outline:3px solid #d8a644; outline-offset:2px; }

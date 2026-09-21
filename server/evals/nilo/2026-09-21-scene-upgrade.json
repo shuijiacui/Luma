@@ -1,0 +1,72 @@
+{
+  "note": "Development regression iterations on the same two synthetic drawings, not independent accuracy evaluation. All runs retained. Final guards and metadata changes after the final live run are covered offline.",
+  "runs": [
+    {
+      "run": "2026-09-21T06-14-06-322Z",
+      "records": [
+        {
+          "case": "spiky_full_person",
+          "canvasFits": false,
+          "failureCode": "unclear_target",
+          "latencyMs": 1671,
+          "calls": 1,
+          "semanticSuccess": null
+        },
+        {
+          "case": "fish_with_top_fin",
+          "canvasFits": true,
+          "failureCode": null,
+          "latencyMs": 4835,
+          "calls": 3,
+          "subject": "鱼鳃线",
+          "semanticSuccess": null
+        }
+      ]
+    },
+    {
+      "run": "2026-09-21T06-17-10-284Z",
+      "records": [
+        {
+          "case": "spiky_full_person",
+          "canvasFits": false,
+          "failureCode": "invalid_response",
+          "latencyMs": 4148,
+          "calls": 3,
+          "semanticSuccess": null
+        },
+        {
+          "case": "fish_with_top_fin",
+          "canvasFits": false,
+          "failureCode": "invalid_response",
+          "latencyMs": 7535,
+          "calls": 4,
+          "semanticSuccess": null
+        }
+      ]
+    },
+    {
+      "run": "2026-09-21T06-21-08-126Z",
+      "records": [
+        {
+          "case": "spiky_full_person",
+          "canvasFits": true,
+          "failureCode": null,
+          "latencyMs": 7506,
+          "calls": 5,
+          "subject": "小鸟",
+          "recipeId": "bird-0",
+          "semanticSuccess": null
+        },
+        {
+          "case": "fish_with_top_fin",
+          "canvasFits": true,
+          "failureCode": null,
+          "latencyMs": 7007,
+          "calls": 5,
+          "subject": "侧鳍",
+          "semanticSuccess": null
+        }
+      ]
+    }
+  ]
+}

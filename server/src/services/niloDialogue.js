@@ -1,6 +1,7 @@
 import { drawingReferenceSheet } from './niloDrawingReferences.js'
 import { decodeOccupancy } from '../../../shared/niloOccupancy.mjs'
 import { validateContact } from '../../../shared/niloContact.mjs'
+import { generateCreativeTurn } from './niloCreativeTurn.js'
 import { generateProtocolTurn } from './niloProtocolTurn.js'
 import { drawingInkContacts } from './niloContactPlacement.js'
 import { readDrawingLayout } from './niloDrawingLayout.js'
@@ -108,11 +109,12 @@ export function sanitizeDialogueContext(input = {}) {
       return ['user', 'assistant'].includes(item?.role) && text ? [{ role: item.role, text }] : []
     }) : [],
     requestDrawing: input?.requestDrawing === true,
+    recentRecipeIds: Array.isArray(input?.recentRecipeIds)?input.recentRecipeIds.filter(x=>typeof x==='string'&&/^[a-z]+-[0-9]+$/.test(x)).slice(-12):[],
     takeTurn: input?.takeTurn === true && input?.requestDrawing === true,
     useDrawingKnowledge: input?.useDrawingKnowledge === true && input?.takeTurn === true && input?.requestDrawing === true,
     turnScope: input?.turnScope === 'scene' && input?.takeTurn === true && input?.requestDrawing === true ? 'scene' : 'latest',
-    drawingProtocol: input?.drawingProtocol === 2 && input?.takeTurn === true && input?.requestDrawing === true ? 2 : 1,
-    collisionMap: input?.drawingProtocol === 2 && input?.takeTurn === true && input?.requestDrawing === true && decodeOccupancy(input?.collisionMap) ? {size:256,bits:input.collisionMap.bits} : undefined,
+    drawingProtocol: [2, 3].includes(input?.drawingProtocol) && input?.takeTurn === true && input?.requestDrawing === true ? input.drawingProtocol : 1,
+    collisionMap: [2, 3].includes(input?.drawingProtocol) && input?.takeTurn === true && input?.requestDrawing === true && decodeOccupancy(input?.collisionMap) ? {size:256,bits:input.collisionMap.bits} : undefined,
     inferDrawingIntent: input?.inferDrawingIntent === true,
     imageProvenance: ['child', 'unknown', 'composite'].includes(input?.imageProvenance) ? input.imageProvenance : 'unknown',
     revision: Number.isSafeInteger(input?.revision) && input.revision >= 0 ? input.revision : 0,
@@ -298,8 +300,12 @@ export function validateProposal(raw, context = {}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !NILO_TEMPLATES.includes(raw.template)) return null
   const simpleRequest = parseSimpleDrawingRequest(context.utterance)
   if (raw.template !== 'custom' && context.rejectedTemplates?.includes(raw.template) && !explicitlyRequests(raw.template, context.utterance) && simpleRequest?.template !== raw.template) return null
-  const allowed = new Set(['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'echoPoints', 'anchor', 'placement', 'subject', 'sketch', 'attachment', 'contact'])
+  const allowed = new Set(['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'echoPoints', 'anchor', 'placement', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'placementPolicy'])
   if (Object.keys(raw).some(key => !allowed.has(key))) return null
+  if (raw.placementPolicy !== undefined && (raw.placementPolicy !== 'free' || raw.contribution !== 'object')) return null
+  if (raw.contribution !== undefined && raw.contribution !== 'object') return null
+  if (raw.contribution === 'object' && (raw.attachment || raw.contact)) return null
+  if (raw.recipeId !== undefined && (typeof raw.recipeId !== 'string' || !/^[a-z]+-[0-9]+$/.test(raw.recipeId))) return null
   let subject, sketch
   if (raw.template === 'custom') {
     if (!validSubject(raw.subject)) return null
@@ -354,7 +360,7 @@ export function validateProposal(raw, context = {}) {
   const color = !changes.color && validColor(style.color) ? style.color : normalized.color
   const finalWidth = !changes.strokeWidth && validBrushSize(style.strokeWidth) ? style.strokeWidth : strokeWidth
   const brushKind = !changes.brushKind && validBrushKind(style.brushKind) ? style.brushKind : raw.brushKind ?? style.brushKind
-  return { template: raw.template, x, y, width, height, rotation, color: color.toLowerCase(), strokeWidth: finalWidth, ...(brushKind ? { brushKind } : {}), target, relation, ...(sketch ? { subject, sketch } : {}), ...(echoPoints ? { echoPoints } : {}), ...(anchor ? { anchor } : {}), ...(raw.placement ? { placement: raw.placement } : {}), ...(attachment ? { attachment } : {}), ...(contact ? { contact } : {}) }
+  return { ...(raw.placementPolicy?{placementPolicy:raw.placementPolicy}:{}), ...(raw.contribution?{contribution:raw.contribution}:{}), ...(raw.recipeId?{recipeId:raw.recipeId}:{}), template: raw.template, x, y, width, height, rotation, color: color.toLowerCase(), strokeWidth: finalWidth, ...(brushKind ? { brushKind } : {}), target, relation, ...(sketch ? { subject, sketch } : {}), ...(echoPoints ? { echoPoints } : {}), ...(anchor ? { anchor } : {}), ...(raw.placement ? { placement: raw.placement } : {}), ...(attachment ? { attachment } : {}), ...(contact ? { contact } : {}) }
 }
 
 export function validateDialogue(raw, context, hasImage) {
@@ -516,17 +522,20 @@ export async function generateNiloDialogue({ imageBase64, focusImage, context: i
         throw error
       }
     }
-    if(context.useDrawingKnowledge || context.drawingProtocol===2) {
+    if(context.useDrawingKnowledge || context.drawingProtocol>=2) {
       let observed
       const regions=context.drawingProtocol===2?'\nAlso return regions:[{name:"actual visible part such as head, face, trunk, wall or wing",bounds:{x,y,width,height},confidence:0..1}] for each subject, at most FOUR inside its whole bounds. These are existing supporting regions, not intended additions. Describe a usable empty surface between its visible edges; do not put a tree trunk region in the canopy or a fish head near its tail. Give small face/trunk/wall regions when actually visible. Do not invent absent anatomy.':''
       try { observed=await call(knowledgeObservationPrompt(context)+regions,{...opts,kind:'nilo_knowledge_observe',maxTokens:context.drawingProtocol===2?1100:650}) }
       catch(error) {if(!(error instanceof LLMParseError))throw error}
       knowledge=retrieveDrawingKnowledge(sanitizeKnowledgeObservation(observed))
-      knowledge.inkAnchors=drawingInkAnchors(imageBase64,knowledge.observation)
-      if(context.drawingProtocol===2)knowledge.inkContacts=drawingInkContacts(imageBase64,knowledge.observation)
+      if(context.drawingProtocol!==3) {
+        knowledge.inkAnchors=drawingInkAnchors(imageBase64,knowledge.observation)
+        if(context.drawingProtocol===2)knowledge.inkContacts=drawingInkContacts(imageBase64,knowledge.observation)
+      }
       // Aggregate diagnostics only: no child text, images or coordinates.
       traceNode('nilo_knowledge',{outcome:'retrieved',cardCount:knowledge.cards.length,hasReference:!!knowledge.referenceSheet})
     }
+    if(context.drawingProtocol===3)return await generateCreativeTurn({imageBase64,context,knowledge,call,opts,validateProposal})
     if(context.drawingProtocol===2)return await generateProtocolTurn({imageBase64,context,knowledge,call,opts,validateProposal})
     const basePrompt=knowledge?knowledgePlanningPrompt(context,knowledge):buildDialoguePrompt(context,hasImage)
     const prompt = context.renderFeedback

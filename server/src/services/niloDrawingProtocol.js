@@ -1,3 +1,4 @@
+import { getDrawingRecipe, recipeCatalogue, recipeMatchesSubject } from '../../../shared/niloRecipes.mjs'
 import { validateCustomSketch } from './niloSketch.js'
 import { normalizeTurnSketch } from './niloCoCreation.js'
 import { projectionFits, placementFits } from '../../../shared/niloCollision.mjs'
@@ -13,8 +14,13 @@ export function drawingScene(observation, anchors=[], contacts=[]) {
   const subjects=observation.subjects.flatMap((s,index)=>{
     const id=`S${index+1}`
     const regions=observedSubjectRegions(s).map(r=>({...r,id:`${id}${r.id}`}))
+    const b=s.bounds
+    const coarseOnly=!regions.length&&s.confidence>=.5&&s.confidence<.65&&['character','animal','plant','vehicle','building','landscape','object'].includes(s.family)
+      &&b&&['x','y','width','height'].every(k=>Number.isFinite(b[k]))&&b.x>=0&&b.y>=0&&b.width>=.01&&b.height>=.01&&b.x+b.width<=1&&b.y+b.height<=1
+      &&s.regions?.some(r=>r.confidence>=.8&&r.bounds&&within(r.bounds,b))
+    if(coarseOnly)regions.push({id:id+'R0',name:'uncertain whole subject; independent related objects only',bounds:b})
     if(!regions.length)return []
-    return [{id,name:s.subject,family:s.family,evidence:s.visible,bounds:s.bounds,existingParts:s.existingParts,regions,
+    return [{id,name:s.subject,family:s.family,evidence:s.visible,bounds:s.bounds,existingParts:s.existingParts,regions,...(coarseOnly?{objectOnly:true}:{}),
       anchors:anchors.filter(a=>a.id.startsWith(`${id}_`)).map(({id,x,y,side})=>({id,x,y,side})),
       contacts:contacts.filter(c=>c.subjectId===id&&regions.some(r=>r.id===c.regionId)).slice(0,8)}]
   })
@@ -25,8 +31,8 @@ export function readDrawingIntent(raw,scene) {
   const subject=scene.subjects.find(s=>s.id===raw?.subjectId)
   const region=subject?.regions.find(r=>r.id===raw?.regionId)
   const detail=text(raw?.detail,60),relationship=text(raw?.relationship,180)
-  if(!subject||!region||!detail||!relationship)return null
-  return {subjectId:subject.id,regionId:region.id,detail,relationship}
+  if(!subject||!region||!detail||!relationship||raw.kind!==undefined&&!['object','detail'].includes(raw.kind)||subject.objectOnly&&raw.kind!=='object')return null
+  return {subjectId:subject.id,regionId:region.id,detail,relationship,...(raw.kind==='object'?{kind:'object'}:{})}
 }
 
 /** Attached paths use an outward local frame, independent of object identity.
@@ -58,12 +64,33 @@ export function compileDrawingPlan(raw,scene,context,validateProposal) {
   if(!intent)return {ok:false,code:'intent_reference',intent:null}
   const failure=code=>({ok:false,code,intent})
   const drawing=raw.drawing,layout=drawing?.placement??raw.placement
+  const recipe=getDrawingRecipe(drawing?.recipeId)
+  if(drawing?.recipeId&&!recipe)return failure('recipe_reference')
+  if(recipe&&intent.kind!=='object')return failure('recipe_requires_object')
+  if(recipe&&!recipeMatchesSubject(recipe,intent.detail))return failure('recipe_subject_mismatch')
   if(!drawing||typeof drawing!=='object')return failure('path_syntax')
-  if(!layout||!['inside','attached','contact','above','below','left','right'].includes(layout.mode))return failure('layout_mode')
+  if(!layout||!['inside','attached','contact','above','below','left','right','scene'].includes(layout.mode))return failure('layout_mode')
+  if(intent.kind==='object'&&layout.mode!=='scene')return failure('object_requires_scene')
   if(layout.mode!=='contact'&&(!unit(layout.scale)||layout.scale<.08||layout.scale>.65))return failure('layout_scale')
-  let sketch=validateCustomSketch(normalizeTurnSketch({aspect:drawing.aspect,paths:drawing.paths}))
-  if(!sketch||sketch.paths.length>8)return failure('path_syntax')
+  let sketch=validateCustomSketch(recipe?.sketch??normalizeTurnSketch({aspect:drawing.aspect,paths:drawing.paths},intent.kind==='object'?24:8))
+  if(!sketch||sketch.paths.length>(intent.kind==='object'?24:8))return failure('path_syntax')
   const subject=scene.subjects.find(s=>s.id===intent.subjectId),region=subject.regions.find(r=>r.id===intent.regionId),a=region.bounds
+  if(layout.mode==='scene') {
+    if(intent.kind!=='object'||!Array.isArray(layout.at)||layout.at.length!==2||!layout.at.every(unit))return failure('scene_object_required')
+    const aspect=context.canvasAspect||1
+    const surfaceHeight=context.canvasSize?.height||512
+    const minimumSpan=Math.max(64/surfaceHeight,(recipe?.minPixels??32)/surfaceHeight*Math.max(1,sketch.aspect)/Math.min(1,sketch.aspect))
+    if(minimumSpan>.38)return failure('object_too_small')
+    const span=Math.min(.38,Math.max(minimumSpan,.12,layout.scale))
+    const width=span*Math.min(1,sketch.aspect)/aspect,height=span/Math.max(1,sketch.aspect)
+    if(context.canvasSize&&Math.min(width*context.canvasSize.width,height*context.canvasSize.height)<(recipe?.minPixels??48))return failure('object_too_small')
+    const style=context.drawingStyle??{color:'#568570',brushSize:4,brushKind:'round'}
+    const proposal=validateProposal({template:'custom',subject:recipe?(context.locale==='en'?recipe.subject:recipe.name):intent.detail,
+      target:subject.name,relation:intent.relationship,anchor:a,placement:'near',contribution:'object',
+      ...(recipe?{recipeId:recipe.id}:{}),sketch,x:layout.at[0]-width/2,y:layout.at[1]-height/2,width,height,rotation:0,
+      color:style.color,strokeWidth:style.brushSize,brushKind:style.brushKind},{...context,takeTurn:false})
+    return proposal?{ok:true,intent,proposal}:{ok:false,code:'geometry_contract',intent}
+  }
   if(layout.mode==='contact') {
     const candidate=subject.contacts?.find(c=>c.id===layout.contactId&&c.regionId===region.id)
     if(!candidate)return failure('contact_reference')
@@ -138,6 +165,20 @@ export function recoverDrawingPlans(raw) {
 export function fitDrawingPlan(proposal,occupancy,aspect,size,pixels) {
   const fits=p=>placementFits(p,aspect,size)&&projectionFits(p,occupancy,aspect,size,pixels)
   if(fits(proposal))return proposal
+  if(proposal.contribution==='object') {
+    // Whole objects have no fixed joint: find a nearby clear place BEFORE review.
+    // Preserve an explicitly requested side, size and physical aspect.
+    const a=proposal.anchor,relation=proposal.relation??''
+    const sideOK=p=>!a||(!/左|\bleft\b/i.test(relation)||p.x+p.width<=a.x)
+      &&(!/右|\bright\b/i.test(relation)||p.x>=a.x+a.width)
+      &&(!/上方|上面|\babove\b/i.test(relation)||p.y+p.height<=a.y)
+      &&(!/下方|下面|\bbelow\b/i.test(relation)||p.y>=a.y+a.height)
+    for(const distance of [.06,.12,.18,.24])for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]]){
+      const p={...proposal,x:proposal.x+dx*distance/aspect,y:proposal.y+dy*distance}
+      if(p.x>=0&&p.y>=0&&p.x+p.width<=1&&p.y+p.height<=1&&sideOK(p)&&fits(p))return p
+    }
+    return null
+  }
   if(proposal.contact)return null // Multiple joints/contours must never drift.
   if(proposal.attachment) {
     const [,u,v]=proposal.sketch.paths[0][0]
@@ -160,13 +201,15 @@ export function fitDrawingPlan(proposal,occupancy,aspect,size,pixels) {
 }
 
 export function drawingProtocolPrompt(context,scene,cards) {
-  return `You are Nilo, a child drawing partner. Plan ONE meaningful new detail and a DIFFERENT backup idea. Inspect the current child drawing, not reference pictures, and respect the child's story. Return a JSON object {"version":2,"plans":[{"intent":{"subjectId":"S1","regionId":"S1R1","detail":"short name of new detail","relationship":"why it belongs on this existing region"},"drawing":{"aspect":0.7,"paths":[[["M",0.1,0.1],["Q",0.3,0.5,0.8,0.9]]],"placement":{"mode":"inside","at":[0.5,0.5],"scale":0.3,"joinId":null}}}]}. Example values are NOT a drawing instruction. At most TWO plans. Every object uses the SAME drawing contract; no templates, part names or API commands. The program supplies all colour, brush, absolute coordinates and text to the child.
-Choose intent FIRST using supplied subject and region IDs. Subjects/regions are observations and may be wrong: verify against the image. No fabricated IDs. Use the WHOLE child picture; a final detached sky mark does not prohibit developing a previous tree. Prefer a specific anatomical/functional region for small details. Eyes need an observed head/face region; windows need a wall, tree bark a trunk. Do not repeat existing details or previously rejected ideas. Preserve asymmetry and leave room for the child to continue.
-Then encode ONLY the new detail in local coordinates [0,1], aspect physical width/height .2..5. Commands: M x y, L x y, Q cx cy x y, C c1x c1y c2x c2y x y, Z; a separate ellipse path is E cx cy rx ry. Normally 1–4 paths, at most 8. Start every open path with M; separate strokes into separate paths. No SVG, code, prose or string coordinates.
-Placement: object details MUST use inside, attached or contact. Detached above/below/left/right are allowed ONLY on subjects whose observed family is landscape (e.g. rain below a cloud). An antenna, ear, leaf or tail cannot use above/below as a substitute for attachment. Use the whole-subject region if a measured join is outside a smaller observed region. Modes inside or landscape above/below/left/right use at:[u,v] (.1..9) within the selected region, scale:.08..65 relative to its longest physical side, joinId:null. attached uses joinId from actual ink anchors of that subject (inside the selected region), at:null, and first M is the connecting end on a local box edge (prefer M 0 .5, drawing toward increasing x). The compiler rotates this local frame to grow OUTWARD from the selected ink side. It must grow AWAY from existing ink, not along or across it. An anchor label is NOT proof of anatomy. Exterior limbs/leaves/stems must be attached; separate neighboring objects need an actual scene interaction. Internal shapes must fit their region. Small details need readable gaps at the current brush size. Don't force an idea when its region is uncertain. If none is grounded return plans:[].
+  return `You are Nilo, a child drawing partner. Plan ONE complete small idea and a DIFFERENT backup idea. This can be a whole NEW related object in clear space, or a detail on an existing subject. For an open invitation, prefer a complete related object in clear space as the FIRST candidate and a different detail or object as backup. If the child explicitly asks for a detail, follow that request. Do not keep returning tiny parts when there is room for a complete idea. One turn may contain many strokes. The last stroke does not constrain your subject choice. Inspect the current child drawing, not reference pictures, and respect the child's story. Return a JSON object {"version":2,"plans":[{"intent":{"subjectId":"S1","regionId":"S1R1","detail":"short name of new detail","relationship":"why it belongs on this existing region"},"drawing":{"aspect":0.7,"paths":[[["M",0.1,0.1],["Q",0.3,0.5,0.8,0.9]]],"placement":{"mode":"inside","at":[0.5,0.5],"scale":0.3,"joinId":null}}}]}. Example values are NOT a drawing instruction. At most TWO plans. Every object uses the SAME drawing contract; no templates, part names or API commands. The program supplies all colour, brush, absolute coordinates and text to the child.
+Choose intent FIRST using supplied subject and region IDs. Subjects/regions are observations and may be wrong: verify against the image. No fabricated IDs. An objectOnly subject has uncertain identity but visible coarse structure: NEVER add anatomical details or claim a precise identity; only propose an independent object related to its broad family or child story, subject to visual review and child confirmation. Use the WHOLE child picture; a final detached sky mark does not prohibit developing a previous tree. Prefer a specific anatomical/functional region for small details. Eyes need an observed head/face region; windows need a wall, tree bark a trunk. Do not repeat existing details or previously rejected ideas. Preserve asymmetry and leave room for the child to continue.
+Then encode ONLY the new detail in local coordinates [0,1], aspect physical width/height .2..5. Commands: M x y, L x y, Q cx cy x y, C c1x c1y c2x c2y x y, Z; a separate ellipse path is E cx cy rx ry. For details use up to 8 paths. A complete new object may use up to 24 paths and 96 commands, with readable silhouette and distinguishing parts. Prefer a suitable executable recipe over inventing its coordinates. Start every open path with M; separate strokes into separate paths. No SVG, code, prose or string coordinates.
+WHOLE OBJECTS: set intent.kind="object" with an existing subjectId/regionId as the SEMANTIC reference. Set drawing.recipeId to an available recipe ID, or supply aspect/paths for an unlisted complete object. The app retrieves the chosen object's actual strokes AFTER you choose the idea; recipeId must really depict that object. Use placement:{mode:"scene",at:[fullCanvasCentreX,fullCanvasCentreY],scale:0.12..0.38}. These at coordinates are FULL CANVAS, unlike detail coordinates. Consider empty space, plausible scale and relation: squirrel BESIDE a tree, boat on water, kite near a person. Physical contact is NOT required. Never use object mode to disguise an unattached body part. Do not repeat the same recent recipe. Catalogue is knowledge, not recognition evidence.
+Placement for DETAILS: object details MUST use inside, attached or contact. Detached above/below/left/right are allowed ONLY on subjects whose observed family is landscape (e.g. rain below a cloud). An antenna, ear, leaf or tail cannot use above/below as a substitute for attachment. Use the whole-subject region if a measured join is outside a smaller observed region. Modes inside or landscape above/below/left/right use at:[u,v] (.1..9) within the selected region, scale:.08..65 relative to its longest physical side, joinId:null. attached uses joinId from actual ink anchors of that subject (inside the selected region), at:null, and first M is the connecting end on a local box edge (prefer M 0 .5, drawing toward increasing x). The compiler rotates this local frame to grow OUTWARD from the selected ink side. It must grow AWAY from existing ink, not along or across it. An anchor label is NOT proof of anatomy. Exterior limbs/leaves/stems must be attached; separate neighboring objects need an actual scene interaction. Internal shapes must fit their region. Small details need readable gaps at the current brush size. Don't force an idea when its region is uncertain. If none is grounded return plans:[].
 When a new shape should meet TWO points or a SHORT CURVED BOUNDARY, use placement:{mode:"contact",contactId:"an actual supplied contact ID",contactKind:"points" or "contour"}, with no scale/at/joinId. The chosen contact must belong to the intent's region. In your LOCAL drawing y=1 is the contact baseline and y=0 grows away from the original boundary. x=0 and x=1 meet the two measured ends. points allows touch at only these two ends; contour fits the baseline to the measured curved ink, so a hat brim can sit naturally on the head. Include endpoints in the paths and, for contour, a continuous bottom path from (0,1) to (1,1). The app warps this bottom to the real contour and sizes the detail from its width and your physical aspect. Most new ink must extend into clear space, never trace/overwrite the original as the whole contribution. Do not use a contact label as evidence of object identity. Contact is optional; use inside for surface details and attached for a single endpoint.
 SCENE DATA: ${JSON.stringify(scene)}
-DRAWING KNOWLEDGE (ideas only, custom local paths are universal): ${JSON.stringify(cards)}
+TARGET OBJECT RECIPE CATALOGUE: ${JSON.stringify(recipeCatalogue(scene.subjects,context.recentRecipeIds))}
+DRAWING KNOWLEDGE (ideas and related forms): ${JSON.stringify(cards)}
 CHILD CONTEXT: ${JSON.stringify({locale:context.locale,utterance:context.utterance,history:context.history.filter(x=>x.role==='user'),scene:context.scene,drawingStyle:context.drawingStyle,canvasSize:context.canvasSize,recentSubjects:context.recentSubjects,rejectedSubjects:context.rejectedSubjects})}
 Name the new detail and relationship in ${context.locale==='en'?'English':'Chinese'}.`
 }

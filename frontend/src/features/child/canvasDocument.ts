@@ -1,7 +1,9 @@
 import { createStrokePainter, type BrushKind, type Point } from './brushes'
+import type { DrawingProposal } from './companion/proposals'
 
 export type CanvasProvenance = 'child' | 'co-created' | 'unknown'
-export type CanvasOperation = {
+export interface NiloObjectData { name: string; proposals: DrawingProposal[]; aspect: number }
+export type CanvasStroke = {
   owner: 'child' | 'nilo'
   type: 'stroke'
   groupId: string
@@ -13,7 +15,10 @@ export type CanvasOperation = {
   /** Coordinates and brush size are replayed in their original drawing space. */
   referenceWidth: number
   referenceHeight: number
-} | { owner: 'child'; type: 'clear'; groupId: string }
+  object?: NiloObjectData
+}
+export type CanvasOperation = CanvasStroke | { owner: 'child'; type: 'clear'; groupId: string }
+  | { owner: 'nilo'; type: 'edit'; groupId: string; targetId: string; replacement: CanvasStroke[] }
 
 export interface CanvasDocument {
   version: 1
@@ -25,8 +30,22 @@ export interface CanvasDocument {
 }
 
 export function cloneCanvasDocument(document: CanvasDocument): CanvasDocument {
-  return { ...document, operations: document.operations.map(op => op.type === 'stroke'
-    ? { ...op, points: op.points.map(point => ({ ...point })) } : { ...op }) }
+  return structuredClone(document)
+}
+
+/** Replacements retain their original z-order. Child strokes are never moved or erased.
+ * Clear closes an epoch: an edit cannot resurrect a group hidden by clear. */
+export function visibleOperations(document: CanvasDocument): (CanvasStroke | Extract<CanvasOperation,{type:'clear'}>)[] {
+  let result: (CanvasStroke | Extract<CanvasOperation,{type:'clear'}>)[] = []
+  for (const op of document.operations) {
+    if (op.type === 'clear') { result = [op]; continue }
+    if (op.type === 'stroke') { result.push(op); continue }
+    const first = result.findIndex(item => item.owner === 'nilo' && item.groupId === op.targetId)
+    if (first < 0) continue
+    result = result.filter(item => item.owner !== 'nilo' || item.groupId !== op.targetId)
+    result.splice(first, 0, ...op.replacement)
+  }
+  return result
 }
 
 export function getCanvasProvenance(document: CanvasDocument): CanvasProvenance {
@@ -36,6 +55,7 @@ export function getCanvasProvenance(document: CanvasDocument): CanvasProvenance 
 }
 
 export function paintCanvasOperation(context: CanvasRenderingContext2D, width: number, height: number, op: CanvasOperation) {
+  if (op.type === 'edit') return
   if (op.type === 'clear') { context.clearRect(0, 0, width, height); return }
   if (!op.points.length) return
   context.save()

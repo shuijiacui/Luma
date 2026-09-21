@@ -1,5 +1,5 @@
 import type { BrushKind } from './brushes'
-import type { CanvasDocument, CanvasOperation } from './canvasDocument'
+import { visibleOperations, type CanvasDocument, type CanvasOperation } from './canvasDocument'
 
 export interface CompanionSceneBox { x: number; y: number; width: number; height: number }
 export interface CompanionSceneContribution {
@@ -58,7 +58,7 @@ export function getCompanionScene(document: CanvasDocument): CompanionScene {
     ? { x: 0, y: 0, width: 1, height: 1 } : null
   let niloBounds: CompanionSceneBox | null = null
   const groups = new Map<string, CompanionSceneContribution>()
-  for (const op of document.operations) {
+  for (const op of visibleOperations(document)) {
     if (op.type === 'clear') { childBounds = null; niloBounds = null; groups.clear(); continue }
     const bounds = strokeBounds(op)
     if (!bounds) continue

@@ -42,6 +42,7 @@ function projectionFits(p, occupancy, aspect = 1, surfaceSize, pixels) {
   if (!n) return false;
   const cells = proposalFootprint(p, n, aspect, surfaceSize);
   if (!cells) return false;
+  if (p.placementPolicy === 'free' && p.contribution === 'object' && !p.attachment && !p.contact) return true;
   if (p.contact !== undefined) return contactProjectionFits(p, occupancy, aspect, surfaceSize, cells, brushMargins(p, n, surfaceSize), pixels);
   if (!p.attachment) return [...cells].every((cell) => occupancy[cell] <= 0.025);
   const start = sampleProposalGeometry(p, aspect)[0]?.points[0];
@@ -53,6 +54,7 @@ function projectionFits(p, occupancy, aspect = 1, surfaceSize, pixels) {
 }
 function placementFits(p, aspect, surfaceSize) {
   if (p.contact !== undefined) return !!p.anchor && !p.attachment && p.template === 'custom' && p.rotation === 0 && !!validateContact(p.contact, p.anchor, aspect);
+  if (p.contribution === "object") return !p.attachment && !p.contact;
   if (!p.anchor || !p.placement) return true;
   if (p.attachment) return true;
   const points = sampleProposalGeometry(p, aspect).flatMap((stroke) => stroke.points);

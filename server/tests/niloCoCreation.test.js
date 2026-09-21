@@ -14,7 +14,7 @@ test('whole-picture turns may develop a prior child tree despite the final separ
   const scene={recentContributions:[{owner:'child',bounds:tree},{owner:'nilo',bounds:{x:.72,y:.1,width:.1,height:.1}},{owner:'child',bounds:sky}]}
   expect(turnAttentionFailure({scene},{anchor:tree})).toBe('wrong_target')
   expect(turnAttentionFailure({scene,turnScope:'scene'},{anchor:tree})).toBeNull()
-  expect(turnAttentionFailure({scene,turnScope:'scene'},{anchor:{x:.72,y:.1,width:.1,height:.1}})).toBe('wrong_target')
+  expect(turnAttentionFailure({scene,turnScope:'scene'},{anchor:{x:.72,y:.1,width:.1,height:.1}})).toBeNull() // confirmed Nilo objects belong to the shared scene
   expect(turnAttentionFailure({scene,turnScope:'scene'},{anchor:{x:.6,y:.4,width:.05,height:.05}})).toBe('wrong_target')
 })
 

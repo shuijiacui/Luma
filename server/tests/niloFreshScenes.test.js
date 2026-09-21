@@ -57,7 +57,7 @@ test('offline preparation saves all 20 before PNGs and 40 unexecuted rows withou
 })
 
 describe('injected provider runs actual pipeline without external calls',()=>{
-  test.each(['baseline','numbered'])('%s retains no-plan failure, unchanged budgets and unknown semantics',async variant=>{
+  test.each(['baseline','numbered'])('%s retains no-plan failure, bounded budgets and unknown semantics',async variant=>{
     const fixture=freshCases[0],sent=[],adapterCalls=[]
     const provider=vi.fn(async(_image,prompt,options)=>{
       sent.push({prompt,options})
@@ -70,7 +70,7 @@ describe('injected provider runs actual pipeline without external calls',()=>{
     }
     const {record,grounding}=await evaluateFreshFixture(fixture,variant,{provider,makeProviderAdapter:factory})
     expect(record).toMatchObject({executed:true,canvasFits:false,failureCode:'unclear_target',semanticStatus:'independent_review_required'})
-    expect(record.calls.map(c=>c.maxTokens)).toEqual([1100,1800])
+    expect(record.calls.map(c=>c.maxTokens)).toEqual([1100,2400])
     expect(record.calls.every(c=>c.tokens===null)).toBe(true)
     expect(record.review.meaningfulAddition).toBeNull()
     expect(sent[0].prompt).not.toContain(fixture.semanticChecklist.plausibleIdeas[0])
@@ -96,7 +96,7 @@ describe('injected provider runs actual pipeline without external calls',()=>{
       return {version:2,plans:[]}
     })
     const {record,grounding}=await evaluateFreshFixture(fixture,'numbered',{provider,makeProviderAdapter:makeGroundedProvider})
-    expect(record.calls.map(c=>c.maxTokens)).toEqual([1100,1800])
+    expect(record.calls.map(c=>c.maxTokens)).toEqual([1100,2400])
     expect(grounding.rejected).toEqual([])
     expect(grounding.adapted.subjects[0].bounds).toEqual(largest.bounds)
     expect(record.canvasFits).toBe(false)

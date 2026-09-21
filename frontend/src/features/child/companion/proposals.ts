@@ -12,6 +12,9 @@ export type Template = BuiltinTemplate | 'custom'
 export interface SubjectAnchor { x: number; y: number; width: number; height: number }
 export type ProposalPlacement = 'above' | 'below' | 'left' | 'right' | 'inside' | 'near'
 export interface DrawingProposal {
+  placementPolicy?: 'free'
+  contribution?: 'object'
+  recipeId?: string
   template: Template
   x: number; y: number; width: number; height: number
   rotation: number; color: string; strokeWidth: number
@@ -93,7 +96,11 @@ type Point = { x:number; y:number }
 export function validateProposal(value: unknown): DrawingProposal | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
   const raw = value as DrawingProposal
-  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints', 'subject', 'sketch', 'attachment', 'contact'].includes(key))) return null
+  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'placementPolicy'].includes(key))) return null
+  if (raw.placementPolicy !== undefined && (raw.placementPolicy !== 'free' || raw.contribution !== 'object')) return null
+  if (raw.contribution !== undefined && raw.contribution !== 'object') return null
+  if (raw.recipeId !== undefined && (typeof raw.recipeId !== 'string' || !/^[a-z]+-[0-9]+$/.test(raw.recipeId))) return null
+  if (raw.contribution === 'object' && (raw.attachment || raw.contact)) return null
   const p = { ...raw, rotation: raw.rotation === undefined ? 0 : raw.rotation, strokeWidth: raw.strokeWidth === undefined ? 4 : raw.strokeWidth }
   if (!(p.template === 'custom' || templates.includes(p.template)) || !/^#[\da-f]{6}$/i.test(p.color)) return null
   if (![p.x, p.y, p.width, p.height, p.rotation, p.strokeWidth].every(Number.isFinite)) return null
@@ -305,7 +312,7 @@ export type LocalCommand = 'accept' | 'dismiss' | 'alternative' | 'smaller' | 'l
 export function localCommand(text: string): LocalCommand {
   if (/[?？]/.test(text)) return null
   const s = text.toLowerCase().trim().replace(/[。！!.]+$/g, '').replace(/\s+/g, ' ')
-  if (/^(留下来?|确认留下|把它留下来|画上去|放上去|keep it|keep this|add it|put it on)$/.test(s)) return 'accept'
+  if (/^(留下来?|确认留下|确认修改|确认移除|keep changes|confirm changes|confirm removal|把它留下来|画上去|放上去|keep it|keep this|add it|put it on)$/.test(s)) return 'accept'
   if (/^(先不要了?|不要了?|先收起来|取消|不要留下来?|不留下|别画|不用了|no|cancel|dismiss|not this|don't keep it|do not keep it)$/.test(s)) return 'dismiss'
   if (/^(换一个|换个想法|换一下|another one|try another|another idea)$/.test(s)) return 'alternative'
   if (/^(停止|安静一下|暂停聊天|stop|stop talking|quiet please)$/.test(s)) return 'stop'
