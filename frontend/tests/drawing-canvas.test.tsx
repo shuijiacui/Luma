@@ -97,6 +97,17 @@ test('a tap is saved as one undoable stroke; a second pointer cannot finish it',
   expect(ctx.clearRect).toHaveBeenCalled()
 })
 
+test('drawing works when randomUUID is unavailable on an HTTP page', () => {
+  vi.stubGlobal('crypto', { getRandomValues: (bytes: Uint8Array) => bytes.fill(7) })
+  const { canvas, draft, complete } = prepare()
+  pointer(canvas, 'pointerdown')
+  pointer(canvas, 'pointermove', { clientX: 80, clientY: 90 })
+  pointer(canvas, 'pointerup', { clientX: 120, clientY: 110 })
+  expect(complete).toHaveBeenCalledOnce()
+  expect(draft.document?.operations).toHaveLength(1)
+  expect(draft.document?.operations[0]).toMatchObject({ owner: 'child', type: 'stroke' })
+})
+
 test('eraser snapshots can be undone and the following brush uses normal paint', async () => {
   const {canvas,props,view,ref} = prepare()
   pointer(canvas,'pointerdown'); pointer(canvas,'pointerup')

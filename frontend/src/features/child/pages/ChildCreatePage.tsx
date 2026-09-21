@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/AuthContext'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { analyzeDrawing, type FeatureJSON } from '@/lib/api/lumaApi'
 import { ApiError } from '@/lib/api/client'
+import { randomId } from '@/lib/randomId'
 import { clearChildDraft, getChildDraft, restoreChildArtwork, resumeChildDraft } from '../draft'
 import { discardStoredDraft, persistChildDraft, readStoredDraft } from '../draftRecovery'
 import { DraftRecovery } from '../components/DraftRecovery'
@@ -224,7 +225,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   async function persistDrawing() {
     const canvas = canvasRef.current, snapshot = canvas?.exportSnapshot()
     if (!canvas || !snapshot) throw new Error('画布还在准备，请稍后再点保存。')
-    draft.artworkId ??= crypto.randomUUID()
+    draft.artworkId ??= randomId()
     const result = await saveArtwork(session, draft.artworkId, draft.artworkRevision ?? 0, snapshot, canvas.getDocument())
     draft.artworkRevision = result.revision; draft.savedSnapshot = snapshot
     setDraftError(!persistChildDraft(ownerId, draftSlot, draft))
@@ -255,7 +256,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     }
     setAnalysis('loading')
     try {
-      if (submission.current?.image !== imageBase64 || submission.current?.provenance !== provenance) submission.current = { image: imageBase64, key: crypto.randomUUID(), provenance }
+      if (submission.current?.image !== imageBase64 || submission.current?.provenance !== provenance) submission.current = { image: imageBase64, key: randomId(), provenance }
       draft.submission = submission.current
       const result = await analyzeDrawing(imageBase64, null, session?.token, submission.current.key, provenance,
         session?.token ? { artworkId: draft.artworkId, revision: draft.artworkRevision }

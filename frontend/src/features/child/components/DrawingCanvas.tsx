@@ -2,6 +2,7 @@ import { pixelOccupancy } from '../../../../../shared/niloOccupancy.mjs'
 import type { InkPixels } from '../../../../../shared/niloContact.mjs'
 import { t, useLocale } from '@/i18n'
 import type { NiloStrokeSpec } from '@/lib/api/lumaApi'
+import { randomId } from '@/lib/randomId'
 import { BRUSHES, createStrokePainter, type BrushKind } from '../brushes'
 import { canvasUndoCounts, cloneCanvasDocument, getCanvasProvenance, paintCanvasOperation, undoCanvasOwner, type CanvasDocument, type CanvasOperation } from '../canvasDocument'
 import { getCompanionScene, type CompanionScene } from '../companionScene'
@@ -161,7 +162,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
       || (spec.brushKind !== undefined && !BRUSHES.some(brush => brush.id === spec.brushKind))
       || !Array.isArray(spec.points) || !spec.points.length || spec.points.length > 4096
       || spec.points.some(point => !Number.isFinite(point.x) || !Number.isFinite(point.y) || point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1))) return false
-    const groupId = crypto.randomUUID()
+    const groupId = randomId()
     const scale = canvas.width / (canvas.getBoundingClientRect().width || canvas.width)
     const ops: CanvasOperation[] = specs.map(spec => ({ owner: 'nilo', type: 'stroke', groupId, points: spec.points.map(point => ({ ...point })),
       color: spec.color, size: spec.width * scale, brushKind: spec.brushKind ?? 'round', eraser: false, referenceWidth: canvas.width, referenceHeight: canvas.height }))
@@ -252,7 +253,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     async drawCompanionStroke(spec) { commitCompanionStrokes([spec], revisionRef.current) },
     clear() {
       if (disabled || restoringRef.current || pointerRef.current !== null) return
-      documentRef.current.operations.push({ owner: 'child', type: 'clear', groupId: crypto.randomUUID() })
+      documentRef.current.operations.push({ owner: 'child', type: 'clear', groupId: randomId() })
       revisionRef.current++
       repaint()
       onStrokeComplete()
@@ -320,7 +321,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     const point = getPoint(event)
     const scale = canvas.width / (canvas.getBoundingClientRect().width || canvas.width)
     const settings = { kind: brushKind, color, size: brushSize * scale, eraser: isEraser }
-    currentStrokeRef.current = { owner: 'child', type: 'stroke', groupId: crypto.randomUUID(),
+    currentStrokeRef.current = { owner: 'child', type: 'stroke', groupId: randomId(),
       points: [{ x: point.x / canvas.width, y: point.y / canvas.height }], color, size: settings.size, brushKind, eraser: isEraser,
       referenceWidth: canvas.width, referenceHeight: canvas.height }
     painterRef.current = createStrokePainter(context, settings, point)
