@@ -2,6 +2,7 @@ import { drawingReferenceSheet } from './niloDrawingReferences.js'
 import { decodeOccupancy } from '../../../shared/niloOccupancy.mjs'
 import { validateContact } from '../../../shared/niloContact.mjs'
 import { generateCreativeTurn } from './niloCreativeTurn.js'
+import { creativeIdeationPrompt, sanitizeCreativeIdea, retrieveIdeaRecipes } from './niloIdeaFirst.js'
 import { generateProtocolTurn } from './niloProtocolTurn.js'
 import { drawingInkContacts } from './niloContactPlacement.js'
 import { readDrawingLayout } from './niloDrawingLayout.js'
@@ -469,7 +470,7 @@ function rawPartCorrection(raw) {
   return 'Use the named part contract: inside parts have position.u/v in 0.1..0.9 and NO attachment; connected parts require attachment and the permitted direction. Omit subject/sketch for part.'
 }
 
-export async function generateNiloDialogue({ imageBase64, focusImage, context: input, chatWithImage = defaultVision, chatText = defaultText, timeoutMs, signal } = {}) {
+export async function generateNiloDialogue({ imageBase64, focusImage, context: input, chatWithImage = defaultVision, chatText = defaultText, timeoutMs, signal, creativeMode = process.env.NILO_CREATIVE_MODE } = {}) {
   const context = sanitizeDialogueContext(input)
   const focus = imageBase64 && typeof focusImage?.imageBase64 === 'string' && focusImage.imageBase64.length <= 1024 * 1024
     && validateBounds(focusImage.bounds) ? { imageBase64: focusImage.imageBase64, bounds: validateBounds(focusImage.bounds) } : undefined
@@ -521,6 +522,18 @@ export async function generateNiloDialogue({ imageBase64, focusImage, context: i
         }
         throw error
       }
+    }
+    if (context.drawingProtocol === 3 && creativeMode === 'idea-first') {
+      let observed
+      try { observed = await call(creativeIdeationPrompt(context), { ...opts, kind: 'nilo_creative_ideate', maxTokens: 1000 }) }
+      catch (error) { if (!(error instanceof LLMParseError)) throw error }
+      controller.signal.throwIfAborted()
+      const idea = sanitizeCreativeIdea(observed?.idea)
+      if (!idea) return dialogueFallback(context, 'invalid_response')
+      const candidates = retrieveIdeaRecipes(idea, context.recentRecipeIds)
+      knowledge = { observation: sanitizeKnowledgeObservation(observed) }
+      traceNode('nilo_knowledge', { outcome: 'idea_first_retrieved', cardCount: candidates.length, hasReference: false })
+      return await generateCreativeTurn({ imageBase64, context, knowledge, idea, candidates, call, opts, validateProposal })
     }
     if(context.useDrawingKnowledge || context.drawingProtocol>=2) {
       let observed

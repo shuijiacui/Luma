@@ -5,6 +5,7 @@ import { decodeCanvas } from './niloPreview.js'
 import { validateCustomSketch } from './niloSketch.js'
 import { normalizeTurnSketch } from './niloCoCreation.js'
 import { LLMParseError } from './llmClient.js'
+import { ideaRenderingPrompt } from './niloIdeaFirst.js'
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n))
 export function creativeColor(raw, recipe) {
@@ -106,11 +107,11 @@ export function placeCreativeObject(proposal, occupancy, aspect, size) {
 }
 
 /** One model choice, optional data-format repair; no semantic approval round. */
-export async function generateCreativeTurn({ imageBase64, context, knowledge, call, opts, validateProposal }) {
-  const catalogue = creativeRecipeCatalogue([
+export async function generateCreativeTurn({ imageBase64, context, knowledge, call, opts, validateProposal, idea, candidates = [] }) {
+  const catalogue = idea ? null : creativeRecipeCatalogue([
     {subject:context.utterance}, ...knowledge.observation.subjects,
   ], context.recentRecipeIds)
-  const prompt = `You are Nilo, a playful drawing partner for a child. Look at the WHOLE picture and choose ONE most relevant new idea yourself. Draw it; do not ask the child to choose from a menu. Imaginative, impossible, loosely associated scenes are welcome. Uncertain recognition is not a reason to stop: offer your own imaginative addition without claiming what the child intended. You need not continue the last stroke or attach to existing anatomy. Follow an explicit request when present, otherwise prefer a complete related object with a readable silhouette and several distinguishing details. Use a different pose/variant from recent turns when appropriate.
+  const prompt = idea ? ideaRenderingPrompt(context, knowledge.observation, idea, candidates) : `You are Nilo, a playful drawing partner for a child. Look at the WHOLE picture and choose ONE most relevant new idea yourself. Draw it; do not ask the child to choose from a menu. Imaginative, impossible, loosely associated scenes are welcome. Uncertain recognition is not a reason to stop: offer your own imaginative addition without claiming what the child intended. You need not continue the last stroke or attach to existing anatomy. Follow an explicit request when present, otherwise prefer a complete related object with a readable silhouette and several distinguishing details. Use a different pose/variant from recent turns when appropriate.
 Return ONLY JSON {"subject":"name of your addition","relationship":"brief connection to this picture","recipeId":"an available recipe ID or null","backup":{"recipeId":"most relevant available recipe ID","relationship":"its own connection","at":[0.7,0.6],"scale":0.2},"sketch":null,"color":"#328ab5","at":[0.7,0.5],"scale":0.28}.
 COLOR: Choose your OWN #RRGGBB stroke color based on the picture, the new subject and the child's story. You are not locked to the child's current pen color. Use clear, harmonious colors visible on the white paper; avoid near-white ink. The catalogue colors are suggestions, not limits. If the child explicitly requests a color, obey it. The backup should include its own color. Keep the child's brush texture and line thickness.
 PATH DATA SCHEMA: paths is an array of strokes; each stroke is an array of command arrays. Example of representation ONLY: [[['M',0.1,0.2],['Q',0.5,0.1,0.9,0.2]],[['E',0.5,0.5,0.1,0.1]]]. Use double quotes for valid JSON. An ellipse's centre minus/plus radius must remain within 0..1. No negative coordinates. backup.recipeId MUST be an EXACT ID from RECIPE CATALOGUE (e.g. boat-0), not a lesson ID or a subject name.
@@ -124,13 +125,16 @@ CHILD CONTEXT: ${JSON.stringify({ utterance: context.utterance, history: context
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw
     try {
-      raw = await call(attempt ? `${prompt}\nThe previous response was not renderable data. Choose the most related recipe from the catalogue and return its recipeId with at and scale.` : prompt,
-        { ...opts, kind: 'nilo_companion_vision', maxTokens: attempt ? 650 : 2400 })
+      const repair = idea ? 'The previous response was not renderable or selected an ineligible recipe. Repair the drawing data for the SAME LOCKED IDEA, preserving all details. Do not choose a backup object. If requiresCustom is true, return recipeId:null and complete custom paths.'
+        : 'The previous response was not renderable data. Choose the most related recipe from the catalogue and return its recipeId with at and scale.'
+      raw = await call(attempt ? `${prompt}\n${repair}` : prompt,
+        { ...opts, kind: idea ? 'nilo_creative_render' : 'nilo_companion_vision', maxTokens: attempt && !idea ? 650 : 2400 })
     } catch (error) { if (!(error instanceof LLMParseError)) throw error }
     opts.signal.throwIfAborted()
-    let recipe = getDrawingRecipe(raw?.recipeId)
+    let recipe = idea ? (!idea.requiresCustom ? candidates.find(r => r.id === raw?.recipeId) : null) : getDrawingRecipe(raw?.recipeId)
     let sketch = recipe?.sketch ?? creativeSketch(raw?.sketch)
     if (!hasDrawableIdea(sketch)) {
+      if (idea) continue
       recipe = getDrawingRecipe(raw?.backup?.recipeId ?? raw?.backupRecipeId); sketch = recipe?.sketch
       // A different object needs its OWN layout and relationship, never the
       // failed original's anatomy (e.g. a bench must not inherit "held wand").
@@ -142,9 +146,9 @@ CHILD CONTEXT: ${JSON.stringify({ utterance: context.utterance, history: context
     const style = context.drawingStyle ?? { color: '#568570', brushSize: 4, brushKind: 'round' }
     const color = creativeColor(raw?.color, recipe)
     const proposal = validateProposal({ template: 'custom', contribution: 'object', placementPolicy: 'free',
-      subject: recipe ? (context.locale === 'en' ? recipe.subject : recipe.name) : raw?.subject,
+      subject: idea?.subject ?? (recipe ? (context.locale === 'en' ? recipe.subject : recipe.name) : raw?.subject),
       ...(recipe ? { recipeId: recipe.id } : {}), sketch, target: 'whole picture',
-      relation: typeof raw?.relationship === 'string' && raw.relationship.trim() ? raw.relationship : 'An imaginative addition to our picture',
+      relation: idea?.relationship ?? (typeof raw?.relationship === 'string' && raw.relationship.trim() ? raw.relationship : 'An imaginative addition to our picture'),
       x: clamp(finite(raw?.at?.[0], .7) - width / 2, .04, .96 - width),
       y: clamp(finite(raw?.at?.[1], .5) - height / 2, .04, .96 - height), width, height,
       rotation: 0, color, strokeWidth: style.brushSize, brushKind: style.brushKind }, { ...context, takeTurn: false, drawingStyle: { ...style, color }, currentProposal: undefined, rejectedSubjects: [] })
@@ -152,7 +156,9 @@ CHILD CONTEXT: ${JSON.stringify({ utterance: context.utterance, history: context
     const occupancy = decodeOccupancy(context.collisionMap) ?? pixelOccupancy(decodeCanvas(imageBase64))
     const placed = placeCreativeObject(proposal, occupancy, aspect, context.canvasSize)
     return { status: 'ready', protocolVersion: 3, geometryReviewed: true, proposal: placed,
-      drawingMetrics: { plans: attempt + 1, reviews: 0, repairs: attempt },
+      drawingMetrics: { plans: attempt + 1, reviews: 0, repairs: attempt,
+        ...(idea ? { creativeMode: 'idea-first', candidateCount: candidates.length, route: recipe ? 'recipe' : 'custom',
+          referenceReported: !recipe && candidates.some(r => r.id === raw?.referenceRecipeId) } : {}) },
       reply: context.locale === 'en' ? `Let’s add ${placed.subject}!` : `我来添上${placed.subject}！` }
   }
   return { status: 'unavailable', reason: 'invalid_response', reply: context.locale === 'en'

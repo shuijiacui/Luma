@@ -44,9 +44,14 @@
   {
     "category": "bird",
     "keys": [
-      "5357674197680128",
-      "5553672849195008"
-    ]
+      "6116863522111488",
+      "5373221698273280"
+    ],
+    "review": {
+      "date": "2026-09-21",
+      "candidateCount": 12,
+      "notes": "Replaces ambiguous flying silhouette and fragmented head with two readable side views; beak, body and feet remain distinct."
+    }
   },
   {
     "category": "butterfly",
@@ -200,5 +205,101 @@
       "5060802019065856",
       "5171915670945792"
     ]
+  },
+  {
+    "category": "elephant",
+    "keys": [
+      "4695471509471232",
+      "5191680976224256"
+    ],
+    "review": {
+      "date": "2026-09-21",
+      "candidateCount": 12,
+      "notes": "Front head and side body provide complementary visible trunk/ear relationships."
+    }
+  },
+  {
+    "category": "giraffe",
+    "keys": [
+      "5807561943023616",
+      "6088877917863936"
+    ],
+    "review": {
+      "date": "2026-09-21",
+      "candidateCount": 12,
+      "notes": "Two complete long-neck figures; second includes a body patch without needing a perfect outline."
+    }
+  },
+  {
+    "category": "lion",
+    "keys": [
+      "5119240698855424",
+      "6258671753363456"
+    ],
+    "review": {
+      "date": "2026-09-21",
+      "candidateCount": 12,
+      "notes": "Face/mane and full-body examples; distinguish mane from face before adding local texture."
+    }
+  },
+  {
+    "category": "bear",
+    "keys": [
+      "5296368123904000",
+      "4506042043990016"
+    ],
+    "review": {
+      "date": "2026-09-21",
+      "candidateCount": 12,
+      "notes": "Rounded ears and a distinct muzzle; rejected pointed-ear, bird-like and fragmented first candidates."
+    }
+  },
+  {
+    "category": "penguin",
+    "keys": [
+      "5688965652807680",
+      "5640412263874560"
+    ],
+    "review": {
+      "date": "2026-09-21",
+      "candidateCount": 12,
+      "notes": "Side and front views with readable beak, belly and flippers; rejected ambiguous first two candidates."
+    }
+  },
+  {
+    "category": "octopus",
+    "keys": [
+      "4512633778601984",
+      "4975207011844096"
+    ],
+    "review": {
+      "date": "2026-09-21",
+      "candidateCount": 12,
+      "notes": "Coherent body-to-arm contours; avoid treating the number of arms as a requirement."
+    }
+  },
+  {
+    "category": "bee",
+    "keys": [
+      "5293265580457984",
+      "4792141492518912"
+    ],
+    "review": {
+      "date": "2026-09-21",
+      "candidateCount": 12,
+      "notes": "Head, striped abdomen and wings are distinguishable; no need to infer direction from stripes alone."
+    }
+  },
+  {
+    "category": "guitar",
+    "keys": [
+      "6051031639130112",
+      "4931191511711744"
+    ],
+    "review": {
+      "date": "2026-09-21",
+      "candidateCount": 12,
+      "notes": "Tilted body, neck, sound hole and sparse strings; preserve that orientation in local details."
+    }
   }
 ]
