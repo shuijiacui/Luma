@@ -1,6 +1,7 @@
 import { changeVariant, changePart, objectEditCommand, resolveObject, type EditableNiloObject } from '../companion/objects'
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { t } from '@/i18n'
+import { randomId } from '@/lib/randomId'
 import { authFetch } from '@/lib/api/authFetch'
 import { ApiError } from '@/lib/api/client'
 import type { DrawingCanvasHandle } from '../components/DrawingCanvas'
@@ -154,7 +155,7 @@ export function useCompanion(options: Options) {
   const drawTurn = useCallback((proposal: DrawingProposal, revision: number, aspect: number, caption = 'Nilo 正在接着画…', turnSource: 'ai' | 'local' = 'ai') => {
     const version = generation.current
     const durationMs = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 1200
-    const turn: Projection = { id: crypto.randomUUID(), revision, proposal, additions: [], alternatives: [], aspect, turn: true, durationMs, turnSource }
+    const turn: Projection = { id: randomId(), revision, proposal, additions: [], alternatives: [], aspect, turn: true, durationMs, turnSource }
     setProjection(turn); setPhase('sketching'); say(caption, false)
     timer.current = setTimeout(() => {
       timer.current = null
@@ -292,10 +293,10 @@ export function useCompanion(options: Options) {
           ? prepareDrawingPlan([proposed, ...additions], occupancy, aspect, opt.surfaceSize?.(), proposed.contact ? canvas.getCollisionPixels?.() : undefined) : null
         const cached = additions.length === 0 ? alternatives.flatMap(item => prepareDrawingPlan([item], occupancy, aspect, opt.surfaceSize?.(), item.contact ? canvas.getCollisionPixels?.() : undefined) ?? []) : []
         if (prepared) {
-          const plan = { editTargetId:pending?.editTargetId, id: crypto.randomUUID(), revision, proposal: prepared[0], additions: prepared.slice(1), alternatives: cached, aspect }
+          const plan = { editTargetId:pending?.editTargetId, id: randomId(), revision, proposal: prepared[0], additions: prepared.slice(1), alternatives: cached, aspect }
           show(plan, reply, speak)
         }
-        else if (cached.length) show({ id: crypto.randomUUID(), revision, proposal: cached[0], additions: [], alternatives: [], aspect }, t('先看看这个小主意，喜欢的话就留下来。', opt.locale), speak)
+        else if (cached.length) show({ id: randomId(), revision, proposal: cached[0], additions: [], alternatives: [], aspect }, t('先看看这个小主意，喜欢的话就留下来。', opt.locale), speak)
         else { setPhase('idle'); say('这组小主意放在这里有点挤。你可以让我换个位置，或添别的内容。', speak) }
       } else if (canPropose && result.proposal != null) {
         setPhase('idle'); say(result.proposal.attachment
@@ -363,12 +364,12 @@ export function useCompanion(options: Options) {
     metrics.current.rejected++
     const variant = changeVariant(p.proposal)
     if (variant) {
-      const next={...p,pristineEdit:false,deleting:false,proposal:variant,id:crypto.randomUUID()}
+      const next={...p,pristineEdit:false,deleting:false,proposal:variant,id:randomId()}
       if(valid(next)){show(next,'换个画法，看看这个怎么样。',speak);return}
     }
     if (p.alternatives.length) {
       cancel(false)
-      show({ ...p, id: crypto.randomUUID(), proposal: p.alternatives[0], additions: [], alternatives: p.alternatives.slice(1) }, t('换个小主意，看看这个怎么样。', ref.current.locale), speak)
+      show({ ...p, id: randomId(), proposal: p.alternatives[0], additions: [], alternatives: p.alternatives.slice(1) }, t('换个小主意，看看这个怎么样。', ref.current.locale), speak)
     } else void ask(t('请换一个和我的画有关的小主意。', ref.current.locale), true, feedback)
   }, [ask, cancel, rememberPlan, say, show, valid])
   const edit = useCallback((patch: Partial<DrawingProposal>, speak = false) => {
@@ -395,7 +396,7 @@ export function useCompanion(options: Options) {
     if (!main || additions.some(item => !item) || !drawingPlanFits([main, ...additions as DrawingProposal[]], (p.editTargetId ? ref.current.canvas.current!.getOccupancyWithoutObject?.(p.editTargetId,256) ?? ref.current.canvas.current!.getOccupancy(256) : ref.current.canvas.current!.getOccupancy(main.contact ? 256 : 64)), p.aspect, ref.current.surfaceSize?.(), main.contact ? ref.current.canvas.current!.getCollisionPixels?.() : undefined)) { say('这个位置会碰到你的画，换个位置试试吧。', speak); if (!speak) ref.current.onSpeak(''); return }
     metrics.current.localEdits++
     ref.current.canvas.current?.previewWithoutObject?.(p.editTargetId??null)
-    setProjection({ ...p, pristineEdit:false, deleting:false, id: crypto.randomUUID(), proposal: main, additions: additions as DrawingProposal[], alternatives: [] })
+    setProjection({ ...p, pristineEdit:false, deleting:false, id: randomId(), proposal: main, additions: additions as DrawingProposal[], alternatives: [] })
     setPhase('projected'); say('调整好啦，喜欢的话就留下来。', speak)
     if (!speak) ref.current.onSpeak('')
   }, [cancel, say, setPhase, setProjection, valid])
@@ -404,7 +405,7 @@ export function useCompanion(options: Options) {
     const canvas=ref.current.canvas.current
     if(!canvas || ref.current.allowDrawing===false || !ref.current.enabled)return
     cancel(false)
-    setProjection({id:crypto.randomUUID(),revision:canvas.getRevision(),proposal:object.proposals[0],additions:object.proposals.slice(1),alternatives:[],aspect:object.aspect,editTargetId:object.id,pristineEdit:true})
+    setProjection({id:randomId(),revision:canvas.getRevision(),proposal:object.proposals[0],additions:object.proposals.slice(1),alternatives:[],aspect:object.aspect,editTargetId:object.id,pristineEdit:true})
     say('选好了，可以移动、换色或换个画法。',false)
     setPhase('projected')
   },[cancel,say,setProjection,setPhase])

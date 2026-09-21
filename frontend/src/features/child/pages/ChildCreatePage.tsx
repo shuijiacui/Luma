@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/AuthContext'
 import { AvatarPicker } from '@/features/profile/components/AvatarPicker'
 import { analyzeDrawing, type FeatureJSON } from '@/lib/api/lumaApi'
 import { ApiError } from '@/lib/api/client'
+import { randomId } from '@/lib/randomId'
 import { clearChildDraft, getChildDraft, restoreChildArtwork, resumeChildDraft } from '../draft'
 import { discardStoredDraft, persistChildDraft, readStoredDraft } from '../draftRecovery'
 import { DraftRecovery } from '../components/DraftRecovery'
@@ -121,6 +122,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   const companionEnabled = !showWelcome && niloVisible && !busy && !tourActive
   const speakRef = useRef<(message: string) => void>(() => {})
   const voiceCancelRef = useRef<() => void>(() => {})
+  const inviteAfterModeChange = useRef(false)
   const companion = useCompanion({
     ownerId, artworkId: draft.artworkId, token: session?.token, locale,
     enabled: companionEnabled, allowDrawing: mode === 'together', canvas: canvasRef,
@@ -141,6 +143,11 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   } })
   speakRef.current = voice.speak
   voiceCancelRef.current = voice.cancel
+  useEffect(() => {
+    if (!inviteAfterModeChange.current || mode !== 'together' || !companionEnabled || companion.phase !== 'idle') return
+    inviteAfterModeChange.current = false
+    void companion.takeTurn()
+  }, [mode, companionEnabled, companion.phase, companion.takeTurn])
   useEffect(() => { mounted.current = true; refreshCanvasVersion(); return () => { mounted.current = false } }, [])
   useEffect(() => {
     draft.color = color; draft.features = features; draft.brushSize = brushSize
@@ -213,6 +220,11 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     companion.cancel(); voice.cancel(); setMode(next); saveMode(ownerId, next)
     if (next === 'together') { setNiloVisible(true); saveNiloVisible(true) }
   }
+  function inviteNilo() {
+    if (mode === 'together') { void companion.takeTurn(); return }
+    inviteAfterModeChange.current = true
+    changeMode('together')
+  }
   function enter(next: 'off' | 'together') { changeMode(next); markWelcomed(ownerId); setShowWelcome(false) }
   function changeNiloVisible(next: boolean) {
     companion.cancel(); voice.cancel(); setNiloVisible(next); saveNiloVisible(next)
@@ -224,7 +236,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   async function persistDrawing() {
     const canvas = canvasRef.current, snapshot = canvas?.exportSnapshot()
     if (!canvas || !snapshot) throw new Error('画布还在准备，请稍后再点保存。')
-    draft.artworkId ??= crypto.randomUUID()
+    draft.artworkId ??= randomId()
     const result = await saveArtwork(session, draft.artworkId, draft.artworkRevision ?? 0, snapshot, canvas.getDocument())
     draft.artworkRevision = result.revision; draft.savedSnapshot = snapshot
     setDraftError(!persistChildDraft(ownerId, draftSlot, draft))
@@ -255,7 +267,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     }
     setAnalysis('loading')
     try {
-      if (submission.current?.image !== imageBase64 || submission.current?.provenance !== provenance) submission.current = { image: imageBase64, key: crypto.randomUUID(), provenance }
+      if (submission.current?.image !== imageBase64 || submission.current?.provenance !== provenance) submission.current = { image: imageBase64, key: randomId(), provenance }
       draft.submission = submission.current
       const result = await analyzeDrawing(imageBase64, null, session?.token, submission.current.key, provenance,
         session?.token ? { artworkId: draft.artworkId, revision: draft.artworkRevision }
@@ -302,7 +314,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
         onColor={value => { setColor(value); setIsEraser(false) }} onBrush={value => { setBrushKind(value); setIsEraser(false) }}
         onSize={setBrushSize} onEraser={() => setIsEraser(value => !value)} onNextShape={handleNextShape} onClearShape={() => setShapeId(null)}
         onUndo={undoLastStroke} onClear={() => { companion.cancel(); voice.cancel(); canvasRef.current?.clear(); invalidateDrawing() }} onSave={handleSave} onFinish={handleFinish}
-        footerAddon={<CompanionDock companion={companion} voice={voice} mode={mode} visible={niloVisible} enabled={companionEnabled} isDrawing={isDrawing} onVisible={changeNiloVisible} />}>
+        footerAddon={<CompanionDock companion={companion} voice={voice} mode={mode} visible={niloVisible} enabled={companionEnabled} isDrawing={isDrawing} onVisible={changeNiloVisible} onInvite={inviteNilo} />}>
         <section className="relative flex min-h-0 min-w-0 w-full flex-1">
           {draftError && <p role="alert" className="absolute bottom-3 left-3 right-3 z-30 mx-auto w-fit rounded-xl bg-white/95 px-4 py-2 text-sm text-red-700">{t('草稿暂存失败，请先保存或下载，再刷新页面。')}</p>}
           {(busy || saveMessage) && <p role="status" className="pointer-events-none absolute top-3 right-3 left-3 z-30 mx-auto w-fit max-w-[90%] rounded-2xl bg-luma-teal-50/95 px-4 py-2 text-center text-sm font-bold text-luma-teal-800 shadow-luma-sm">{t(saving ? '正在保存图画…' : analysis === 'loading' ? 'Nilo 正在仔细看你的画…' : saveMessage!)}</p>}

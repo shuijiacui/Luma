@@ -12,10 +12,11 @@ interface Props {
   enabled: boolean
   isDrawing: boolean
   onVisible: (visible: boolean) => void
+  onInvite: () => void
 }
 
 /** All voice controls live in the bottom strip; no chat window or text input. */
-export function CompanionDock({ companion, voice, mode, visible, enabled, isDrawing, onVisible }: Props) {
+export function CompanionDock({ companion, voice, visible, enabled, isDrawing, onVisible, onInvite }: Props) {
   useLocale()
   const [editing, setEditing] = useState(false)
   const [voiceSettings, setVoiceSettings] = useState(false)
@@ -51,9 +52,9 @@ export function CompanionDock({ companion, voice, mode, visible, enabled, isDraw
           <input type="color" className="size-9" aria-label={t('投影颜色')} value={projected.proposal.color} onChange={event => { voice.cancel(); companion.edit({ color: event.target.value }) }} />
         </div>}
       </div>}
-      {!projected && <button type="button" data-onboarding="canvas-nilo" className="nilo-footer-avatar" aria-label={t(inviteLabel)} title={t(inviteLabel)} disabled={visible && (!enabled || mode !== 'together' || isDrawing || companion.phase !== 'idle')} onClick={() => {
+      {!projected && <button type="button" data-onboarding="canvas-nilo" className="nilo-footer-avatar" aria-label={t(inviteLabel)} title={t(inviteLabel)} disabled={visible && (!enabled || isDrawing || companion.phase !== 'idle')} onClick={() => {
         if (!visible) { onVisible(true); return }
-        voice.cancel(); void companion.takeTurn()
+        voice.cancel(); onInvite()
       }}><img src={niloCompanion} alt="" draggable={false} className="nilo-invite-image" /><span className="nilo-invite-label">{t(companion.phase === 'thinking' ? '看画中…' : companion.projection?.turn ? '接画中…' : '轮到 Nilo')}</span></button>}
       {visible && <>
         {!projected && <button type="button" className="nilo-footer-mic" disabled={!enabled || isDrawing || companion.phase!=='idle'} onClick={()=>{voice.cancel();companion.openObjects()}} aria-label={t('修改 Nilo 的作品')} title={t('修改 Nilo 的作品')}>✎</button>}

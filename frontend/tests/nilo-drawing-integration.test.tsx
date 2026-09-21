@@ -394,7 +394,8 @@ test.each([['我自己画', 'off'], ['和 Nilo 一起画', 'together']] as const
   expect(startTour).toHaveBeenCalledOnce()
 })
 
-test('mode switching changes the invitation while preserving the canvas and keeping every stroke child-owned', async () => {
+test('an HTTP-page invitation switches mode and keeps Nilo temporary until the child accepts', async () => {
+  vi.stubGlobal('crypto', { getRandomValues: globalThis.crypto.getRandomValues.bind(globalThis.crypto) })
   const canvas = prepare(); draw(canvas)
   fireEvent.click(screen.getByRole('button', { name: '和 Nilo 一起画' }))
   expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(false)
@@ -403,7 +404,14 @@ test('mode switching changes the invitation while preserving the canvas and keep
   expect(requests()).toHaveLength(0)
   expect(operations().map(operation => operation.owner)).toEqual(['child', 'child'])
   fireEvent.click(screen.getByRole('button', { name: '我自己画' }))
-  expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(true)
+  expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(false)
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Nilo，你来画' })))
+  expect(screen.getByRole('button', { name: '和 Nilo 一起画' }).getAttribute('aria-pressed')).toBe('true')
+  await act(async () => vi.advanceTimersByTimeAsync(1200))
+  expect(screen.getByLabelText('Nilo 的投影，尚未加入画作')).toBeTruthy()
+  expect(operations().map(operation => operation.owner)).toEqual(['child', 'child'])
+  fireEvent.click(screen.getByRole('button', { name: '留下来' }))
+  expect(operations().some(operation => operation.owner === 'nilo')).toBe(true)
   expect(screen.getByRole('button', { name: '开启背景音乐' })).toBeTruthy()
   expect(document.querySelector('canvas')).toBe(canvas)
 })
