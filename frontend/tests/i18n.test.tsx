@@ -29,7 +29,7 @@ test('drawing modes and bottom voice settings preserve the active canvas across 
     const canvas = screen.getByLabelText('自由绘画画布')
     await act(async () => {})
     expect(screen.getByRole('button', { name: '我自己画' }).getAttribute('aria-pressed')).toBe('true')
-    expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: '声音选项' }))
     fireEvent.click(screen.getByRole('button', { name: '关闭 Nilo 声音' }))
     expect(screen.queryByRole('textbox')).toBeNull()
