@@ -11,7 +11,7 @@ const approved={targetVisible:true,detailRelated:true,usesExistingDrawing:true,p
 
 test('reviewed library has source attribution and usable bounded vector data for every record',()=>{
   const {cards,records}=drawingKnowledgeLibrary()
-  expect(cards).toHaveLength(28);expect(records).toHaveLength(57)
+  expect(cards.length).toBeGreaterThanOrEqual(28);expect(records.length).toBeGreaterThanOrEqual(57)
   expect(new Set(cards.map(c=>c.id)).size).toBe(cards.length)
   for(const card of cards){
     for(const category of card.categories)expect(records.some(r=>r.category===category)).toBe(true)

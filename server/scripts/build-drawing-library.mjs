@@ -2,6 +2,8 @@
 // Review contact sheets, then explicitly record selected IDs before --build.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { PNG } from 'pngjs'
+const candidateCount=Number(process.argv.find(arg=>arg.startsWith('--candidates='))?.split('=')[1]??3)
+if(!Number.isInteger(candidateCount)||candidateCount<3||candidateCount>12)throw Error('Candidate count must be an integer from 3 to 12')
 const root=new URL('../skills/nilo-cocreate/references/',import.meta.url)
 const out=new URL('../../.tmp/drawing-knowledge/',import.meta.url)
 mkdirSync(out,{recursive:true})
@@ -32,24 +34,26 @@ if(process.argv.includes('--build')) {
       try {while(bytes<131072){const {done,value}=await reader.read();if(done)break;chunks.push(Buffer.from(value).subarray(0,131072-bytes));bytes+=value.length}}
       finally {await reader.cancel()}
       const rows=Buffer.concat(chunks).toString('utf8').split('\n').slice(0,-1).map(line=>JSON.parse(line))
-      return rows.filter(row=>row.recognized&&row.drawing.length>=2&&row.drawing.length<=12&&row.drawing.every(s=>s[0].length>=2&&s[0].length<=60)).slice(0,3)
+      return rows.filter(row=>row.recognized&&row.drawing.length>=2&&row.drawing.length<=12&&row.drawing.every(s=>s[0].length>=2&&s[0].length<=60)).slice(0,candidateCount)
         .map(row=>({category,key:String(row.key_id),source,drawing:row.drawing}))
     }))
     for(const result of batch){if(result.status==='rejected')throw result.reason;samples.push(...result.value)}
   }
   writeFileSync(candidatePath,JSON.stringify(samples,null,2))
-  for(let offset=0;offset<categories.length;offset+=6) {
-    const group=categories.slice(offset,offset+6),png=new PNG({width:600,height:group.length*160});png.data.fill(255)
+  const groupSize=candidateCount>3?1:6,rowsPerCategory=Math.ceil(candidateCount/3)
+  for(let offset=0;offset<categories.length;offset+=groupSize) {
+    const group=categories.slice(offset,offset+groupSize),png=new PNG({width:600,height:group.length*rowsPerCategory*160});png.data.fill(255)
     for(const [row,category] of group.entries())for(const [col,sample] of samples.filter(s=>s.category===category).entries()) {
       for(const [xs,ys] of sample.drawing)for(let i=1;i<xs.length;i++){
         const steps=Math.max(1,Math.ceil(Math.hypot(xs[i]-xs[i-1],ys[i]-ys[i-1])))
         for(let j=0;j<=steps;j++){
-          const x=Math.round(col*200+25+(xs[i-1]+(xs[i]-xs[i-1])*j/steps)*.5),y=Math.round(row*160+12+(ys[i-1]+(ys[i]-ys[i-1])*j/steps)*.5)
+          const x=Math.round(col%3*200+25+(xs[i-1]+(xs[i]-xs[i-1])*j/steps)*.5),y=Math.round((row*rowsPerCategory+Math.floor(col/3))*160+12+(ys[i-1]+(ys[i]-ys[i-1])*j/steps)*.5)
           for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const k=((y+dy)*png.width+x+dx)*4;png.data[k]=32;png.data[k+1]=53;png.data[k+2]=47}
         }
       }
     }
-    writeFileSync(new URL(`review-${offset/6+1}.png`,out),PNG.sync.write(png))
-    console.log(JSON.stringify({sheet:offset/6+1,rows:group,counts:group.map(c=>samples.filter(s=>s.category===c).length)}))
+    const sheet=candidateCount>3?`review-${group[0].replaceAll(' ','-')}.png`:`review-${offset/groupSize+1}.png`
+    writeFileSync(new URL(sheet,out),PNG.sync.write(png))
+    console.log(JSON.stringify({sheet,rows:group,counts:group.map(c=>samples.filter(s=>s.category===c).length)}))
   }
 }

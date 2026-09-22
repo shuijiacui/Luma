@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "authorship": "Luma original co-creation guidance; external sketch attribution is stored separately in drawing-library.json.",
   "cards": [
     {
@@ -14,7 +14,11 @@
         "A fringe or hair bow on empty forehead when eyes/mouth already exist; hat only with headroom.",
         "A small button only on visible clothing; nose only if missing."
       ],
-      "avoid": "Do not turn a smiling person into a balloon or duplicate eyes. Follow the child's own character identity."
+      "avoid": "Do not turn a smiling person into a balloon or duplicate eyes. Follow the child's own character identity.",
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "cat",
@@ -52,7 +56,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "connected-curve",
+        "inset-detail"
+      ]
     },
     {
       "id": "dog",
@@ -65,7 +73,11 @@
         "A little nose in the visible muzzle if missing.",
         "A collar at a visible neck; a tail joined to the rear body if missing."
       ],
-      "avoid": "A collar needs a neck; do not draw one across eyes or add detached bones by default."
+      "avoid": "A collar needs a neck; do not draw one across eyes or add detached bones by default.",
+      "techniqueIds": [
+        "connected-curve",
+        "inset-detail"
+      ]
     },
     {
       "id": "rabbit",
@@ -110,7 +122,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "fish",
@@ -123,7 +139,11 @@
         "One eye inside the head if absent.",
         "A triangular fin joined to the body contour, or one gill curve behind the head."
       ],
-      "avoid": "Never put the eye beside the tail; do not surround unrelated shapes with bubbles."
+      "avoid": "Never put the eye beside the tail; do not surround unrelated shapes with bubbles.",
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "bird",
@@ -161,7 +181,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "butterfly",
@@ -194,7 +218,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "turtle",
@@ -247,7 +275,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "snail",
@@ -303,7 +335,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "tree",
@@ -322,9 +358,35 @@
         "subject": "small bark knot",
         "placement": "inside",
         "requires": "Anchor the actual empty trunk interior below its fork, not the whole tree. Select position and scale from its visible width. Omit attachment. Only use when no knot already exists and there is room for two separated curves.",
-        "sketch": { "aspect": 0.65, "paths": [ [["E", 0.5, 0.5, 0.42, 0.43]], [["E", 0.5, 0.5, 0.18, 0.2]] ] },
+        "sketch": {
+          "aspect": 0.65,
+          "paths": [
+            [
+              [
+                "E",
+                0.5,
+                0.5,
+                0.42,
+                0.43
+              ]
+            ],
+            [
+              [
+                "E",
+                0.5,
+                0.5,
+                0.18,
+                0.2
+              ]
+            ]
+          ]
+        },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "sparse-texture",
+        "inset-detail"
+      ]
     },
     {
       "id": "flower",
@@ -337,7 +399,11 @@
         "One leaf connected to the visible stem.",
         "A small centre in an empty flower head or one missing petal attached to it."
       ],
-      "avoid": "Preserve the child's petal count and style; do not redraw the whole blossom."
+      "avoid": "Preserve the child's petal count and style; do not redraw the whole blossom.",
+      "techniqueIds": [
+        "connected-curve",
+        "inset-detail"
+      ]
     },
     {
       "id": "cactus",
@@ -385,7 +451,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "sparse-texture",
+        "inset-detail"
+      ]
     },
     {
       "id": "house",
@@ -398,7 +468,11 @@
         "One window in empty wall space.",
         "A door on the lower wall, or a chimney joined to the roof if room remains."
       ],
-      "avoid": "Never put windows in the roof unless the child explicitly asks for a roof window; preserve existing doors."
+      "avoid": "Never put windows in the roof unless the child explicitly asks for a roof window; preserve existing doors.",
+      "techniqueIds": [
+        "parallel-detail",
+        "inset-detail"
+      ]
     },
     {
       "id": "castle",
@@ -444,7 +518,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "parallel-detail",
+        "inset-detail"
+      ]
     },
     {
       "id": "car",
@@ -458,7 +536,11 @@
         "A hub in an existing wheel.",
         "A window inside the cabin, or a headlight inside the front body edge."
       ],
-      "avoid": "Do not turn an explicitly named wheel into a sun or add extra wheels arbitrarily."
+      "avoid": "Do not turn an explicitly named wheel into a sun or add extra wheels arbitrarily.",
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "train",
@@ -471,7 +553,11 @@
         "One carriage window inside an empty side panel.",
         "A short coupling attached between two existing carriages; a hub in a visible wheel."
       ],
-      "avoid": "Do not extend a whole new train across the page or draw rails through the body."
+      "avoid": "Do not extend a whole new train across the page or draw rails through the body.",
+      "techniqueIds": [
+        "parallel-detail",
+        "inset-detail"
+      ]
     },
     {
       "id": "boat",
@@ -517,7 +603,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "connected-curve",
+        "inset-detail"
+      ]
     },
     {
       "id": "airplane",
@@ -530,7 +620,11 @@
         "A window along the fuselage.",
         "A small tail fin joined to the rear if missing."
       ],
-      "avoid": "Do not add a second pair of wings or misplace a cockpit at the tail."
+      "avoid": "Do not add a second pair of wings or misplace a cockpit at the tail.",
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "rocket",
@@ -573,7 +667,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "connected-curve",
+        "inset-detail"
+      ]
     },
     {
       "id": "sun",
@@ -586,7 +684,11 @@
         "A short missing ray at the rim, with the same spacing as existing rays.",
         "A face detail only if the child has already made it a character."
       ],
-      "avoid": "A wheel or person's face must not become a sun because it is round."
+      "avoid": "A wheel or person's face must not become a sun because it is round.",
+      "techniqueIds": [
+        "parallel-detail",
+        "inset-detail"
+      ]
     },
     {
       "id": "moon",
@@ -619,7 +721,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "cloud",
@@ -632,7 +738,10 @@
         "A short rain line below the cloud if the child wants rainy weather.",
         "A small internal curl that develops an existing cloud lobe."
       ],
-      "avoid": "Do not change cheerful weather into rain by default or add rain to unrelated shapes."
+      "avoid": "Do not change cheerful weather into rain by default or add rain to unrelated shapes.",
+      "techniqueIds": [
+        "open-continuation"
+      ]
     },
     {
       "id": "rainbow",
@@ -645,7 +754,11 @@
         "One parallel arc that follows the existing arch, without crossing its bands.",
         "A small cloud at a visible rainbow endpoint if absent."
       ],
-      "avoid": "Do not fill the whole rainbow or rescale the child's arches."
+      "avoid": "Do not fill the whole rainbow or rescale the child's arches.",
+      "techniqueIds": [
+        "parallel-detail",
+        "inset-detail"
+      ]
     },
     {
       "id": "apple",
@@ -658,7 +771,11 @@
         "A leaf joined to a visible stem.",
         "A short stem joined at the fruit's top notch if missing."
       ],
-      "avoid": "No detached leaf; do not join at the fruit's bottom tip."
+      "avoid": "No detached leaf; do not join at the fruit's bottom tip.",
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "cake",
@@ -748,7 +865,11 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
-      }
+      },
+      "techniqueIds": [
+        "parallel-detail",
+        "inset-detail"
+      ]
     },
     {
       "id": "umbrella",
@@ -791,6 +912,350 @@
           ]
         },
         "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      },
+      "techniqueIds": [
+        "connected-curve",
+        "inset-detail"
+      ]
+    },
+    {
+      "id": "elephant",
+      "label": "大象 / elephant",
+      "cues": "A visible long trunk and broad ears support the identity; retain the actual facing direction.",
+      "ideas": [
+        "One inner-ear curve inside an existing empty ear.",
+        "A short fold on an existing trunk, keeping its tip and silhouette intact."
+      ],
+      "avoid": "Never add a second trunk or attach one to the rear body. A round head alone is not enough evidence.",
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ],
+      "categories": [
+        "elephant"
+      ],
+      "exampleAddition": {
+        "subject": "one inner-ear curve",
+        "placement": "inside",
+        "requires": "Anchor the actual visible ear, not the entire head; keep the curve inset from its outer contour and clear of the eye.",
+        "sketch": {
+          "aspect": 0.8,
+          "paths": [
+            [
+              [
+                "M",
+                0.8,
+                0.1
+              ],
+              [
+                "C",
+                0.1,
+                0.05,
+                0.05,
+                0.9,
+                0.8,
+                0.9
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "giraffe",
+      "label": "长颈鹿 / giraffe",
+      "cues": "Long neck connecting a small head to the body; use the child story when the silhouette is ambiguous.",
+      "ideas": [
+        "One small patch on a clear part of the existing neck or body.",
+        "One short inner-ear detail when an ear is visible and empty."
+      ],
+      "avoid": "Do not lengthen or replace the child neck, fill every gap with spots, or draw patches across an eye.",
+      "techniqueIds": [
+        "inset-detail",
+        "sparse-texture"
+      ],
+      "categories": [
+        "giraffe"
+      ],
+      "exampleAddition": {
+        "subject": "one neck patch",
+        "placement": "inside",
+        "requires": "Use a visible empty neck or body surface; keep the patch smaller than that surface and fully inside its outline.",
+        "sketch": {
+          "aspect": 1.2,
+          "paths": [
+            [
+              [
+                "E",
+                0.5,
+                0.5,
+                0.38,
+                0.3
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "lion",
+      "label": "狮子 / lion",
+      "cues": "A face with a surrounding mane, or a child-named lion with visible head/body.",
+      "ideas": [
+        "One short curved strand inside an existing mane.",
+        "One small nose on an empty visible muzzle."
+      ],
+      "avoid": "Do not surround an unrelated face with a full new mane or draw mane texture across facial features.",
+      "techniqueIds": [
+        "sparse-texture",
+        "inset-detail"
+      ],
+      "categories": [
+        "lion"
+      ],
+      "exampleAddition": {
+        "subject": "one mane strand",
+        "placement": "inside",
+        "requires": "Anchor a clear patch of the existing mane outside the face; follow its growth direction and leave visible gaps.",
+        "sketch": {
+          "aspect": 1.3,
+          "paths": [
+            [
+              [
+                "M",
+                0.15,
+                0.2
+              ],
+              [
+                "Q",
+                0.5,
+                0.85,
+                0.85,
+                0.25
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "bear",
+      "label": "熊 / bear",
+      "cues": "Round ears with a broad muzzle/head, or an explicitly named bear. Preserve schematic or teddy-like proportions.",
+      "ideas": [
+        "One curved inset in an existing empty rounded ear.",
+        "A short seam on the body only if the child has identified a toy bear."
+      ],
+      "avoid": "Do not turn an ordinary animal into a toy, add a second set of ears, or place seams across its face.",
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ],
+      "categories": [
+        "bear"
+      ],
+      "exampleAddition": {
+        "subject": "one inner-ear arc",
+        "placement": "inside",
+        "requires": "An existing rounded ear with clear interior space; size the arc inside that ear and follow its tilt.",
+        "sketch": {
+          "aspect": 1.2,
+          "paths": [
+            [
+              [
+                "M",
+                0.1,
+                0.8
+              ],
+              [
+                "C",
+                0.05,
+                0.05,
+                0.95,
+                0.05,
+                0.9,
+                0.8
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "penguin",
+      "label": "企鹅 / penguin",
+      "cues": "Upright oval body, beak and flippers or child-named penguin; a plain oval is not enough.",
+      "ideas": [
+        "One short curve inside an already visible flipper.",
+        "One small toe line inside an existing foot."
+      ],
+      "avoid": "Do not add flying wings, duplicate a belly outline, or surround it with stock snow without scene evidence.",
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ],
+      "categories": [
+        "penguin"
+      ],
+      "exampleAddition": {
+        "subject": "one flipper crease",
+        "placement": "inside",
+        "requires": "Anchor one existing flipper, not the whole body; align the curve with that flipper and stay inside its outline.",
+        "sketch": {
+          "aspect": 0.4,
+          "paths": [
+            [
+              [
+                "M",
+                0.3,
+                0.1
+              ],
+              [
+                "Q",
+                0.8,
+                0.5,
+                0.4,
+                0.9
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "octopus",
+      "label": "章鱼 / octopus",
+      "cues": "Rounded head/body with several curling arms or explicit child story; do not infer it from arbitrary squiggles.",
+      "ideas": [
+        "One small sucker inside a visible arm with enough width.",
+        "One short curling continuation from a visible unfinished arm endpoint."
+      ],
+      "avoid": "Do not enforce eight arms, add detached limbs, or draw suckers over the face.",
+      "techniqueIds": [
+        "connected-curve",
+        "inset-detail"
+      ],
+      "categories": [
+        "octopus"
+      ],
+      "exampleAddition": {
+        "subject": "one arm sucker",
+        "placement": "inside",
+        "requires": "Choose a clearly visible arm segment whose interior is wide enough; use its own bounds and avoid existing marks.",
+        "sketch": {
+          "aspect": 1,
+          "paths": [
+            [
+              [
+                "E",
+                0.5,
+                0.5,
+                0.32,
+                0.32
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "bee",
+      "label": "蜜蜂 / bee",
+      "cues": "An insect body with wings and antennae or a child-named bee; examine the real head and abdomen direction.",
+      "ideas": [
+        "One curved stripe inside an empty part of the abdomen.",
+        "One antenna connected to the head if absent."
+      ],
+      "avoid": "Do not duplicate stripes or wings, draw a stripe across the head, or assume any oval insect is a bee.",
+      "techniqueIds": [
+        "parallel-detail",
+        "connected-curve"
+      ],
+      "categories": [
+        "bee"
+      ],
+      "exampleAddition": {
+        "subject": "one curved abdomen stripe",
+        "placement": "inside",
+        "requires": "Anchor the visible abdomen and rotate with its long axis; keep both ends inset from the body contour.",
+        "sketch": {
+          "aspect": 0.6,
+          "paths": [
+            [
+              [
+                "M",
+                0.3,
+                0.05
+              ],
+              [
+                "Q",
+                0.8,
+                0.5,
+                0.3,
+                0.95
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
+      }
+    },
+    {
+      "id": "guitar",
+      "label": "吉他 / guitar",
+      "cues": "A lobed body connected to a narrow neck with a sound hole or strings; keep the observed tilt.",
+      "ideas": [
+        "Two short, separated strings only where the neck or body is visibly empty.",
+        "A small sound hole inside the body if missing."
+      ],
+      "avoid": "Do not straighten a tilted guitar, force all six strings into a tiny space, duplicate existing strings, or draw across the outer body.",
+      "techniqueIds": [
+        "parallel-detail",
+        "inset-detail"
+      ],
+      "categories": [
+        "guitar"
+      ],
+      "exampleAddition": {
+        "subject": "two spaced strings",
+        "placement": "inside",
+        "requires": "Anchor a visible clear neck or body surface; align with the guitar direction and leave gaps wider than the current brush.",
+        "sketch": {
+          "aspect": 0.4,
+          "paths": [
+            [
+              [
+                "M",
+                0.25,
+                0.05
+              ],
+              [
+                "L",
+                0.25,
+                0.95
+              ]
+            ],
+            [
+              [
+                "M",
+                0.75,
+                0.05
+              ],
+              [
+                "L",
+                0.75,
+                0.95
+              ]
+            ]
+          ]
+        },
+        "authorship": "Luma original; local coordinates and idea only. Re-ground on the child canvas; other custom ideas remain allowed."
       }
     },
     {
@@ -802,7 +1267,11 @@
         "A small accessory on a real head/neck/body region, respecting the child's story.",
         "An attached antenna, wing or tail only when it expands the existing character without changing its identity."
       ],
-      "avoid": "Do not force it into the nearest known animal or correct the child's anatomy."
+      "avoid": "Do not force it into the nearest known animal or correct the child's anatomy.",
+      "techniqueIds": [
+        "inset-detail",
+        "connected-curve"
+      ]
     },
     {
       "id": "abstract",
@@ -813,7 +1282,10 @@
         "A deliberate connected extension that develops an existing rhythm or enclosure, only if visually meaningful.",
         "Use general attachment, repetition and contrast principles with a clearly chosen new shape; custom paths remain available."
       ],
-      "avoid": "Do not invent an object label to fit the catalogue. No detached copied last stroke just to produce ink."
+      "avoid": "Do not invent an object label to fit the catalogue. No detached copied last stroke just to produce ink.",
+      "techniqueIds": [
+        "open-continuation"
+      ]
     }
   ]
 }

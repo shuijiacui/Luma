@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "authorship": "Luma original guidance and editable path examples, informed by the engineering references below. No upstream code or model weights copied; not a validated art curriculum.",
+  "sources": [
+    {
+      "id": "quickdraw",
+      "url": "https://github.com/googlecreativelab/quickdraw-dataset",
+      "use": "Stroke sequences, pen lifts, uniform scaling and simplified line vocabulary. Dataset samples are credited separately in drawing-library.json."
+    },
+    {
+      "id": "roughjs",
+      "url": "https://github.com/rough-stuff/rough/wiki",
+      "use": "Controlled curvature, preserving endpoints, sparse hachure and repeatable geometry. Adapted as original planning guidance; no Rough.js dependency or copied implementation."
+    }
+  ],
+  "techniques": [
+    {
+      "id": "stroke-economy",
+      "label": "少笔画表达 / stroke economy",
+      "steps": [
+        "Identify ONE missing local feature; use its silhouette before adding texture. Keep the child's existing outline.",
+        "Prefer one continuous Q or C curve over many tiny zigzags; lift the pen between genuinely separate marks. Usually use 1–3 paths.",
+        "Retain the child's proportions and brush. Stop with room for their next contribution."
+      ],
+      "avoid": "Do not redraw the whole subject, impose perfect symmetry or add repeated outlines just to look hand-drawn.",
+      "exampleAddition": { "subject": "one simple arch", "requires": "Illustrates curve economy only; choose a meaningful local feature and orient it from the actual canvas.", "sketch": { "aspect": 1.6, "paths": [[["M", 0, 0.8], ["Q", 0.5, 0.05, 1, 0.8]]] } },
+      "sourceIds": ["quickdraw", "roughjs"]
+    },
+    {
+      "id": "connected-curve",
+      "label": "沿连接点起笔 / connected curve",
+      "steps": [
+        "Locate the actual supporting contour and confirm which body part it belongs to.",
+        "Place the first M at the visible junction; let one or two curves grow into available space. Mirror or rotate for the subject's real direction.",
+        "Keep that endpoint fixed while sizing the new part. Reuse exactly the same geometry for preview and commit."
+      ],
+      "avoid": "No floating tail, whisker or stem; do not move a junction onto a different body part to dodge a collision.",
+      "exampleAddition": { "subject": "one connected curl", "requires": "First M touches supporting ink. The illustrated growth is rightward; choose the actual placement and attachment on the original canvas.", "sketch": { "aspect": 1.4, "paths": [[["M", 0, 0.6], ["Q", 0.35, 0.15, 0.65, 0.35], ["Q", 1, 0.65, 0.85, 0.95]]] } },
+      "sourceIds": ["roughjs"]
+    },
+    {
+      "id": "inset-detail",
+      "label": "轮廓内添细节 / inset detail",
+      "steps": [
+        "Find an actually empty interior surface such as an ear, wing, shell or clothing panel.",
+        "Add one small arc or oval following that surface's orientation; leave a visible gap from the outer contour.",
+        "Keep existing eyes, mouth, strings and markings clear. Omit the detail when the interior is already crowded."
+      ],
+      "avoid": "Do not add a second outline around the whole subject or put an interior feature outside its supporting surface.",
+      "exampleAddition": { "subject": "one small oval detail", "requires": "Requires a visible empty interior patch; set placement=inside and position relative to that supporting region.", "sketch": { "aspect": 1.2, "paths": [[["E", 0.5, 0.5, 0.4, 0.3]]] } },
+      "sourceIds": ["quickdraw"]
+    },
+    {
+      "id": "sparse-texture",
+      "label": "稀疏纹理 / sparse texture",
+      "steps": [
+        "Use texture only when the existing subject has a suitable visible surface, such as bark, a mane or a shell.",
+        "Choose 2–3 short strokes following the surface direction and leave more blank space than ink.",
+        "Keep strokes separated, inside the same surface, and away from important features. Preserve the current brush."
+      ],
+      "avoid": "No dense hatching, black fill, noisy randomized scribbles or texture across the child's face and outline.",
+      "exampleAddition": { "subject": "three sparse surface marks", "requires": "Interior surface must be large enough for gaps wider than the current brush; otherwise choose a single detail.", "sketch": { "aspect": 1.4, "paths": [[["M", 0.1, 0.25], ["L", 0.23, 0.55]], [["M", 0.43, 0.2], ["L", 0.55, 0.55]], [["M", 0.75, 0.3], ["L", 0.88, 0.65]]] } },
+      "sourceIds": ["roughjs"]
+    },
+    {
+      "id": "parallel-detail",
+      "label": "有间隔的重复线 / spaced repeated lines",
+      "steps": [
+        "Identify a real functional surface, such as a guitar neck or a train panel, and inspect existing lines first.",
+        "Use 2–3 separated lines in the same local direction; adapt their length to that surface instead of copying reference coordinates.",
+        "Keep the spacing visible at the child's brush width. Fewer readable lines are preferable to an exact but crowded count."
+      ],
+      "avoid": "Do not cross the supporting contour, duplicate existing strings or turn a tilted object upright.",
+      "exampleAddition": { "subject": "three spaced strings", "requires": "Requires a visible clear elongated surface. Rotate with it, and connect line ends only where actual supporting ink exists.", "sketch": { "aspect": 0.5, "paths": [[["M", 0.15, 0.05], ["L", 0.15, 0.95]], [["M", 0.5, 0.05], ["L", 0.5, 0.95]], [["M", 0.85, 0.05], ["L", 0.85, 0.95]]] } },
+      "sourceIds": ["quickdraw", "roughjs"]
+    },
+    {
+      "id": "open-continuation",
+      "label": "留给孩子的下一笔 / open continuation",
+      "steps": [
+        "Follow a visible endpoint or a clear contour relationship without guessing an object name.",
+        "Add one short curve whose starting direction continues the existing gesture; keep the junction on real ink.",
+        "Leave a new reachable endpoint and enough empty space for the child to respond. A closed form can support an attached open line."
+      ],
+      "avoid": "Do not force every unknown shape into an animal, trace the last line, or close and complete the whole drawing.",
+      "exampleAddition": { "subject": "one open sweeping line", "requires": "Select a real endpoint or meaningful junction; use the child's gesture to choose direction. First M is the connection end.", "sketch": { "aspect": 1.8, "paths": [[["M", 0, 0.8], ["C", 0.35, 0.8, 0.25, 0.15, 0.65, 0.2], ["Q", 0.9, 0.2, 1, 0.05]]] } },
+      "sourceIds": ["quickdraw", "roughjs"]
+    }
+  ]
+}
