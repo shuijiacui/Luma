@@ -55,6 +55,10 @@ export function listAnalyses(db, childId, auth, { limit = 50, offset = 0 } = {})
         // 未生成的字段为 undefined，res.json 会自然省略，与前端可选字段声明一致。
         report: report && auth.role === 'parent'
           ? {
+            kind: report.kind,
+            observationStatus: report.observationStatus,
+            childAgeBand: report.childAgeBand,
+            ageContext: report.ageContext,
             emotion: report.emotion,
             confidence: report.confidence,
             language: report.language ?? 'zh',
@@ -77,8 +81,6 @@ export function listAnalyses(db, childId, auth, { limit = 50, offset = 0 } = {})
 
 // 纵向趋势（描述性聚合，不是新判定类型——v2 界限：不下诊断、不给预测，只呈现历史序列与计数）
 // direction：报告不足或近期有信息不足时 insufficient；有效报告无预警为 stable；有预警为 watch。
-const WATCH_EMOTIONS = ['需要关注', '焦虑倾向', '低落倾向']
-
 export function trendSummary(db, childId, auth) {
   const child = db.prepare("SELECT family_id FROM accounts WHERE id = ? AND role = 'child'").get(childId)
   const isFamilyParent = child && auth.role === 'parent' && auth.familyId === child.family_id
@@ -90,18 +92,15 @@ export function trendSummary(db, childId, auth) {
     .filter(r => r.report_json)
     .map(r => {
       const report = JSON.parse(r.report_json)
-      return { createdAt: r.createdAt, emotion: report.emotion, confidence: report.confidence, provenance: report.provenance ?? 'unknown' }
+      return { createdAt: r.createdAt, kind: report.kind ?? 'legacy', emotion: report.emotion, confidence: report.confidence, provenance: report.provenance ?? 'unknown' }
     })
 
   const counts = {}
-  for (const p of points) counts[p.emotion] = (counts[p.emotion] ?? 0) + 1
+  for (const p of points) counts[p.kind === 'observation-v1' ? '画面观察' : '历史旧版报告'] = (counts[p.kind === 'observation-v1' ? '画面观察' : '历史旧版报告'] ?? 0) + 1
 
-  let direction = 'insufficient'
-  if (points.length >= 2) {
-    const recent = points.slice(0, 3)
-    direction = recent.some(p => WATCH_EMOTIONS.includes(p.emotion)) ? 'watch'
-      : recent.every(p => ['乐观平稳', '未见明显风险信号'].includes(p.emotion) && p.confidence > 0) ? 'stable' : 'insufficient'
-  }
+  const direction = 'insufficient'
+  // A sequence of observations is not a psychological trend. Preserve the old
+  // response shape for clients, but never promote legacy labels to a new claim.
 
   return {
     total: rows.length,

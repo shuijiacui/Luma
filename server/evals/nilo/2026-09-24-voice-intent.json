@@ -1,0 +1,107 @@
+{
+  "date": "2026-09-24T10:32:01.142Z",
+  "scope": "Synthetic text interpretation only; not ASR, drawing quality or child usability.",
+  "passed": 6,
+  "total": 6,
+  "results": [
+    {
+      "utterance": "把它改成蓝色，再小一点，往左挪一点",
+      "selectedTargetId": "bird-right",
+      "plan": {
+        "status": "edit",
+        "targetId": "bird-right",
+        "actions": [
+          {
+            "type": "color",
+            "value": "#0000ff"
+          },
+          {
+            "type": "scale",
+            "factor": 0.85
+          },
+          {
+            "type": "move",
+            "dx": -0.035,
+            "dy": 0
+          }
+        ]
+      },
+      "passed": true,
+      "latencyMs": 1124
+    },
+    {
+      "utterance": "不要红色，要蓝色，其他都别动",
+      "selectedTargetId": "bird-right",
+      "plan": {
+        "status": "edit",
+        "targetId": "bird-right",
+        "actions": [
+          {
+            "type": "color",
+            "value": "#0000ff"
+          }
+        ]
+      },
+      "passed": true,
+      "latencyMs": 689
+    },
+    {
+      "utterance": "不要删掉它",
+      "selectedTargetId": "bird-right",
+      "plan": {
+        "status": "noop"
+      },
+      "passed": true,
+      "latencyMs": 930
+    },
+    {
+      "utterance": "不是这只，是左边那只，把它缩小一点",
+      "selectedTargetId": "bird-right",
+      "plan": {
+        "status": "edit",
+        "targetId": "bird-left",
+        "actions": [
+          {
+            "type": "scale",
+            "factor": 0.85
+          }
+        ]
+      },
+      "passed": true,
+      "latencyMs": 661
+    },
+    {
+      "utterance": "把小鸟换成紫色",
+      "plan": {
+        "status": "clarify",
+        "reason": "target",
+        "candidateIds": [
+          "bird-left",
+          "bird-right"
+        ]
+      },
+      "passed": true,
+      "latencyMs": 637
+    },
+    {
+      "utterance": "Make it green and a little smaller, but do not move it.",
+      "selectedTargetId": "bird-left",
+      "plan": {
+        "status": "edit",
+        "targetId": "bird-left",
+        "actions": [
+          {
+            "type": "color",
+            "value": "#00ff00"
+          },
+          {
+            "type": "scale",
+            "factor": 0.85
+          }
+        ]
+      },
+      "passed": true,
+      "latencyMs": 766
+    }
+  ]
+}

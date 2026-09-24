@@ -7,7 +7,7 @@ export function hasCompositeDrawing(context) {
 export function drawingReferenceSheet(context) {
   const words=[context.utterance,...(context.history??[]).filter(x=>x.role==='user').map(x=>x.text)].join(' ')
   if (!hasCompositeDrawing(context) && !/人物|小人|人脸|帽子|头发|\b(person|face|hat|hair)\b/i.test(words)) return undefined
-  sheet ??= readFileSync(new URL('../../skills/nilo-cocreate/references/person-drawing-references.png',import.meta.url)).toString('base64')
+  sheet ??= readFileSync(new URL('../../../knowledge/nilo/references/legacy/person-drawing-references.png',import.meta.url)).toString('base64')
   return { imageBase64:sheet, description:'REFERENCE SHEET ONLY, not part of the child canvas. 2 rows x 3 columns: top row = hat, crown, bowtie; bottom row = eyeglasses, nose, fringe. First five: Google Quick, Draw! contributors (CC BY 4.0); last: original Luma example. These show simple drawable ideas, NOT objects already present in the canvas. Inspect Image 1 independently before choosing. Never transfer reference coordinates or draw the complete sheet.' }
 }
 

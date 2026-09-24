@@ -1,4 +1,4 @@
-import {P,E,L,R,poly,moveParts} from './niloRecipePrimitives.mjs'
+import {P,E,L,R,poly,moveParts} from './primitives.mjs'
 export function addFoodRecipes(add){for(let v=0;v<3;v++){
   const fruitBody=P(['M',.5,.24],['C',.1,.02,.04,.53,.25,.83],['Q',.36,1,.5,.88],['Q',.64,1,.75,.83],['C',.96,.53,.9,.02,.5,.24])
   add('apple','苹果',v,['带叶苹果','切开苹果','一口苹果'][v],1,{

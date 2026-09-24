@@ -1,3 +1,4 @@
+import { halfShape } from '../../../shared/niloHalfShape.mjs'
 // Explicit, whole-utterance requests only. Complex scenes still go to vision.
 // This is a requested drawing, never a random fallback for failed model calls.
 const subjects = [
@@ -15,14 +16,24 @@ const ratios = { stars: 1, sun: 1, moon: .85, tree: .8, flower: .7, cloud: 1.7, 
 
 export function parseSimpleDrawingRequest(utterance) {
   if (typeof utterance !== 'string') return null
-  const text = utterance.trim().replace(/^[Nn]ilo[，,、\s]*/, '').replace(/[。！!？?]+$/g, '').trim()
+  let text = utterance.trim().replace(/^[Nn]ilo[，,、\s]*/, '').replace(/[。！!？?]+$/g, '').trim()
+  let region,half
+  const corner=text.match(/(?:[，,]?(?:放在|放到|画在|在)(?:画布(?:的)?)?)(左上角|右上角|左下角|右下角)$/)
+  const corners={'左上角':'top-left','右上角':'top-right','左下角':'bottom-left','右下角':'bottom-right'}
+  if(corner){region=corners[corner[1]];text=text.slice(0,corner.index).trim()}
+  const englishCorner=text.match(/(?:,? (?:in|at|put it in) (?:the )?)(top left|top right|bottom left|bottom right)(?: corner)?$/i)
+  if(englishCorner){region=englishCorner[1].toLowerCase().replace(' ','-');text=text.slice(0,englishCorner.index).trim()}
+  const halfMatch=text.match(/(上|下|左|右)?(?:一半|半个|半边)(?:的)?/)
+  if(halfMatch&&/^(?:请)?(?:只)?(?:帮我)?(?:画|绘制)/.test(text)){half=({'上':'top','下':'bottom','左':'left','右':'right'})[halfMatch[1]]??'top';text=text.replace(halfMatch[0],'').replace(/^只画/,'画').replace(/^请只画/,'请画')}
+  const englishHalf=text.match(/(?:the )?(top|bottom|left|right)? ?half (?:of )?(?:a |the )?/i)
+  if(englishHalf&&/^(?:please )?(?:draw|paint)/i.test(text)){half=englishHalf[1]?.toLowerCase()??'top';text=text.replace(englishHalf[0],' a ').replace(/ +/g,' ')}
   const zh = text.match(/^(?:请)?(?:你)?(?:能不能|可以|能)?(?:帮我|给我)?(?:再)?(?:画上|画|加上|加|添上|添|来|换成|换|改成)(?:一下)?(?:一(?:个|颗|朵|棵|条|只|座|片)|个|颗|朵|棵|条|只|座|片)?(?:([红黄蓝绿紫橙粉白黑])色?的?)?(.+?)(?:吧|呀|好吗|好不好|可以吗|吗)?$/)
   const en = text.toLowerCase().match(/^(?:please )?(?:can you |could you )?(?:help me )?(?:draw|add|paint|make|replace it with|change it to)(?: me)? (?:a |an |one |another )?(?:(red|yellow|blue|green|purple|orange|pink|white|black) )?([a-z]+)(?: please)?$/)
   const match = zh ?? en
   if (!match) return null
   const subject = subjects.find(([, , english, aliases]) => zh ? aliases.includes(match[2]) : english === match[2])
   if (!subject) return null
-  return { template: subject[0], subject: subject[1], english: subject[2], color: colors[match[1]], replace: /换|改成|replace|change/.test(text) }
+  return { ...(region?{region}:{}),...(half?{half}:{}),template: subject[0], subject: subject[1], english: subject[2], color: colors[match[1]], replace: /换|改成|replace|change/.test(text) }
 }
 
 function oneStar() {
@@ -62,13 +73,16 @@ export function planSimpleDrawing(context) {
   const scale = Math.min(1, .28 / width, .28 / height)
   width *= scale; height *= scale
   const candidates = []
-  if (current) candidates.push([current.x + current.width / 2 - width / 2, current.y + current.height / 2 - height / 2])
+  if (current && !request.region) candidates.push([current.x + current.width / 2 - width / 2, current.y + current.height / 2 - height / 2])
   // The child named a standalone subject, with no requested spatial relationship.
   // Prefer open space; do not infer a target from an unrelated existing stroke.
-  for (const y of [.12, .38, .65]) for (const x of [.38, .08, .68]) candidates.push([x, y])
+  if(request.region){
+    const right=request.region.endsWith('right'),bottom=request.region.startsWith('bottom')
+    for(const inset of [.04,.08,.12])candidates.push([right?1-width-inset:inset,bottom?1-height-inset:inset])
+  }else for (const y of [.12, .38, .65]) for (const x of [.38, .08, .68]) candidates.push([x, y])
   const box = candidates.map(([x, y]) => ({ x, y, width, height })).find(box => box.x >= .02 && box.y >= .02 && box.x + width <= .98 && box.y + height <= .98 && fitsGrid(box, context.inkGrid ?? []))
   if (!box) return { status: 'clarify', reply: en ? `Where would you like the ${name}? You can make a little space for it.` : `${name}想放在哪里呢？可以先给它留一小块空白。` }
-  const proposal = {
+  let proposal = {
     template: request.template === 'stars' ? 'custom' : request.template,
     ...(request.template === 'stars' ? { subject: name, sketch: oneStar() } : {}),
     ...box, rotation: 0, color: request.color ?? style.color ?? '#5f7065',
@@ -77,5 +91,11 @@ export function planSimpleDrawing(context) {
     target: en ? `The ${name} you requested` : `你想要的${name}`,
     relation: en ? 'A preview in open space, awaiting your confirmation' : '先放在空白处预览，等你确认留下',
   }
+  if(request.half){
+    proposal=halfShape({...proposal,...(proposal.template==='custom'?{}:{subject:name})},request.half,aspect)
+    if(!proposal)return {status:'clarify',reply:en?'Which half would you like to show?':'你想让它露出哪一半呢？'}
+  }
+  const location=request.region?(en?' in the '+request.region.replace('-',' ')+' corner':'，放在'+Object.entries({'左上角':'top-left','右上角':'top-right','左下角':'bottom-left','右下角':'bottom-right'}).find(([,v])=>v===request.region)[0]):''
+  if(request.half||request.region)return {status:'ready',placementLocked:true,proposal,reply:en?('Here is '+(request.half?'half of ':'')+'the '+name+location+'. Keep it if you like it.'):('先放'+(request.half?'半个':'一个')+name+location+'给你看看，喜欢就留下来。')}
   return { status: 'ready', reply: en ? `Here's a ${name} to preview. Say “keep it” or tap the button if you like it.` : `先放一个${name}给你看看，喜欢就说“留下来”或点按钮。`, proposal }
 }

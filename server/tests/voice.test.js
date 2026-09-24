@@ -124,3 +124,15 @@ test('DashScope download rejects SSRF destinations, redirects and malformed audi
   const redirect = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ output: { audio: { url: 'https://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/audio.wav' } } }))).mockResolvedValueOnce(new Response(null, { status: 302, headers: { Location: 'http://localhost' } }))
   await expect(synthesizeVoice({ text: '你好' }, { config: dashscope, fetchImpl: redirect })).rejects.toThrow('voice_provider_unavailable')
 })
+
+
+test('FunASR is opt-in, sends bounded drawing hotwords, and never advertises unsupported TTS',async()=>{
+ const local={...config,provider:'funasr',baseUrl:'http://127.0.0.1:8765/v1',apiKey:'',asrModel:'paraformer'}
+ expect(voiceCapabilities(local)).toEqual({asr:true,tts:false})
+ expect(voiceCapabilities({...local,baseUrl:'http://remote.example/v1'})).toEqual({asr:false,tts:false})
+ const fetchImpl=vi.fn(async()=>new Response(JSON.stringify({text:'太阳'})))
+ await transcribeVoice({audioBase64:Buffer.from('test').toString('base64'),mimeType:'audio/wav',context:{subjects:['小船']}},{config:local,fetchImpl})
+ const options=fetchImpl.mock.calls[0][1]
+ expect(options.headers.Authorization).toBeUndefined()
+ expect(JSON.parse(options.body.get('hotwords')).vocabulary).toEqual(expect.arrayContaining(['太阳','小船']))
+})

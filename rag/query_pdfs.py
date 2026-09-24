@@ -1,28 +1,12 @@
-"""Query the local Chroma literature index for reference-only evidence."""
-from pathlib import Path
+"""Inspect literature retrieval using the same code path as the parent report."""
 import sys
-sys.stdout.reconfigure(encoding="utf-8")
-from llama_index.core import VectorStoreIndex
-from modelscope_embedding import ModelScopeEmbedding
-import chromadb
-from llama_index.vector_stores.chroma import ChromaVectorStore
+from retrieve_references import search
 
-ROOT = Path(__file__).resolve().parents[1]
-DB_DIR = ROOT / "knowledge" / "chroma"
-MODEL = "Qwen/Qwen3-Embedding-4B"
-
-client = chromadb.PersistentClient(path=str(DB_DIR))
-collection = client.get_collection("luma_reference_literature")
-index = VectorStoreIndex.from_vector_store(
-    ChromaVectorStore(chroma_collection=collection),
-    embed_model=ModelScopeEmbedding(model_name=MODEL),
-)
-SCORE_THRESHOLD = 0.40
 query = " ".join(sys.argv[1:]) or "儿童绘画和单幅画解释的局限性"
-nodes = [n for n in index.as_retriever(similarity_top_k=5).retrieve(query) if float(n.score or 0) >= SCORE_THRESHOLD]
-if not nodes:
-    print(f"未找到足够相关文献（阈值 {SCORE_THRESHOLD}）")
-for node in nodes:
-    print(f"score={node.score:.4f} source={node.node.metadata.get('source_file', 'unknown')}")
-    print(node.node.get_content()[:1000].replace('\n', ' '))
+results = search(query)["results"]
+if not results:
+    print("未找到达到检索阈值的文献片段")
+for item in results:
+    print(f"score={item['score']:.4f} source={item['sourceFile']} PDF页={item['sourcePage']} chunk={item['chunkId']}")
+    print(item["text"][:1000].replace("\n", " "))
     print()

@@ -300,7 +300,7 @@ test.each(['保存', '完成'])('%s during an unconfirmed click animation saves 
   if (action === '完成') expect(vi.mocked(analyzeDrawing).mock.calls[0][4]).toBe('child')
 })
 
-test('Nilo handoff stays silent even when reply sound is enabled, and sends the child brush style', async () => {
+test('Nilo handoff speaks the preview without opening the microphone, and sends the child brush style', async () => {
   localStorage.setItem('luma_companion_mode:guest-child', 'together')
   localStorage.setItem('luma:voice-sound:guest-child', 'on')
   const speak = vi.fn(), microphone = vi.fn()
@@ -324,7 +324,8 @@ test('Nilo handoff stays silent even when reply sound is enabled, and sends the 
   await act(async () => vi.advanceTimersByTimeAsync(1200))
   if(screen.queryByRole('button',{name:'留下来'}))fireEvent.click(screen.getByRole('button',{name:'留下来'}))
   expect(operations().filter(op => op.type === 'stroke' && op.owner === 'nilo')).toEqual(expect.arrayContaining([expect.objectContaining({ brushKind: 'crayon', color: '#d74952', size: 9 })]))
-  expect(speak).not.toHaveBeenCalled()
+  expect(speak).toHaveBeenCalledOnce()
+  expect(speak.mock.calls[0][0].text).toBe('先看看这个小主意，喜欢的话就留下来。')
   expect(microphone).not.toHaveBeenCalled()
 })
 

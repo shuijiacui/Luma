@@ -84,9 +84,9 @@ access token 默认 120 分钟，refresh token 30 天且使用后轮换。带无
 }
 ```
 
-`rawDescription` 最长 10000 字符；数组最多 100 项、字符串项最长 100。数值须有限，置信度及颜色比例为 0–1。构图 size 为 small/normal/large，position 为 center/corner/edge，pressure 为 light/normal/heavy。
+`rawDescription` 最长 10000 字符；数组最多 100 项、字符串项最长 100。数值须有限，置信度及颜色比例为 0–1。构图 size 为 small/normal/large，position 为 center/corner/edge/bottom，pressure 旧字段保留兼容。新模型可返回最多 12 个 `objects`：`label,visibility,bbox,confidence`；bbox 使用画布归一化坐标且须完全落在画布内，看不清时为 null。
 
-逐维置信度低于 0.5 的维度被门控：元素/异常数组可为空，颜色/构图可为 null，涂改数可清零；响应可含 `droppedDimensions`。数字画板标记使笔压/涂改次数规则不参与评分，这些估计字段不代表真实过程测量。AI 描述不是孩子原话。
+逐维置信度低于 0.5 的维度被门控：元素/异常数组可为空，颜色/构图可为 null，涂改数可清零；响应可含 `droppedDimensions`。静态画面无法测量真实笔压或擦除次数；新识图提示固定填 `normal` 和 `0`，新报告不使用这两个字段。AI 描述不是孩子原话。
 
 服务端还记录 `provenance`、`analysisScope: "child-only"`、`displayScope: "child-only" | "composite"`、分析与展示图 SHA-256，以及可选的画册编号和版本。旧数据可能缺少这些字段，客户端不能据此断言作者来源。
 
@@ -98,24 +98,28 @@ access token 默认 120 分钟，refresh token 30 天且使用后轮换。带无
 { "analysisId": "分析记录UUID", "locale": "zh" }
 ```
 
-忽略客户端替换特征和年龄，按账户生日计算当前年龄；未填生日则不推测。匿名允许 `{features,childAge?}` 的临时演示（年龄 0–18），不保存；匿名带真实 analysisId 返回 401；儿童调用返回 403。
+忽略已登录请求中的客户端替换特征和年龄，按账户生日计算当前年龄；未填生日则不推测。已知年龄不在 5–12 岁时返回 422 `age_out_of_scope`。匿名允许 `{features,childAge?}` 的临时演示，不保存；匿名带真实 analysisId 返回 401；儿童调用返回 403。
 
-`locale` 为 `zh` / `en`，省略或无效值按中文。基础报告本地化，可选模型增强按所选语言生成；不改变分类枚举、评分、知识库编号或权限。切换界面语言不会自动翻译已有自由文本。
+`locale` 为 `zh` / `en`，省略或无效值按中文。新报告为 `observation-v1`，只描述 5–12 岁孩子笔迹图中可见的元素、颜色和可验证位置；不执行旧 HTP 情绪规则、未经审核的 PDF RAG、联网建议或评分。报告会附上已核对文献的一般研究背景与适用局限，带原文链接，不把文献与该幅画面的某个符号对应。旧报告仍按原样保存在历史记录中，前端明确标记为“历史旧版报告”。界面切换语言不会自动翻译旧自由文本。
 
-成功 200 的基础字段：
+成功 200 示例：
 
 ```json
 {
-  "emotion": "信息不足",
+  "kind": "observation-v1",
+  "emotion": "画面观察",
   "confidence": 0,
-  "evidence": [],
-  "parentAdvice": ["本次画面信息不足，建议继续观察"]
+  "observationStatus": "observed",
+  "childAgeBand": "5-7",
+  "ageContext": "5–7 岁：用简短、具体的问题邀请孩子讲画里的故事；不根据细节判断能力或情绪。",
+  "evidence": [{ "entryId": "OBS-elements", "summary": "画面中可以看到树。", "clusterLabel": "可见细节" }],
+  "narrative": "这里只记录单幅画里看得见的内容，不推断孩子的情绪。孩子愿意时，可以听听他自己讲的故事。",
+  "parentAdvice": ["可以问孩子：……", "让孩子自己决定是否讲述……"],
+  "referenceEvidence": [{ "sourceId": "guo-2023-review", "sourceUrl": "https://www.frontiersin.org/journals/psychiatry/articles/10.3389/fpsyt.2022.1041770/full", "text": "研究背景……", "limitation": "适用局限……", "role": "reference_only" }]
 }
 ```
 
-`emotion`：乐观平稳 / 未见明显风险信号 / 焦虑倾向 / 低落倾向 / 需要关注 / 信息不足。`evidence` 每项有 `entryId,summary`，可有 `clusterLabel`、通俗化后的 `plain`。`confidence` 是启发式参考值，具体语义见 [AI 解读与知识库](AI解读与知识库.md)，不是准确率或医学概率。
-
-响应记录 `language`、`provenance`、`analysisScope`；共创报告另有 `provenanceNote`，说明仅观察孩子笔迹、创作选择仍可能受共创影响。可选增强字段为 `narrative`、`webAdvice`、`webAdviceSource`、`referenceEvidence`、`referenceEvidenceSource`。增强受 `REPORT_BUDGET_MS` 总预算约束；失败/超时保留基础报告。正式结果带审计落库，并使该孩子周期摘要失效以待重建；历史接口返回保存的 `audit`。
+`confidence: 0` 是兼容历史客户端的占位字段，**不是对识图质量的评分**。`evidence` 的 OBS ID 对应 [画面观察词表](../knowledge/observation/catalog.json)。`referenceEvidence` 是一般研究背景，包含 `sourceId,sourceFile,sourceUrl,text,limitation,role:reference_only`，来源于[人工核对目录](../knowledge/psychology/literature/curated-context.json)，不因作品内容而改变。`observationStatus: insufficient` 表示没有足够清晰、位于词表内的细节；不表示没有作品内容。正式结果保存 `provenance`、`analysisScope` 与审计版本；共创报告另有 `provenanceNote`，明确只分析孩子笔迹。生日用于选择 5–7、8–9、10–12 岁的沟通措辞，`ageContext` 向家长说明提问方式；它们不改变画作观察，也不是发展常模或心理评分。生日未知时使用通用提问。
 
 ## 儿童可继续绘画的小画册
 
@@ -152,7 +156,7 @@ access token 默认 120 分钟，refresh token 30 天且使用后轮换。带无
 
 ### GET `/children/:childId/trend`
 
-仅同家庭家长。返回 `total,withReport,direction,counts,points,provenanceCounts`。direction 为 insufficient/stable/watch：报告少于 2 份不足；最近 3 份有关注/焦虑/低落则 watch；近期全为正分值的乐观或未见风险则 stable，其余 insufficient。points 为最近 10 份报告时间正序并带来源，counts 汇总全部报告。只是历史描述，不是心理变化预测。
+仅同家庭家长。返回 `total,withReport,direction,counts,points,provenanceCounts`。新报告不生成心理走势；`direction` 固定为 `insufficient`。`counts` 区分新画面观察与历史旧版报告，`points` 仅供时间顺序回看，不可据此推断心理变化。
 
 ## GET `/children/:childId/digests?kind=weekly&limit=12&offset=0`
 
@@ -180,7 +184,7 @@ access token 默认 120 分钟，refresh token 30 天且使用后轮换。带无
 
 | 方法与路径 | 作用 |
 | --- | --- |
-| POST `/nilo/companion` | 单次视觉规划或无图聊天，返回 reply、状态和可选待确认提案；每组最多 4 个相关元素 |
+| POST `/nilo/companion` | 单次视觉规划或无图聊天，返回 reply、状态和可选提案；登录儿童由服务端生日选择 5–7、8–9、10–12 岁对话措辞，游客或生日未知用通用版，客户端年龄无效；年龄不限制绘画题材与几何 |
 | GET `/nilo/voice/config` | 返回 `{asr,tts}` 能力，不披露密钥或服务商配置 |
 | POST `/nilo/voice/transcribe` | 有限大小音频 → `{text}` |
 | POST `/nilo/voice/speak` | 短文本 → `{audioBase64,mimeType}` |

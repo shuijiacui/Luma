@@ -1,7 +1,7 @@
 import { t, useLocale } from '@/i18n'
 import type { ImgHTMLAttributes, SVGProps } from 'react'
 
-import niloCutout from '@/assets/images/nilo-cutout.png'
+import niloCutout from '@/assets/images/nilo/nilo-cutout.png'
 import { cn } from '@/lib/cn'
 
 type DecoProps = SVGProps<SVGSVGElement> & { tone?: 'green' | 'clay' | 'gold' | 'teal' }

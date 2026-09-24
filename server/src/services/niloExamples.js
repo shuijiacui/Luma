@@ -2,7 +2,7 @@ import { hasCompositeDrawing } from './niloDrawingReferences.js'
 import { readFileSync } from 'node:fs'
 
 let cachedExamples
-const loadExamples = () => cachedExamples ??= JSON.parse(readFileSync(new URL('../../skills/nilo-cocreate/references/examples.json', import.meta.url), 'utf8'))
+const loadExamples = () => cachedExamples ??= JSON.parse(readFileSync(new URL('../../../knowledge/nilo/references/legacy/examples.json', import.meta.url), 'utf8'))
 
 /** At most two examples per plan. Selection uses the child's words and actual
  * gesture geometry, never an assistant's guessed subject. */

@@ -1,4 +1,4 @@
-import {P,E,L,R,poly} from './niloRecipePrimitives.mjs'
+import {P,E,L,R,poly} from './primitives.mjs'
 const wheels=(xs,y=.8,r=.095)=>xs.map(x=>E(x,y,r/1.7,r))
 export function addPlaceRecipes(add){for(let v=0;v<3;v++){
   add('car','汽车',v,['小轿车','厢式小车','敞篷小车'][v],1.7,{

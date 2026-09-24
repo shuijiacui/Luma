@@ -6,6 +6,7 @@ import { validateCustomSketch } from './niloSketch.js'
 import { normalizeTurnSketch } from './niloCoCreation.js'
 import { LLMParseError } from './llmClient.js'
 import { ideaRenderingPrompt } from './niloIdeaFirst.js'
+import { niloAgeGuidance } from './niloAgeGuidance.js'
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n))
 export function creativeColor(raw, recipe) {
@@ -112,6 +113,7 @@ export async function generateCreativeTurn({ imageBase64, context, knowledge, ca
     {subject:context.utterance}, ...knowledge.observation.subjects,
   ], context.recentRecipeIds)
   const prompt = idea ? ideaRenderingPrompt(context, knowledge.observation, idea, candidates) : `You are Nilo, a playful drawing partner for a child. Look at the WHOLE picture and choose ONE most relevant new idea yourself. Draw it; do not ask the child to choose from a menu. Imaginative, impossible, loosely associated scenes are welcome. Uncertain recognition is not a reason to stop: offer your own imaginative addition without claiming what the child intended. You need not continue the last stroke or attach to existing anatomy. Follow an explicit request when present, otherwise prefer a complete related object with a readable silhouette and several distinguishing details. Use a different pose/variant from recent turns when appropriate.
+AGE-ADAPTED CONVERSATION (wording only; never limit the idea): ${niloAgeGuidance(context)}
 Return ONLY JSON {"subject":"name of your addition","relationship":"brief connection to this picture","recipeId":"an available recipe ID or null","backup":{"recipeId":"most relevant available recipe ID","relationship":"its own connection","at":[0.7,0.6],"scale":0.2},"sketch":null,"color":"#328ab5","at":[0.7,0.5],"scale":0.28}.
 COLOR: Choose your OWN #RRGGBB stroke color based on the picture, the new subject and the child's story. You are not locked to the child's current pen color. Use clear, harmonious colors visible on the white paper; avoid near-white ink. The catalogue colors are suggestions, not limits. If the child explicitly requests a color, obey it. The backup should include its own color. Keep the child's brush texture and line thickness.
 PATH DATA SCHEMA: paths is an array of strokes; each stroke is an array of command arrays. Example of representation ONLY: [[['M',0.1,0.2],['Q',0.5,0.1,0.9,0.2]],[['E',0.5,0.5,0.1,0.1]]]. Use double quotes for valid JSON. An ellipse's centre minus/plus radius must remain within 0..1. No negative coordinates. backup.recipeId MUST be an EXACT ID from RECIPE CATALOGUE (e.g. boat-0), not a lesson ID or a subject name.

@@ -1,0 +1,692 @@
+{
+  "version": 1,
+  "scope": "5-12 free drawing",
+  "decision": "Legacy HTP emotion rules are excluded from new parent reports pending source review and target-population validation.",
+  "rules": [
+    {
+      "entryId": "HTP-001",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Yan et al. 2014, 中国临床心理学杂志 22(5):842-848, OR=2.693；Guo et al. 2023, Clin Child Psychol Psychiatry 28(4):1623-1634 互证",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-002",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Yan et al. 2014, OR=3.877（该研究最强单特征）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-003",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "elements"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Yan et al. 2014, OR=2.732",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-004",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "elements"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Yan et al. 2014, OR=1.977",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-005",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Yan et al. 2014, OR=1.947",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-006",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Yan et al. 2014, OR=1.510",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-007",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "colors.darkRatioMin"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "fbanet2023"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Guo et al. 2023（涂黑画纸/仅用深色为抑郁预测特征）；Burkitt et al. 2003 JCPP 44(3):445-455（黑色=负面角色最常被选色，330名4-11岁实验）；FBANet Entropy 2023 Fig5（定性）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-008",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "colors.dominantIncludes",
+        "colors.darkRatioMinForDominant"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Guo et al. 2023；Zentner 2001 Dev Sci 4(4):389-398（暗色-悲伤联结3岁已建立）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-009",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Guo et al. 2023（缺少细节为抑郁预测特征）；Yan et al. 2014 反向佐证（描绘细致为保护性 OR=0.553）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-010",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Guo et al. 2023（省略表情为抑郁预测特征）；Li et al. 2011 #25无嘴（Rasch拟合通过）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-011",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Guo et al. 2023（画面缺乏动感为抑郁预测特征）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-012",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "composition.size"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Li et al. 2011 #5（Rasch通过）；Koppitz 1968 微小人物（经验级）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-013",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "composition.position"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011",
+        "zhao2024"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Li et al. 2011 #6（Rasch通过）；赵小明2024 表1（位置偏下→不安全感/沮丧感，HTP评价标准共识）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-014",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011",
+        "fbanet2023"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Li et al. 2011 #17枯枝/#18枯根（Rasch通过）；FBANet Entropy 2023 Fig5c/Grad-CAM（枯树为抑郁画聚焦区，定性）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-015",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011",
+        "fbanet2023"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Li et al. 2011 #20极细树干（Rasch通过）；FBANet Fig5c 单线树干（定性）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-016",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011",
+        "fbanet2023"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Li et al. 2011 #19树干涂阴影（Rasch通过）；FBANet Fig5d 深黑树干（定性）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-017",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "elements"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "fbanet2023"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "FBANet Entropy 2023 Fig5c（falling raindrops→low mood，定性观察）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-018",
+      "legacySignal": "焦虑倾向",
+      "featureKeys": [
+        "erasureMarksMin"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "unmeasurable_from_static_canvas",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "Real pen pressure or erasure history is not measured by the static canvas image.",
+      "citationText": "Alnamlah 2025 IJIRSS 8(6):670-678（反复擦除为适应不良显著指标，总量表相关 r=.92**，125名9-12岁）；Li et al. 2011 #32反复擦改（Rasch通过）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-019",
+      "legacySignal": "焦虑倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Piombo et al. 2025 J Pers Assess（临床焦虑儿童留白更少，228名小学生，叙事性自由绘画）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-020",
+      "legacySignal": "焦虑倾向",
+      "featureKeys": [
+        "composition.pressure"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "unmeasurable_from_static_canvas",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "Real pen pressure or erasure history is not measured by the static canvas image.",
+      "citationText": "Piombo et al. 2025（临床焦虑儿童粗重笔触更多）；Puura et al. 2005 Paediatr Anaesth 15(3)（笔压入焦虑画分，60名4-7岁，p=.029）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-021",
+      "legacySignal": "焦虑倾向",
+      "featureKeys": [
+        "composition.pressure"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "unmeasurable_from_static_canvas",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "Real pen pressure or erasure history is not measured by the static canvas image.",
+      "citationText": "Li et al. 2011 #1线条力度异常弱（Rasch通过）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-022",
+      "legacySignal": "焦虑倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Li et al. 2011 #2不连续弯曲线条（Rasch通过）；Alnamlah 2025（粗重断续线条为适应不良指标）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-023",
+      "legacySignal": "焦虑倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "li2011",
+        "zhao2024"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Li et al. 2011 #4阴影/#35涂阴影（Rasch通过）；Koppitz 1968（面部/身体阴影→焦虑，经验级）；赵小明2024（阴影16-patch密度为全文最强单特征，准确率89.33%，3436幅数据集）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-024",
+      "legacySignal": "乐观平稳",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Yan et al. 2014, OR=0.172（该研究最强保护性特征）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-025",
+      "legacySignal": "乐观平稳",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Yan et al. 2014, OR=0.553",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-026",
+      "legacySignal": "乐观平稳",
+      "featureKeys": [
+        "elements"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Yan et al. 2014, OR=0.086（雪/雨合并项）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-027",
+      "legacySignal": "乐观平稳",
+      "featureKeys": [
+        "colors.dominantIncludes"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Weng et al. 2024 Sci Rep 14:11571（快乐图饱和度68.5%/亮度75.4%最高，黄=快乐）；Zentner 2001（亮色-快乐联结）；KIDO数据集2025（快乐用色更鲜艳，10860幅）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-028",
+      "legacySignal": "焦虑倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Buck 1948 H-T-P框架（二手综述转述：无门/无窗=退缩防御）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-029",
+      "legacySignal": "焦虑倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "Koppitz 1968（倾斜人物≥15°=不稳定，经验级）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-030",
+      "legacySignal": "低落倾向",
+      "featureKeys": [
+        "distortions"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "fbanet2023"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "FBANet Entropy 2023 Fig5d/Grad-CAM（墙体裂纹为抑郁画聚焦区，定性观察）",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    },
+    {
+      "entryId": "HTP-031",
+      "legacySignal": "焦虑倾向",
+      "featureKeys": [
+        "composition.size"
+      ],
+      "runtimeStatus": "retired_from_new_parent_reports",
+      "digitalCanvasStatus": "legacy_match_possible",
+      "sourceStatus": "unverified",
+      "candidateDocumentIds": [
+        "zhao2024"
+      ],
+      "applicability5to12": "not_established",
+      "reason": "A visible symbol alone is not a validated individual mental-state inference for free drawing.",
+      "citationText": "赵小明/潘婷/刘伟锋 2024 计算机与现代化(2024)08:92-97 表1（面积过大→过度自信/紧张/好斗，HTP评价标准共识映射，非本实验统计）；面积>画纸2/3阈值 p.93",
+      "sourcePage": null,
+      "studyPopulation": null,
+      "drawingTask": null,
+      "effectDirection": null,
+      "reviewer": null,
+      "reviewedAt": null,
+      "reviewStatus": "pending_full_text_and_target_population_review"
+    }
+  ]
+}

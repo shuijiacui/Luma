@@ -6,10 +6,10 @@
 
 ## 文件与来源
 
-- drawing-knowledge.json：Luma 原创知识条目、适用条件、错误示范和 22 组 exampleAddition 笔画步骤。其余条目可使用既有部件编译器或模型自定义路径。步骤只描述新添部分的局部坐标，必须重新定位到孩子画上。
-- drawing-techniques.json：6 类原创技巧说明及独立的局部路径示意：少笔画表达、沿连接点起笔、轮廓内添细节、稀疏纹理、有间隔的重复线、留给孩子的下一笔。条目记录操作步骤、不适用条件及工程参考来源；不是经验证的儿童美术课程。
-- drawing-library.json：已筛选的 73 张公开简笔画，含来源、原始简化笔迹、标识、署名、许可与变换说明。
-- drawing-library-selection.json：审核后选定的分类和记录 ID；未选候选不进入运行时。
+- `lessons/drawing-knowledge.json`：Luma 原创知识条目、适用条件、错误示范和 22 组 exampleAddition 笔画步骤。其余条目可使用既有部件编译器或模型自定义路径。步骤只描述新添部分的局部坐标，必须重新定位到孩子画上。
+- `lessons/drawing-techniques.json`：6 类原创技巧说明及独立的局部路径示意：少笔画表达、沿连接点起笔、轮廓内添细节、稀疏纹理、有间隔的重复线、留给孩子的下一笔。条目记录操作步骤、不适用条件及工程参考来源；不是经验证的儿童美术课程。
+- `references/quickdraw/drawing-library.json`：已筛选的 73 张公开简笔画，含来源、原始简化笔迹、标识、署名、许可与变换说明。
+- `references/quickdraw/drawing-library-selection.json`：审核后选定的分类和记录 ID；未选候选不进入运行时。
 - 数据源：[Google Quick, Draw! dataset](https://github.com/googlecreativelab/quickdraw-dataset)，署名 Google Quick, Draw! contributors；[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)，见[官方许可](https://github.com/googlecreativelab/quickdraw-dataset/blob/master/LICENSE)。这是众包涂鸦，不能称为儿童专属绘画数据。分发记录或拼图时保留署名、许可、原始来源与修改说明。
 - 图库示例在运行时等比缩放、重新绘线、换色和拼版。原创知识条目/笔画步骤与第三方示例的来源分别标明；不自动把示例整幅贴到孩子画上。
 - 技巧的工程参考还包括 [Rough.js](https://github.com/rough-stuff/rough/wiki) 的曲线、端点保留、重复渲染和疏密控制。这里只将其思路改写为 Luma 原创规划指导，没有复制上游实现或增加运行时依赖，也没有接入 Sketch-RNN 模型训练。
@@ -24,7 +24,7 @@
 
 兼容细节规划继续保留最多三条绘画技巧：少笔画指导作为基础，其余按主题交替取相关技巧并去重；技巧示意必须重新定向、缩放和定位。当前 v3 使用知识条目和完整画法目录，不读取单独的 techniques 提示字段，也不受旧版“只能添一个局部”的规则限制。
 
-这是推理时的资料检索，不是训练，也不是图像向量搜索；素材规模不能换算成模型的识图或共创准确率。旧部件连接与严格复核仅保留给兼容协议，见 [Nilo API](../../../NILO_API.md)。
+这是推理时的资料检索，不是训练，也不是图像向量搜索；素材规模不能换算成模型的识图或共创准确率。旧部件连接与严格复核仅保留给兼容协议，见 [Nilo API](../../server/NILO_API.md)。
 
 ## 用量与数据
 
@@ -48,7 +48,7 @@ v3 通常为观察、规划两次模型调用，最多一次格式纠正，共�
 
 ## 完整事物画法（2026-09-21）
 
-`shared/niloRecipes.mjs` 统一导出 **90 类、270 种** Luma 原创可执行线稿，每类 3 种画法。保留原有 18 类；新增 72 类：动物 18 类、植物天象 12 类、交通建筑 12 类、食物 12 类、物件玩具 12 类、幻想角色 6 类。分别在 `niloRecipesAnimals/Nature/Places/Food/Objects/Fantasy.mjs` 中维护。
+`shared/niloRecipes.mjs` 统一导出 **90 类、270 种** Luma 原创可执行线稿，每类 3 种画法。保留原有 18 类；新增 72 类：动物 18 类、植物天象 12 类、交通建筑 12 类、食物 12 类、物件玩具 12 类、幻想角色 6 类。分别在 `recipes/animals.mjs`、`nature.mjs`、`places.mjs`、`food.mjs`、`objects.mjs`、`fantasy.mjs` 中维护。
 
 变体改变姿态、轮廓、构成或细节，例如长颈恐龙／霸王龙／剑龙、全身／坐姿／头像、开花／盆栽、敞篷车／厢式车；不是换色或镜像副本。素材保留具名部件，支持整组移动、缩放、换色和换画法。中英文名称共用匹配规则，避免把“熊猫”选成“猫”、把“鲸鱼”选成“鱼”。不是下载训练权重；当前 73 张 Quick, Draw! 参考均保留原署名。
 
@@ -58,4 +58,4 @@ v3 通常为观察、规划两次模型调用，最多一次格式纠正，共�
 
 素材附带建议配色；模型可根据画面另选颜色，建议色不是强制调色板。按物体合并候选目录，避免每个变体重复发送主题和配色，仍向模型提供全部 270 个 ID。
 
-预览：[270 种线稿联系图](../../../../docs/assets/nilo-recipes.svg)。在 server 目录运行 `node scripts/render-nilo-recipes.mjs` 可从实际生产笔画重新生成；分页 PNG 位于 `.tmp/nilo-recipes-expanded-1.png` 至 `-5.png`。
+预览：[270 种线稿联系图](previews/nilo-recipes.svg)。在 server 目录运行 `node scripts/render-nilo-recipes.mjs` 可从实际生产笔画重新生成；分页 PNG 位于 `.tmp/nilo-recipes-expanded-1.png` 至 `-5.png`。

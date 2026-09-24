@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "purpose": "Human-review smoke set for literature retrieval; expected IDs are routing checks, not proof of scientific claims.",
+  "cases": [
+    {
+      "id": "htp_measurement_limits",
+      "query": "房树人绘画测量的信度和效度有哪些局限？",
+      "expectedAnyDocumentIds": ["diasviana2020", "lilienfeld2000"],
+      "mustBeEmpty": false
+    },
+    {
+      "id": "cross_cultural_context",
+      "query": "儿童绘画解释受到文化和绘画任务怎样的影响？",
+      "expectedAnyDocumentIds": ["restoy2022"],
+      "mustBeEmpty": false
+    },
+    {
+      "id": "khtp_scale",
+      "query": "KHTP 评分体系的画作特征和总量表资料",
+      "expectedAnyDocumentIds": ["li2011"],
+      "mustBeEmpty": false
+    },
+    {
+      "id": "out_of_domain",
+      "query": "火箭发动机燃料喷射器的尺寸计算",
+      "expectedAnyDocumentIds": [],
+      "mustBeEmpty": true
+    }
+  ]
+}

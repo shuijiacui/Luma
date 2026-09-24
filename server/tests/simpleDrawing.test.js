@@ -1,6 +1,41 @@
 import { expect, test, vi } from 'vitest'
 import { parseSimpleDrawingRequest } from '../src/services/simpleDrawing.js'
 import { generateNiloDialogue } from '../src/services/niloDialogue.js'
+import {sampleProposalGeometry} from '../../shared/niloGeometry.mjs'
+import {halfShape} from '../../shared/niloHalfShape.mjs'
+
+test.each(['左上角','右上角','左下角','右下角'])('half sun stays half in the requested corner: %s',async corner=>{
+ const vision=vi.fn()
+ const result=await run(`只画一半的太阳，放在${corner}`,{}, {chatWithImage:vision})
+ expect(result.status).toBe('ready')
+ expect(result.placementLocked).toBe(true)
+ const p=result.proposal
+ expect(p).toMatchObject({template:'custom',subject:'太阳'})
+ expect(p.width*context.canvasAspect/p.height).toBeCloseTo(2)
+ expect(p.x < .5).toBe(corner.includes('左'))
+ expect(p.y < .5).toBe(corner.includes('上'))
+ const points=sampleProposalGeometry(p,context.canvasAspect).flatMap(s=>s.points)
+ expect(Math.max(...points.map(p=>p.y))-Math.min(...points.map(p=>p.y))).toBeLessThan(.12)
+ expect(vision).not.toHaveBeenCalled()
+})
+
+test.each(['top','bottom','left','right'])('clips actual sun strokes on %s',side=>{
+ const original={template:'sun',x:.2,y:.2,width:.2,height:.2,color:'#123456'}
+ const result=halfShape(original,side)
+ expect(result).not.toBeNull()
+ for(const {points} of sampleProposalGeometry(result))for(const p of points){
+  if(side==='top')expect(p.y).toBeLessThanOrEqual(.300001)
+  if(side==='bottom')expect(p.y).toBeGreaterThanOrEqual(.299999)
+  if(side==='left')expect(p.x).toBeLessThanOrEqual(.300001)
+  if(side==='right')expect(p.x).toBeGreaterThanOrEqual(.299999)
+ }
+ expect(original.template).toBe('sun')
+})
+
+test('half parser keeps negations and extra clauses out of the shortcut',()=>{
+ expect(parseSimpleDrawingRequest('draw half a sun in the top left corner')).toMatchObject({half:'top',region:'top-left'})
+ for(const text of ['不要画半个太阳，放在左上角','画一半的太阳，不要放在左上角','画一半的太阳，再画一朵花，放在左上角'])expect(parseSimpleDrawingRequest(text)).toBeNull()
+})
 
 const context = { locale: 'zh', inferDrawingIntent: true, inkGrid: Array(64).fill(0), canvasAspect: 1.5,
   lastStroke: { points: [{ x: .3, y: .4 }, { x: .5, y: .6 }], color: '#d74952', width: 7, brushKind: 'crayon' } }

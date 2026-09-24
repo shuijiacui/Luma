@@ -1,4 +1,7 @@
-import { changeVariant, changePart, objectEditCommand, resolveObject, type EditableNiloObject } from '../companion/objects'
+import { applyVoiceActions, simpleVoiceActions, isVoiceEditRequest, proposalBounds } from '../companion/voiceActions'
+import { newVoiceTrace, recordVoiceEvent } from '../companion/voiceDiagnostics'
+import { validateVoicePlan, type VoicePlan } from '../../../../../shared/niloVoiceActions.mjs'
+import { changeVariant, objectEditCommand, resolveObject, type EditableNiloObject } from '../companion/objects'
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { t } from '@/i18n'
 import { randomId } from '@/lib/randomId'
@@ -70,6 +73,7 @@ export function useCompanion(options: Options) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const busy = useRef(false)
   const lastRequest = useRef(-Infinity)
+  const voiceTarget = useRef<string | null>(null)
   const metrics = useRef({ requests: 0, accepted: 0, rejected: 0, stale: 0, localEdits: 0 })
   const identity = useRef({ ownerId: options.ownerId, artworkId: options.artworkId })
 
@@ -113,7 +117,7 @@ export function useCompanion(options: Options) {
     const previous = identity.current
     if (previous.ownerId === options.ownerId && previous.artworkId === options.artworkId) return
     identity.current = { ownerId: options.ownerId, artworkId: options.artworkId }
-    cancel(); lastRequest.current = -Infinity; usedRecipes.current=[]
+    cancel(); lastRequest.current = -Infinity; usedRecipes.current=[]; voiceTarget.current=null
     if (!(previous.ownerId === options.ownerId && !previous.artworkId && options.artworkId)) history.current = []
     // Saving a fresh draft assigns its first artwork id; retain that draft's own story.
     if (previous.ownerId === options.ownerId && !previous.artworkId && options.artworkId) remember(memoryRef.current)
@@ -152,7 +156,7 @@ export function useCompanion(options: Options) {
     }, window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 550)
   }, [cancel, say, setPhase, setProjection, valid])
 
-  const drawTurn = useCallback((proposal: DrawingProposal, revision: number, aspect: number, caption = 'Nilo 正在接着画…', turnSource: 'ai' | 'local' = 'ai') => {
+  const drawTurn = useCallback((proposal: DrawingProposal, revision: number, aspect: number, caption = 'Nilo 正在接着画…', turnSource: 'ai' | 'local' = 'ai', speak = true) => {
     const version = generation.current
     const durationMs = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 1200
     const turn: Projection = { id: randomId(), revision, proposal, additions: [], alternatives: [], aspect, turn: true, durationMs, turnSource }
@@ -161,25 +165,25 @@ export function useCompanion(options: Options) {
       timer.current = null
       if (generation.current === version && current.current?.id === turn.id) {
         if (!valid(turn)) { cancel(false); return }
-        setProjection({...turn,turn:false});setPhase('projected');say('先看看这个小主意，喜欢的话就留下来。',false)
+        setProjection({...turn,turn:false});setPhase('projected');say('先看看这个小主意，喜欢的话就留下来。',speak)
       }
     }, durationMs)
   }, [valid, cancel, say, setPhase, setProjection])
 
-  const ask = useCallback(async (utterance: string, requestDrawing = false, feedback: { speak?: boolean; inferDrawingIntent?: boolean; takeTurn?: boolean; commitDrawing?: boolean } = {}) => {
+  const ask = useCallback(async (utterance: string, requestDrawing = false, feedback: { alternatives?: string[]; speak?: boolean; inferDrawingIntent?: boolean; takeTurn?: boolean; commitDrawing?: boolean; voiceEdit?: boolean } = {}) => {
     const speak = feedback.speak !== false
     const opt = ref.current
     if (!opt.enabled || !utterance.trim() || document.visibilityState === 'hidden') return
     const canvas = opt.canvas.current
     if (!canvas) return
     if (busy.current) cancel(false)
-    if (!feedback.takeTurn && Date.now() - lastRequest.current < 1500) { say('我在这里，稍等一下再说吧。', speak); return }
+    if (!feedback.takeTurn && !feedback.voiceEdit && Date.now() - lastRequest.current < 1500) { say('我在这里，稍等一下再说吧。', speak); return }
     requestDrawing = requestDrawing && opt.allowDrawing !== false
     const inferDrawingIntent = feedback.inferDrawingIntent === true && opt.allowDrawing !== false
     const canPropose = requestDrawing || inferDrawingIntent
     const takeTurn = feedback.takeTurn === true && requestDrawing
     const pending = current.current
-    const sceneDrawing=takeTurn||(requestDrawing&&!pending&&!!canvas.getCompanionScene().childBounds)
+    const sceneDrawing=takeTurn||(requestDrawing&&!pending&&!!canvas.getCompanionScene().childBounds&&!/一半|半个|半边|左上角|右上角|左下角|右下角|\bhalf\b|(?:top|bottom) (?:left|right)/i.test(utterance))
     cancel(false)
     const version = generation.current
     const revision = canvas.getRevision()
@@ -206,7 +210,7 @@ export function useCompanion(options: Options) {
       say(reason === 'timeout' ? '这次连接有点慢，稍后再点我试试。'
         : reason === 'network_error' || reason === 'provider_error' || reason === 'model_unavailable'
           ? '画画伙伴暂时没连上，稍后再点我试试。'
-          : '这次画笔数据没传好，再点我试试。', false)
+          : '这次画笔数据没传好，再点我试试。', speak)
       return true
     }
     let onAbort: (() => void) | undefined
@@ -215,7 +219,7 @@ export function useCompanion(options: Options) {
       const provenance = getCanvasProvenance(canvas.getDocument())
       const focusImage = image && canPropose ? canvas.exportCompanionFocus?.() : null
       const requestBody = { imageBase64: image?.split(',')[1], ...(focusImage ? { focusImage } : {}), context: {
-          locale: opt.locale, utterance: userText, requestDrawing, inferDrawingIntent, takeTurn:sceneDrawing, useDrawingKnowledge:sceneDrawing, turnScope: sceneDrawing ? 'scene' : undefined, revision,
+          locale: opt.locale, utterance: userText, asrAlternatives: feedback.alternatives, requestDrawing, inferDrawingIntent, takeTurn:sceneDrawing, useDrawingKnowledge:sceneDrawing, turnScope: sceneDrawing ? 'scene' : undefined, revision,
           drawingProtocol: sceneDrawing ? 3 : undefined, collisionMap: sceneDrawing ? encodeOccupancy(canvas.getOccupancy(256)) : undefined,
           imageProvenance: provenance === 'unknown' ? 'unknown' : provenance === 'co-created' ? 'composite' : 'child',
           theme: memoryRef.current.theme, history: previous,
@@ -279,7 +283,7 @@ export function useCompanion(options: Options) {
           ? result.geometryReviewed
             ? drawingPlanFits([proposed], canvas.getOccupancy(256), aspect, opt.surfaceSize?.(), proposed.contact ? canvas.getCollisionPixels?.() : undefined) ? proposed : null
             : prepareTurnProposal(proposed, canvas.getOccupancy(256), aspect, opt.surfaceSize?.(), proposed.contact ? canvas.getCollisionPixels?.() : undefined) : null
-        if (prepared) drawTurn(prepared, revision, aspect)
+        if (prepared) drawTurn(prepared, revision, aspect, undefined, undefined, speak)
         else reportTurnFailure(result.proposal ? 'geometry_rejected' : 'invalid_response')
         return
       }
@@ -287,7 +291,7 @@ export function useCompanion(options: Options) {
         const rawAdditions = result.additions ?? []
         const additions = Array.isArray(rawAdditions) && rawAdditions.length <= 3 ? rawAdditions.map(prepareCandidate) : [null]
         const occupancy = pending?.editTargetId ? canvas.getOccupancyWithoutObject?.(pending.editTargetId,256) ?? canvas.getOccupancy(256) : canvas.getOccupancy(256)
-        const prepared = result.geometryReviewed && !additions.length
+        const prepared = (result.geometryReviewed || result.placementLocked) && !additions.length
           ? drawingPlanFits([proposed],occupancy,aspect,opt.surfaceSize?.(),proposed.contact?canvas.getCollisionPixels?.():undefined)?[proposed]:null
           : additions.every((p): p is DrawingProposal => p !== null)
           ? prepareDrawingPlan([proposed, ...additions], occupancy, aspect, opt.surfaceSize?.(), proposed.contact ? canvas.getCollisionPixels?.() : undefined) : null
@@ -320,13 +324,17 @@ export function useCompanion(options: Options) {
       clearTimeout(timeout)
       clearTimeout(progress)
       if (onAbort) controller.signal.removeEventListener('abort', onAbort)
+      if(feedback.voiceEdit&&version===generation.current&&pending&&!current.current&&valid(pending)){
+        canvas.previewWithoutObject?.(pending.pristineEdit?null:pending.editTargetId??null)
+        setProjection(pending);setPhase('projected')
+      }
       if (version === generation.current) { busy.current = false; active.current = null }
     }
   }, [cancel, drawTurn, remember, say, setPhase, setProjection, show, valid])
 
   const takeTurn = useCallback(() => {
     if (ref.current.allowDrawing === false || phaseRef.current !== 'idle') return
-    return ask(t('轮到你了，请接着我的画继续创作。', ref.current.locale), true, { speak: false, takeTurn: true })
+    return ask(t('轮到你了，请接着我的画继续创作。', ref.current.locale), true, { speak: true, takeTurn: true })
   }, [ask])
 
 
@@ -409,10 +417,11 @@ export function useCompanion(options: Options) {
     say('选好了，可以移动、换色或换个画法。',false)
     setPhase('projected')
   },[cancel,say,setProjection,setPhase])
-  const receive = useCallback((text: string, feedback: { speak?: boolean; selectedObjectId?: string } = {}) => {
+  const receive = useCallback(async (text: string, feedback: { speak?: boolean; selectedObjectId?: string; traceId?: string; alternatives?: string[] } = {}) => {
     if (!ref.current.enabled || document.visibilityState === 'hidden') return
+    const traceId=feedback.traceId??newVoiceTrace(),speak=feedback.speak!==false,started=Date.now()
     if(ref.current.allowDrawing===false){void ask(text,false,{...feedback,inferDrawingIntent:true});return}
-    const basic=localCommand(text), parsed=objectEditCommand(text)
+    const basic=localCommand(text)
     if (basic === 'accept') {
       if(/确认移除|confirm removal/i.test(text)&&!current.current?.deleting)return
       accept(feedback); return
@@ -420,52 +429,94 @@ export function useCompanion(options: Options) {
     if (basic === 'dismiss' && !/不要那|不要这/.test(text)) { dismiss(feedback); return }
     if (basic === 'stop') { cancel(); ref.current.onSpeak(''); return }
     if (basic === 'forget') { forget(); return }
-    if(parsed==='undo'){
+    if(objectEditCommand(text)==='undo'){
       cancel(false)
       const canvas=ref.current.canvas.current
-      if(canvas?.getDocument().operations.at(-1)?.type==='edit'&&canvas.undoCompanionStroke()){ref.current.onCommitted();say('恢复刚才的样子啦。',feedback.speak!==false)}
-      else say('现在没有可恢复的修改。',feedback.speak!==false)
-      return
-    }
-    const editIntent=!!parsed||/移到|放到|挪到|改成|换成|换一种|变成|变大|变小|靠近|删除|\b(move|make|change|replace|put|remove|delete)\b/i.test(text)
-    if(!current.current&&editIntent){
-      const objects=ref.current.canvas.current?.getEditableObjects?.()??[]
-      const matches=resolveObject(text,objects)
-      if(matches.length!==1){setObjectChoices({objects:matches,text});say(matches.length?'想改哪一个？点一下就好。':'还没有可以修改的 Nilo 作品。',feedback.speak!==false);return}
-      beginObjectEdit(matches[0])
-    }
-    if(current.current?.editTargetId&&editIntent&&!feedback.selectedObjectId){
-      const objects=ref.current.canvas.current?.getEditableObjects?.()??[]
-      const named=resolveObject(text,objects,true)
-      if(named.length>1){setObjectChoices({objects:named,text});say('想改哪一个？点一下就好。',feedback.speak!==false);return}
-      if(named.length===1&&named[0].id!==current.current.editTargetId)beginObjectEdit(named[0])
-    }
-    const p=current.current?.proposal
-    const command=parsed??basic
-    if(p&&command){
-      const speak=feedback.speak!==false
-      if(command==='alternative'||command==='variant'){alternative(feedback);return}
-      if(command==='delete'){
-        if(current.current?.editTargetId){ref.current.canvas.current?.previewWithoutObject?.(current.current.editTargetId);setProjection({...current.current,pristineEdit:false,deleting:true});setPhase('projected');say('先收起来，确认后才会移除。',speak)}
-        else dismiss(feedback)
-        return
-      }
-      if(typeof command==='object'){
-        if('color'in command)edit({color:command.color},speak)
-        else {const next=changePart(p,command.part,command.factor);if(next)edit({sketch:next.sketch,x:next.x,y:next.y,width:next.width,height:next.height},speak);else say('这个部位暂时不能单独调整，可以换个画法。',speak)}
-      }else if(command==='smaller'||command==='larger'){
-        const ratio=command==='smaller'?.85:1.15,items=planItems(current.current!)
-        const cx=(Math.min(...items.map(i=>i.x))+Math.max(...items.map(i=>i.x+i.width)))/2
-        const cy=(Math.min(...items.map(i=>i.y))+Math.max(...items.map(i=>i.y+i.height)))/2
-        edit({width:p.width*ratio,height:p.height*ratio,x:cx+(p.x-cx)*ratio,y:cy+(p.y-cy)*ratio},speak)
-      }else if(command==='left'||command==='right')edit({x:p.x+(command==='left'?-.035:.035)},speak)
-      else if(command==='up'||command==='down')edit({y:p.y+(command==='up'?-.035:.035)},speak)
+      if(canvas?.getDocument().operations.at(-1)?.type==='edit'&&canvas.undoCompanionStroke()){ref.current.onCommitted();say('恢复刚才的样子啦。',speak)}
+      else say('现在没有可恢复的修改。',speak)
       return
     }
     if(basic==='alternative'){alternative(feedback);return}
-    const requestsDrawing=/帮.*画|请.*画|你.*画|你来|轮到你|添|加.*(点|个|一)|画.*给我|^(?:请|帮我|给我)?\s*(?:画|绘制).+|\b(draw|add)\b|your turn|help.*(paint|sketch)/i.test(text)
-    void ask(text,requestsDrawing||(!!p&&editIntent),{...feedback,inferDrawingIntent:!requestsDrawing&&!editIntent})
-  },[accept,alternative,ask,beginObjectEdit,cancel,dismiss,edit,forget,say,setPhase,setProjection])
+    if(!isVoiceEditRequest(text)||/^(?:请)?(?:只)?(?:帮我)?(?:画|绘制)(?:一半|半个|半边|一个|个)|^(?:please )?(?:draw|paint) /i.test(text)){
+      const requestsDrawing=/^只画|帮.*画|请.*画|你.*画|你来|轮到你|添|加.*(点|个|一)|画.*给我|^(?:请|帮我|给我)?\s*(?:画|绘制).+|\b(draw|add)\b|your turn|help.*(paint|sketch)/i.test(text)
+      void ask(text,requestsDrawing,{...feedback,inferDrawingIntent:!requestsDrawing});return
+    }
+    const canvas=ref.current.canvas.current
+    if(!canvas)return
+    // Supersede older interpretation without discarding the existing projection.
+    active.current?.abort();active.current=null
+    if(timer.current)clearTimeout(timer.current)
+    const version=++generation.current,revision=canvas.getRevision(),pending=current.current
+    if(pending&&pending.revision!==revision){cancel(false);say('画面已经变了，我们重新看一下吧。',speak);return}
+    const objects=canvas.getEditableObjects?.()??[]
+    const previewId=pending?.editTargetId??'@preview'
+    const targets=pending?[...objects.filter(o=>o.id!==previewId),{id:previewId,name:pending.proposal.subject??pending.proposal.template,proposals:planItems(pending),aspect:pending.aspect}]:objects
+    const selectedId=feedback.selectedObjectId??(pending?previewId:objects.find(o=>o.id===voiceTarget.current)?.id)
+    const restore=()=>{busy.current=false;setPhase(pending?'projected':'idle')}
+    const choices=(candidates:EditableNiloObject[],reason:'target'|'instruction'='target')=>{
+      restore()
+      const visible=candidates.filter(o=>o.id!=='@preview')
+      setObjectChoices(reason==='target'&&visible.length?{objects:visible,text}:null)
+      say(reason==='instruction'?'这句话我还没理解好，可以换个说法告诉我怎么改吗？':targets.length?'想改哪一个？点一下就好。':'还没有可以修改的 Nilo 作品。',speak)
+    }
+    let plan:VoicePlan|null=null
+    const local=simpleVoiceActions(text)
+    if(!targets.length&&!local){restore();void ask(text,false,{...feedback,inferDrawingIntent:true});return}
+    if(local){
+      const named=feedback.selectedObjectId?[]:resolveObject(text,targets,true)
+      const matches=feedback.selectedObjectId?targets.filter(o=>o.id===feedback.selectedObjectId):named.length?named:selectedId?targets.filter(o=>o.id===selectedId):resolveObject(text,targets)
+      if(matches.length!==1){choices(matches);return}
+      plan={status:'edit',targetId:matches[0].id,actions:local}
+    }else{
+      const controller=new AbortController();active.current=controller;busy.current=true;setPhase('thinking')
+      let onAbort:(()=>void)|undefined
+      const timeout=setTimeout(()=>controller.abort(),10000)
+      try{
+        const abort=new Promise<never>((_,reject)=>{onAbort=()=>reject(new Error('cancelled'));controller.signal.addEventListener('abort',onAbort,{once:true})})
+        const raw=await Promise.race([authFetch<unknown>('/nilo/voice/interpret',{method:'POST',token:ref.current.token,signal:controller.signal,body:{utterance:text,asrAlternatives:feedback.alternatives,locale:ref.current.locale,selectedTargetId:selectedId,objects:targets.map(o=>({id:o.id,name:o.name,subjects:o.proposals.map(p=>p.subject??p.template),bounds:proposalBounds(o.proposals)}))}}),abort])
+        plan=validateVoicePlan(raw,targets.map(o=>o.id))
+        if(!plan)throw new Error('interpretation_unavailable')
+      }catch(error){
+        if(version===generation.current){
+          if(canvas.getRevision()!==revision){cancel(false);say('画面已经变了，我们重新看一下吧。',speak)}
+          else{restore();say(error instanceof ApiError?requestFailureMessage(error,false):controller.signal.aborted?'理解这句话等得有点久，请再试一次。':'语音指令暂时没能理解，原来的画没有改变。',speak)}
+          recordVoiceEvent({turn:traceId,stage:'understand',outcome:controller.signal.aborted?'timeout':'unavailable',durationMs:Date.now()-started,text})
+        }
+        return
+      }finally{clearTimeout(timeout);if(onAbort)controller.signal.removeEventListener('abort',onAbort);if(version===generation.current){busy.current=false;active.current=null}}
+    }
+    if(version!==generation.current)return
+    if(canvas.getRevision()!==revision){cancel(false);say('画面已经变了，我们重新看一下吧。',speak);recordVoiceEvent({turn:traceId,stage:'execute',outcome:'stale'});return}
+    recordVoiceEvent({turn:traceId,stage:'understand',outcome:local?'local':plan.status,durationMs:Date.now()-started,text,plan})
+    restore()
+    if(plan.status==='clarify'){choices(targets.filter(o=>plan.candidateIds.includes(o.id)),plan.reason);return}
+    if(plan.status==='noop'){say('好，就保持现在的样子。',speak);return}
+    if(plan.status==='unhandled'){await ask(text,false,{...feedback,inferDrawingIntent:true,voiceEdit:true});return}
+    const target=targets.find(o=>o.id===plan.targetId)
+    if(!target){choices([]);return}
+    if(plan.status==='redraw'){
+      if(target.id!=='@preview')beginObjectEdit(target)
+      recordVoiceEvent({turn:traceId,stage:'execute',outcome:'delegated_redraw'})
+      await ask(text,true,{...feedback,voiceEdit:true});return
+    }
+    const result=applyVoiceActions(target.proposals,plan.actions)
+    if(!result.ok){
+      say(result.reason==='geometry'?'这样调整会超出画布，原来的投影先保留。':'这些修改暂时不能一起完成，原来的投影先保留。',speak)
+      recordVoiceEvent({turn:traceId,stage:'execute',outcome:result.reason,actions:plan.actions.map(a=>a.type)});return
+    }
+    if(result.deleting&&target.id==='@preview'){dismiss(feedback);return}
+    const next:Projection={id:randomId(),revision,proposal:result.items[0],additions:result.items.slice(1),alternatives:[],aspect:target.aspect,editTargetId:target.id==='@preview'?undefined:target.id,pristineEdit:false,deleting:result.deleting}
+    if(!valid(next)){
+      say('这些调整会碰到画面里的内容，原来的投影先保留。',speak)
+      recordVoiceEvent({turn:traceId,stage:'execute',outcome:'geometry',actions:plan.actions.map(a=>a.type)});return
+    }
+    setObjectChoices(null);canvas.previewWithoutObject?.(next.editTargetId??null)
+    voiceTarget.current=next.editTargetId??null
+    setProjection(next);setPhase('projected');metrics.current.localEdits++
+    say(next.deleting?'先收起来，确认后才会移除。':'调整好啦，喜欢的话就留下来。',speak)
+    if(!speak)ref.current.onSpeak('')
+    recordVoiceEvent({turn:traceId,stage:'execute',outcome:'previewed',actions:plan.actions.map(a=>a.type)})
+  },[accept,alternative,ask,beginObjectEdit,cancel,dismiss,forget,say,setPhase,setProjection,valid])
   const chooseObject=useCallback((id:string)=>{
     const choice=objectChoices?.objects.find(o=>o.id===id),text=objectChoices?.text
     if(!choice)return

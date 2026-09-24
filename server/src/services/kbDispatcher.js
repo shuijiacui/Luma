@@ -1,4 +1,4 @@
-// 知识库调度器：分层与约束见 docs/AI解读与知识库.md。
+// 历史规则调度器：旧规则档案见 knowledge/psychology/rules/README.md。
 // L4 元认知层先行：年龄调制 → 标签匹配 → L3 共现门槛 → 冲突登记处置
 // 输出分层命中集给 score.js；冲突与丢弃全程显式记录（不在黑箱里消化）
 import { matchEntry } from './retrieve.js'

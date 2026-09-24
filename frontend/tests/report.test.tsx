@@ -9,7 +9,7 @@ vi.mock('@/lib/api/lumaApi', () => ({ fetchReport: vi.fn() }))
 vi.mock('@/hooks/useAuthedImage', () => ({ useAuthedImage: () => null }))
 afterEach(() => { cleanup(); vi.clearAllMocks(); sessionStorage.clear() })
 const analysis = (id: string) => ({ id, createdAt: '2026-09-01T00:00:00Z', imageUrl: null, rawDescription: '一棵树', summary: { elements: ['tree'] }, report: null })
-const report = { emotion: '未见明显风险信号', confidence: .6, evidence: [], parentAdvice: ['一起看看画面'] } as const
+const report = { kind: 'observation-v1', emotion: '画面观察', confidence: 0, observationStatus: 'observed', childAgeBand: '5-7', ageContext: '5–7 岁：用简短、具体的问题邀请孩子讲画里的故事。', evidence: [{ entryId: 'OBS-elements', summary: '画面中可以看到树。' }], parentAdvice: ['一起看看画面'] } as const
 
 test('new parent device generates historical report using ID with no sessionStorage', async () => {
   vi.mocked(listAnalyses).mockResolvedValue({ analyses: [analysis('saved-art')] } as Awaited<ReturnType<typeof listAnalyses>>)
@@ -20,6 +20,10 @@ test('new parent device generates historical report using ID with no sessionStor
   fireEvent.click(await screen.findByRole('button', { name: '生成画面解读' }))
   await waitFor(() => expect(fetchReport).toHaveBeenCalledWith(null, { token: 'parent-token', analysisId: 'saved-art' }))
   await screen.findByText('一起看看画面')
+  expect(screen.getByText('画面中可以看到树。')).toBeTruthy()
+  expect(screen.getByText('5–7 岁')).toBeTruthy()
+  expect(screen.getByText(report.ageContext)).toBeTruthy()
+  expect(screen.queryByText('参考分值')).toBeNull()
   expect(updated).toHaveBeenCalledOnce()
 })
 

@@ -114,7 +114,7 @@ test('CONFLICT-02: 擦改条目需线条簇支撑，否则不计入', () => {
 })
 
 // ---- 趋势接口 ----
-test('trend: 聚合历史报告，direction 三态正确，权限隔离', async () => {
+test('trend: 汇总作品但不从观察推断心理走势，保留权限隔离', async () => {
   const app = createApp({
     chatWithImage: async () => ({
       rawDescription: 'd', elements: ['house'], colors: { dominant: ['red'], darkRatio: 0.1 },
@@ -135,7 +135,7 @@ test('trend: 聚合历史报告，direction 三态正确，权限隔离', async 
     .set('Authorization', `Bearer ${parent.token}`)).body
   expect(trend.direction).toBe('insufficient')
 
-  // 产生 2 份报告（entries 为空 → 未见明显风险信号）
+  // 产生 2 份画面观察；数量不构成心理趋势。
   for (let i = 0; i < 2; i += 1) {
     const ana = await request(app).post('/api/analyze')
       .set('Authorization', `Bearer ${child.token}`).send({ imageBase64: 'aGVsbG8=' })
@@ -145,10 +145,10 @@ test('trend: 聚合历史报告，direction 三态正确，权限隔离', async 
   }
   trend = (await request(app).get(`/api/children/${child.session.id}/trend`)
     .set('Authorization', `Bearer ${parent.token}`)).body
-  expect(trend.direction).toBe('stable')
+  expect(trend.direction).toBe('insufficient')
   expect(trend.withReport).toBe(2)
   expect(trend.points).toHaveLength(2)
-  expect(trend.counts['未见明显风险信号']).toBe(2)
+  expect(trend.counts['画面观察']).toBe(2)
 
   // 权限：陌生家长 403，未登录 401
   const stranger = (await request(app).post('/api/auth/parent/register')

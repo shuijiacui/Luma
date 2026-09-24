@@ -1,5 +1,5 @@
 import { lt, t, useLocale } from '@/i18n'
-// 画面解读（家长视角）：基于孩子画作的情绪倾向报告 + 历史解读
+// 画面观察（家长视角）：新报告只描述可见笔迹；旧报告保留版本标记供回看
 // 数据源：/api/report + /api/children/:id/analyses（判定逻辑全在后端，前端只展示，不做阈值判断、不改写文案）
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -9,18 +9,22 @@ import {
   type Emotion,
   type ReportResponse,
 } from '@/lib/api/lumaApi'
-import { listAnalyses, fetchTrend, type AnalysisSummary, type TrendResponse } from '@/lib/api/authApi'
+import { listAnalyses, type AnalysisSummary } from '@/lib/api/authApi'
 import { authFetch } from '@/lib/api/authFetch'
 import { useAuthedImage } from '@/hooks/useAuthedImage'
 import { cn } from '@/lib/cn'
 
 const EMOTION_STYLE: Record<Emotion, { label: string; className: string }> = {
+  画面观察: { label: '画面观察', className: 'bg-luma-teal-50 text-luma-teal-700 border-luma-teal-100' },
   乐观平稳: { label: '乐观平稳', className: 'bg-luma-teal-50 text-luma-teal-700 border-luma-teal-100' },
   未见明显风险信号: { label: '未见明显风险信号', className: 'bg-luma-teal-50 text-luma-teal-700 border-luma-teal-100' },
   焦虑倾向: { label: '焦虑倾向', className: 'bg-luma-gold-100 text-luma-gold-700 border-luma-gold-300/50' },
   低落倾向: { label: '低落倾向', className: 'bg-[#eceefc] text-[#5a63b8] border-[#d5d9f5]' },
   需要关注: { label: '需要关注', className: 'bg-[#fdeae7] text-[#c4533f] border-[#f6d0c9]' },
   信息不足: { label: '信息不足', className: 'bg-luma-ivory-100 text-luma-muted border-luma-ivory-200' },
+}
+const AGE_LABELS: Record<NonNullable<ReportResponse['childAgeBand']>, string> = {
+  '5-7': '5–7 岁', '8-9': '8–9 岁', '10-12': '10–12 岁',
 }
 
 function emotionStyle(emotion: string) {
@@ -62,12 +66,6 @@ function elementLabel(value: string) {
 }
 
 // 趋势方向文案（描述性，不做预测、不下结论——v2 界限）
-const DIRECTION_TEXT: Record<TrendResponse['direction'], { text: string; className: string }> = {
-  insufficient: { text: '解读次数还太少，趋势需更多画作积累', className: 'text-luma-muted' },
-  stable: { text: '近期有效解读未见预警信号，请继续结合日常观察', className: 'text-luma-teal-700' },
-  watch: { text: '近期解读中出现了需要留意的信号，建议持续观察', className: 'text-[#c4533f]' },
-}
-
 interface DrawingInsightSectionProps {
   childId?: string
   token?: string
@@ -80,7 +78,6 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
   const [reportSource, setReportSource] = useState<'latest' | 'history'>('latest')
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [history, setHistory] = useState<AnalysisSummary[]>([])
-  const [trend, setTrend] = useState<TrendResponse | null>(null)
   const [selectedId, setSelectedId] = useState('')
   const [loadError, setLoadError] = useState(false)
   const features = !!(token && childId && history.length)
@@ -105,13 +102,6 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
       })
       .catch(() => {
         if (loadTokenRef.current === requestToken) setLoadError(true)
-      })
-    fetchTrend(childId, token)
-      .then((res) => {
-        if (loadTokenRef.current === requestToken) setTrend(res)
-      })
-      .catch(() => {
-        if (loadTokenRef.current === requestToken) setTrend(null)
       })
   }, [childId, token])
 
@@ -158,13 +148,14 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
   }
 
   const style = report ? emotionStyle(report.emotion) : null
+  const observation = report?.kind === 'observation-v1'
 
   return (
     <Card
       variant="glass"
-      eyebrow="画面解读"
-      title={t("所选画作的观察与解读")}
-      description="只呈现情绪倾向与参考分值，不构成任何诊断结论"
+      eyebrow="画面观察"
+      title={lt('所选画作的画面观察')}
+      description={lt('看看孩子画了什么，听孩子讲自己的故事')}
       className="mt-5 border-luma-teal-100"
     >
       <p className="mb-3 text-xs leading-relaxed text-luma-muted">{t('新解读将使用当前语言；已有自由文本保留生成时的语言。')}</p>
@@ -203,19 +194,13 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
                 style?.className,
               )}
             >
-              {lt(style?.label)}
+              {observation ? lt('画面观察') : lt('历史旧版报告')}
             </span>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-36 overflow-hidden rounded-full bg-luma-ivory-200">
-                <div
-                  className="h-full rounded-full bg-luma-teal-500"
-                  style={{ width: `${Math.round(report.confidence * 100)}%` }}
-                />
-              </div>
-              <span className="text-sm font-bold text-luma-teal-900">
-                {t("参考分值")}{lt(Math.round(report.confidence * 100))}%
+            {observation && report.childAgeBand && (
+              <span className="rounded-full bg-luma-ivory-50 px-3 py-1 text-xs font-semibold text-luma-teal-700">
+                {lt(AGE_LABELS[report.childAgeBand])}
               </span>
-            </div>
+            )}
             {reportSource === 'history' && (
               <span className="text-xs font-semibold text-luma-muted">{t("（历史解读）")}</span>
             )}
@@ -229,7 +214,7 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
 
           {report.evidence.length > 0 && (
             <div>
-              <div className="luma-eyebrow text-luma-gold-700">{t("判定依据（可追溯文献条目）")}</div>
+              <div className="luma-eyebrow text-luma-gold-700">{observation ? lt('画面里看到') : lt('历史旧版依据')}</div>
               <ul className="mt-2 space-y-2">
                 {report.evidence.map((item) => (
                   <li
@@ -257,6 +242,7 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
 
           <div>
             <div className="luma-eyebrow text-luma-gold-700">{t("沟通建议")}</div>
+            {observation && report.ageContext && <p className="mt-2 text-xs leading-relaxed text-luma-muted">{lt(report.ageContext)}</p>}
             <ul className="mt-2 space-y-2">
               {report.parentAdvice.map((advice) => (
                 <li key={advice} className="flex items-start gap-2.5 text-sm leading-relaxed text-luma-teal-900">
@@ -296,8 +282,9 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
                       {t("局限：")}{lt(item.limitation)}
                     </div>
                     <div className="mt-1 font-mono text-[11px] text-luma-teal-600">
-                      {t("文献来源：")}{item.sourceFile}
+                      {t("文献来源：")}{item.sourceFile}{item.sourcePage ? ` · PDF p. ${item.sourcePage}` : ''}
                     </div>
+                    {item.sourceUrl && <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs font-semibold text-luma-teal-700 underline underline-offset-2">{lt('查看原文')}</a>}
                   </li>
                 ))}
               </ul>
@@ -305,40 +292,14 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
           )}
 
           <div className="rounded-xl bg-luma-teal-50 px-4 py-3 text-xs leading-relaxed text-luma-teal-700">
-            {t("以上仅为单幅画面的观察参考，分值是规则计算结果，未经真实样本概率校准；请结合日常观察了解孩子。")}</div>
+            {observation ? lt('这里只描述单幅画中可见的内容。模型可能看错；孩子自己的讲述比画面猜测更重要。')
+              : lt('这份历史旧版报告包含未经目标人群验证的规则分值，不应据此判断孩子的心理状态。可以重新生成画面观察。')}</div>
 
           {features && (
             <Button variant="ghost" size="sm" onClick={handleGenerate} disabled={status === 'loading'}>
               {lt(status === 'loading' ? '正在解读…' : '重新解读所选画作')}
             </Button>
           )}
-        </div>
-      )}
-
-      {token && trend && trend.withReport > 0 && (
-        <div className="mt-4 rounded-xl bg-luma-ivory-50 px-4 py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="luma-eyebrow text-luma-gold-700">{t("近期趋势")}</span>
-            <span className="flex items-center gap-1" aria-label={t("历次解读结果")}>
-              {trend.points.map((p) => (
-                <span
-                  key={p.createdAt}
-                  title={t(`${formatTime(p.createdAt)} ${p.emotion} ${Math.round(p.confidence * 100)}%`)}
-                  className={cn(
-                    'inline-block size-2.5 rounded-full',
-                    p.emotion === '需要关注' && 'bg-[#ef7b69]',
-                    (p.emotion === '焦虑倾向' || p.emotion === '低落倾向') && 'bg-luma-gold-300',
-                    (p.emotion === '乐观平稳' || p.emotion === '未见明显风险信号') && 'bg-luma-teal-500',
-                    p.emotion === '信息不足' && 'bg-luma-ivory-200',
-                  )}
-                />
-              ))}
-            </span>
-          </div>
-          <p className={cn('mt-1.5 text-xs font-semibold', DIRECTION_TEXT[trend.direction].className)}>
-            {lt(DIRECTION_TEXT[trend.direction].text)}
-            <span className="ml-2 font-normal text-luma-muted">{t("（基于最近")}{lt(trend.withReport)} {t("次解读，仅为历史呈现，不构成预测）")}</span>
-          </p>
         </div>
       )}
 
@@ -375,7 +336,7 @@ export function DrawingInsightSection({ childId, token, onUpdated }: DrawingInsi
                         emotionStyle(item.report.emotion).className,
                       )}
                     >
-                      {lt(item.report.emotion)} {lt(Math.round(item.report.confidence * 100))}%
+                      {item.report.kind === 'observation-v1' ? lt('画面观察') : lt('历史旧版报告')}
                     </span>
                   ) : (
                     <span className="shrink-0 text-xs">{t("未生成解读")}</span>

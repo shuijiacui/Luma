@@ -1,11 +1,14 @@
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { authFetch } from '@/lib/api/authFetch'
+import { ApiError } from '@/lib/api/client'
 import { useCompanionVoice } from '@/features/child/hooks/useCompanionVoice'
 import { useDrawingMusic } from '@/features/child/hooks/useDrawingMusic'
 import { convertVoiceBuffer, encodeVoiceWav } from '@/features/child/hooks/voiceAudio'
 import { selectCompanionVoice } from '@/features/child/hooks/voiceProfile'
 import { createSpeechEndpoint, recognitionContext, recognitionVocabulary, SPEECH_PAUSE_MS } from '@/features/child/hooks/voiceRecognition'
+
+vi.mock('@/features/child/hooks/voiceVad',()=>({startVoiceVad:vi.fn(async()=>{throw new Error('unavailable in test')})}))
 
 vi.mock('@/lib/api/authFetch', () => ({ authFetch: vi.fn() }))
 
@@ -81,6 +84,21 @@ class FakeAudioContext {
 const originalMediaDevices = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices')
 const baseOptions = () => ({ ownerId: 'child-a', locale: 'zh' as const, enabled: true, onTranscript: vi.fn() })
 async function ready() { await act(async () => { await Promise.resolve() }) }
+
+test.each([[503,'voice_provider_unavailable','服务暂时没连上'],[422,'voice_no_speech','没有听到完整的话'],[504,'timeout','等得有点久']] as const)('server ASR %s has an accurate error and releases the microphone',async(status,code,message)=>{
+ vi.mocked(authFetch).mockImplementation(path=>path.endsWith('/config')?Promise.resolve({asr:true,tts:false}):Promise.reject(new ApiError(status,code)))
+ const stopTrack=vi.fn(),opts=baseOptions()
+ microphone.mockResolvedValue({getTracks:()=>[{stop:stopTrack}]})
+ const {result}=renderHook(()=>useCompanionVoice(opts))
+ await ready()
+ await act(async()=>result.current.start())
+ act(()=>result.current.stop())
+ await act(async()=>{await new Promise(resolve=>setTimeout(resolve,30))})
+ expect(result.current.error).toContain(message)
+ expect(result.current.status).toBe('idle')
+ expect(stopTrack).toHaveBeenCalledOnce()
+ expect(opts.onTranscript).not.toHaveBeenCalled()
+})
 beforeEach(() => {
   vi.mocked(authFetch).mockReset()
   vi.mocked(authFetch).mockResolvedValue({ asr: false, tts: false })
@@ -124,7 +142,7 @@ test('never opens the microphone on entry and can retry after a permission refus
   expect(result.current.error).toContain('麦克风未获允许')
   act(() => result.current.start())
   act(() => FakeRecognition.instances[1].say('我想画一只猫'))
-  expect(opts.onTranscript).toHaveBeenCalledWith('我想画一只猫')
+  expect(opts.onTranscript).toHaveBeenCalledWith('我想画一只猫', expect.stringMatching(/^voice-/))
   expect(result.current.transcript).toBe('我想画一只猫')
   expect(result.current.error).toBeNull()
 })
@@ -171,7 +189,7 @@ test('browser-prefixed speech recognition is available without cloud ASR', async
   await ready()
   act(() => result.current.start())
   act(() => FakeRecognition.instances[0].say('我想画太阳'))
-  expect(opts.onTranscript).toHaveBeenCalledWith('我想画太阳')
+  expect(opts.onTranscript).toHaveBeenCalledWith('我想画太阳', expect.stringMatching(/^voice-/))
 })
 
 test('a speech output service alone cannot enable microphone recognition', async () => {
@@ -243,7 +261,7 @@ test('final recognition waits for a pause without requiring end; interim words n
   act(() => recognition.onresult?.({ results: [{ isFinal: true, 0: { transcript: '留下来' } }] }))
   expect(opts.onTranscript).not.toHaveBeenCalled()
   act(() => vi.advanceTimersByTime(SPEECH_PAUSE_MS))
-  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('留下来')
+  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('留下来', expect.stringMatching(/^voice-/))
   expect(result.current.status).toBe('idle')
   expect(recognition.abort).toHaveBeenCalledOnce()
   act(() => { lateEnd?.(); lateError?.({ error: 'aborted' }) })
@@ -268,7 +286,7 @@ test('a thinking pause and revised interim tail are kept in one Chinese utteranc
   expect(opts.onTranscript).not.toHaveBeenCalled()
   act(() => recognition.onresult?.({ results: [first, { isFinal: true, 0: { transcript: '蓝色的小汽车' } }] }))
   act(() => vi.advanceTimersByTime(SPEECH_PAUSE_MS))
-  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('帮我画一个蓝色的小汽车')
+  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('帮我画一个蓝色的小汽车', expect.stringMatching(/^voice-/))
 })
 
 test('an unfinished trailing correction is never dropped to execute the earlier fragment', async () => {
@@ -295,7 +313,7 @@ test('manual stop submits a complete sentence immediately and cancellation disca
   act(() => result.current.start())
   act(() => FakeRecognition.instances[0].onresult?.({ results: [{ isFinal: true, 0: { transcript: '画太阳' } }] }))
   act(() => result.current.stop())
-  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('画太阳')
+  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('画太阳', expect.stringMatching(/^voice-/))
   act(() => result.current.start())
   act(() => FakeRecognition.instances[1].onresult?.({ results: [{ isFinal: true, 0: { transcript: '留下来' } }] }))
   act(() => result.current.cancel())
@@ -313,7 +331,7 @@ test('English fragments retain word boundaries', async () => {
     { isFinal: true, 0: { transcript: 'Draw a' } }, { isFinal: true, 0: { transcript: 'blue boat' } },
   ] }))
   act(() => vi.advanceTimersByTime(SPEECH_PAUSE_MS))
-  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('Draw a blue boat')
+  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('Draw a blue boat', expect.stringMatching(/^voice-/))
 })
 
 test('an engine that rejects contextual phrases retries once without biasing', async () => {
@@ -329,7 +347,7 @@ test('an engine that rejects contextual phrases retries once without biasing', a
   expect(FakeRecognition.instances).toHaveLength(2)
   expect((FakeRecognition.instances[1] as BiasedRecognition).phrases).toEqual([])
   act(() => FakeRecognition.instances[1].say('画火箭'))
-  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('画火箭')
+  expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('画火箭', expect.stringMatching(/^voice-/))
 })
 
 test('endpointing accepts quiet speech and preserves a pause before the next word', () => {
@@ -732,4 +750,18 @@ test('voice activity ducks music while preserving the user volume setting', asyn
   expect(audio.volume).toBeCloseTo(.4 * .15)
   act(() => window.dispatchEvent(new CustomEvent('luma-voice-active', { detail: false })))
   expect(audio.volume).toBe(.4)
+})
+
+
+test('recognition alternatives retain the entire correction without rewriting the displayed transcript',async()=>{
+ const opts=baseOptions(); const {result}=renderHook(()=>useCompanionVoice(opts))
+ await ready()
+ act(()=>result.current.start())
+ const recognition=FakeRecognition.instances[0]
+ act(()=>{recognition.onresult?.({results:[
+  {isFinal:true,0:{transcript:'画蔡阳'},1:{transcript:'画太阳'},length:2},
+  {isFinal:true,0:{transcript:'只画一半，不要放右边，放左上角'}}
+ ]} as Parameters<NonNullable<typeof recognition.onresult>>[0]);recognition.onend?.()})
+ expect(result.current.transcript).toBe('画蔡阳只画一半，不要放右边，放左上角')
+ expect(opts.onTranscript).toHaveBeenCalledExactlyOnceWith('画蔡阳只画一半，不要放右边，放左上角',expect.stringMatching(/^voice-/),['画太阳只画一半，不要放右边，放左上角'])
 })

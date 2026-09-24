@@ -26,5 +26,5 @@ for(const [index,r] of recipes.entries()){
 }
 svg.push('</svg>');mkdirSync('.tmp',{recursive:true});
 sheets.forEach((sheet,i)=>writeFileSync(`.tmp/nilo-recipes-expanded-${i+1}.png`,PNG.sync.write(sheet)));
-mkdirSync('../docs/assets',{recursive:true});writeFileSync('../docs/assets/nilo-recipes.svg',svg.join('\n'));
+mkdirSync('../knowledge/nilo/previews',{recursive:true});writeFileSync('../knowledge/nilo/previews/nilo-recipes.svg',svg.join('\n'));
 console.log(`${recipes.length} recipes rendered`);

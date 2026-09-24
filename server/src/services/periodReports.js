@@ -25,6 +25,7 @@ function summarize(rows, previousCount, bounds) {
   const advice = new Set()
   let withReport = 0
   let insufficientReports = 0
+  let legacyReports = 0
   const provenanceCounts = { child: 0, coCreated: 0, unknown: 0 }
   for (const row of rows) {
     const features = JSON.parse(row.features_json)
@@ -33,8 +34,10 @@ function summarize(rows, previousCount, bounds) {
     if (row.report_json) {
       const report = JSON.parse(row.report_json)
       withReport++
-      if (report.emotion === '信息不足' || !(report.confidence > 0)) insufficientReports++
-      for (const item of report.parentAdvice ?? []) if (typeof item === 'string') advice.add(item)
+      if (report.kind === 'observation-v1') {
+        if (report.observationStatus === 'insufficient') insufficientReports++
+        for (const item of report.parentAdvice ?? []) if (typeof item === 'string') advice.add(item)
+      } else legacyReports++
     }
   }
   return {
@@ -43,7 +46,7 @@ function summarize(rows, previousCount, bounds) {
     activeDays: new Set(rows.map(row => localDay(row.created_at))).size,
     previousArtworkCount: previousCount,
     artworkCountChange: rows.length - previousCount,
-    withReport, insufficientReports,
+    withReport, insufficientReports, legacyReports,
     provenanceCounts,
     elements: [...elements].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 12).map(([name, count]) => ({ name, count })),
     parentAdvice: [...advice].slice(0, 6),

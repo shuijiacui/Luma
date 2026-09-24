@@ -8,10 +8,11 @@ export interface FeatureJSON {
   analysisScope?: 'child-only'
   rawDescription: string
   elements: string[]
+  objects?: { label: string; visibility: 'visible' | 'unclear'; bbox: { x: number; y: number; width: number; height: number } | null; confidence: number }[]
   colors: { dominant: string[]; darkRatio: number } | null
   composition: {
     size: 'small' | 'normal' | 'large'
-    position: 'center' | 'corner' | 'edge'
+    position: 'center' | 'corner' | 'edge' | 'bottom'
     pressure: 'light' | 'normal' | 'heavy'
   } | null
   distortions: string[]
@@ -31,6 +32,7 @@ export interface AnalyzeResponse {
 }
 
 export type Emotion =
+  | '画面观察'
   | '乐观平稳'
   | '未见明显风险信号'
   | '焦虑倾向'
@@ -39,6 +41,10 @@ export type Emotion =
   | '信息不足'
 
 export interface ReportResponse {
+  kind?: 'observation-v1'
+  observationStatus?: 'observed' | 'insufficient'
+  childAgeBand?: '5-7' | '8-9' | '10-12' | null
+  ageContext?: string | null
   language?: 'zh' | 'en'
   narrative?: string
   emotion: Emotion
@@ -47,7 +53,7 @@ export interface ReportResponse {
   parentAdvice: string[]
   webAdvice?: string[]
   webAdviceSource?: string
-  referenceEvidence?: { sourceFile: string; text: string; limitation: string; role: string }[]
+  referenceEvidence?: { sourceFile: string; sourceUrl?: string; sourcePage?: number; sourceId?: string; chunkId?: string; text: string; limitation: string; role: string }[]
   referenceEvidenceSource?: string
 }
 

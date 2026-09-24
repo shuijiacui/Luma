@@ -42,7 +42,7 @@ test('only completed nonempty periods; counts, day dedup, advice and sources rem
   const first = add('2026-08-30T16:00:00.000Z', ['tree', 'tree'])
   add('2026-08-31T00:00:00.000Z', ['tree', 'sun']) // same Shanghai date
   add('2026-09-06T16:00:00.000Z') // current week
-  attachReport(db, first, { emotion: '信息不足', confidence: 0, parentAdvice: ['聊聊画中的树'] }, auth)
+  attachReport(db, first, { kind: 'observation-v1', emotion: '画面观察', confidence: 0, observationStatus: 'insufficient', parentAdvice: ['聊聊画中的树'] }, auth)
   generateChildReports(db, child.session.id, new Date('2026-09-07T00:00:00Z'))
   const rows = db.prepare("SELECT * FROM period_reports WHERE kind = 'weekly' ORDER BY period_start DESC").all()
   expect(rows).toHaveLength(2)

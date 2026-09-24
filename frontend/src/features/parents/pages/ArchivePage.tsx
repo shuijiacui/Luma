@@ -28,7 +28,7 @@ function groupAnalysesByMonth(analyses: AnalysisSummary[]): MonthData[] {
     works.push({
       id: a.id,
       title: a.summary.elements.slice(0, 2).join('与') || '无标题',
-      emotion: a.report?.emotion ?? null,
+      emotion: a.report ? (a.report.kind === 'observation-v1' ? '画面观察' : '历史旧版报告') : null,
       createdAt: a.createdAt,
     })
     map.set(key, works)

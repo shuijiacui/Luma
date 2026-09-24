@@ -1,0 +1,256 @@
+{
+  "version": 1,
+  "editorialPolicy": "Candidates are not evidence of support; Guo review and Buck guide are never substituted for the cited primary studies.",
+  "rules": [
+    {
+      "entryId": "HTP-001",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-002",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-003",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-004",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-005",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-006",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-007",
+      "candidateDocumentIds": [
+        "fbanet2023"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-008",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-009",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-010",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-011",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-012",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-013",
+      "candidateDocumentIds": [
+        "li2011",
+        "zhao2024"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-014",
+      "candidateDocumentIds": [
+        "li2011",
+        "fbanet2023"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-015",
+      "candidateDocumentIds": [
+        "li2011",
+        "fbanet2023"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-016",
+      "candidateDocumentIds": [
+        "li2011",
+        "fbanet2023"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-017",
+      "candidateDocumentIds": [
+        "fbanet2023"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-018",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-019",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-020",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-021",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-022",
+      "candidateDocumentIds": [
+        "li2011"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-023",
+      "candidateDocumentIds": [
+        "li2011",
+        "zhao2024"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-024",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-025",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-026",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-027",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-028",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-029",
+      "candidateDocumentIds": [],
+      "relation": "citation_candidate_unverified",
+      "note": "No safely matched local primary document; do not substitute a similarly named PDF.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-030",
+      "candidateDocumentIds": [
+        "fbanet2023"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    },
+    {
+      "entryId": "HTP-031",
+      "candidateDocumentIds": [
+        "zhao2024"
+      ],
+      "relation": "citation_candidate_unverified",
+      "note": "Source field resembles this local document; claim, page, population and direction still require human verification.",
+      "reviewedRelations": []
+    }
+  ]
+}

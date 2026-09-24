@@ -1,4 +1,5 @@
 import { drawingRecipes, matchingRecipeSubjects } from '../../../shared/niloRecipes.mjs'
+import { niloAgeGuidance } from './niloAgeGuidance.js'
 
 const boundedText = (value, max) => typeof value === 'string' && value.trim().length > 0 && value.trim().length <= max ? value.trim() : null
 export function sanitizeCreativeIdea(raw) {
@@ -22,6 +23,7 @@ export function retrieveIdeaRecipes(idea, recent = []) {
 
 export function creativeIdeationPrompt(context) {
   return `You are Nilo, a playful drawing partner for a child. Look at the whole picture and imagine ONE new addition. Follow the child's explicit request; otherwise choose a complete object with an interesting connection to this scene. Impossible combinations are welcome. Uncertain recognition is not a reason to stop or to assert what the child intended. Do not infer psychology. Do not ask the child to choose from a menu.
+AGE-ADAPTED CONVERSATION (wording only; never limit the idea): ${niloAgeGuidance(context)}
 This is the IDEA stage. No drawing assets or catalogue are available at this stage. Choose the idea freely before deciding how to draw it. Do not produce paths or recipe IDs.
 Return ONLY JSON {"subjects":[{"subject":"visible object, or uncertain marks","family":"character|animal|plant|landscape|vehicle|building|object|abstract","confidence":0.8,"evidence":"visible marks","bounds":{"x":0.1,"y":0.1,"width":0.4,"height":0.5}}],"idea":{"subject":"short name of ONE addition","relationship":"specific connection to this scene or request","searchTerms":["singular English noun for the main object","optional component noun"],"requiresCustom":false,"details":["essential visible feature","another essential feature"]}}.
 At most 4 observed subjects, 4 search terms and 5 essential details. Bounds are normalized 0..1 in the full canvas. searchTerms are retrieval hints ONLY, never constraints on your idea. requiresCustom MUST be true for invented combinations, unusual accessories or transformations essential to the idea (a normal object alone would lose the idea); false for an ordinary object with an ordinary pose. Keep the name under 80 characters, relationship under 240, each detail under 100. Write subject, relationship and details in ${context.locale === 'en' ? 'English' : 'Chinese'}.

@@ -149,20 +149,11 @@ test('a model response after family deletion cannot recreate a saved artwork', a
   expect(fs.existsSync(path.join(dir, 'uploads'))).toBe(false)
 })
 
-test('a report removed during enrichment does not return false save success', async () => {
-  let entered, release
-  const started = new Promise(resolve => { entered = resolve })
-  const response = new Promise(resolve => { release = resolve })
-  const { app, db, parent, add } = fixture({
-    entries: [{ id: 'HTP-001', featureMatch: { elements: ['tree'] }, tier: 1, strength: .5, reliability: .7, emotionSignal: '乐观平稳', cluster: 'tree', note: '画面有树' }],
-    chatText: () => { entered(); return response },
-  })
+test('deleted artwork cannot receive a new observation report', async () => {
+  const { app, db, parent, add } = fixture()
   const id = add()
-  const pending = request(app).post('/api/report').set('Authorization', `Bearer ${parent.token}`).send({ analysisId: id }).then(result => result)
-  await started
   expect((await request(app).post(`/api/analyses/${id}/delete`).set('Authorization', `Bearer ${parent.token}`)).status).toBe(200)
-  release({})
-  expect((await pending).status).toBe(404)
+  expect((await request(app).post('/api/report').set('Authorization', `Bearer ${parent.token}`).send({ analysisId: id })).status).toBe(404)
   expect(db.prepare('SELECT COUNT(*) AS n FROM analyses').get().n).toBe(0)
 })
 
@@ -193,7 +184,8 @@ test('parent birthday is stored and used instead of client supplied age', async 
   const report = await request(app).post('/api/report').set('Authorization',`Bearer ${parent.token}`).send({analysisId:id,childAge:18})
   expect(report.status).toBe(200)
   const stored = JSON.parse(db.prepare('SELECT report_json FROM analyses WHERE id = ?').get(id).report_json)
-  expect(stored.audit.dropped.some(x => x.reason.startsWith('age_mod'))).toBe(true)
+  expect(stored.childAgeBand).toBe('5-7')
+  expect(stored.audit.matchedEntryIds.every(id => id.startsWith('OBS-'))).toBe(true)
 })
 
 test('digital canvas excludes unmeasured behavior; legacy weak spelling matches light', () => {
@@ -228,7 +220,7 @@ test('delete requires family parent and removes both history and image', async (
   expect(fs.existsSync(path.join(dir,'uploads',filename))).toBe(false)
 })
 
-test('slow text enrichment returns baseline within the total budget', async () => {
+test('new observation report does not depend on text enrichment', async () => {
   const original=process.env.REPORT_BUDGET_MS
   process.env.REPORT_BUDGET_MS='100'
   try {
@@ -236,7 +228,7 @@ test('slow text enrichment returns baseline within the total budget', async () =
     const started=Date.now()
     const response=await request(app).post('/api/report').set('Authorization',`Bearer ${parent.token}`).send({analysisId:add()})
     expect(response.status).toBe(200)
-    expect(response.body.emotion).toBe('乐观平稳')
+    expect(response.body).toMatchObject({ kind: 'observation-v1', emotion: '画面观察', confidence: 0 })
     expect(Date.now()-started).toBeLessThan(2000)
   } finally { if(original===undefined) delete process.env.REPORT_BUDGET_MS; else process.env.REPORT_BUDGET_MS=original }
 })

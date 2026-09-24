@@ -34,6 +34,7 @@ export interface DrawingProposal {
 }
 export const clarificationReasons = ['unclear_target', 'misplaced_detail', 'duplicate_detail', 'unrelated_detail', 'uncertain_review', 'invalid_review', 'wrong_target'] as const
 export interface CompanionReply {
+  placementLocked?: boolean
   geometryReviewed?: boolean
   reply: string
   status?: 'ready' | 'clarify' | 'unavailable'

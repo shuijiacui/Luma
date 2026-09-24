@@ -50,7 +50,7 @@
 }
 .nilo-room::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: url('../../../assets/images/nilo-storybook-world-v2.png') center / 100% 100% no-repeat;
+  background: url('../../../assets/images/nilo/nilo-storybook-world-v2.png') center / 100% 100% no-repeat;
 }
 .nilo-tree-sign {
   position: absolute; z-index: 4; left: 3.25%; top: 35.5%; width: 11.2%; height: 21%;

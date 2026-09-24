@@ -1,0 +1,62 @@
+{
+  "version": "research-context-v1",
+  "policy": "General research background only. These records never match a child's picture, select a label, or alter observations.",
+  "sources": [
+    {
+      "id": "guo-2023-review",
+      "title": "Analysis of the screening and predicting characteristics of the house-tree-person drawing test for mental disorders",
+      "doi": "10.3389/fpsyt.2022.1041770",
+      "url": "https://www.frontiersin.org/journals/psychiatry/articles/10.3389/fpsyt.2022.1041770/full",
+      "localFile": "Guo2023-HTP-systematic-review-meta-analysis.pdf",
+      "reviewStatus": "publisher_full_text_checked",
+      "checkedSection": "Abstract; Strengths and limitations",
+      "population": "Mixed populations across 30 included studies; age-specific applicability was not established by this review.",
+      "task": "Structured house-tree-person drawing test, not Luma free drawing.",
+      "text": {
+        "zh": "一项房—树—人研究综述汇总了不同研究中的画面特征关联，但研究任务与 Luma 的自由绘画不同。",
+        "en": "A review of house-tree-person studies found associations for some drawing features across studies, but the task differs from Luma's free drawing."
+      },
+      "limitation": {
+        "zh": "作者指出特征编码有重叠，且无法分析年龄差异；不能据此解释某个孩子的单幅作品。",
+        "en": "The authors noted overlapping feature definitions and insufficient data for age comparisons; this cannot interpret one child's picture."
+      }
+    },
+    {
+      "id": "lin-2022-htp",
+      "title": "The House-Tree-Person test is not valid for the prediction of mental health: An empirical study using deep neural networks",
+      "doi": "10.1016/j.actpsy.2022.103734",
+      "url": "https://www.sciencedirect.com/science/article/pii/S0001691822002499",
+      "localFile": null,
+      "reviewStatus": "publisher_abstract_checked",
+      "checkedSection": "Publisher abstract and highlights",
+      "population": "4,196 Chinese children and adolescents in the empirical study.",
+      "task": "House-tree-person test and depression scores, not Luma free drawing.",
+      "text": {
+        "zh": "另一项儿童和青少年研究未发现既有房—树—人指标能可靠预测所研究的心理问题。",
+        "en": "A study of children and adolescents did not find reliable prediction of the studied mental-health outcome from existing house-tree-person indicators."
+      },
+      "limitation": {
+        "zh": "这一结果也不能直接评价孩子的自由画；它提醒我们不要把某个符号当作个人结论。",
+        "en": "This result does not directly test a child's free drawing either; it cautions against treating one symbol as an individual conclusion."
+      }
+    },
+    {
+      "id": "aap-2025-screening",
+      "title": "Promoting Optimal Development: Screening for Mental Health, Emotional, and Behavioral Problems",
+      "url": "https://publications.aap.org/pediatrics/article/156/3/e2025073172/203217/Promoting-Optimal-Development-Screening-for-Mental",
+      "localFile": null,
+      "reviewStatus": "publisher_full_text_checked",
+      "checkedSection": "Screening Tools",
+      "population": "Pediatric care guidance across ages; not a validation of Luma.",
+      "task": "Clinical screening guidance, not picture interpretation.",
+      "text": {
+        "zh": "美国儿科学会建议按适用年龄与人群选择经过验证的标准化筛查工具。",
+        "en": "The American Academy of Pediatrics advises choosing validated screening tools for the relevant age and population."
+      },
+      "limitation": {
+        "zh": "Luma 的画面观察不是心理筛查工具；如家长有持续担忧，应结合日常情况向专业人员咨询。",
+        "en": "Luma's picture observation is not a mental-health screen; persistent concerns call for discussion with a qualified professional."
+      }
+    }
+  ]
+}

@@ -13,9 +13,12 @@ server/uploads/
 
 .rag-venv/
 knowledge/chroma/
+knowledge/psychology/chroma/
 __pycache__/
 *.pyc
 .tmp/
 *.tsbuildinfo
 *.pptx
 *.docx
+*.pdf
+!knowledge/psychology/references/*.pdf

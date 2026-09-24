@@ -1,8 +1,12 @@
+import { startVoiceVad } from './voiceVad'
+import { ApiError } from '@/lib/api/client'
+import { voiceTranscriptionError } from './voiceErrors'
+import { newVoiceTrace, recordVoiceEvent } from '../companion/voiceDiagnostics'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { authFetch } from '@/lib/api/authFetch'
 import { convertVoiceBuffer, readVoiceRecording } from './voiceAudio'
 import { companionSpeechProfile, selectCompanionVoice } from './voiceProfile'
-import { createSpeechEndpoint, recognitionContext, recognitionVocabulary, SPEECH_PAUSE_MS, type DrawingSpeechContext } from './voiceRecognition'
+import { createSpeechEndpoint, recognitionContext, recognitionVocabulary, SPEECH_PAUSE_MS, type DrawingSpeechContext, recognitionAlternatives } from './voiceRecognition'
 
 export type CompanionVoiceStatus = 'idle' | 'preparing' | 'listening' | 'transcribing' | 'speaking'
 export interface CompanionVoiceController {
@@ -28,14 +32,15 @@ interface VoiceOptions {
   locale: 'zh' | 'en'
   enabled: boolean
   drawingContext?: DrawingSpeechContext
-  onTranscript: (text: string) => void
+  onTranscript: (text: string, traceId?: string, alternatives?: string[]) => void
 }
 interface RecognitionResultEvent {
-  results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }>
+  results: ArrayLike<{ isFinal: boolean; 0: { transcript: string }; length?: number; [index:number]:{transcript:string} }>
 }
 interface Recognition {
   lang: string
   continuous: boolean
+  maxAlternatives: number
   interimResults: boolean
   phrases?: unknown[]
   onstart: (() => void) | null
@@ -104,12 +109,15 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
     let context: AudioContext | null = null
     let decodingContext: AudioContext | null = null
     let analyserTimer: ReturnType<typeof setInterval> | undefined
+    let vadAbort:AbortController|null=null
+    let vadOwnsEndpoint=false
     let player: HTMLAudioElement | null = null
     let playerUrl: string | null = null
     let utterance: SpeechSynthesisUtterance | null = null
     let releaseVoiceWait: (() => void) | null = null
     let request: AbortController | null = null
     let turnContext: DrawingSpeechContext = {}
+    let traceId = newVoiceTrace(), listenStarted = 0, asrStarted = 0, speakStarted = 0
     const timers = new Set<ReturnType<typeof setTimeout>>()
     const capabilityRequest = new AbortController()
     const voiceWindow = window as VoiceWindow
@@ -147,6 +155,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
       window.dispatchEvent(new CustomEvent('luma-voice-active', { detail: next !== 'idle' }))
     }
     function releaseInput() {
+      vadAbort?.abort();vadAbort=null;vadOwnsEndpoint=false
       if (recorder) {
         recorder.onstop = null
         recorder.ondataavailable = null
@@ -200,6 +209,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
       if (!disposed) setError(null)
     }
     function fail(message: string) {
+      recordVoiceEvent({turn:traceId,stage:currentStatus==='speaking'?'speak':currentStatus==='transcribing'?'asr':'listen',outcome:'failed',durationMs:Date.now()-(currentStatus==='speaking'?speakStarted:asrStarted||listenStarted)})
       cancel()
       if (!disposed) setError(message)
     }
@@ -211,7 +221,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
       // Allow the speaker's sound to decay before opening the microphone.
       later(() => { if (continuing) start() }, 450)
     }
-    function deliver(text: string, turn: number) {
+    function deliver(text: string, turn: number, alternatives: string[] = []) {
       if (!valid(turn)) return
       const clean = text.trim().slice(0, 1200)
       if (!clean) { fail('没有听清，点麦克风再说一次吧。'); return }
@@ -221,14 +231,18 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
       sessionTurns++
       // A missing/failed host reply must not leave an indefinite live session.
       later(() => { if (valid(turn) && continuing) endSession() }, 30000)
-      onTranscript.current(clean)
+      recordVoiceEvent({turn:traceId,stage:'asr',outcome:'transcribed',durationMs:Date.now()-(asrStarted||listenStarted),text:clean})
+      if(alternatives.length)onTranscript.current(clean, traceId, alternatives)
+      else onTranscript.current(clean, traceId)
     }
     async function transcribe(blob: Blob, turn: number) {
       if (!valid(turn)) return
       updateStatus('transcribing')
+      asrStarted=Date.now()
       request = new AbortController()
       const controller = request
-      const timeout = later(() => { if (valid(turn)) fail('暂时没听清，可以再说一次或用按钮。') }, 20000)
+      const timeout = later(() => { if (valid(turn)) fail('语音识别等得有点久，请再试一次。') }, 20000)
+      let stage:'audio'|'asr'='audio'
       try {
         const recording = await readVoiceRecording(blob, controller.signal)
         if (!valid(turn) || controller.signal.aborted) return
@@ -250,12 +264,16 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         const wav = await convertVoiceBuffer(decoded, controller.signal)
         const base64 = await audioBase64(wav)
         if (!valid(turn) || controller.signal.aborted) return
+        stage='asr'
         const result = await authFetch<{ text: string }>('/nilo/voice/transcribe', {
           method: 'POST', token, signal: controller.signal,
           body: { audioBase64: base64, mimeType: 'audio/wav', locale, context: turnContext },
         })
         deliver(result.text, turn)
-      } catch { if (valid(turn)) fail('暂时没听清，可以再说一次或用按钮。') }
+      } catch (reason) { if (valid(turn)) {
+        recordVoiceEvent({turn:traceId,stage:'asr',outcome:stage==='audio'?'audio_unreadable':reason instanceof ApiError?'http_'+reason.status:'network_error',durationMs:Date.now()-asrStarted})
+        fail(voiceTranscriptionError(reason,stage))
+      } }
       finally { clearTimeout(timeout); timers.delete(timeout) }
     }
     function stop() {
@@ -299,8 +317,8 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
             energy = samples.reduce((sum, value) => sum + ((value - 128) / 128) ** 2, 0) / samples.length
           }
           const state = endpoint(Math.sqrt(energy), Date.now())
-          if (state === 'no-speech') fail('没有听到声音，想说话时再点麦克风。')
-          else if (continuing && state === 'silence') stop()
+          if (!vadOwnsEndpoint && state === 'no-speech') fail('没有听到声音，想说话时再点麦克风。')
+          else if (!vadOwnsEndpoint && continuing && state === 'silence') stop()
         }, 100)
       } catch { /* Manual stop and the segment limit still work without an analyser. */ }
     }
@@ -330,6 +348,12 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         recorder.start()
         updateStatus('listening')
         watchSilence(stream, turn)
+        const vadController=new AbortController();vadAbort=vadController
+        void startVoiceVad(stream,vadController.signal,()=>{
+          if(valid(turn)&&continuing&&currentStatus==='listening')stop()
+        },()=>{if(valid(turn))vadOwnsEndpoint=true}).then(()=>{
+          if(valid(turn))recordVoiceEvent({turn:traceId,stage:'listen',outcome:'silero_ready'})
+        }).catch(()=>{if(valid(turn)){vadOwnsEndpoint=false;recordVoiceEvent({turn:traceId,stage:'listen',outcome:'energy_fallback'})}})
         later(() => { if (valid(turn)) stop() }, 20000)
       } catch (reason) {
         if (!valid(turn)) return
@@ -345,6 +369,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         recognition.lang = locale === 'zh' ? 'zh-CN' : 'en-US'
         recognition.continuous = true
         recognition.interimResults = true
+        recognition.maxAlternatives = 3
         const Phrase = voiceWindow.SpeechRecognitionPhrase
         let biased = false
         if (withPhrases && Phrase && 'phrases' in recognition) {
@@ -353,6 +378,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
           biased = Boolean(recognition.phrases?.length)
         }
         let finalText = ''
+        let alternatives:string[]=[]
         let hasInterim = false
         let delivered = false
         let settleTimer: ReturnType<typeof setTimeout> | undefined
@@ -366,12 +392,13 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
           delivered = true
           // Never silently drop an unfinished tail (especially a negation).
           if (hasInterim) { fail('这句话还没听完整，请再说一次，或点“说完了”。'); return }
-          deliver(finalText, turn)
+          deliver(finalText, turn, alternatives)
         }
         recognition.onresult = event => {
           if (!valid(turn) || delivered) return
           const results = Array.from(event.results)
           const separator = locale === 'zh' ? '' : ' '
+          alternatives = recognitionAlternatives(results.filter(result=>result.isFinal),locale)
           finalText = results.filter(result => result.isFinal).map(result => result[0].transcript.trim()).join(separator)
           hasInterim = results.some(result => !result.isFinal && result[0].transcript.trim())
           setTranscript(results.map(result => result[0].transcript.trim()).join(separator))
@@ -410,6 +437,8 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
       if (!enabled || disposed || document.visibilityState === 'hidden') return
       clearOperation()
       setError(null); setTranscript('')
+      traceId=newVoiceTrace();listenStarted=Date.now();asrStarted=0
+      recordVoiceEvent({turn:traceId,stage:'listen',outcome:mode})
       turnContext = recognitionContext(drawingContext.current)
       const turn = version
       if (mode === 'server') {
@@ -439,7 +468,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         utterance.lang = voice?.lang ?? (locale === 'zh' ? 'zh-CN' : 'en-US')
         utterance.pitch = companionSpeechProfile.pitch
         utterance.rate = companionSpeechProfile.rate
-        utterance.onend = () => { if (valid(turn)) { releasePlayback(); resume() } }
+        utterance.onend = () => { if (valid(turn)) { recordVoiceEvent({turn:traceId,stage:'speak',outcome:'played',durationMs:Date.now()-speakStarted}); releasePlayback(); resume() } }
         utterance.onerror = () => { if (valid(turn)) fail('声音没播放成功，点麦克风或看字幕继续。') }
         updateStatus('speaking')
         try { synthesis.speak(utterance) }
@@ -468,6 +497,8 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
       const turn = version
       const clean = text.trim().slice(0, 1500)
       if (!clean || !sound) { resume(); return }
+      speakStarted=Date.now()
+      recordVoiceEvent({turn:traceId,stage:'speak',outcome:config.tts?'server':'browser',text:clean})
       later(() => {
         if (valid(turn) && currentStatus === 'speaking') fail('声音没播放成功，点麦克风或看字幕继续。')
       }, 90000)
@@ -484,11 +515,11 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         const bytes = Uint8Array.from(atob(result.audioBase64), char => char.charCodeAt(0))
         playerUrl = URL.createObjectURL(new Blob([bytes], { type: result.mimeType }))
         player = new Audio(playerUrl)
-        player.onended = () => { if (valid(turn)) { releasePlayback(); resume() } }
+        player.onended = () => { if (valid(turn)) { recordVoiceEvent({turn:traceId,stage:'speak',outcome:'played',durationMs:Date.now()-speakStarted}); releasePlayback(); resume() } }
         player.onerror = () => { if (valid(turn)) fail('声音没播放成功，点麦克风或看字幕继续。') }
         try { await player.play() }
         catch { if (valid(turn)) fail('声音没播放成功，点麦克风或看字幕继续。') }
-      } catch { if (valid(turn)) browserSpeak(clean, turn) }
+      } catch { if (valid(turn)) {recordVoiceEvent({turn:traceId,stage:'speak',outcome:'browser_fallback',durationMs:Date.now()-speakStarted});browserSpeak(clean, turn)} }
     }
     function toggleSound() {
       sound = !sound

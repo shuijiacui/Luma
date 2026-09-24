@@ -67,12 +67,12 @@ export const DEMO_OVERVIEW: OverviewModel = {
     quote: '“我的小船要去很远很远的地方，那里会不会有新朋友在等我？”',
     tags: ['探索', '自然', '伙伴', '想象'],
     observation:
-      '小船、波浪和远方的小岛，构成一个关于“出发”的故事。孩子把船放在画面中央、朝向留白处驶去，像是在表达对未知世界的期待——既有想出去看看的愿望，也藏着对“有谁一起”的在意。',
+      '画面中有小船、波浪和远处的小岛。小船位于中间，周围留有空白；这个故事由孩子自己来讲。',
   },
   statuses: [
-    { id: 'emotion', emoji: '☀️', label: '情绪倾向', value: 76, statusText: '平稳积极', tone: 'grass' },
-    { id: 'express', emoji: '💬', label: '表达意愿', value: 84, statusText: '较主动', tone: 'gold' },
-    { id: 'imagine', emoji: '✨', label: '想象丰富度', value: 92, statusText: '丰富', tone: 'clay' },
+    { id: 'emotion', emoji: '☀️', label: '画面观察', value: 0, statusText: '看看画了什么', tone: 'grass' },
+    { id: 'express', emoji: '💬', label: '孩子讲述', value: 0, statusText: '由孩子决定', tone: 'gold' },
+    { id: 'imagine', emoji: '✨', label: '共创记录', value: 0, statusText: '保留创作过程', tone: 'clay' },
   ],
   themes: [
     { id: 'animal', title: '动物', count: 8, kind: 'animal' },
@@ -84,14 +84,14 @@ export const DEMO_OVERVIEW: OverviewModel = {
     {
       id: 'far',
       emoji: '🧭',
-      title: '对“远方”的兴趣在增加',
-      desc: '小船、道路与远处的地平线近期多次出现，孩子开始把目光投向画面之外。',
+      title: '画面里出现的小船与道路',
+      desc: '这些元素可以成为开放问题的起点；具体故事由孩子自己讲述。',
     },
     {
       id: 'together',
       emoji: '🤝',
-      title: '更常画“和谁在一起”',
-      desc: '画面中结伴出现的人物与小动物变多了，“关系”成为孩子表达里重要的一部分。',
+      title: '画面里的人物与动物',
+      desc: '可以问问孩子这些角色叫什么、正在做什么，不替他们定义关系。',
     },
   ],
   suggestions: [
@@ -99,13 +99,13 @@ export const DEMO_OVERVIEW: OverviewModel = {
       id: 'talk',
       emoji: '💬',
       title: '从画面出发聊聊',
-      desc: '“这艘小船要开去哪里？你想和谁一起去？”让孩子做故事的主角，ta 会愿意讲给你听。',
+      desc: '“这艘小船要开去哪里？”孩子愿意说时，听听他自己的版本。',
     },
     {
       id: 'curiosity',
       emoji: '🔭',
       title: '支持 ta 的好奇心',
-      desc: '当孩子反复画“远方”，可以一起看看地图、聊聊旅行，把想象轻轻接进生活里。',
+      desc: '如果孩子对小船的故事感兴趣，可以一起看看地图或继续画下一段旅程。',
     },
     {
       id: 'together',
@@ -114,7 +114,7 @@ export const DEMO_OVERVIEW: OverviewModel = {
       desc: '陪 ta 补画一朵云、一只新朋友，让创作成为你们之间共同的默契语言。',
     },
   ],
-  hint: 'ta 最近的作品中，常常出现探索与伙伴的主题，这可能与对外部世界的兴趣有关。',
+  hint: '演示作品中有小船与伙伴；画面的含义以孩子自己的讲述为准。',
 }
 
 export const ELEMENT_ZH: Record<string, string> = {

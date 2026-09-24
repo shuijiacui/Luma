@@ -1,4 +1,4 @@
-import {P,E,L,poly,eyes,smile,portraitPoses} from './niloRecipePrimitives.mjs'
+import {P,E,L,poly,eyes,smile,portraitPoses} from './primitives.mjs'
 export function addAnimalRecipes(add) {
   const mammals=[
     ['dog','小狗',{head:[P(['M',.24,.27],['Q',.5,.08,.76,.27],['L',.8,.66],['Q',.5,.93,.2,.66],['Z'])],ears:[P(['M',.25,.26],['C',.01,.19,.01,.77,.21,.7]),P(['M',.75,.26],['C',.99,.19,.99,.77,.79,.7])],eyes:eyes(),muzzle:[E(.5,.61,.18,.12),E(.5,.56,.055,.035),smile(.5,.64)]}],

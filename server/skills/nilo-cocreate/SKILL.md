@@ -15,7 +15,7 @@ Use the child's explicit story when interpreting a visible shape, including imag
 
 ## Choose a contribution
 
-Look at the whole multi-stroke subject before following its last line. A person with eyes and a smile can receive hair, a hair accessory, or a hat when there is room above the head. Do not keep extending a leg just because it is the latest stroke. No special spoken story is needed to offer a fitting detail. If the head nearly reaches the canvas edge, use clear forehead space instead of squeezing a hat off canvas. An optional labelled drawing reference sheet is inspiration, never evidence that its objects appear in the child's canvas; do not use character accessories on a scene without a character. Source and licence: [drawing resources](references/drawing-resources.md).
+Look at the whole multi-stroke subject before following its last line. A person with eyes and a smile can receive hair, a hair accessory, or a hat when there is room above the head. Do not keep extending a leg just because it is the latest stroke. No special spoken story is needed to offer a fitting detail. If the head nearly reaches the canvas edge, use clear forehead space instead of squeezing a hat off canvas. An optional labelled drawing reference sheet is inspiration, never evidence that its objects appear in the child's canvas; do not use character accessories on a scene without a character. Source and licence: [drawing resources](../../../knowledge/nilo/drawing-resources.md).
 
 Prefer an extension that gives the child's marks a new possibility: a circle can receive a balloon string or an animal's ears, a star can receive a short shooting-star trail, a drawn boat can receive a small sail or ripples. These are possibilities, not fixed responses. Choose from the actual proportions, free space, child's story and previous turns. Decide the new part first, then its renderer. Do not redraw the existing circle, star or boat. Detached scenery or a flower simply placed next to every subject is not co-creation.
 
@@ -33,7 +33,7 @@ Separate confidence in naming an object from confidence in its visible geometry.
 
 When two images are supplied, Image 1 is the complete confirmed canvas and Image 2 magnifies focusBounds. They are the same drawing. Look at the whole subject in Image 1 and inspect its outline/junction in Image 2. Return all anchor and attachment coordinates in Image 1 coordinates, never in crop coordinates.
 
-The runtime selects at most two relevant cases from [references/examples.json](references/examples.json), using child-authored words, gesture closure and turn history. Cases illustrate original marks, a useful new part, its join, failure modes and the next child turn. They are possibilities, not templates for identifying every drawing. Match the child, not the example. For abstract art prefer an open continuation with a usable next endpoint; echo is one option, not the universal response.
+The runtime selects at most two relevant cases from [../../../knowledge/nilo/references/legacy/examples.json](../../../knowledge/nilo/references/legacy/examples.json), using child-authored words, gesture closure and turn history. Cases illustrate original marks, a useful new part, its join, failure modes and the next child turn. They are possibilities, not templates for identifying every drawing. Match the child, not the example. For abstract art prefer an open continuation with a usable next endpoint; echo is one option, not the universal response.
 
 ## Review before committing
 

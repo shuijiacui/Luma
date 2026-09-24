@@ -1,0 +1,26 @@
+{
+  "version": "observation-v1",
+  "purpose": "Visible artwork details only; never infer a child's mental state from a symbol.",
+  "ageRange": [5, 12],
+  "elements": {
+    "house": ["房子", "house"], "tree": ["树", "tree"], "person": ["人物", "person"],
+    "sun": ["太阳", "sun"], "moon": ["月亮", "moon"], "cloud": ["云", "cloud"],
+    "rain": ["雨", "rain"], "flower": ["花", "flower"], "animal": ["动物", "animal"],
+    "mountain": ["山", "mountain"], "river": ["河流", "river"], "bird": ["鸟", "bird"],
+    "cat": ["猫", "cat"], "dog": ["狗", "dog"], "car": ["汽车", "car"],
+    "rainbow": ["彩虹", "rainbow"], "butterfly": ["蝴蝶", "butterfly"],
+    "fish": ["鱼", "fish"], "boat": ["船", "boat"], "grass": ["草", "grass"],
+    "star": ["星星", "star"], "road": ["路", "road"], "fence": ["栅栏", "fence"]
+  },
+  "colors": {
+    "red": ["红色", "red"], "orange": ["橙色", "orange"], "yellow": ["黄色", "yellow"],
+    "green": ["绿色", "green"], "blue": ["蓝色", "blue"], "purple": ["紫色", "purple"],
+    "pink": ["粉色", "pink"], "brown": ["棕色", "brown"], "black": ["黑色", "black"],
+    "white": ["白色", "white"], "gray": ["灰色", "gray"], "grey": ["灰色", "grey"]
+  },
+  "observations": [
+    { "id": "OBS-elements", "input": "recognized visible elements", "meaning": "object names only" },
+    { "id": "OBS-colors", "input": "recognized dominant colors", "meaning": "color names only" },
+    { "id": "OBS-position", "input": "validated normalized object bounding box", "meaning": "approximate canvas location only" }
+  ]
+}

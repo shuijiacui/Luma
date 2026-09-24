@@ -21,6 +21,16 @@ test('valid feature JSON passes validation', () => {
   expect(() => validateFeatures(VALID)).not.toThrow()
 })
 
+test('object locations must stay inside the original canvas; unclear objects have no box', () => {
+  const features = structuredClone(VALID)
+  features.objects = [{ label: 'tree', visibility: 'visible', bbox: { x: .7, y: .2, width: .4, height: .5 }, confidence: .9 }]
+  expect(() => validateFeatures(features)).toThrow(/bbox/)
+  features.objects[0].bbox.width = .3
+  expect(() => validateFeatures(features)).not.toThrow()
+  features.objects[0] = { label: 'shape', visibility: 'unclear', bbox: null, confidence: .4 }
+  expect(() => validateFeatures(features)).not.toThrow()
+})
+
 test('missing confidence dimension fails validation', () => {
   const bad = structuredClone(VALID)
   delete bad.confidence.colors

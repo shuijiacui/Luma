@@ -18,6 +18,7 @@ export interface PeriodReport {
     artworkCountChange: number
     withReport: number
     insufficientReports: number
+    legacyReports?: number
     elements: { name: string; count: number }[]
     parentAdvice: string[]
     sources: { analysisId: string; createdAt: string; hasReport: boolean }[]
@@ -75,8 +76,9 @@ export function PeriodicReportsSection({ childId, childName, token }: { childId?
             <Button variant="secondary" size="sm" onClick={() => downloadReport(report, childName)}>{t("下载摘要数据")}</Button>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[['作品', report.summary.artworkCount], ['创作天数', report.summary.activeDays], ['已有解读', report.summary.withReport], ['其中信息不足', report.summary.insufficientReports]].map(([label, value]) => <div key={label} className="rounded-xl bg-luma-grass-50 p-3"><div className="text-xs">{lt(label)}</div><div className="mt-1 text-xl font-bold">{lt(value)}</div></div>)}
+            {[['作品', report.summary.artworkCount], ['创作天数', report.summary.activeDays], ['报告记录', report.summary.withReport], ['观察不足', report.summary.insufficientReports]].map(([label, value]) => <div key={label} className="rounded-xl bg-luma-grass-50 p-3"><div className="text-xs">{lt(label)}</div><div className="mt-1 text-xl font-bold">{lt(value)}</div></div>)}
           </div>
+          {!!report.summary.legacyReports && <p className="text-xs text-luma-muted">{lt('其中')} {report.summary.legacyReports} {lt('份为历史旧版报告，未纳入陪伴建议。')}</p>}
           <p className="text-sm">{t(`上一周期保存 ${report.summary.previousArtworkCount} 件作品；本期${report.summary.artworkCountChange >= 0 ? '增加' : '减少'} ${Math.abs(report.summary.artworkCountChange)} 件。`)}</p>
           {report.summary.elements.length > 0 && <div className="flex flex-wrap gap-2">{report.summary.elements.map(item => <span key={item.name} className="rounded-full bg-[#faf7ef] px-3 py-1 text-sm">{lt(elementLabel(item.name))} · {lt(item.count)} {t("件作品")}</span>)}</div>}
           <div><h4 className="font-semibold">{t("已有解读中的陪伴建议")}</h4>{report.summary.parentAdvice.length ? <ul className="mt-2 list-disc space-y-2 pl-5 text-sm">{report.summary.parentAdvice.map(text => <li key={text}>{lt(text)}</li>)}</ul> : <p className="mt-2 text-sm">{t("尚无可汇总的建议，可在成长概览的完整解读中选择画作生成报告。")}</p>}</div>

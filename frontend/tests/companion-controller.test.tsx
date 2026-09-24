@@ -65,6 +65,107 @@ async function project(hook: ReturnType<typeof setup>) {
   expect(hook.result.current.phase).toBe('projected')
 }
 
+test('compound voice edits are atomic previews, with follow-up corrections and explicit confirmation', async () => {
+  const hook=setup()
+  await project(hook)
+  const original=hook.result.current.projection!.proposal
+  vi.mocked(authFetch).mockResolvedValueOnce({status:'edit',targetId:'@preview',actions:[{type:'color',value:'#459fd1'},{type:'scale',factor:.85},{type:'move',dx:-.035,dy:0}]})
+  await act(async()=>{await hook.result.current.receive('变蓝再小一点，往左挪',{speak:false})})
+  expect(hook.result.current.projection?.proposal).toMatchObject({color:'#459fd1',width:original.width*.85,height:original.height*.85})
+  expect(hook.commit).not.toHaveBeenCalled()
+  vi.mocked(authFetch).mockResolvedValueOnce({status:'edit',targetId:'@preview',actions:[{type:'color',value:'#168777'}]})
+  await act(async()=>{await hook.result.current.receive('不是蓝色，是绿色',{speak:false})})
+  expect(hook.result.current.projection?.proposal.color).toBe('#168777')
+  expect(hook.result.current.projection?.proposal.width).toBeCloseTo(original.width*.85)
+  act(()=>hook.result.current.accept({speak:false}))
+  expect(hook.commit).toHaveBeenCalledOnce()
+})
+
+test('a failed compound edit keeps the complete original projection',async()=>{
+ const hook=setup();await project(hook)
+ const before=structuredClone(hook.result.current.projection)
+ vi.mocked(authFetch).mockResolvedValueOnce({status:'edit',targetId:'@preview',actions:[{type:'color',value:'#459fd1'},{type:'place',x:0,y:0}]})
+ await act(async()=>{await hook.result.current.receive('变蓝并移到最左上角',{speak:false})})
+ expect(hook.result.current.projection).toEqual(before)
+ expect(hook.result.current.phase).toBe('projected')
+ expect(hook.result.current.message).toContain('超出画布')
+ expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test.each(['cancel','draw','new-request'])('late voice interpretation cannot overwrite %s',async(action)=>{
+ const hook=setup();await project(hook)
+ let resolve!:(x:unknown)=>void
+ vi.mocked(authFetch).mockImplementationOnce(()=>new Promise(r=>{resolve=r}))
+ let pending!:Promise<void>
+ act(()=>{pending=hook.result.current.receive('改蓝色再小一点',{speak:false})})
+ if(action==='cancel')act(()=>hook.result.current.cancel())
+ if(action==='draw')hook.state.revision++
+ if(action==='new-request')await act(async()=>{await hook.result.current.receive('改成绿色',{speak:false})})
+ await act(async()=>{resolve({status:'edit',targetId:'@preview',actions:[{type:'color',value:'#459fd1'}]});await pending})
+ if(action==='new-request')expect(hook.result.current.projection?.proposal.color).toBe('#168777')
+ else expect(hook.result.current.projection).toBeNull()
+ expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('interpretation timeout preserves preview and releases thinking even when fetch ignores abort',async()=>{
+ const hook=setup();await project(hook)
+ const before=structuredClone(hook.result.current.projection)
+ vi.mocked(authFetch).mockImplementationOnce(()=>new Promise(()=>{}))
+ let pending!:Promise<void>
+ act(()=>{pending=hook.result.current.receive('不是蓝色，换绿色再缩小',{speak:false})})
+ await act(async()=>{vi.advanceTimersByTime(10000);await pending})
+ expect(hook.result.current.projection).toEqual(before)
+ expect(hook.result.current.phase).toBe('projected')
+ expect(hook.result.current.message).toContain('等得有点久')
+})
+
+test('a negated instruction from the interpreter never triggers local deletion',async()=>{
+ const hook=setup();await project(hook)
+ const before=structuredClone(hook.result.current.projection)
+ vi.mocked(authFetch).mockResolvedValueOnce({status:'noop'})
+ await act(async()=>{await hook.result.current.receive('不要删掉它',{speak:false})})
+ expect(hook.result.current.projection).toEqual(before)
+ expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('after confirming an edit, a follow-up still targets that earlier object',async()=>{
+ const hook=setup()
+ const objects=[{id:'first',name:'小鸟',proposals:[{...robot,x:.15,width:.18,height:.25}],aspect:1.5},{id:'second',name:'小鸟',proposals:[{...robot,x:.65,width:.18,height:.25}],aspect:1.5}]
+ hook.canvas.current.getEditableObjects=()=>objects
+ hook.canvas.current.getOccupancyWithoutObject=()=>Array(65536).fill(0)
+ hook.canvas.current.previewWithoutObject=vi.fn()
+ vi.mocked(authFetch).mockResolvedValueOnce({status:'edit',targetId:'first',actions:[{type:'color',value:'#168777'}]})
+ await act(async()=>{await hook.result.current.receive('不是这只，是左边的，改成绿色',{speak:false})})
+ expect(hook.result.current.projection?.editTargetId).toBe('first')
+ objects[0].proposals=[hook.result.current.projection!.proposal]
+ act(()=>hook.result.current.accept({speak:false}))
+ await act(async()=>{await hook.result.current.receive('再小一点',{speak:false})})
+ expect(hook.result.current.projection?.editTargetId).toBe('first')
+ expect(hook.result.current.projection?.proposal.color).toBe('#168777')
+ expect(hook.result.current.projection?.proposal.width).toBeCloseTo(.18*.85)
+ expect(authFetch).toHaveBeenCalledOnce()
+})
+
+test('a new drawing mentioning wings is not mistaken for editing nonexistent objects',async()=>{
+ const hook=setup()
+ vi.mocked(authFetch).mockResolvedValueOnce(reply)
+ await act(async()=>{await hook.result.current.receive('画一个有翅膀的机器人',{speak:false});await Promise.resolve()})
+ expect(vi.mocked(authFetch).mock.calls[0][0]).toBe('/nilo/companion')
+ expect(vi.mocked(authFetch).mock.calls[0][1]?.body).toMatchObject({context:{requestDrawing:true}})
+})
+
+test('a structural edit forwards every clause and restores preview when drawing fails',async()=>{
+ const hook=setup();await project(hook)
+ const before=structuredClone(hook.result.current.projection)
+ vi.mocked(authFetch).mockResolvedValueOnce({status:'redraw',targetId:'@preview'}).mockRejectedValueOnce(new ApiError(503,'unavailable'))
+ const utterance='改成戴帽子的小鸟，蓝色再小一点'
+ await act(async()=>{await hook.result.current.receive(utterance,{speak:false})})
+ expect(vi.mocked(authFetch).mock.calls.at(-1)?.[1]?.body).toMatchObject({context:{utterance,requestDrawing:true}})
+ expect(hook.result.current.projection).toEqual(before)
+ expect(hook.result.current.phase).toBe('projected')
+ expect(hook.commit).not.toHaveBeenCalled()
+})
+
 test('an apparent grid contact never commits the detached part without replacing it with random local ink', async () => {
   const hook = setup()
   const detached: DrawingProposal = { ...proposal, template: 'custom', subject: '叶片',
@@ -107,7 +208,7 @@ test('a slightly misplaced model joint snaps to actual child ink and commits wit
   expect(hook.commit.mock.calls[0][0][0].points[0].y).toBeCloseTo(.3)
 })
 
-test('an explicit Nilo click animates then commits one checked contribution with explicit confirmation and no speech', async () => {
+test('an explicit Nilo click animates then commits one checked contribution with explicit confirmation and a spoken preview', async () => {
   const hook = setup()
   hook.canvas.current.exportCompanionFocus = () => ({ imageBase64:'CROP',bounds:{x:.2,y:.2,width:.4,height:.4} })
   vi.mocked(authFetch).mockResolvedValueOnce(reply)
@@ -123,7 +224,7 @@ test('an explicit Nilo click animates then commits one checked contribution with
   expect(hook.onCommitted).toHaveBeenCalledOnce()
   expect(hook.result.current.projection).toBeNull()
   expect(hook.result.current.phase).toBe('idle')
-  expect(hook.onSpeak).not.toHaveBeenCalled()
+  expect(hook.onSpeak).toHaveBeenCalledExactlyOnceWith('先看看这个小主意，喜欢的话就留下来。')
 })
 
 test.each(['ready', 'clarify'] as const)('a text-only %s response never invents local ink without retaining its invented story', async status => {
@@ -224,7 +325,7 @@ test.each(['unclear_target', 'misplaced_detail', 'duplicate_detail', 'uncertain_
   act(() => vi.advanceTimersByTime(1200))
   if(hook.result.current.phase==='projected')act(()=>hook.result.current.accept({speak:false}))
   expect(hook.commit).not.toHaveBeenCalled()
-  expect(hook.onSpeak).not.toHaveBeenCalled()
+  expect(hook.onSpeak).toHaveBeenCalledExactlyOnceWith(hook.result.current.message)
 })
 
 test.each(['model_rejected','offline','blocked'])('a multi-stroke picture never receives meaningless fallback ink: %s',async failure=>{
@@ -241,7 +342,7 @@ test.each(['model_rejected','offline','blocked'])('a multi-stroke picture never 
   expect(hook.result.current.phase).toBe('idle')
   expect(hook.result.current.projection).toBeNull()
   expect(hook.result.current.message).not.toContain('一起选')
-  expect(hook.onSpeak).not.toHaveBeenCalled()
+  expect(hook.onSpeak).toHaveBeenCalledExactlyOnceWith(hook.result.current.message)
   expect((vi.mocked(authFetch).mock.calls[0][1]?.body as {context:{useDrawingKnowledge:boolean}}).context.useDrawingKnowledge).toBe(true)
 })
 
@@ -296,7 +397,7 @@ test('an offline click reports the connection failure without arbitrary drawing'
   act(() => vi.advanceTimersByTime(1200))
   if(hook.result.current.phase==='projected')act(()=>hook.result.current.accept({speak:false}))
   expect(hook.commit).not.toHaveBeenCalled()
-  expect(hook.onSpeak).not.toHaveBeenCalled()
+  expect(hook.onSpeak).toHaveBeenCalledExactlyOnceWith(hook.result.current.message)
   expect(hook.onUnavailable).toHaveBeenCalledOnce()
 })
 
@@ -325,7 +426,7 @@ test('no commit during sketching; explicit acceptance commits exactly the shown 
   vi.mocked(authFetch).mockResolvedValueOnce(reply)
   await act(async () => { await hook.result.current.ask('帮飞船画尾焰', true) })
   expect(hook.result.current.phase).toBe('sketching')
-  act(() => hook.result.current.receive('留下来'))
+  act(() => { void hook.result.current.receive('留下来') })
   expect(hook.commit).not.toHaveBeenCalled()
   act(() => vi.advanceTimersByTime(550))
   const shown = hook.result.current.projection!
@@ -356,7 +457,7 @@ test('a custom subject previews and edits with the child brush, commits once and
   expect(hook.commit).not.toHaveBeenCalled()
   act(() => vi.advanceTimersByTime(550))
   expect(hook.result.current.projection?.proposal.subject).toBe('机器人')
-  act(() => hook.result.current.receive('smaller', { speak: false }))
+  act(() => { void hook.result.current.receive('smaller', { speak: false }) })
   act(() => hook.result.current.edit({ color: '#123456' }))
   const preview = hook.result.current.projection!
   expect(preview.proposal.width * preview.aspect / preview.proposal.height).toBeCloseTo(.8)
@@ -434,7 +535,7 @@ test('group color, brush, movement and scaling stay together without another mod
   act(() => hook.result.current.edit({ color: '#7a82d8', brushKind: 'crayon', strokeWidth: 8 }))
   expect(getItems().every(item => item.color === '#7a82d8' && item.brushKind === 'crayon' && item.strokeWidth === 8)).toBe(true)
   const styled = getItems()
-  act(() => hook.result.current.receive('left', { speak: false }))
+  act(() => { void hook.result.current.receive('left', { speak: false }) })
   const moved = getItems()
   moved.forEach((item, index) => {
     expect(item.x).toBeCloseTo(styled[index].x - .035)
@@ -443,7 +544,7 @@ test('group color, brush, movement and scaling stay together without another mod
   })
   const cx = (Math.min(...moved.map(item => item.x)) + Math.max(...moved.map(item => item.x + item.width))) / 2
   const cy = (Math.min(...moved.map(item => item.y)) + Math.max(...moved.map(item => item.y + item.height))) / 2
-  act(() => hook.result.current.receive('smaller', { speak: false }))
+  act(() => { void hook.result.current.receive('smaller', { speak: false }) })
   const resized = getItems()
   resized.forEach((item, index) => {
     expect(item.x).toBeCloseTo(cx + (moved[index].x - cx) * .85)
@@ -616,10 +717,10 @@ test('button edits avoid model and speech calls; voice edits acknowledge once', 
   await project(hook)
   const previousX = hook.result.current.projection!.proposal.x
   hook.onSpeak.mockClear(); vi.mocked(authFetch).mockClear()
-  act(() => hook.result.current.receive('left', { speak: false }))
+  act(() => { void hook.result.current.receive('left', { speak: false }) })
   expect(hook.result.current.projection?.proposal.x).toBeCloseTo(previousX - .035)
   expect(hook.onSpeak.mock.calls.every(([text]) => text === '')).toBe(true)
-  act(() => hook.result.current.receive('再小一点'))
+  act(() => { void hook.result.current.receive('再小一点') })
   expect(hook.onSpeak).toHaveBeenLastCalledWith('调整好啦，喜欢的话就留下来。')
   expect(authFetch).not.toHaveBeenCalled()
 })
@@ -716,7 +817,7 @@ test('forgetting a story is local, clears memory and preview, and never changes 
   expect(hook.result.current.memory.theme).toBe('飞船')
   vi.mocked(authFetch).mockClear()
   const revision = hook.state.revision
-  act(() => hook.result.current.receive('忘掉这个故事'))
+  act(() => { void hook.result.current.receive('忘掉这个故事') })
   expect(hook.result.current.memory).toEqual({ theme: '', recentTemplates: [], rejectedTemplates: [], recentSubjects: [], rejectedSubjects: [] })
   expect(readMemory('child-a', 'work-a').theme).toBe('')
   expect(hook.result.current.projection).toBeNull()
@@ -735,7 +836,7 @@ test('reviewed geometry is committed at exactly its reviewed position without lo
   if(hook.result.current.phase==='projected')act(()=>hook.result.current.accept({speak:false}))
   expect(hook.commit).toHaveBeenCalledOnce()
   expect(hook.commit.mock.calls[0][0]).toEqual(proposalStrokes(reviewed,1.5))
-  expect(hook.onSpeak).not.toHaveBeenCalled()
+  expect(hook.onSpeak).toHaveBeenCalledExactlyOnceWith('先看看这个小主意，喜欢的话就留下来。')
 })
 
 test('repeated Nilo clicks keep the child story, and changing artwork clears it',async()=>{
@@ -763,7 +864,7 @@ test('ambiguous committed objects require a choice; choosing the earlier object 
   hook.canvas.current.getEditableObjects=()=>objects
   hook.canvas.current.getOccupancyWithoutObject=vi.fn(()=>Array(65536).fill(0))
   hook.canvas.current.previewWithoutObject=vi.fn()
-  act(()=>hook.result.current.receive('把松鼠改成蓝色',{speak:false}))
+  act(() => { void hook.result.current.receive('把松鼠改成蓝色',{speak:false}) })
   expect(hook.result.current.objectChoices?.objects).toHaveLength(2)
   expect(hook.result.current.projection).toBeNull()
   act(()=>hook.result.current.chooseObject('first'))
@@ -779,13 +880,29 @@ test('voice deletion previews, cancellation preserves the group, and a second co
   hook.canvas.current.getEditableObjects=()=>[{id:'bird',name:'小鸟',proposals:[p],aspect:1.5}]
   hook.canvas.current.getOccupancyWithoutObject=()=>Array(65536).fill(0)
   hook.canvas.current.previewWithoutObject=vi.fn()
-  act(()=>hook.result.current.receive('不要那只鸟了',{speak:false}))
+  act(() => { void hook.result.current.receive('不要那只鸟了',{speak:false}) })
   expect(hook.result.current.projection).toMatchObject({editTargetId:'bird',deleting:true})
   expect(hook.commit).not.toHaveBeenCalled()
   act(()=>hook.result.current.dismiss({speak:false}))
   expect(hook.commit).not.toHaveBeenCalled()
-  act(()=>hook.result.current.receive('不要那只鸟了',{speak:false}))
+  act(() => { void hook.result.current.receive('不要那只鸟了',{speak:false}) })
   act(()=>hook.result.current.accept({speak:false}))
   expect(hook.commit.mock.calls[0][0]).toEqual([])
   expect(hook.commit.mock.calls[0][3]).toBe('bird')
+})
+
+
+test('spoken partial-shape constraints keep the exact projection position through confirmation',async()=>{
+ const hook=setup()
+ const half={template:'custom',subject:'太阳',x:.04,y:.04,width:.2,height:.15,rotation:0,color:'#edcd70',strokeWidth:4,brushKind:'pencil',target:'太阳',relation:'左上角',sketch:{aspect:2,paths:[[['M',.1,1],['Q',.5,0,.9,1]]]}}
+ vi.mocked(authFetch).mockResolvedValueOnce({status:'ready',placementLocked:true,proposal:half,reply:'半个太阳放在左上角给你看看。'})
+ await act(async()=>{await hook.result.current.receive('只画一半的太阳，放在左上角',{traceId:'voice-test',alternatives:['画半个太阳，放在左上角']});await Promise.resolve()})
+ const body=vi.mocked(authFetch).mock.calls[0][1]?.body
+ expect(body).toMatchObject({context:{utterance:'只画一半的太阳，放在左上角',takeTurn:false,asrAlternatives:['画半个太阳，放在左上角']}})
+ act(()=>vi.advanceTimersByTime(550))
+ expect(hook.result.current.projection?.proposal).toEqual(half)
+ expect(hook.onSpeak).toHaveBeenCalledWith('半个太阳放在左上角给你看看。')
+ expect(hook.commit).not.toHaveBeenCalled()
+ act(()=>hook.result.current.accept({speak:false}))
+ expect(hook.commit.mock.calls[0][0]).toEqual(proposalStrokes(half as DrawingProposal,1.5))
 })

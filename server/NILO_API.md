@@ -89,7 +89,7 @@ API 的最终 proposal 使用 `contact:{kind:"points"|"contour",points:[{x,y},..
 }
 ```
 
-共创图片包含已确认的孩子与 Nilo 笔迹（最长边 768 像素），不能把未确认的投影合进去；儿童分析接口仍只使用孩子图层。请求中的图片字符串最多 2 MiB。
+共创图片包含已确认的孩子与 Nilo 笔迹（最长边 768 像素），不能把未确认的投影合进去；儿童分析接口仍只使用孩子图层。请求中的图片字符串最多 2 MiB。登录儿童的共创对话从服务端家庭资料读取生日，按 5–7、8–9、10–12 岁选择[沟通词库](../knowledge/child-development/conversation.json)中的措辞；游客或生日未知时使用通用指引。客户端传来的年龄段会被忽略，年龄只影响 Nilo 的提问方式，不限制画法、题材或画面比例。证据范围和待验证问题见[创作对话证据](../knowledge/child-development/evidence.md)。
 
 可选 `focusImage: {imageBase64, bounds: {x,y,width,height}}` 提供同一画布的局部放大图，图片字符串最多 1 MiB，必须同时提供全图。前端围绕最新孩子笔迹及邻近笔迹取景，从完整已确认画面裁剪，最长边 768 像素；不从缩略全图放大、不改变画布布局、不包含临时投影。服务端验证边界，并把全图、局部图及映射一起交给规划和复核。所有输出坐标仍归一化到全图；局部 `(u,v)` 对应 `(bounds.x+u*bounds.width,bounds.y+v*bounds.height)`。局部图不是另一个作品，旧客户端可只发全图。
 主题最多 120 字符，当前话语最多 600 字符，历史只保留最后 8 条、每条最多 300 字符。
@@ -284,7 +284,7 @@ npm test -- --run tests/niloDialogue.test.js tests/voice.test.js tests/nilo.test
 
 合成评测将 canvasFits 与 semanticCheck 分开：鱼眼方向检查只证明在鱼头一侧，不等于完整语义通过；其他贡献仍需人工检查相关性、结构、重复、尺寸与孩子可继续创作的空间。已有眼睛、新主体和旋转案例分别评测，不能用落笔数量代替有效共创率。
 
-未启用知识库的兼容流程中，多笔画或人物相关的点击规划按需附带一张 480×320 的绘画参考图：人工挑选的 5 张 Quick, Draw! 简笔画与 1 张原创刘海示例。它提供画法词汇，不承担识别，也不是模型训练；见[资源、许可与扩展说明](skills/nilo-cocreate/references/drawing-resources.md)。规划最多为全图、局部图、参考图三张，复核仍为原图与添画后图两张。增加输入用量，不增加原有模型调用上限。无效部件数据会消耗原有的一次格式纠正机会，不再被当成成功的空方案提前结束。
+未启用知识库的兼容流程中，多笔画或人物相关的点击规划按需附带一张 480×320 的绘画参考图：人工挑选的 5 张 Quick, Draw! 简笔画与 1 张原创刘海示例。它提供画法词汇，不承担识别，也不是模型训练；见[资源、许可与扩展说明](../knowledge/nilo/drawing-resources.md)。规划最多为全图、局部图、参考图三张，复核仍为原图与添画后图两张。增加输入用量，不增加原有模型调用上限。无效部件数据会消耗原有的一次格式纠正机会，不再被当成成功的空方案提前结束。
 
 复核前的内部 custom 细节允许在原锚点范围内进行小范围像素避让：保持形状、大小与朝向，平移上限为画布短边 3% 且不超过主体物理最长边 8%。找不到近邻空位时保留候选交给后续检查，不能搬到另一个区域。连接部件不走此平移流程；视觉复核和客户端保护仍独立生效。
 
@@ -296,7 +296,7 @@ npm test -- --run tests/niloDialogue.test.js tests/voice.test.js tests/nilo.test
 
 规划的 `grounding.visible` 若为非空文本列表，可无损合并为描述字符串；若身份/几何置信度足够但描述字段类型不合格，使用现有的一次格式纠正机会，并记录 `invalid_grounding_format`，不直接归因为识图失败。无证据或低置信度仍不放行。无关的可选 `structure` 格式错误不阻断普通部件；眼睛、嘴、窗户仍必须具备有效结构与支持区域。
 
-当前有 36 个主题条目、37 类 73 张经过筛选的 Quick, Draw! 简笔画、22 组原创主题添画步骤，以及 6 类通用绘画技巧。只把检索到的条目、最多三条相关技巧和最多四张示例拼成的一张小图传给规划；技巧本地检索不新增模型调用，观察和复核不附带参考图。观察是暂时性的模型判断，规划必须重新看原画，不能把示例身份套到孩子画上。来源、许可、视觉筛选及扩展方法见[绘画资源说明](skills/nilo-cocreate/references/drawing-resources.md)。
+当前有 36 个主题条目、37 类 73 张经过筛选的 Quick, Draw! 简笔画、22 组原创主题添画步骤，以及 6 类通用绘画技巧。只把检索到的条目、最多三条相关技巧和最多四张示例拼成的一张小图传给规划；技巧本地检索不新增模型调用，观察和复核不附带参考图。观察是暂时性的模型判断，规划必须重新看原画，不能把示例身份套到孩子画上。来源、许可、视觉筛选及扩展方法见[绘画资源说明](../knowledge/nilo/drawing-resources.md)。
 
 资料是推理时的上下文，不是微调模型；增加数据量不能保证识别、语义或定位准确。资源在服务进程中缓存，更新后重启后端。`check-nilo-cocreate.mjs` 默认启用知识库，`--without-knowledge` 可比较旧流程。测试只能使用合成样例；不得把真实儿童图片与对话写入回归输出目录。
 
@@ -329,4 +329,21 @@ npm test -- --run tests/niloDialogue.test.js tests/voice.test.js tests/nilo.test
 
 成功响应的 `drawingMetrics` 增加 `creativeMode`、`candidateCount`、`route: recipe|custom` 和 `referenceReported`，后者只是模型报告使用了候选参考。`template: custom` 仍不是库外使用率指标，应看最终 `recipeId` 和失败分母。名称锁定、几何校验都不证明必需细节画对了。
 
-本轮 6 张合成画的实际对照未证明整体质量提升，保留为可选试验。重现方法、结果和限制见 [试验记录](../docs/先构思后检索试验-2026-09-21.md)。
+本轮 6 张合成画的实际对照未证明整体质量提升，保留为可选试验。重现方法、结果和限制见 [试验记录](../knowledge/nilo/experiments/先构思后检索试验-2026-09-21.md)。
+
+
+## 语音修改指令（第一阶段，2026-09-24）
+
+新增 POST /api/nilo/voice/interpret，沿用儿童/游客访问限制和 Nilo 模型调用限流。此接口只解析转写文字，不上传音频或画面，也不修改画布。
+
+请求包含 utterance（1–400 字符）、locale、selectedTargetId（可选）及 objects（最多 40 个 Nilo 物体）。每个物体提供 id、name、subjects 和 bounds {x,y,width,height}，坐标归一化为 0–1。重复 ID、越界范围和超长句子在调用模型前拒绝；不截断长句，避免丢掉句末否定。
+
+返回状态：edit {targetId,actions}、redraw {targetId}、clarify {reason,candidateIds}、noop、unhandled，或 unavailable {reason}。edit 每次针对一个物体，最多六个操作：color、等比 scale、move、按组中心 place、variant、part（tail/wing/sail）及单独 delete。未知 ID、未知操作、超范围参数、删除与其他操作混用均拒绝整组执行。结构变化交给现有绘图流程，不能把“加帽子”伪装成几何缩放。
+
+前端简单完整指令走本地；复杂句子只调用一次现有文字模型，最多 700 输出 token，不重试，服务端限时 8 秒、前端限时 10 秒。动作在克隆数据上整组计算，通过结构、边界和碰撞检查后才发布投影。失败保留上一投影；孩子确认后才提交 Nilo 物体的替换，不操作孩子的笔迹。正在解析时取消、换作品、切换孩子、隐藏页面或开始新请求，旧回复失效；画布版本变化也拒绝执行。
+
+此阶段限制：没有提高 ASR 模型本身的识别准确率；没有建立跨会话角色记忆；一次不能同时修改多个独立物体。模型只能依据已提供的 Nilo 物体位置解析空间指代，不会假装知道孩子所画“树旁边”的精确位置。改画形状仍依赖现有绘图规划器，不能据此保证任意改画成功。
+
+### 可选开源语音后端
+
+`VOICE_PROVIDER=funasr` 将 `/voice/transcribe` 代理到配置的 `/v1/audio/transcriptions`，热词以有界 `hotwords` JSON 字段发送。`asrAlternatives` 可传入 companion context 或 voice/interpret 请求，最多三条，每条最多 400 字，作为不可信候选数据参与现有推理。FunASR 能力声明始终 `tts:false`，客户端保留浏览器朗读。无密钥仅允许 loopback 服务；安装与对比步骤见 [speech/README.md](../speech/README.md)。明确半形/角落的绘画响应可带 `placementLocked:true`，客户端不可自动把它搬到别处。

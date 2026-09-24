@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const KB = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const KB = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../psychology/rules');
 const errors = [];
 const SIGNALS = ['乐观平稳', '焦虑倾向', '低落倾向'];
 const CONDITIONS = ['elements', 'colors.darkRatioMin', 'colors.dominantIncludes', 'colors.darkRatioMinForDominant',
@@ -46,6 +46,37 @@ for (const e of entries) {
     if (!CONDITIONS.includes(k)) errors.push(`${where}: featureMatch 含未知条件 "${k}"`);
 }
 
+const audit = JSON.parse(fs.readFileSync(path.join(KB, 'audit.json'), 'utf8'));
+const audited = new Set();
+for (const row of audit.rules ?? []) {
+  if (!ids.has(row.entryId)) errors.push(`audit: 未知条目 ${row.entryId}`);
+  if (audited.has(row.entryId)) errors.push(`audit: 重复条目 ${row.entryId}`);
+  audited.add(row.entryId);
+  if (row.runtimeStatus !== 'retired_from_new_parent_reports') errors.push(`audit: ${row.entryId} 不应进入新家长报告`);
+  if (!['unverified', 'review_required'].includes(row.sourceStatus)) errors.push(`audit: ${row.entryId} 来源状态非法`);
+}
+for (const id of ids) if (!audited.has(id)) errors.push(`audit: 缺少 ${id}`);
+
+const observation = JSON.parse(fs.readFileSync(path.resolve(KB, '../../observation/catalog.json'), 'utf8'));
+const conversation = JSON.parse(fs.readFileSync(path.resolve(KB, '../../child-development/conversation.json'), 'utf8'));
+if (JSON.stringify(observation.ageRange) !== '[5,12]' || JSON.stringify(conversation.ageRange) !== '[5,12]')
+  errors.push('新观察与沟通知识范围必须为 5–12 岁');
+for (const band of ['5-7', '8-9', '10-12']) {
+  const prompts = conversation.ageBands?.[band];
+  for (const key of ['withSubject', 'withoutSubject', 'context', 'niloGuidance', 'niloClarify'])
+    if (!prompts?.[key]?.zh || !prompts?.[key]?.en) errors.push(`年龄分层缺少 ${band}.${key} 的中英文内容`);
+}
+if (!conversation.niloGuidance?.zh || !conversation.niloGuidance?.en) errors.push('年龄未知时缺少 Nilo 通用对话指引');
+for (const row of observation.observations ?? [])
+  if (!row.id?.startsWith('OBS-') || !row.input || !row.meaning) errors.push('观察条目字段不完整');
+const context = JSON.parse(fs.readFileSync(path.resolve(KB, '../literature/curated-context.json'), 'utf8'));
+for (const source of context.sources ?? []) {
+  if (!source.url?.startsWith('https://') || !source.reviewStatus?.endsWith('_checked')
+    || !source.checkedSection || !source.population || !source.task
+    || !source.text?.zh || !source.text?.en || !source.limitation?.zh || !source.limitation?.en)
+    errors.push(`文献背景条目不完整或未经核对: ${source.id}`);
+}
+
 // ---- constraints.json ----
 const constraints = JSON.parse(fs.readFileSync(path.join(KB, 'constraints.json'), 'utf8'));
 if (!(constraints.validityCeiling?.value > 0 && constraints.validityCeiling.value < 1))
@@ -80,4 +111,4 @@ if (errors.length) {
   errors.forEach(e => console.error('  - ' + e));
   process.exit(1);
 }
-console.log(`✅ 知识库校验通过：${entries.length} 条（L1实证 ${count[1]} / L2体系 ${count[2]} / L3经验 ${count[3]}），constraints + dispatch 一致`);
+console.log(`✅ 知识库校验通过：${entries.length} 条历史规则（L1 ${count[1]} / L2 ${count[2]} / L3 ${count[3]}）均已审计并退出新家长报告；5–12 岁观察词表有效`);

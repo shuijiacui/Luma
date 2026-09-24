@@ -58,7 +58,7 @@ function deriveObservations(analyses: AnalysisSummary[]): Observation[] {
   const elementFreq = new Map<string, number>()
 
   for (const a of analyses) {
-    if (a.report?.parentAdvice) {
+    if (a.report?.kind === 'observation-v1' && a.report.parentAdvice) {
       for (const advice of a.report.parentAdvice) {
         if (!allAdvice.includes(advice)) allAdvice.push(advice)
       }

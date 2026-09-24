@@ -1,4 +1,4 @@
-// 知识库检索：标签匹配（docs/AI解读与知识库.md）。
+// 历史规则标签匹配（knowledge/psychology/rules/README.md）。
 // 所有 featureMatch 条件 AND；命中按 strength × reliability 降序（v2.2：c 只门控不入权重）
 import fs from 'node:fs'
 

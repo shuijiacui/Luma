@@ -6,7 +6,7 @@ import {validateContact} from '../../../shared/niloContact.mjs'
 import {placeContactSketch} from './niloContactPlacement.js'
 import {orientAttachedSketch} from './niloDrawingProtocol.js'
 
-const resource=new URL('../../skills/nilo-cocreate/references/relation-examples.json',import.meta.url)
+const resource=new URL('../../../knowledge/nilo/references/legacy/relation-examples.json',import.meta.url)
 const relations=['inside','single-point','two-points','contour','abstract-continuation']
 const box=b=>b&&['x','y','width','height'].every(k=>Number.isFinite(b[k]))&&b.x>=0&&b.y>=0&&b.width>0&&b.height>0&&b.x+b.width<=1.000001&&b.y+b.height<=1.000001
 const point=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=0&&p.y>=0&&p.x<=1&&p.y<=1

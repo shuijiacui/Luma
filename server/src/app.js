@@ -5,51 +5,18 @@ import { createApiRouter } from './routes/analyze.js'
 import { createAuthRouter } from './routes/auth.js'
 import { createArtworkRouter } from './routes/artworks.js'
 import { createNiloRouter } from './routes/nilo.js'
-import { loadEntries } from './services/retrieve.js'
-import { DEFAULT_CONFIG } from './services/score.js'
 import { createDb } from './db.js'
 import { authenticate } from './services/authService.js'
 import { corsMiddleware, rateLimit, defaultLimits } from './services/security.js'
 import { chatText } from './services/llmClient.js'
-import { bochaSearch } from './services/webSearch.js'
 import { startReportScheduler } from './services/periodReports.js'
 
-const KNOWLEDGE_DIR = new URL('../../knowledge/', import.meta.url)
-
-function loadJsonSafe(url) {
-  try { return JSON.parse(fs.readFileSync(url, 'utf8')) } catch { return null }
-}
-
-function envNum(name) {
-  const v = parseFloat(process.env[name] ?? '')
-  return Number.isFinite(v) ? v : undefined
-}
-
-// deps 注入便于测试：{ chatWithImage, entries, scoreConfig, db, limits, corsOrigins, staticDir }
+// deps 注入便于测试：{ chatWithImage, db, limits, corsOrigins, staticDir }
 export function createApp(deps = {}) {
-  const entries = deps.entries ?? loadEntries(new URL('entries.jsonl', KNOWLEDGE_DIR))
-  const constraints = loadJsonSafe(new URL('constraints.json', KNOWLEDGE_DIR))
-  const dispatchConfig = loadJsonSafe(new URL('dispatch.config.json', KNOWLEDGE_DIR))
   const db = deps.db ?? createDb()
   const limits = deps.limits ?? defaultLimits()
   const corsOrigins = deps.corsOrigins
     ?? (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',').map(s => s.trim()).filter(Boolean)
-  const scoreConfig = deps.scoreConfig ?? {
-    ...DEFAULT_CONFIG,
-    threshold: envNum('CONFIDENCE_THRESHOLD') ?? DEFAULT_CONFIG.threshold,
-    ceiling: envNum('CONFIDENCE_CEILING') ?? DEFAULT_CONFIG.ceiling,
-    fpr: envNum('FALSE_POSITIVE_RATE') ?? DEFAULT_CONFIG.fpr,
-    priors: {
-      ...DEFAULT_CONFIG.priors,
-      低落倾向: envNum('PRIOR_DISTRESS') ?? DEFAULT_CONFIG.priors.低落倾向,
-      焦虑倾向: envNum('PRIOR_DISTRESS') ?? DEFAULT_CONFIG.priors.焦虑倾向,
-      乐观平稳: envNum('PRIOR_POSITIVE') ?? DEFAULT_CONFIG.priors.乐观平稳,
-    },
-    validIds: new Set(entries.map(e => e.id)),
-    redLineWords: constraints?.redLineWords ?? DEFAULT_CONFIG.redLineWords,
-    l23Cap: dispatchConfig?.tiers?.['2']?.groupEvidenceCap ?? DEFAULT_CONFIG.l23Cap,
-  }
-
   const app = express()
   const uploadDir = path.resolve(deps.uploadDir ?? process.env.UPLOAD_DIR ?? 'uploads')
   app.locals.closeBackgroundJobs = startReportScheduler(db, {
@@ -82,6 +49,7 @@ export function createApp(deps = {}) {
   app.use('/api/report', rateLimit(limits.analyze))
   // Nilo routes split drawing, transcription, speech and capability quotas; global still applies.
   app.use('/api/nilo', createNiloRouter({
+    db,
     chatWithImage: deps.chatWithImage ?? undefined,
     chatText: deps.chatText ?? (process.env.NODE_ENV === 'test' ? null : chatText),
     timeoutMs: deps.niloTimeoutMs,
@@ -90,14 +58,7 @@ export function createApp(deps = {}) {
   }))
   app.use('/api', createApiRouter({
     chatWithImage: deps.chatWithImage ?? undefined,
-    chatText: deps.chatText ?? (process.env.NODE_ENV === 'test' ? null : chatText),
-    webSearch: deps.webSearch ?? (process.env.NODE_ENV === 'test' ? null : bochaSearch),
-    retrieveReferences: deps.retrieveReferences ?? (process.env.NODE_ENV === 'test' ? async () => ({ results: [] }) : undefined),
-    entries,
-    constraints: constraints ?? {},
-    scoreConfig,
     db,
-    kbVersion: `entries-${entries.length}${constraints?.version ? `+constraints-${constraints.version}` : ''}`,
     uploadDir,
   }))
 

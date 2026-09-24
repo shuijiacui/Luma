@@ -59,16 +59,20 @@ test('POST /api/analyze 502 when LLM extraction fails', async () => {
   expect(res.body).toEqual({ error: 'feature_extraction_failed' })
 })
 
-test('POST /api/report returns emotion/confidence/evidence/parentAdvice', async () => {
+test('POST /api/report returns visible observations without psychological scoring', async () => {
   const res = await request(makeApp()).post('/api/report').send({ features: FEATURES })
   expect(res.status).toBe(200)
-  expect(res.body.emotion).toBe('乐观平稳')
-  expect(res.body.confidence).toBeGreaterThan(0)
+  expect(res.body.kind).toBe('observation-v1')
+  expect(res.body.emotion).toBe('画面观察')
+  expect(res.body.confidence).toBe(0)
   expect(res.body.evidence.length).toBeGreaterThan(0)
   for (const e of res.body.evidence) {
-    expect(ENTRIES.map(x => x.id)).toContain(e.entryId) // 条目 ID 必须真实存在
+    expect(e.entryId).toMatch(/^OBS-/)
+    expect(e.summary).not.toMatch(/焦虑|低落|风险|情绪/)
   }
   expect(Array.isArray(res.body.parentAdvice)).toBe(true)
+  expect(res.body.referenceEvidence).toHaveLength(3)
+  expect(res.body.referenceEvidence.every(item => item.role === 'reference_only')).toBe(true)
   expect(res.body.parentAdvice.join('')).not.toMatch(/抑郁|多动症|自闭|精神分裂|心理疾病|诊断/)
 })
 
@@ -76,4 +80,10 @@ test('POST /api/report 400 without features', async () => {
   const res = await request(makeApp()).post('/api/report').send({})
   expect(res.status).toBe(400)
   expect(res.body).toEqual({ error: 'features required' })
+})
+
+test('POST /api/report rejects known ages outside the 5–12 target range', async () => {
+  const res = await request(makeApp()).post('/api/report').send({ features: FEATURES, childAge: 13 })
+  expect(res.status).toBe(422)
+  expect(res.body.error).toBe('age_out_of_scope')
 })

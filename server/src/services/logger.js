@@ -1,5 +1,5 @@
 // JSONL 日志持久化：app.log（运行日志）+ audit.log（判定审计快照）
-// 审计快照对齐 knowledge/dispatch.config.json loading.auditSnapshot：
+// 审计快照对齐 knowledge/psychology/rules/dispatch.config.json loading.auditSnapshot：
 // 每次判定记录命中条目 ID + 知识库版本，供"判定依据"展示与事后审计
 import fs from 'node:fs'
 import path from 'node:path'

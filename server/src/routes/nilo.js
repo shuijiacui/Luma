@@ -6,6 +6,8 @@ import { NILO_STROKE_KINDS, generateNiloPraise, generateNiloStroke } from '../se
 import { generateNiloDialogue, sanitizeDialogueContext, validateBounds } from '../services/niloDialogue.js'
 import { voiceCapabilities, voiceConfig, transcribeVoice, synthesizeVoice } from '../services/voice.js'
 import { defaultLimits, rateLimit } from '../services/security.js'
+import { interpretVoiceEdit } from '../services/niloVoiceIntent.js'
+import { ageBandForBirthDate } from '../services/niloAgeGuidance.js'
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
@@ -60,6 +62,7 @@ function readImage(body) {
 }
 
 export function createNiloRouter({
+  db,
   chatWithImage,
   chatText,
   generate = generateNiloStroke,
@@ -117,13 +120,21 @@ export function createNiloRouter({
       if (image.error) throw Object.assign(new Error(image.error), { status: image.status })
       focusImage = { imageBase64: image.encoded, bounds }
     }
-    return generateDialogue({ imageBase64, focusImage, context: sanitizeDialogueContext(req.body.context), chatWithImage, chatText, timeoutMs, signal })
+    const context = sanitizeDialogueContext(req.body.context)
+    // The child's verified profile is the only age source. Guests and children
+    // without a birth date receive the general, non-assessing conversation style.
+    const birthDate = req.auth?.role === 'child' && db
+      ? db.prepare("SELECT birth_date FROM accounts WHERE id = ? AND role = 'child'").get(req.auth.accountId)?.birth_date
+      : null
+    context.ageBand = ageBandForBirthDate(birthDate)
+    return generateDialogue({ imageBase64, focusImage, context, chatWithImage, chatText, timeoutMs, signal })
   }))
 
   router.get('/voice/config', childOnly, capabilitiesLimit, (_req, res) => {
     res.set('Cache-Control', 'no-store')
     res.json(voiceCapabilities(voice.config ?? voiceConfig()))
   })
+  router.post('/voice/interpret', childOnly, drawingLimit, cancellable((req, signal) => interpretVoiceEdit(req.body, { chatText, signal })))
   router.post('/voice/transcribe', childOnly, asrLimit, cancellable((req, signal) => transcribeVoice(req.body, { ...voice, signal })))
   router.post('/voice/speak', childOnly, ttsLimit, cancellable((req, signal) => synthesizeVoice(req.body, { ...voice, signal })))
 

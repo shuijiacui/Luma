@@ -1,3 +1,4 @@
+import { voiceAssets } from './voice-assets'
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
@@ -6,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // 儿童端 App：保持网页版，独立端口 5175
 export default defineConfig({
-  plugins: [
+  plugins: [voiceAssets(),
     react(),
     tailwindcss(),
     {

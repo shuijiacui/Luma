@@ -6,15 +6,13 @@ import { Router } from 'express'
 import { extractFeatures, validateFeatures, gateFeatures } from '../services/extractFeatures.js'
 import { asyncRoute } from '../services/http.js'
 import { managedImagePath } from '../services/media.js'
-import { dispatchEntries } from '../services/kbDispatcher.js'
-import { score } from '../services/score.js'
-import { buildReport, buildFeedback, FOLLOW_UP, buildParentNarrativePrompt, validateParentNarrative, buildWebAdvicePrompt, validateWebAdvice, buildEvidencePlainPrompt, validateEvidencePlain } from '../services/report.js'
-import { bochaSearch, searchQueryFor } from '../services/webSearch.js'
+import { buildFeedback, FOLLOW_UP } from '../services/report.js'
 import { insertAnalysis, attachReport } from '../services/historyService.js'
 import { log } from '../services/logger.js'
 import { traceNode } from '../services/tracing.js'
-import { localeOf, localizeReport, englishFeedback, ENGLISH_FOLLOW_UP, ENGLISH_PROMPT } from '../services/localization.js'
-import { retrieveReferences, buildReferenceFilterPrompt, validateReferenceFilter } from '../services/referenceRag.js'
+import { localeOf, englishFeedback, ENGLISH_FOLLOW_UP } from '../services/localization.js'
+import { buildObservationReport } from '../services/observationReport.js'
+import { buildLiteratureContext } from '../services/literatureContext.js'
 
 function displayPng(value) {
   if (typeof value !== 'string') return null
@@ -27,7 +25,7 @@ function displayPng(value) {
   return buffer
 }
 
-export function createApiRouter({ chatWithImage, chatText = null, webSearch = null, retrieveReferences: retrieveReferencesImpl = retrieveReferences, entries, constraints = {}, scoreConfig, db, kbVersion = 'unknown', uploadDir = path.resolve('uploads') }) {
+export function createApiRouter({ chatWithImage, db, uploadDir = path.resolve('uploads') }) {
   uploadDir = path.resolve(uploadDir)
   const router = Router()
 
@@ -185,125 +183,41 @@ export function createApiRouter({ chatWithImage, chatText = null, webSearch = nu
         if (now.getUTCMonth() < birth.getUTCMonth() || (now.getUTCMonth() === birth.getUTCMonth() && now.getUTCDate() < birth.getUTCDate())) age--
       } else age = null
     }
+    if (age !== null && (age < 5 || age > 12)) {
+      return res.status(422).json({ error: 'age_out_of_scope', message: '画面观察目前面向 5–12 岁儿童。' })
+    }
     try { validateFeatures(features, { gated: true }) } catch { return res.status(400).json({ error: 'invalid features' }) }
     features = gateFeatures(features).features
-    const controller = new AbortController()
-    const budgetMs = Math.max(100, Math.min(30000, Number(process.env.REPORT_BUDGET_MS) || 20000))
-    const timer = setTimeout(() => controller.abort(), budgetMs)
-    res.once('close', () => { clearTimeout(timer); controller.abort() })
-    const bounded = async fn => {
-      controller.signal.throwIfAborted()
-      let abort
-      try {
-        return await Promise.race([fn(), new Promise((_, reject) => {
-          abort = () => reject(new Error('report enhancement budget exceeded'))
-          controller.signal.addEventListener('abort', abort, { once: true })
-        })])
-      } finally { if (abort) controller.signal.removeEventListener('abort', abort) }
-    }
-    const text = (prompt, opts) => bounded(() => chatText(prompt + (locale === 'en' ? ENGLISH_PROMPT : ''), { ...opts, signal: controller.signal }))
-    // 调度器：年龄调制 → 标签匹配 → L3 共现门槛 → 冲突处置（docs/AI解读与知识库.md）
-    const { hits: matches, conflicts, dropped } = dispatchEntries({
-      features, entries, constraints,
-      childAge: age,
-    })
-    const result = score(matches, features, scoreConfig)
-    traceNode('report_score', { emotion: result.emotion, confidence: result.confidence, reason: result.reason, hits: matches.map(m => m.id), conflicts, dropped, kbVersion })
-    // 判定审计快照（dispatch.config.json loading.auditSnapshot）：命中条目 ID + 知识库版本 + 冲突/丢弃
-    log.audit(
-      {
-        emotion: result.emotion,
-        confidence: result.confidence,
-        reason: result.reason,
-        hits: matches.map(m => m.id),
-        conflicts,
-        dropped,
-        kbVersion,
-      },
-      { accountId: req.auth?.accountId ?? null, analysisId },
-    )
-    log.info('report', { msg: `emotion=${result.emotion} confidence=${result.confidence} reason=${result.reason} hits=${matches.map(m => m.id).join(',') || '-'}` })
-    const report = localizeReport(buildReport(result), locale)
-    let narrative = null
-    if (chatText && report.evidence.length > 0) {
-      try {
-        const raw = await text(buildParentNarrativePrompt(result, report), { maxTokens: 900 })
-        narrative = validateParentNarrative(raw)
-      } catch (err) {
-        log.error('report_narrative', { msg: `narrative generation failed: ${err.message}` })
-      }
-    }
-    // 把知识库证据改写成家长能读懂的人话（保留 entryId 可追溯）
-    let evidencePlain = null
-    if (chatText && report.evidence.length > 0) {
-      try {
-        const raw = await text(buildEvidencePlainPrompt(report.evidence), { maxTokens: 600 })
-        evidencePlain = validateEvidencePlain(raw, report.evidence.length)
-      } catch (err) {
-        log.error('report_evidence_plain', { msg: `evidence plain failed: ${err.message}` })
-      }
-    }
-    // PDF 文献 RAG：只生成研究背景，不进入确定性评分链
-    let referenceEvidence = null
-    if (chatText && matches.length > 0) {
-      try {
-        const query = `${matches.map(m => m.cluster ?? m.id).join('、')} 儿童绘画研究局限`
-        const retrieved = (await bounded(() => retrieveReferencesImpl(query, { signal: controller.signal }))).results ?? []
-        if (retrieved.length) {
-          const filtered = validateReferenceFilter(await text(buildReferenceFilterPrompt(query, retrieved), { maxTokens: 700 }), retrieved)
-          if (filtered) referenceEvidence = filtered
-        }
-      } catch (err) {
-        log.error('report_reference_rag', { msg: `reference RAG failed: ${err.message}` })
-      }
-    }
-    // 联网搜索 → 家长沟通建议（只补陪伴类内容，标注来源，失败静默降级）
-    let webAdvice = null
-    if (webSearch && chatText) {
-      try {
-        const pages = await bounded(() => webSearch(searchQueryFor(result.emotion), { signal: controller.signal }))
-        if (pages && pages.length > 0) {
-          const rawAdvice = await text(buildWebAdvicePrompt(pages), { maxTokens: 500 })
-          webAdvice = validateWebAdvice(rawAdvice)
-        }
-      } catch (err) {
-        log.error('report_web_advice', { msg: `web advice failed: ${err.message}` })
-      }
-    }
-    const enrichedReport = { ...report, provenance: features.provenance ?? 'unknown', analysisScope: features.analysisScope ?? 'legacy' }
-    if (narrative) {
-      enrichedReport.narrative = narrative.summary
-      enrichedReport.parentAdvice = narrative.advice
-    }
-    if (evidencePlain) {
-      enrichedReport.evidence = enrichedReport.evidence.map((e, i) => ({ ...e, plain: evidencePlain[i] ?? null }))
-    }
-    if (referenceEvidence) {
-      enrichedReport.referenceEvidence = referenceEvidence
-      enrichedReport.referenceEvidenceSource = 'PDF 文献检索（仅供研究背景参考）'
-    }
-    if (webAdvice) {
-      enrichedReport.webAdvice = webAdvice
-      enrichedReport.webAdviceSource = '网络搜索（仅供参考）'
+
+    // New reports describe the child's visible marks only. The historical HTP
+    // score and unreviewed rule notes are not evidence about an individual child.
+    const observation = buildObservationReport(features, { locale, childAge: age })
+    traceNode('report_observation', { status: observation.observationStatus, ids: observation.evidence.map(e => e.entryId), provenance: features.provenance ?? 'unknown' })
+    log.audit({ kind: observation.kind, status: observation.observationStatus, ids: observation.evidence.map(e => e.entryId), knowledgeVersion: 'observation-v1' },
+      { accountId: req.auth?.accountId ?? null, analysisId })
+    const enrichedObservation = {
+      ...observation,
+      referenceEvidence: buildLiteratureContext(locale),
+      referenceEvidenceSource: locale === 'en' ? 'Research background, not a reading of this picture' : '研究背景，不是对这幅画的判断',
+      provenance: features.provenance ?? 'unknown',
+      analysisScope: features.analysisScope ?? 'legacy',
     }
     if (features.provenance === 'co-created') {
-      enrichedReport.provenanceNote = locale === 'en'
-        ? 'Co-created with Nilo. This observation uses only the child’s strokes; their choices may still reflect the shared activity. It does not represent fully independent drawing.'
-        : '这是一幅与 Nilo 合作完成的作品。本次观察只使用孩子自己的笔迹；创作选择仍可能受到共创过程影响，不代表完全独立绘画。'
-      enrichedReport.parentAdvice = [enrichedReport.provenanceNote, ...(enrichedReport.parentAdvice ?? [])]
+      enrichedObservation.provenanceNote = locale === 'en'
+        ? 'This observation uses only the child’s marks. Their choices may still reflect the shared activity with Nilo.'
+        : '本次观察只使用孩子自己的笔迹；创作选择仍可能受到与 Nilo 共创过程的影响。'
+      enrichedObservation.parentAdvice = [enrichedObservation.provenanceNote, ...enrichedObservation.parentAdvice]
     }
-    // The source can be removed while optional enrichment awaits an external service.
     if (db && req.auth && analysisId) {
-      const saved = attachReport(db, analysisId, enrichedReport, req.auth, {
-        knowledgeVersion: kbVersion,
-        matchedEntryIds: matches.map(m => m.id),
-        conflicts,
-        dropped,
-        reason: result.reason,
+      const saved = attachReport(db, analysisId, enrichedObservation, req.auth, {
+        knowledgeVersion: 'observation-v1', matchedEntryIds: observation.evidence.map(e => e.entryId),
+        conflicts: [], dropped: [], reason: observation.observationStatus,
       })
       if (!saved) return res.status(404).json({ error: 'analysis no longer exists' })
     }
-    res.json(enrichedReport)
+    res.json(enrichedObservation)
+
+
   }))
 
   return router

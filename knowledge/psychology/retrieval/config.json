@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "collection": "luma_reference_literature",
+  "topK": 5,
+  "scoreThreshold": 0.4,
+  "maxExcerptChars": 1800,
+  "role": "reference_only"
+}

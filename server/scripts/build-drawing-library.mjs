@@ -4,15 +4,15 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { PNG } from 'pngjs'
 const candidateCount=Number(process.argv.find(arg=>arg.startsWith('--candidates='))?.split('=')[1]??3)
 if(!Number.isInteger(candidateCount)||candidateCount<3||candidateCount>12)throw Error('Candidate count must be an integer from 3 to 12')
-const root=new URL('../skills/nilo-cocreate/references/',import.meta.url)
+const root=new URL('../../knowledge/nilo/',import.meta.url)
 const out=new URL('../../.tmp/drawing-knowledge/',import.meta.url)
 mkdirSync(out,{recursive:true})
-const cards=JSON.parse(readFileSync(new URL('drawing-knowledge.json',root))).cards
+const cards=JSON.parse(readFileSync(new URL('lessons/drawing-knowledge.json',root))).cards
 const categories=[...new Set(cards.flatMap(card=>card.categories))]
 const candidatePath=new URL('candidates.json',out)
 if(process.argv.includes('--build')) {
   const candidates=JSON.parse(readFileSync(candidatePath))
-  const selections=JSON.parse(readFileSync(new URL('drawing-library-selection.json',root)))
+  const selections=JSON.parse(readFileSync(new URL('references/quickdraw/drawing-library-selection.json',root)))
   const records=selections.map(({category,keys})=>{
     if(!categories.includes(category)||!Array.isArray(keys)||!keys.length||keys.length>3)throw Error('Invalid selection')
     return keys.map(key=>{
@@ -21,7 +21,7 @@ if(process.argv.includes('--build')) {
       return {...sample,credit:'Google Quick, Draw! contributors',license:'CC-BY-4.0',licenseUrl:'https://creativecommons.org/licenses/by/4.0/',modifications:'Simplified source strokes; runtime uniformly scales, recolours and lays out selected samples.'}
     })
   }).flat()
-  writeFileSync(new URL('drawing-library.json',root),JSON.stringify({version:1,source:'https://github.com/googlecreativelab/quickdraw-dataset',review:'Manually inspected contact sheets; selected drawable, relevant line examples. Not child-only data.',records},null,2)+'\n')
+  writeFileSync(new URL('references/quickdraw/drawing-library.json',root),JSON.stringify({version:1,source:'https://github.com/googlecreativelab/quickdraw-dataset',review:'Manually inspected contact sheets; selected drawable, relevant line examples. Not child-only data.',records},null,2)+'\n')
   console.log(JSON.stringify({cards:cards.length,categories:selections.length,references:records.length}))
 } else {
   const samples=[]

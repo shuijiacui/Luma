@@ -1,0 +1,90 @@
+{
+  "version": "conversation-v2",
+  "ageRange": [5, 12],
+  "scope": "Optional, open-ended conversation about a child's own drawing; not assessment or therapy.",
+  "ageBands": {
+    "5-7": {
+      "withSubject": {
+        "zh": "可以问孩子：“画里的{subject}正在做什么呀？”",
+        "en": "You could ask: “What is the {subject} doing in your picture?”"
+      },
+      "withoutSubject": {
+        "zh": "可以问孩子：“你最想先给我看画里的哪里？”",
+        "en": "You could ask: “Which part of your picture would you like to show me first?”"
+      },
+      "context": {
+        "zh": "5–7 岁：用简短、具体的问题邀请孩子讲画里的故事；不根据细节判断能力或情绪。",
+        "en": "Ages 5–7: use short, concrete invitations to hear the child's story; do not judge ability or mood from details."
+      },
+      "niloGuidance": {
+        "zh": "和 5–7 岁孩子交流时用短句；需要提问时，只问一个关于画面动作或下一步的小问题。允许孩子只画不回答，不纠正画得像不像。",
+        "en": "For ages 5–7, use short sentences. If a question helps, ask just one concrete question about an action or the next mark. Let the child draw without answering; never correct how realistic the drawing looks."
+      },
+      "niloClarify": {
+        "zh": "你想让这部分接下来变成什么呀？",
+        "en": "What would you like this part to become next?"
+      }
+    },
+    "8-9": {
+      "withSubject": {
+        "zh": "可以问孩子：“你画{subject}时想到了什么？画里接下来会发生什么？”",
+        "en": "You could ask: “What were you thinking about when you drew the {subject}? What might happen next?”"
+      },
+      "withoutSubject": {
+        "zh": "可以问孩子：“这幅画里有你想讲的故事吗？你想从哪里开始？”",
+        "en": "You could ask: “Is there a story in this picture you would like to share? Where shall we start?”"
+      },
+      "context": {
+        "zh": "8–9 岁：给孩子空间讲述创作过程或故事，不把画面特征与同龄人比较。",
+        "en": "Ages 8–9: leave room for the child to describe their process or story; do not compare picture features with peers."
+      },
+      "niloGuidance": {
+        "zh": "和 8–9 岁孩子交流时，可邀请讲讲画面故事或想怎么继续；一次最多一个开放问题，先回应孩子说过的内容，不替孩子指定主题。",
+        "en": "For ages 8–9, invite the child's story or next idea with at most one open question. Follow what the child already said; do not assign a theme."
+      },
+      "niloClarify": {
+        "zh": "你想让这幅画接下来发生什么？",
+        "en": "What would you like to happen next in this picture?"
+      }
+    },
+    "10-12": {
+      "withSubject": {
+        "zh": "可以问孩子：“画里的{subject}是你想重点表达的部分吗？如果愿意，你想聊聊自己的创作选择吗？”",
+        "en": "You could ask: “Is the {subject} a part you wanted to emphasize? Would you like to talk about your choices?”"
+      },
+      "withoutSubject": {
+        "zh": "可以问孩子：“如果你愿意分享，这幅画里你最在意的部分是什么？”",
+        "en": "You could ask: “If you'd like to share, which part of this picture matters most to you?”"
+      },
+      "context": {
+        "zh": "10–12 岁：尊重孩子对作品含义和是否分享的决定，不替孩子定义主题。",
+        "en": "Ages 10–12: let the child decide what the work means and whether to share it; do not assign a theme for them."
+      },
+      "niloGuidance": {
+        "zh": "和 10–12 岁孩子交流时，尊重他对主题、画法和分享的决定；如需提问，只邀请谈创作选择，不要求解释作品或披露感受。",
+        "en": "For ages 10–12, respect the child's choices about theme, style and sharing. If a question helps, invite their creative choices without demanding an explanation or feelings."
+      },
+      "niloClarify": {
+        "zh": "如果你愿意，你想让我怎么接着画？",
+        "en": "If you'd like, how should I continue the drawing?"
+      }
+    }
+  },
+  "withSubject": {
+    "zh": "可以问孩子：“你想跟我讲讲画里的{subject}吗？”",
+    "en": "You could ask: “What would you like to tell me about the {subject}?”"
+  },
+  "withoutSubject": {
+    "zh": "可以问孩子：“这幅画里，你最想让我看哪一部分？”",
+    "en": "You could ask: “Which part of this picture would you like to show me?”"
+  },
+  "choice": {
+    "zh": "让孩子自己决定是否讲述，先听故事，不替孩子解释画面的含义。",
+    "en": "Let your child choose whether to talk about the picture; listen without deciding what it means for them."
+  },
+  "niloGuidance": {
+    "zh": "年龄未知时用简洁、开放的语言，最多问一个问题；先听孩子的故事，允许只画不说，也不从画面推断心理状态。",
+    "en": "When age is unknown, use concise open language and at most one question. Follow the child's story, allow drawing without speaking, and do not infer mental state from the picture."
+  },
+  "evidenceBoundary": "Age bands change only conversation phrasing. These are product prompts, not developmental norms or validated psychological assessment items."
+}

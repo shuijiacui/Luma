@@ -24,7 +24,7 @@ test('real overview follows the compact summary layout and does not invent psych
   render(<MemoryRouter><ParentDemoPage /></MemoryRouter>)
   await screen.findByText('—— AI 画面描述')
   expect(screen.getByText('本周成长摘要')).toBeTruthy()
-  expect(screen.getByText('情绪趋势')).toBeTruthy()
+  expect(screen.getByText('画面观察')).toBeTruthy()
   expect(screen.getByText('本月报告')).toBeTruthy()
   const headerRow = document.querySelector('.luma-parent-head-row')
   expect(headerRow?.querySelector('[data-onboarding="parent-child-switcher"]')).toBeTruthy()
@@ -32,7 +32,7 @@ test('real overview follows the compact summary layout and does not invent psych
   expect(screen.queryByText('—— 孩子原话')).toBeNull()
   expect(screen.getByText('本周创作')).toBeTruthy()
   expect(screen.queryByText('表达意愿')).toBeNull()
-  expect(screen.getByText('观察中')).toBeTruthy()
+  expect(screen.queryByText('观察中')).toBeNull()
 })
 
 test('header logout ends the session and returns directly to parent login', async () => {

@@ -70,7 +70,7 @@ npm run dev
 
 首页背景使用 `assets/images/home-lakeside-v2.png`。小屋角色当前由 `NiloCharacter.tsx` 和 `NiloIllustration.tsx` 实现，不能沿用历史稿中“整张图片 multiply”或“图集拆分肢体”的实现说明。
 
-- `NiloIllustration` 使用 `nilo-companion-v1.png`、`nilo/nilo-content.png`、`nilo/nilo-laugh.png`、`nilo/nilo-highfive.png` 四种整幅姿态，配合 `nilo-silhouettes.json` 的 SVG 轮廓遮罩。局部位移滤镜提供动作，表情以面部遮罩融合；不是骨骼动画。
+- `NiloIllustration` 使用 `images/nilo/nilo-companion-v1.png`、`nilo/nilo-content.png`、`nilo/nilo-laugh.png`、`nilo/nilo-highfive.png` 四种整幅姿态，配合 `nilo-silhouettes.json` 的 SVG 轮廓遮罩。局部位移滤镜提供动作，表情以面部遮罩融合；不是骨骼动画。
 - 替换素材时，需同时检查统一的 `1254 × 1254` 画面坐标、轮廓和热区。姿态图未解码完成时回退 idle；击掌姿态会更新手部触碰位置，避免热点留在旧位置。
 - 六个热区为头、鼻子、手、肚子、尾巴、提灯。交互分察觉／回应／恢复；连续点击取消旧定时器，间隔保护为 220 毫秒。页面隐藏、离开和减少动态效果设置会停止相应动画；触摸不启用鼠标视线跟随。
 - 热区使用可键盘操作的真实按钮，回应通过状态区域播报。不要将仅可点击的图片或坐标区域替换掉这些语义。

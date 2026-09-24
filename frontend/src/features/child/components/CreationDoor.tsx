@@ -1,5 +1,5 @@
 import { t, useLocale } from '@/i18n'
-import worldArtwork from '@/assets/images/nilo-storybook-world-v2.png'
+import worldArtwork from '@/assets/images/nilo/nilo-storybook-world-v2.png'
 
 export function CreationDoor({ opening, onOpen }: { opening: boolean; onOpen: () => void }) {
   useLocale()

@@ -235,8 +235,8 @@ export function OverviewDashboard({
           <MetricCard
             icon={<HeartIcon className="size-4" />}
             tone="rose"
-            value={stats?.emotionText ?? '观察中'}
-            label="情绪趋势"
+            value={stats?.reportReady ? '可查看' : '待生成'}
+            label="画面观察"
           />
           <MetricCard
             icon={<TimelineIcon className="size-4" />}

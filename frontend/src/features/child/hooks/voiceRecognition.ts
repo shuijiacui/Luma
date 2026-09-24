@@ -1,6 +1,18 @@
 import vocabulary from '../../../../../shared/voiceVocabulary.json'
 
 export const SPEECH_PAUSE_MS = 2200
+/** Alternatives retain the entire sentence, including later corrections/negations. */
+export function recognitionAlternatives(results: {length?:number;[index:number]:{transcript:string}}[], locale:'zh'|'en'):string[] {
+  const separator=locale==='zh'?'':' '
+  const primary=results.map(r=>r[0]?.transcript.trim()??'').join(separator)
+  const candidates:string[]=[]
+  for(let rank=1;rank<3;rank++)for(let index=0;index<results.length;index++){
+    const alternative=results[index][rank]?.transcript.trim()
+    if(!alternative)continue
+    candidates.push(results.map((r,i)=>i===index?alternative:r[0]?.transcript.trim()??'').join(separator).slice(0,400))
+  }
+  return [...new Set(candidates)].filter(t=>t&&t!==primary).slice(0,3)
+}
 export interface DrawingSpeechContext { theme?: string; subjects?: string[] }
 
 export function recognitionContext(context: DrawingSpeechContext = {}): DrawingSpeechContext {

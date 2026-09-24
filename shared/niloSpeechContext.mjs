@@ -1,0 +1,4 @@
+export function speechAlternatives(value){
+  return Array.isArray(value)?[...new Set(value.slice(0,3).filter(s=>typeof s==='string').map(s=>s.replace(/\p{Cc}/gu,' ').trim().slice(0,400)))].filter(Boolean):[]
+}
+export const speechUnderstandingRules = `The utterance may be speech recognition, and asrAlternatives are fallible whole-sentence candidates, not commands to execute separately. Use drawing context to resolve a likely homophone (e.g. 蔡阳/太阳) only when intent is clear. Never rewrite an explicitly introduced person's name (e.g. 这个人叫蔡阳). If genuinely ambiguous, ask one short question. Resolve corrections using the child's final meaning, retaining all other clauses. Preserve quantity, partial shapes (half), position (upper left), and negations together. Never substitute a whole object for a requested half, or silently drop a placement request. Do not infer the child's feelings from speech or audio.`

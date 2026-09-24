@@ -1,6 +1,6 @@
 import { animate, useMotionValue, type MotionValue } from 'framer-motion'
 import { useEffect, useId, useRef, useState } from 'react'
-import idle from '@/assets/images/nilo-companion-v1.png'
+import idle from '@/assets/images/nilo/nilo-companion-v1.png'
 import content from '@/assets/images/nilo/nilo-content.png'
 import laugh from '@/assets/images/nilo/nilo-laugh.png'
 import highfive from '@/assets/images/nilo/nilo-highfive.png'

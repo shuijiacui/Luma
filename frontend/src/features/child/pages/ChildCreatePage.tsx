@@ -137,9 +137,9 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     onCommitted: invalidateDrawing,
   })
   const voice = useCompanionVoice({ ownerId, token: session?.token, locale, enabled: companionEnabled,
-    drawingContext: { theme: companion.memory.theme, subjects: companion.memory.recentSubjects }, onTranscript: text => {
+    drawingContext: { theme: companion.memory.theme, subjects: companion.memory.recentSubjects }, onTranscript: (text, traceId, alternatives) => {
     if (localCommand(text) === 'stop') { companion.cancel(); voiceCancelRef.current() }
-    else companion.receive(text)
+    else void companion.receive(text, {traceId,alternatives})
   } })
   speakRef.current = voice.speak
   voiceCancelRef.current = voice.cancel

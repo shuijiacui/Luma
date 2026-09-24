@@ -120,7 +120,7 @@ test('full flow: child analyze 落库 → report 回写 → parent 查历史', a
   expect(history.status).toBe(200)
   expect(history.body.analyses).toHaveLength(1)
   expect(history.body.analyses[0].summary.elements).toEqual(['house'])
-  expect(history.body.analyses[0].report.emotion).toBe('未见明显风险信号') // entries 为空 → 零命中分支
+  expect(history.body.analyses[0].report).toMatchObject({ kind: 'observation-v1', emotion: '画面观察', confidence: 0 })
 })
 
 // 回归：narrative / webAdvice / referenceEvidence / evidence[].plain 由 attachReport 落库，

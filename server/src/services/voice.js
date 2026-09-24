@@ -40,8 +40,9 @@ export function voiceConfig(env = process.env) {
 }
 
 export function voiceCapabilities(config = voiceConfig()) {
-  const ready = Boolean(config.baseUrl && config.apiKey && (!config.provider || ['dashscope', 'openai-compatible'].includes(config.provider)))
-  return { asr: ready && Boolean(config.asrModel), tts: ready && Boolean(config.ttsModel && config.voice) }
+  const localFunasr = config.provider === 'funasr' && (()=>{try{const u=new URL(config.baseUrl);return ['http:','https:'].includes(u.protocol)&&(!!config.apiKey||['127.0.0.1','localhost','[::1]'].includes(u.hostname))}catch{return false}})()
+  const ready = localFunasr || Boolean(config.baseUrl && config.apiKey && (!config.provider || ['dashscope', 'openai-compatible'].includes(config.provider)))
+  return { asr: ready && Boolean(config.asrModel), tts: config.provider !== 'funasr' && ready && Boolean(config.ttsModel && config.voice) }
 }
 
 export function readAudio(input = {}) {
@@ -90,7 +91,7 @@ async function voiceRequest(path, body, { config, signal, fetchImpl, json = fals
       (async () => {
         const response = await fetchImpl(`${config.baseUrl}${path}`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${config.apiKey}`, ...(json ? { 'Content-Type': 'application/json' } : {}) },
+          headers: { ...(config.apiKey ? {Authorization: `Bearer ${config.apiKey}`} : {}), ...(json ? { 'Content-Type': 'application/json' } : {}) },
           body: json ? JSON.stringify(body) : body,
           signal: controller.signal,
         })
@@ -147,6 +148,7 @@ export async function transcribeVoice(input, { config = voiceConfig(), signal, f
   form.append('model', config.asrModel)
   form.append('language', locale)
   form.append('response_format', 'json')
+  if(config.provider==='funasr')form.append('hotwords',voiceRecognitionContext(input.context,locale))
   return voiceRequest('/audio/transcriptions', form, {
     config, signal, fetchImpl, kind: 'asr', audioBytes: audio.length,
     onResponse: bytes => {
