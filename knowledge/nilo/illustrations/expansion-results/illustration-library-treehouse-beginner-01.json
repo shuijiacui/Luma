@@ -1,0 +1,33 @@
+{
+  "id": "illustration-library-treehouse-beginner-01",
+  "subject": "treehouse",
+  "name": "树屋",
+  "label": "树杈上的小屋",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "architecture",
+  "related": [
+    "building",
+    "town",
+    "treehouse"
+  ],
+  "aliases": [
+    "树屋",
+    "树上的房子",
+    "tree house"
+  ],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: illustration-story. Standalone original picture-book beginner reference for children's drawing practice. ONE square PNG. One charming simple treehouse. One plain wide Y-shaped tree trunk, one small rectangular cabin resting in the fork, one simple triangular roof, one square window, one open door and a ladder with ONLY THREE rungs. The tree crown is ONE broad scalloped cloud silhouette. Only around ten simple contour shapes. No bark, woodgrain, board seams, leaves, shrubs, bricks, ornament or dense detail. Elegant confident dark ink outlines ONLY, generous white empty interiors and a PURE WHITE background. Flat contour artwork, absolutely no shading or grayscale modeling. Complete subject centered, with generous clear margin on every side. No text, watermark, border or collage. Make the structure legible and delightful to trace.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-1d1157a1-b8f3-4e44-889c-9636a1db9f10.png",
+  "src": "/nilo-illustrations/illustration-library-treehouse-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

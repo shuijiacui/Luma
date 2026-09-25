@@ -3,7 +3,7 @@ import { comparisonCases, evaluateIdeaFixture, ideaComparisonReport } from '../s
 
 test('comparison uses the production two-stage flow and records failed turns in the denominator', async () => {
   const provider = vi.fn().mockResolvedValueOnce({ subjects: [], idea: { subject: '小鸟', relationship: '来看看仙人掌',
-    searchTerms: ['bird'], requiresCustom: false, details: ['头和翅膀'] } }).mockResolvedValueOnce({ recipeId: 'bird-0', scale: .2, color: '#7b4fa8' })
+    searchTerms: ['bird'], requiresCustom: false, details: ['头和翅膀'] } }).mockResolvedValueOnce({ recipeId: 'bird-2', scale: .2, color: '#7b4fa8' })
   const { record, preview } = await evaluateIdeaFixture(comparisonCases[0], 'idea-first', { provider })
   expect(record.canvasFits).toBe(true)
   expect(preview.proposal).toEqual(record.result.proposal)

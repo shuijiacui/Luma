@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-lantern-beginner-01",
+  "subject": "lantern",
+  "name": "提灯",
+  "label": "圆窗小提灯",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "stilllife",
+  "related": [
+    "stilllife",
+    "object",
+    "生活物件",
+    "home"
+  ],
+  "aliases": [],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. BEGINNER reference: a warm simple picture-book drawing, 3–5 large easy-to-read forms and a small number of necessary interior marks. Broad rounded organic silhouettes; no repetitive decoration. One simple camping lantern front view, large loop handle, broad glass chamber and stable base.\nBEGINNER STRICT: only FOUR large connected shapes: one broad rounded inverted-U handle, one simple rounded roof, ONE large oval glass body, ONE plain flat rounded base. Inside glass just a single teardrop flame. No screws, knobs, supporting guard rails, vents, circles, reflection highlights or layered metal collars. At most 10 contour strokes in total. A simple picture-book camping lantern a 5-year-old can trace.\nEntire subject fully visible centered within 12 percent margin.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-b60ecdea-5542-4ede-9883-8da42faff470.png",
+  "src": "/nilo-illustrations/illustration-library-lantern-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true,
+  "supersededSourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-0a376078-5ed5-474c-a53d-97f68d8a3697.png"
+}

@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-daffodil-medium-01",
+  "subject": "daffodil",
+  "name": "水仙",
+  "label": "低头的水仙",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "botanical",
+  "related": [
+    "botanical",
+    "plant",
+    "garden",
+    "植物"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One daffodil nodding to the side, long trumpet and six clearly separated swept-back petals, two arching ribbon leaves and a natural stem.\nComplete subject within central 76%, 12% margin. Pure dark contours only. Flower center must be a simple plain oval with ONLY THREE sparse interior marks, not many stamens or seeds. A beginner flower has at most five broad petal shapes and two leaves, with only ONE simple central vein per leaf. No folds within beginner petals. Medium may have more natural connected structural detail but no dense center.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-8c7e59f9-e42e-42cd-8a6a-aff2fc556617.png",
+  "src": "/nilo-illustrations/illustration-library-daffodil-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

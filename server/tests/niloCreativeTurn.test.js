@@ -11,7 +11,7 @@ const imageBase64 = PNG.sync.write(png).toString('base64')
 const context = { locale: 'zh', requestDrawing: true, takeTurn: true, drawingProtocol: 3, turnScope: 'scene',
   canvasAspect: 1.5, canvasSize: { width: 900, height: 600 }, utterance: '轮到你了',
   drawingStyle: { color: '#203b34', brushSize: 4, brushKind: 'round' } }
-const choice = { subject: '松鼠', relationship: '树旁的小伙伴', recipeId: 'squirrel-1', backupRecipeId: 'bird-1', at: [.7, .6], scale: .3 }
+const choice = { subject: '松鼠', relationship: '树旁的小伙伴', recipeId: 'squirrel-3', backupRecipeId: 'bird-2', at: [.7, .6], scale: .3 }
 async function run(observation, plan = choice, extra = {}) {
   const model = vi.fn().mockResolvedValueOnce(observation).mockResolvedValueOnce(plan)
   const result = await generateNiloDialogue({ imageBase64, context: { ...context, ...extra }, chatWithImage: model })
@@ -21,8 +21,8 @@ async function run(observation, plan = choice, extra = {}) {
 test.each([{ subjects: [] }, { subjects: [{ subject: 'maybe a tree', family: 'plant', confidence: .2, visible: 'round lines' }] }])(
   'uncertain or empty observations do not veto the model choice: %j', async observation => {
     const { result, model } = await run(observation)
-    expect(result).toMatchObject({ status: 'ready', protocolVersion: 3, proposal: { recipeId: 'squirrel-1', placementPolicy: 'free' } })
-    expect(result.proposal.sketch).toEqual(getDrawingRecipe('squirrel-1').sketch)
+    expect(result).toMatchObject({ status: 'ready', protocolVersion: 3, proposal: { recipeId: 'squirrel-3', placementPolicy: 'free' } })
+    expect(result.proposal.sketch).toEqual(getDrawingRecipe('squirrel-3').sketch)
     expect(model).toHaveBeenCalledTimes(2)
     expect(model.mock.calls.map(call => call[2].kind)).toEqual(['nilo_knowledge_observe', 'nilo_companion_vision'])
     expect(model.mock.calls[1][1]).toContain('DRAWING KNOWLEDGE:')
@@ -35,9 +35,46 @@ test('can invent an object beyond the recipe catalogue', async () => {
   expect(result.proposal.sketch).toEqual(sketch); expect(result.proposal.recipeId).toBeUndefined()
 })
 
+test('the planner can select a compact studio ID and cannot substitute another style',async()=>{
+ const {result,model}=await run({}, {...choice,recipeId:'lamp-4'}, {tracingGuide:true,utterance:'画写实风的台灯'})
+ expect(result.proposal?.recipeId).toBe('lamp-4')
+ expect(result.proposal?.sketch).toEqual(getDrawingRecipe('lamp-4').sketch)
+ expect(model.mock.calls[1][1]).toContain('lamp/台灯 @6')
+ expect(model).toHaveBeenCalledTimes(2)
+ const rejected=await run({}, {...choice,recipeId:'lamp-0',backupRecipeId:'cat-0'}, {tracingGuide:true,utterance:'画写实风的台灯'})
+ expect(rejected.result.proposal).toBeUndefined()
+})
+
+test('cute recipes reach the default planner without extra calls and remain readable as guides',async()=>{
+ const recipe=getDrawingRecipe('capybara-0')
+ const {result,model}=await run({}, {...choice,recipeId:recipe.id,scale:.01}, {tracingGuide:true})
+ expect(result.proposal.recipeId).toBe(recipe.id)
+ expect(result.proposal.sketch).toEqual(recipe.sketch)
+ expect(Math.min(result.proposal.width*900,result.proposal.height*600)).toBeCloseTo(recipe.minPixels)
+ expect(model).toHaveBeenCalledTimes(2)
+ expect(model.mock.calls[1][1]).toContain('capybara-0=团坐水豚 [cute]')
+ expect(model.mock.calls[1][1]).toContain('Explicit requests for a different style or pose take priority')
+})
+
+test.each([{width:900,height:600},{width:320,height:600},{width:180,height:180}])('tracing minimum preserves proportions within small canvas bounds: %j',canvasSize=>{
+ const recipe=getDrawingRecipe('jellyfish-0'),aspect=canvasSize.width/canvasSize.height
+ const size=creativeObjectSize({scale:.001},recipe.sketch,{...context,tracingGuide:true,canvasSize,canvasAspect:aspect},{subjects:[]},recipe)
+ expect(size.width).toBeLessThanOrEqual(.440001);expect(size.height).toBeLessThanOrEqual(.440001)
+ expect(size.width*aspect/size.height).toBeCloseTo(recipe.sketch.aspect)
+ if(canvasSize.width===900)expect(Math.min(size.width*canvasSize.width,size.height*canvasSize.height)).toBeCloseTo(recipe.minPixels)
+})
+
+test('creative drawing returns natural guide speech from the same generation call', async () => {
+  const text = '松鼠的虚线底图来啦，想给它穿什么颜色的衣服都可以。'
+  const { result, model } = await run({}, { ...choice, reply: text }, { tracingGuide: true })
+  expect(result.reply).toBe(text)
+  expect(model).toHaveBeenCalledTimes(2)
+  expect(model.mock.calls[1][1]).toContain('ONLY tracing guides')
+})
+
 test('malformed custom paths use the MODEL-selected related recipe, with its actual name', async () => {
   const { result, model } = await run({}, { ...choice, recipeId: null, subject: '飞行茶杯', sketch: { paths: 'broken' } })
-  expect(result.proposal.recipeId).toBe('bird-1'); expect(result.proposal.subject).toBe('小鸟')
+  expect(result.proposal.recipeId).toBe('bird-2'); expect(result.proposal.subject).toBe('小鸟')
   expect(result.reply).toContain('小鸟'); expect(model).toHaveBeenCalledTimes(2)
 })
 
@@ -77,7 +114,7 @@ test('transport failures are reported honestly and do not fabricate a model choi
 test('isolated slashes cannot masquerade as a complete new object', async () => {
   const { result } = await run({}, { ...choice, recipeId: null, subject: '机器人',
     sketch: { aspect: 1, paths: [[['M', .1, .1], ['L', .9, .9]]] } })
-  expect(result.proposal.recipeId).toBe('bird-1')
+  expect(result.proposal.recipeId).toBe('bird-2')
   expect(result.proposal.sketch.paths.length).toBeGreaterThan(3)
 })
 
@@ -85,11 +122,11 @@ test('model scale varies with composition rather than a fixed icon size', async 
   const small = await run({}, { ...choice, scale: .09 })
   const large = await run({}, { ...choice, scale: .4 })
   expect(large.result.proposal.height).toBeGreaterThan(small.result.proposal.height * 3)
-  for (const { result } of [small, large]) expect(result.proposal.width * 1.5 / result.proposal.height).toBeCloseTo(1.1)
+  for (const { result } of [small, large]) expect(result.proposal.width * 1.5 / result.proposal.height).toBeCloseTo(getDrawingRecipe('squirrel-3').sketch.aspect)
 })
 
 test('missing scale follows observed subject size; explicit scale wins, proportions remain stable on a portrait canvas', () => {
-  const sketch = getDrawingRecipe('bird-0').sketch
+  const sketch = getDrawingRecipe('bird-2').sketch
   const small = { subjects: [{ bounds: { x: .1, y: .1, width: .15, height: .15 } }] }
   const large = { subjects: [{ bounds: { x: .1, y: .1, width: .7, height: .7 } }] }
   expect(creativeObjectSize({}, sketch, context, large).height).toBeGreaterThan(creativeObjectSize({}, sketch, context, small).height)

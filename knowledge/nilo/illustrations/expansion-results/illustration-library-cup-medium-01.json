@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-cup-medium-01",
+  "subject": "cup",
+  "name": "杯子",
+  "label": "高脚茶杯",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "object",
+    "food",
+    "home",
+    "tea",
+    "杯子"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "REQUIRED OUTPUT CANVAS: SQUARE, 1:1 aspect ratio, 1024 by 1024 pixels. One beautiful children's coloring-page outline drawing of a teacup resting on a saucer, with a graceful curved handle and short round foot. Gentle three-quarter view: an open ellipse for the rim, one ellipse for the saucer. A single simple five-petal flower with two leaves decorates the front. Smooth confident dark black contour lines only, empty pure white interiors and pure white background. No gray whatsoever, no tonal rendering, no shading, no highlights, no fine texture, no ornate repeated patterns. A flat hand-drawn outline illustration, not a photo or render. Complete single cup and saucer centered with at least 10 percent empty margin on all sides. No people or extra objects, no text or border. Medium drawing reference: clear connected forms, few meaningful structures. Square page, square raster file, the cup-and-saucer must fit in central 75 percent of the square with ample blank area above and below.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-f6a8f4da-ee39-40fc-ac16-bb41c557491e.png",
+  "src": "/nilo-illustrations/illustration-library-cup-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

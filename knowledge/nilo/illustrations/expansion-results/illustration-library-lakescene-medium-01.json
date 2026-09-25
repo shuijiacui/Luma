@@ -1,0 +1,35 @@
+{
+  "id": "illustration-library-lakescene-medium-01",
+  "subject": "lakescene",
+  "name": "湖泊",
+  "label": "山脚下的湖泊",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "landscape",
+  "related": [
+    "landscape",
+    "landscape",
+    "nature",
+    "风景"
+  ],
+  "aliases": [
+    "湖水",
+    "湖",
+    "lake"
+  ],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One calm lake landscape with a gently irregular shoreline, two connected mountain silhouettes, one small reed cluster and a few long reflection lines.\nSTRICT SIMPLIFICATION: the lake is empty white space with exactly THREE single long curved reflection strokes. NO reflected mountain copies. NO ripple shading, parallel hatching or tiny repeated horizontal lines anywhere. Exactly two mountain outlines, three broad mountain ridge strokes, and one reed clump of three blades. No forests, trees, shrubs or extra scenery. Every line must be individually easy to trace.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-4c9444d9-749c-45a3-bfbc-ff731fe9af7a.png",
+  "src": "/nilo-illustrations/illustration-library-lakescene-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true,
+  "supersededSourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-77bb114e-3af4-4ac1-a94e-33789a3ae994.png"
+}

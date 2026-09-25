@@ -685,3 +685,14 @@ test('a compact click contribution allows eight paths, rejecting nine or an over
  expect(validateDialogue({reply:'添一笔',proposal:{...proposal,width:.3,height:.3}},context,true)).toBeNull()
  expect(validateDialogue({reply:'添一笔',proposal:{...proposal,sketch:{aspect:1,paths:[...paths,paths[0]]}}},context,true)).toBeNull()
 })
+
+
+test('tracing context describes a persistent guide without an acceptance step', () => {
+  const context = sanitizeDialogueContext({ ...CONTEXT, tracingGuide: true })
+  expect(context.tracingGuide).toBe(true)
+  const prompt = buildDialoguePrompt(context, true)
+  expect(prompt).toContain('gray dashed tracing guide')
+  expect(prompt).toContain('there is no acceptance step')
+  expect(prompt).not.toContain("needs the child's explicit confirmation AS A GROUP")
+  expect(sanitizeDialogueContext({ tracingGuide: 'true' }).tracingGuide).toBe(false)
+})

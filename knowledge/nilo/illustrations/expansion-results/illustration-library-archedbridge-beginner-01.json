@@ -1,0 +1,36 @@
+{
+  "id": "illustration-library-archedbridge-beginner-01",
+  "subject": "archedbridge",
+  "name": "小石拱桥",
+  "label": "一孔小拱桥",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "architecture",
+  "related": [
+    "building",
+    "town",
+    "archedbridge"
+  ],
+  "aliases": [
+    "小石拱桥",
+    "石拱桥",
+    "拱桥",
+    "小桥",
+    "桥",
+    "arched bridge"
+  ],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. BEGINNER reference: a warm simple picture-book drawing, 3–5 large easy-to-read forms and a small number of necessary interior marks. Broad rounded organic silhouettes; no repetitive decoration. One small stone arch bridge side view, one broad arch, smooth top edge and two simple end posts, no stone texture. Essential rendering rule: this is flat OUTLINE ART for a child's tracing activity. Pure white interiors and pure white background; ONLY dark ink contour strokes. Never render volume with gray gradients or shadows. Keep the whole composition comfortably inside the square with clear margins. Large readable forms, no tiny repeated details.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-ccd8f23d-acad-4195-b235-d69cbc48baa7.png",
+  "src": "/nilo-illustrations/illustration-library-archedbridge-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

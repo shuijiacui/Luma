@@ -5,16 +5,20 @@ import { validateContact, type DrawingContact } from '../../../../../shared/nilo
 import type { NiloStrokeSpec } from '@/lib/api/lumaApi'
 import { BRUSHES, type BrushKind } from '../brushes'
 import { SKETCH_LIMITS, validateSketch, type DrawingSketch } from './sketch'
+import { getDrawingIllustration } from '../../../../../shared/niloIllustrations.mjs'
+import { sameDrawingSubject } from '../../../../../shared/niloVariants.mjs'
 
 export const templates = ['waves', 'fish', 'leaf', 'window', 'stars', 'cloud', 'flower', 'trail', 'flame', 'rain', 'grass', 'echo', 'sun', 'moon', 'tree', 'mountain', 'house', 'boat', 'bird', 'butterfly', 'heart'] as const
 export type BuiltinTemplate = typeof templates[number]
-export type Template = BuiltinTemplate | 'custom'
+export type Template = BuiltinTemplate | 'custom' | 'illustration'
 export interface SubjectAnchor { x: number; y: number; width: number; height: number }
 export type ProposalPlacement = 'above' | 'below' | 'left' | 'right' | 'inside' | 'near'
 export interface DrawingProposal {
   placementPolicy?: 'free'
   contribution?: 'object'
   recipeId?: string
+  /** A trusted catalogue identifier. Raster guides never contain URLs or authored ink. */
+  illustrationId?: string
   template: Template
   x: number; y: number; width: number; height: number
   rotation: number; color: string; strokeWidth: number
@@ -97,15 +101,18 @@ type Point = { x:number; y:number }
 export function validateProposal(value: unknown): DrawingProposal | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
   const raw = value as DrawingProposal
-  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'placementPolicy'].includes(key))) return null
+  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'illustrationId', 'placementPolicy'].includes(key))) return null
   if (raw.placementPolicy !== undefined && (raw.placementPolicy !== 'free' || raw.contribution !== 'object')) return null
   if (raw.contribution !== undefined && raw.contribution !== 'object') return null
   if (raw.recipeId !== undefined && (typeof raw.recipeId !== 'string' || !/^[a-z]+-[0-9]+$/.test(raw.recipeId))) return null
   if (raw.contribution === 'object' && (raw.attachment || raw.contact)) return null
   const p = { ...raw, rotation: raw.rotation === undefined ? 0 : raw.rotation, strokeWidth: raw.strokeWidth === undefined ? 4 : raw.strokeWidth }
-  if (!(p.template === 'custom' || templates.includes(p.template)) || !/^#[\da-f]{6}$/i.test(p.color)) return null
+  if (!(p.template === 'custom' || p.template === 'illustration' || templates.includes(p.template)) || !/^#[\da-f]{6}$/i.test(p.color)) return null
+  if (p.template !== 'illustration' && p.illustrationId !== undefined) return null
   if (![p.x, p.y, p.width, p.height, p.rotation, p.strokeWidth].every(Number.isFinite)) return null
-  if (p.width < .025 || p.height < .025 || p.width > .45 || p.height > .45 || p.width * p.height > .16) return null
+  const maxSpan = p.template === 'illustration' ? .9 : .45
+  const maxArea = p.template === 'illustration' ? .81 : .16
+  if (p.width < .025 || p.height < .025 || p.width > maxSpan || p.height > maxSpan || p.width * p.height > maxArea) return null
   if (p.x < 0 || p.y < 0 || p.x + p.width > 1 || p.y + p.height > 1 || Math.abs(p.rotation) > 180 || p.strokeWidth < 1 || p.strokeWidth > 32) return null
   if (p.brushKind !== undefined && !BRUSHES.some(brush => brush.id === p.brushKind)) return null
   const target = typeof p.target === 'string' ? p.target.trim().slice(0, 100) : ''
@@ -117,6 +124,11 @@ export function validateProposal(value: unknown): DrawingProposal | null {
     subject = typeof p.subject === 'string' ? p.subject.trim() : ''
     sketch = validateSketch(p.sketch)
     if (!subject || subject.length > 60 || !sketch) return null
+  } else if (p.template === 'illustration') {
+    const illustration = typeof p.illustrationId === 'string' ? getDrawingIllustration(p.illustrationId) : undefined
+    if (!illustration || ['sketch', 'recipeId', 'attachment', 'contact', 'echoPoints'].some(key => Object.hasOwn(p, key))) return null
+    subject = typeof p.subject === 'string' ? p.subject.trim() : ''
+    if (!subject || subject.length > 60 || !sameDrawingSubject(p, { ...p, subject: illustration.subject })) return null
   } else if ('subject' in p || 'sketch' in p) return null
   if (p.placement !== undefined && !['above', 'below', 'left', 'right', 'inside', 'near'].includes(p.placement)) return null
   if (p.anchor !== undefined) {
@@ -137,10 +149,10 @@ export function validateProposal(value: unknown): DrawingProposal | null {
     const xs = p.echoPoints.map(point => point.x), ys = p.echoPoints.map(point => point.y)
     if (Math.max(...xs) - Math.min(...xs) + Math.max(...ys) - Math.min(...ys) < .005) return null
   } else if (p.echoPoints !== undefined) return null
-  return { ...p, color: p.color.toLowerCase(), target, relation, ...(sketch ? { subject, sketch } : {}), ...(p.anchor ? { anchor: { ...p.anchor } } : {}), ...(contact ? { contact } : {}), ...(p.echoPoints ? { echoPoints: p.echoPoints.map(({ x, y }) => ({ x, y })) } : {}) }
+  return { ...p, color: p.color.toLowerCase(), target, relation, ...(sketch ? { subject, sketch } : p.template === 'illustration' ? { subject } : {}), ...(p.anchor ? { anchor: { ...p.anchor } } : {}), ...(contact ? { contact } : {}), ...(p.echoPoints ? { echoPoints: p.echoPoints.map(({ x, y }) => ({ x, y })) } : {}) }
 }
 export function proposalStrokes(p: DrawingProposal, aspect = 1): NiloStrokeSpec[] {
-  return validateProposal(p) ? sampleProposalGeometry(p, aspect) : []
+  return p.template !== 'illustration' && validateProposal(p) ? sampleProposalGeometry(p, aspect) : []
 }
 type SurfaceSize = { width: number; height: number }
 export function projectionFits(p: DrawingProposal, occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize, pixels?: InkPixels): boolean {
@@ -264,7 +276,7 @@ function prepareAttachedProposal(p: DrawingProposal, occupancy: number[], aspect
 /** Validation for editing/accepting a complete plan; never adjusts its coordinates. */
 export function drawingPlanFits(proposals: DrawingProposal[], occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize, pixels?: InkPixels): boolean {
   const n = occupancySize(occupancy)
-  if (!n || !planBudgetFits(proposals) || proposals.reduce((area, p) => area + p.width * p.height, 0) > .24) return false
+  if (!n || !planBudgetFits(proposals) || proposals.reduce((area, p) => area + (p.template === 'illustration' ? 0 : p.width * p.height), 0) > .24) return false
   const occupied = [...occupancy]
   for (const p of proposals) {
     const cells = proposalFootprint(p, n, aspect, surfaceSize)
@@ -295,6 +307,7 @@ export function prepareDrawingPlan(proposals: DrawingProposal[], occupancy: numb
 
 function planBudgetFits(proposals: DrawingProposal[]): boolean {
   if (!Array.isArray(proposals) || proposals.length < 1 || proposals.length > 4) return false
+  if (proposals.some(proposal => proposal?.template === 'illustration') && proposals.length !== 1) return false
   let strokes = 0, commands = 0
   for (const value of proposals) {
     const p = validateProposal(value)
@@ -302,7 +315,7 @@ function planBudgetFits(proposals: DrawingProposal[]): boolean {
     if (p.template === 'custom') {
       strokes += p.sketch!.paths.length
       commands += p.sketch!.paths.reduce((sum, path) => sum + path.length, 0)
-    } else strokes += p.template === 'echo' ? 1 : localPaths(p.template).length
+    } else strokes += p.template === 'echo' || p.template === 'illustration' ? 1 : localPaths(p.template).length
     if (strokes > SKETCH_LIMITS.planStrokes || commands > SKETCH_LIMITS.planCommands) return false
   }
   return true
@@ -314,8 +327,9 @@ export function localCommand(text: string): LocalCommand {
   if (/[?？]/.test(text)) return null
   const s = text.toLowerCase().trim().replace(/[。！!.]+$/g, '').replace(/\s+/g, ' ')
   if (/^(留下来?|确认留下|确认修改|确认移除|keep changes|confirm changes|confirm removal|把它留下来|画上去|放上去|keep it|keep this|add it|put it on)$/.test(s)) return 'accept'
+  if (/^(?:清除|清掉|去掉|收起)(?:这个|这张)?底图$|^(?:clear|remove)(?: the)? guide$/.test(s)) return 'dismiss'
   if (/^(先不要了?|不要了?|先收起来|取消|不要留下来?|不留下|别画|不用了|no|cancel|dismiss|not this|don't keep it|do not keep it)$/.test(s)) return 'dismiss'
-  if (/^(换一个|换个想法|换一下|another one|try another|another idea)$/.test(s)) return 'alternative'
+  if (/^(换一个|换一下|换个画法|换一种画法|another one|try another|another style|try another style)$/.test(s)) return 'alternative'
   if (/^(停止|安静一下|暂停聊天|stop|stop talking|quiet please)$/.test(s)) return 'stop'
   if (/^(忘掉这个故事|重新开始故事|forget this story|forget the story)$/.test(s)) return 'forget'
   if (/^(再?小一点|缩小一点|小一些|make it smaller|smaller)$/.test(s)) return 'smaller'

@@ -10,7 +10,7 @@ import { visibleOperations, canvasUndoCounts, cloneCanvasDocument, getCanvasProv
 import { getCompanionScene, type CompanionScene } from '../companionScene'
 import { exportCompanionFocus } from '../companion/focus'
 import type { CanvasDraft } from '../draft'
-import { forwardRef, useEffect, useImperativeHandle, useRef, type PointerEvent as ReactPointerEvent } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 
 export interface DrawingCanvasHandle {
   flushDraft: () => void
@@ -56,10 +56,11 @@ interface DrawingCanvasProps {
   onStrokeStart?: () => void
   draft: CanvasDraft
   disabled?: boolean
+  guideVisible?: boolean
 }
 
 export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(function DrawingCanvas(
-  { color, brushSize, brushKind = 'round', isEraser, onStrokeComplete, onStrokeStart, draft, disabled }, forwardedRef,
+  { color, brushSize, brushKind = 'round', isEraser, onStrokeComplete, onStrokeStart, draft, disabled, guideVisible }, forwardedRef,
 ) {
   useLocale()
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -104,10 +105,10 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     return result
   }
 
-  function persist() {
+  const persist = useCallback(() => {
     draft.document = cloneCanvasDocument(documentRef.current)
     if (canvasRef.current) draft.history = [canvasRef.current.toDataURL('image/png')]
-  }
+  }, [draft])
 
   function repaint() {
     const canvas = canvasRef.current
@@ -116,6 +117,13 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     renderDocument(context, canvas.width, canvas.height)
     persist()
   }
+
+  useEffect(() => {
+    if (guideVisible && !documentRef.current.guided) {
+      documentRef.current.guided = true
+      persist()
+    }
+  }, [guideVisible, persist])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -160,6 +168,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
   }
 
   function commitCompanionStrokes(specs: NiloStrokeSpec[], expectedRevision: number, object?: { proposals: DrawingProposal[]; aspect: number }, targetId?: string) {
+    if (object?.proposals.some(proposal => proposal.template === 'illustration')) return false
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d')
     if (disabled || restoringRef.current || pointerRef.current !== null || !canvas || !context || expectedRevision !== revisionRef.current
@@ -380,7 +389,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
     finishStroke()
   }
 
-  return <canvas ref={canvasRef} className="block h-full min-h-0 w-full cursor-crosshair touch-none rounded-[1.5rem] bg-white"
+  return <canvas ref={canvasRef} className="relative z-[1] block h-full min-h-0 w-full cursor-crosshair touch-none rounded-[1.5rem]"
     aria-label={t('自由绘画画布')} onPointerDown={startDrawing} onPointerMove={draw} onPointerUp={finishDrawing}
     onPointerCancel={finishDrawing} onLostPointerCapture={finishDrawing} />
 })

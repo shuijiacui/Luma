@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-monstera-medium-01",
+  "subject": "monstera",
+  "name": "龟背竹",
+  "label": "舒展的龟背竹",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "botanical",
+  "related": [
+    "botanical",
+    "plant",
+    "garden",
+    "植物"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One monstera plant with two large leaves at distinct angles in a low pot, characteristic broad splits and only two interior openings per leaf.\nComplete subject inside the central 76% of the square, generous 12% clear margins on every side. Pure ink outlines only with blank interiors. No gray fills, leaf shading or surface texture. Keep each leaf to its clean silhouette and one main vein.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-2ee2383c-fc1e-4c7f-8626-c81b0f3f4700.png",
+  "src": "/nilo-illustrations/illustration-library-monstera-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

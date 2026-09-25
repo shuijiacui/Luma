@@ -1,4 +1,5 @@
 import { getDrawingRecipe } from '../../shared/niloRecipes.mjs'
+import { drawingIllustrations } from '../../shared/niloIllustrations.mjs'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { authFetch } from '@/lib/api/authFetch'
@@ -9,8 +10,12 @@ import type { DrawingCanvasHandle } from '@/features/child/components/DrawingCan
 import type { CanvasDocument } from '@/features/child/canvasDocument'
 import type { CompanionScene } from '@/features/child/companionScene'
 import { decodeOccupancy } from '../../shared/niloOccupancy.mjs'
+import { refreshMaterialCuration } from '@/features/child/companion/materialCuration'
+import { getMaterialCuration, setMaterialCuration } from '../../shared/niloCuration.mjs'
+import { readMaterialChoices } from '@/features/child/companion/materialPreferences'
 
 vi.mock('@/lib/api/authFetch', () => ({ authFetch: vi.fn() }))
+vi.mock('@/features/child/companion/materialCuration', () => ({ refreshMaterialCuration: vi.fn(async () => {}) }))
 const proposal: DrawingProposal = { template: 'flame', x: .3, y: .5, width: .15, height: .15, rotation: 0, color: '#e4a86a', strokeWidth: 4, target: '飞船', relation: '飞船的小尾焰' }
 const reply: CompanionReply = { reply: '先给你看一小段尾焰。', theme: '飞船', proposal }
 const plan: DrawingProposal[] = [
@@ -32,12 +37,13 @@ const robot: DrawingProposal = {
 }
 beforeEach(() => {
   vi.useFakeTimers(); vi.mocked(authFetch).mockReset(); localStorage.clear()
+  vi.mocked(refreshMaterialCuration).mockReset().mockResolvedValue(undefined)
   vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false })))
 })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
-function setup(initial = { ownerId: 'child-a', artworkId: 'work-a' as string | undefined, allowDrawing: true, enabled: true }) {
+function setup(initial: { ownerId: string; artworkId: string | undefined; allowDrawing: boolean; enabled: boolean; tracing?: boolean; preferenceChildId?: string } = { ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true }) {
   const state = {
     revision: 1, occupancy: Array(64 * 64).fill(0),
     document: { version: 1, baseSource: 'child', operations: [] } as CanvasDocument,
@@ -53,7 +59,7 @@ function setup(initial = { ownerId: 'child-a', artworkId: 'work-a' as string | u
     exportObservation: vi.fn(() => 'data:image/png;base64,CHILD'),
     exportCompanionObservation: vi.fn(() => 'data:image/png;base64,COMPOSITE'), commitCompanionStrokes: commit,
   } as unknown as DrawingCanvasHandle }
-  const hook = renderHook(props => useCompanion({ ...props, locale: 'zh', canvas, aspect: () => 1.5,
+  const hook = renderHook(props => useCompanion({ tracing: false, ...props, locale: 'zh', canvas, aspect: () => 1.5,
     surfaceSize: () => ({ width: 900, height: 600 }), drawingStyle: () => ({ brushKind: 'pencil', color: '#123456', brushSize: 4 }),
     onSpeak, onCommitted, onUnavailable }), { initialProps: initial })
   return { ...hook, state, canvas, commit, onSpeak, onCommitted, onUnavailable }
@@ -64,6 +70,158 @@ async function project(hook: ReturnType<typeof setup>) {
   act(() => vi.advanceTimersByTime(550))
   expect(hook.result.current.phase).toBe('projected')
 }
+
+test('a raster illustration is always a persistent guide even in the legacy confirmation workflow', async () => {
+  const hook = setup()
+  const raster: DrawingProposal = { ...proposal, template: 'illustration', illustrationId: 'illustration-reading-child', subject: '读书的孩子', contribution: 'object', width: .24, height: .3 }
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '可以看看书页和手的位置。', proposal: raster })
+  await act(async () => { await hook.result.current.ask('画一个读书的孩子', true) })
+  expect(hook.result.current.phase).toBe('projected')
+  expect(hook.result.current.projection?.tracing).toBe(true)
+  expect(hook.result.current.projection?.proposal.illustrationId).toBe(raster.illustrationId)
+  expect(hook.result.current.message).not.toContain('虚线')
+  act(() => hook.result.current.accept())
+  expect(hook.commit).not.toHaveBeenCalled()
+  const before = hook.result.current.projection!.proposal
+  act(() => hook.result.current.edit({ x: before.x + .03, y: before.y - .02 }))
+  expect(hook.result.current.projection?.proposal.x).toBeCloseTo(before.x + .03)
+  expect(hook.result.current.projection?.proposal.illustrationId).toBe(raster.illustrationId)
+  act(() => hook.result.current.dismiss())
+  expect(hook.result.current.projection).toBeNull()
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('opening and closing material choices never changes the guide or records a model recommendation', async () => {
+  const hook = setup({ ownerId: 'child-a', preferenceChildId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  await project(hook)
+  const before = structuredClone(hook.result.current.projection)
+  await act(async () => { await hook.result.current.openMaterialPicker() })
+  expect(hook.result.current.materialPicker?.subject).toBeNull()
+  expect(hook.result.current.materialPicker?.subjects.find(item => item.subject === 'cat')).toBeTruthy()
+  expect(hook.result.current.materialChoices).toEqual([])
+  act(() => hook.result.current.closeMaterialPicker())
+  expect(hook.result.current.projection).toEqual(before)
+  expect(readMaterialChoices('child-a')).toEqual([])
+  expect(authFetch).toHaveBeenCalledOnce()
+})
+
+test('only a clicked material changes the guide, keeps child ink and records the child account preference', async () => {
+  const hook = setup({ ownerId: 'child-a', preferenceChildId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  const cat: DrawingProposal = { ...proposal, x: .2, y: .2, width: .25, height: .3, template: 'custom', subject: '小猫', recipeId: 'cat-0', sketch: getDrawingRecipe('cat-0')!.sketch }
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '小猫的底图来啦。', proposal: cat })
+  await act(async () => { await hook.result.current.ask('画小猫', true) })
+  const before = hook.result.current.projection!.proposal
+  hook.state.document.operations.push({ type: 'stroke', owner: 'child', groupId: 'own-lines', color: '#123456', size: 4,
+    brushKind: 'pencil', eraser: false, referenceWidth: 900, referenceHeight: 600, points: [{ x: .1, y: .1 }, { x: .2, y: .2 }] })
+  const document = structuredClone(hook.state.document)
+  await act(async () => { await hook.result.current.openMaterialPicker() })
+  expect(hook.result.current.materialPicker?.subject).toBe('cat')
+  await act(async () => { await hook.result.current.chooseMaterial('cat-2') })
+  expect(hook.result.current.projection!.proposal).toMatchObject({ recipeId: 'cat-2', x: before.x, y: before.y, width: before.width, height: before.height, rotation: before.rotation })
+  expect(hook.result.current.materialPicker).toBeNull()
+  expect(hook.result.current.projection!.tracing).toBe(true)
+  expect(hook.state.document).toEqual(document)
+  expect(hook.commit).not.toHaveBeenCalled()
+  expect(readMaterialChoices('child-a')).toEqual([{ subject: 'cat', materialId: 'cat-2', style: 'storybook', difficulty: 'beginner', chosenAt: expect.any(Number) }])
+  expect(readMaterialChoices('child-b')).toEqual([])
+  await act(async () => { await hook.result.current.openMaterialPicker() })
+  expect(hook.result.current.materialPicker?.subjects.find(item => item.subject === 'cat')?.materials[0].id).toBe('cat-2')
+  await act(async () => { await hook.result.current.chooseMaterial('illustration-medium-school') })
+  expect(hook.result.current.projection!.proposal).toMatchObject({ template: 'illustration', illustrationId: 'illustration-medium-school', subject: '学校' })
+  expect(hook.state.document).toEqual(document)
+  expect(hook.commit).not.toHaveBeenCalled()
+  expect(hook.result.current.materialChoices.at(-1)).toMatchObject({ subject: 'school', difficulty: 'medium' })
+  expect(authFetch).toHaveBeenCalledOnce()
+})
+
+test.each(['close', 'clear', 'change-child'] as const)('a pending material selection cannot override %s or record a stale preference', async action => {
+  const hook = setup({ ownerId: 'child-a', preferenceChildId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  await project(hook)
+  const before = hook.result.current.projection
+  await act(async () => { await hook.result.current.openMaterialPicker() })
+  let finish!: () => void
+  vi.mocked(refreshMaterialCuration).mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+  let pending!: Promise<void>
+  act(() => { pending = hook.result.current.chooseMaterial('cat-0') })
+  if (action === 'close') act(() => hook.result.current.closeMaterialPicker())
+  if (action === 'clear') act(() => hook.result.current.dismiss({ speak: false }))
+  if (action === 'change-child') hook.rerender({ ownerId: 'child-b', preferenceChildId: 'child-b', artworkId: 'work-b', allowDrawing: true, enabled: true, tracing: true })
+  await act(async () => { finish(); await pending })
+  expect(hook.result.current.projection).toEqual(action === 'close' ? before : null)
+  expect(readMaterialChoices('child-a')).toEqual([])
+  expect(readMaterialChoices('child-b')).toEqual([])
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('a freshly rejected card cannot be selected or recorded and is removed from the open picker', async () => {
+  const previous = getMaterialCuration()
+  try {
+    setMaterialCuration({ version: 1, decisions: {} })
+    const hook = setup({ ownerId: 'child-a', preferenceChildId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+    await project(hook)
+    const before = hook.result.current.projection
+    await act(async () => { await hook.result.current.openMaterialPicker() })
+    vi.mocked(refreshMaterialCuration).mockImplementationOnce(async () => { setMaterialCuration({ version: 1, decisions: { 'cat-0': 'reject' } }) })
+    await act(async () => { await hook.result.current.chooseMaterial('cat-0') })
+    expect(hook.result.current.projection).toEqual(before)
+    expect(hook.result.current.materialPicker?.subjects.flatMap(item => item.materials).some(item => item.id === 'cat-0')).toBe(false)
+    expect(hook.result.current.materialChoices).toEqual([])
+  } finally { setMaterialCuration(previous) }
+})
+
+test('guest choices stay in this hook session and do not become a shared guest-child profile', async () => {
+  const hook = setup({ ownerId: 'guest-child', artworkId: undefined, allowDrawing: true, enabled: true, tracing: true })
+  await project(hook)
+  await act(async () => { await hook.result.current.openMaterialPicker() })
+  await act(async () => { await hook.result.current.chooseMaterial('cat-0') })
+  expect(hook.result.current.materialChoices).toHaveLength(1)
+  expect([...Array(localStorage.length)].map((_, index) => localStorage.key(index)).some(key => key?.startsWith('luma_material_choices:'))).toBe(false)
+  hook.unmount()
+  const otherGuest = setup({ ownerId: 'guest-child', artworkId: undefined, allowDrawing: true, enabled: true, tracing: true })
+  expect(otherGuest.result.current.materialChoices).toEqual([])
+})
+
+test('selecting vector art from a large raster guide fits the existing size budget around its centre', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '学校的参考图。', proposal: { ...proposal,
+    template: 'illustration', illustrationId: 'illustration-medium-school', subject: '学校', x: .15, y: .14, width: .58, height: .68, rotation: 12 } })
+  await act(async () => { await hook.result.current.ask('画学校', true) })
+  const before = hook.result.current.projection!.proposal
+  await act(async () => { await hook.result.current.openMaterialPicker() })
+  await act(async () => { await hook.result.current.chooseMaterial('cat-0') })
+  const next = hook.result.current.projection!.proposal
+  expect(next.recipeId).toBe('cat-0')
+  expect(next.width).toBeLessThanOrEqual(.45)
+  expect(next.height).toBeLessThanOrEqual(.45)
+  expect(next.width * next.height).toBeLessThanOrEqual(.16)
+  expect(next.width / next.height).toBeCloseTo(before.width / before.height)
+  expect(next.x + next.width / 2).toBeCloseTo(before.x + before.width / 2)
+  expect(next.y + next.height / 2).toBeCloseTo(before.y + before.height / 2)
+  expect(next.rotation).toBe(before.rotation)
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('tracing preserves the model idea, speaks exactly the displayed text', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  const text = '给飞船一个弯弯的尾焰，让你的故事继续出发。'
+  vi.mocked(authFetch).mockResolvedValueOnce({ ...reply, reply: text })
+  await act(async () => { await hook.result.current.ask('给飞船画尾焰', true) })
+  expect(hook.result.current.message).toContain(text)
+  expect(hook.onSpeak).toHaveBeenLastCalledWith(hook.result.current.message)
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('click-turn guide also keeps its context-aware reply after the reveal animation', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  const text = '虚线里的小主意准备好啦，你可以画出自己的版本。'
+  vi.mocked(authFetch).mockResolvedValueOnce({ ...reply, reply: text })
+  await act(async () => { await hook.result.current.takeTurn() })
+  expect(hook.result.current.phase).toBe('sketching')
+  act(() => vi.advanceTimersByTime(1200))
+  expect(hook.result.current.message).toBe(text)
+  expect(hook.onSpeak).toHaveBeenLastCalledWith(text)
+  expect(hook.commit).not.toHaveBeenCalled()
+})
 
 test('compound voice edits are atomic previews, with follow-up corrections and explicit confirmation', async () => {
   const hook=setup()
@@ -224,7 +382,7 @@ test('an explicit Nilo click animates then commits one checked contribution with
   expect(hook.onCommitted).toHaveBeenCalledOnce()
   expect(hook.result.current.projection).toBeNull()
   expect(hook.result.current.phase).toBe('idle')
-  expect(hook.onSpeak).toHaveBeenCalledExactlyOnceWith('先看看这个小主意，喜欢的话就留下来。')
+  expect(hook.onSpeak).toHaveBeenCalledExactlyOnceWith(reply.reply)
 })
 
 test.each(['ready', 'clarify'] as const)('a text-only %s response never invents local ink without retaining its invented story', async status => {
@@ -836,7 +994,7 @@ test('reviewed geometry is committed at exactly its reviewed position without lo
   if(hook.result.current.phase==='projected')act(()=>hook.result.current.accept({speak:false}))
   expect(hook.commit).toHaveBeenCalledOnce()
   expect(hook.commit.mock.calls[0][0]).toEqual(proposalStrokes(reviewed,1.5))
-  expect(hook.onSpeak).toHaveBeenCalledExactlyOnceWith('先看看这个小主意，喜欢的话就留下来。')
+  expect(hook.onSpeak).toHaveBeenCalledExactlyOnceWith('接一笔')
 })
 
 test('repeated Nilo clicks keep the child story, and changing artwork clears it',async()=>{
@@ -859,7 +1017,7 @@ test('repeated Nilo clicks keep the child story, and changing artwork clears it'
 
 test('ambiguous committed objects require a choice; choosing the earlier object edits only that ID without another API call',()=>{
   const hook=setup()
-  const p:DrawingProposal={...robot,contribution:'object',recipeId:'squirrel-0',subject:'松鼠',sketch:getDrawingRecipe('squirrel-0')!.sketch,width:.18,height:.25,x:.2,y:.2}
+  const p:DrawingProposal={...robot,contribution:'object',recipeId:'squirrel-2',subject:'松鼠',sketch:getDrawingRecipe('squirrel-2')!.sketch,width:.18,height:.25,x:.2,y:.2}
   const objects=[{id:'first',name:'松鼠',proposals:[p],aspect:1.5},{id:'second',name:'松鼠',proposals:[{...p,x:.6}],aspect:1.5}]
   hook.canvas.current.getEditableObjects=()=>objects
   hook.canvas.current.getOccupancyWithoutObject=vi.fn(()=>Array(65536).fill(0))
@@ -876,7 +1034,7 @@ test('ambiguous committed objects require a choice; choosing the earlier object 
   expect(hook.canvas.current.previewWithoutObject).toHaveBeenLastCalledWith(null)
 })
 test('voice deletion previews, cancellation preserves the group, and a second confirmed deletion targets one object',()=>{
-  const hook=setup(),p:DrawingProposal={...robot,contribution:'object',recipeId:'bird-0',subject:'小鸟',sketch:getDrawingRecipe('bird-0')!.sketch,width:.2,height:.2}
+  const hook=setup(),p:DrawingProposal={...robot,contribution:'object',recipeId:'bird-2',subject:'小鸟',sketch:getDrawingRecipe('bird-2')!.sketch,width:.2,height:.2}
   hook.canvas.current.getEditableObjects=()=>[{id:'bird',name:'小鸟',proposals:[p],aspect:1.5}]
   hook.canvas.current.getOccupancyWithoutObject=()=>Array(65536).fill(0)
   hook.canvas.current.previewWithoutObject=vi.fn()
@@ -905,4 +1063,187 @@ test('spoken partial-shape constraints keep the exact projection position throug
  expect(hook.commit).not.toHaveBeenCalled()
  act(()=>hook.result.current.accept({speak:false}))
  expect(hook.commit.mock.calls[0][0]).toEqual(proposalStrokes(half as DrawingProposal,1.5))
+})
+
+
+test('tracing guides remain editable over new child ink and keep commands never commit model strokes', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  await project(hook)
+  expect(hook.result.current.projection?.tracing).toBe(true)
+  hook.state.revision++
+  hook.state.occupancy.fill(1)
+  act(() => hook.result.current.interrupt())
+  const original = hook.result.current.projection!.proposal
+  act(() => hook.result.current.edit({ x: original.x + .02 }))
+  expect(hook.result.current.projection?.proposal.x).toBeCloseTo(original.x + .02)
+  await act(async () => hook.result.current.receive('小一点', { speak: false }))
+  expect(hook.result.current.projection?.proposal.width).toBeLessThan(original.width)
+  await act(async () => hook.result.current.receive('留下来', { speak: false }))
+  expect(hook.commit).not.toHaveBeenCalled()
+  expect(hook.onCommitted).not.toHaveBeenCalled()
+  expect(hook.result.current.projection?.tracing).toBe(true)
+  await act(async () => hook.result.current.receive('清除底图', { speak: false }))
+  expect(hook.result.current.projection).toBeNull()
+  expect(hook.result.current.memory.rejectedTemplates).toEqual([])
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('a failed replacement retains the tracing guide and restores its editing controls', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  await project(hook)
+  const shown = hook.result.current.projection
+  act(() => vi.advanceTimersByTime(1600))
+  vi.mocked(authFetch).mockRejectedValueOnce(new Error('offline'))
+  await act(async () => hook.result.current.ask('请画太阳', true, { speak: false }))
+  expect(hook.result.current.projection?.proposal).toEqual(shown?.proposal)
+  expect(hook.result.current.phase).toBe('projected')
+  act(() => hook.result.current.dismiss({ speak: false }))
+  expect(hook.result.current.projection).toBeNull()
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('another style cycles the spoken sun locally, ignoring a cached moon and retaining the adjusted frame', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '太阳的底图来啦。', theme: '太阳', proposal: plan[2], alternatives: [{ ...plan[2], template: 'moon' }] })
+  await act(async () => hook.result.current.receive('请画太阳', { speak: false }))
+  expect(hook.result.current.projection?.proposal.template).toBe('sun')
+  expect(hook.result.current.projection?.alternatives[0].template).toBe('moon')
+  act(() => hook.result.current.edit({ x: .58, y: .15, width: .16, height: .18, rotation: 12, color: '#ff9900' }))
+  const original = hook.result.current.projection!.proposal
+  const sketches = new Set<string>()
+  for (let i = 0; i < 3; i++) {
+    await act(async () => { await hook.result.current.alternative({ speak: false }) })
+    const current = hook.result.current.projection!.proposal
+    expect(current.subject).toBe('太阳')
+    expect(getDrawingRecipe(current.recipeId!)?.subject).toBe('sun')
+    expect(current).toMatchObject({ x: original.x, y: original.y, width: original.width, height: original.height, rotation: 12, color: '#ff9900', strokeWidth: original.strokeWidth })
+    sketches.add(JSON.stringify(current.sketch))
+    expect(hook.result.current.phase).toBe('projected')
+  }
+  expect(sketches.size).toBe(3)
+  expect(authFetch).toHaveBeenCalledOnce()
+  expect(hook.result.current.memory).toMatchObject({ theme: '太阳', rejectedTemplates: [], rejectedSubjects: [] })
+  expect(hook.result.current.metrics.rejected).toBe(0)
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('another style preserves the other objects in a tracing group', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '太阳和小云朵。', proposal: plan[2], additions: [plan[3]] })
+  await act(async () => hook.result.current.ask('请画太阳和云朵', true))
+  const before = structuredClone(hook.result.current.projection!)
+  expect(before.additions).toHaveLength(1)
+  await act(async () => { await hook.result.current.alternative({ speak: false }) })
+  expect(hook.result.current.projection?.proposal.subject).toBe('太阳')
+  expect(hook.result.current.projection?.additions).toEqual(before.additions)
+  expect(authFetch).toHaveBeenCalledOnce()
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test.each(['only-reference', 'other-rejected'] as const)('a raster guide with %s stays unchanged without requesting a vector fallback', async scenario => {
+  const previous = getMaterialCuration()
+  try {
+    setMaterialCuration({ version: 1, decisions: {} })
+    const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+    const raster: DrawingProposal = { ...proposal, template: 'illustration',
+      illustrationId: scenario === 'only-reference' ? 'illustration-medium-bakery' : 'illustration-reading-child',
+      subject: scenario === 'only-reference' ? '面包店' : '读书的孩子',
+      contribution: 'object', x: .14, y: .15, width: .55, height: .66 }
+    const otherDecisions = Object.fromEntries(drawingIllustrations
+      .filter(item => item.subject === (scenario === 'only-reference' ? 'bakery' : 'readingchild') && item.id !== raster.illustrationId)
+      .map(item => [item.id, 'reject' as const]))
+    if (scenario === 'only-reference') setMaterialCuration({ version: 1, decisions: otherDecisions })
+    vi.mocked(authFetch).mockResolvedValueOnce({ reply: '参考图准备好啦。', proposal: raster })
+    await act(async () => hook.result.current.ask('请画一个参考图', true))
+    const before = structuredClone(hook.result.current.projection!)
+    expect(before.proposal.template).toBe('illustration')
+    if (scenario === 'other-rejected') {
+      vi.mocked(refreshMaterialCuration).mockImplementationOnce(async () => {
+        setMaterialCuration({ version: 1, decisions: otherDecisions })
+      })
+    }
+    await act(async () => { await hook.result.current.alternative() })
+    expect(hook.result.current.projection).toEqual(before)
+    expect(hook.result.current.phase).toBe('projected')
+    expect(hook.result.current.message).toBe('这张参考图暂时没有别的画法，可以试试自己添细节。')
+    expect(hook.onSpeak).toHaveBeenLastCalledWith(hook.result.current.message)
+    expect(authFetch).toHaveBeenCalledOnce()
+    expect(hook.commit).not.toHaveBeenCalled()
+    expect(hook.onCommitted).not.toHaveBeenCalled()
+  } finally { setMaterialCuration(previous) }
+})
+
+test('a free drawing requests a same-subject variation and restores its frame instead of accepting server movement', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '机器人来啦。', proposal: robot })
+  await act(async () => hook.result.current.ask('请画机器人', true))
+  const before = structuredClone(hook.result.current.projection!)
+  const changed = { ...robot, x: .6, y: .5, width: .12, height: .18, color: '#ff0000', sketch: { ...robot.sketch!, paths: [...robot.sketch!.paths, [['M', .4, .39], ['L', .6, .39]]] } }
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '另一种机器人。', theme: '别的故事', proposal: changed })
+  await act(async () => { await hook.result.current.alternative({ speak: false }) })
+  const body = vi.mocked(authFetch).mock.calls[1][1]?.body
+  expect(body).toMatchObject({ context: { variantOnly: true, takeTurn: false, useDrawingKnowledge: false, currentProposal: before.proposal, currentAdditions: before.additions, history: [{ role: 'user', text: '请画机器人' }] } })
+  expect(JSON.stringify(body)).not.toContain('换一个和我的画有关的小主意')
+  const result = hook.result.current.projection!.proposal
+  expect(result.subject).toBe('机器人')
+  expect(result.sketch).not.toEqual(before.proposal.sketch)
+  expect(result).toMatchObject({ x: before.proposal.x, y: before.proposal.y, width: before.proposal.width, height: before.proposal.height, color: before.proposal.color })
+  expect(hook.result.current.memory.theme).not.toBe('别的故事')
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test.each(['wrong-subject', 'offline', 'clarify'] as const)('a %s variation retains the original free guide without drawing ink', async failure => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '机器人来啦。', proposal: robot })
+  await act(async () => hook.result.current.ask('请画机器人', true))
+  const original = structuredClone(hook.result.current.projection!)
+  if (failure === 'offline') vi.mocked(authFetch).mockRejectedValueOnce(new Error('offline'))
+  else vi.mocked(authFetch).mockResolvedValueOnce(failure === 'wrong-subject' ? { reply: '换成月亮。', proposal: { ...plan[2], template: 'moon' } } : { status: 'clarify', reply: '你想画什么？' })
+  await act(async () => { await hook.result.current.alternative({ speak: false }) })
+  expect(hook.result.current.projection?.proposal).toEqual(original.proposal)
+  expect(hook.result.current.phase).toBe('projected')
+  expect(hook.result.current.memory).toMatchObject({ rejectedTemplates: [], rejectedSubjects: [] })
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('an explicit new spoken subject may still replace a sun guide with a moon', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '太阳来啦。', proposal: plan[2] })
+  await act(async () => hook.result.current.receive('请画太阳'))
+  act(() => vi.advanceTimersByTime(1600))
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '月亮来啦。', proposal: { ...plan[2], template: 'moon' } })
+  await act(async () => hook.result.current.receive('请画月亮'))
+  expect(hook.result.current.projection?.proposal.template).toBe('moon')
+  const body = vi.mocked(authFetch).mock.calls[1][1]?.body as { context: { variantOnly?: boolean } }
+  expect(body.context.variantOnly).toBeUndefined()
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('another style applies freshly reviewed exclusions before selecting a local recipe', async () => {
+  const previous = getMaterialCuration()
+  try {
+    setMaterialCuration({ version: 1, decisions: {} })
+    const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+    vi.mocked(authFetch).mockResolvedValueOnce({ reply: '太阳来啦。', proposal: plan[2] })
+    await act(async () => hook.result.current.ask('请画太阳', true))
+    vi.mocked(refreshMaterialCuration).mockImplementationOnce(async () => { setMaterialCuration({ version: 1, decisions: { 'sun-0': 'reject' } }) })
+    await act(async () => { await hook.result.current.alternative({ speak: false }) })
+    expect(hook.result.current.projection?.proposal.recipeId).toMatch(/^sun-[12]$/)
+    expect(getMaterialCuration().decisions['sun-0']).toBe('reject')
+    expect(hook.commit).not.toHaveBeenCalled()
+  } finally { setMaterialCuration(previous) }
+})
+
+test('clearing a guide while review decisions load cannot replace it with a late local variant', async () => {
+  const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '太阳来啦。', proposal: plan[2] })
+  await act(async () => hook.result.current.ask('请画太阳', true))
+  let finish!: () => void
+  vi.mocked(refreshMaterialCuration).mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+  let pending!: Promise<void>
+  act(() => { pending = hook.result.current.alternative({ speak: false }) })
+  act(() => hook.result.current.dismiss({ speak: false }))
+  await act(async () => { finish(); await pending })
+  expect(hook.result.current.projection).toBeNull()
+  expect(hook.commit).not.toHaveBeenCalled()
 })

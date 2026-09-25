@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-teapot-beginner-01",
+  "subject": "teapot",
+  "name": "茶壶",
+  "label": "圆肚小茶壶",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "stilllife",
+  "related": [
+    "object",
+    "food",
+    "home",
+    "tea",
+    "茶壶"
+  ],
+  "aliases": [],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. Pure white background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. BEGINNER reference: a warm simple picture-book drawing, 3–5 large easy-to-read forms and a small number of necessary interior marks. Broad rounded organic silhouettes; no repetitive decoration. One round teapot in side view, large C handle, short curved spout, domed lid and round knob. Show only the specified object itself: no person, child, hands or scene around it.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-f7d49679-9547-4081-bd11-121b8a95eb3e.png",
+  "src": "/nilo-illustrations/illustration-library-teapot-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

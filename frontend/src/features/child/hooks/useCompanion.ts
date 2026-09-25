@@ -2,6 +2,7 @@ import { applyVoiceActions, simpleVoiceActions, isVoiceEditRequest, proposalBoun
 import { newVoiceTrace, recordVoiceEvent } from '../companion/voiceDiagnostics'
 import { validateVoicePlan, type VoicePlan } from '../../../../../shared/niloVoiceActions.mjs'
 import { changeVariant, objectEditCommand, resolveObject, type EditableNiloObject } from '../companion/objects'
+import { fitVariantToFrame, variantSubjectName } from '../../../../../shared/niloVariants.mjs'
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { t } from '@/i18n'
 import { randomId } from '@/lib/randomId'
@@ -12,6 +13,12 @@ import { getCanvasProvenance } from '../canvasDocument'
 import { refineAttachment } from '../companion/attachmentGrounding'
 import { encodeOccupancy } from '../../../../../shared/niloOccupancy.mjs'
 import { contactSamples } from '../../../../../shared/niloContact.mjs'
+import { placementFits } from '../../../../../shared/niloCollision.mjs'
+import type { TracingGuide } from '../companion/tracingGuide'
+import { guideReply, tracingReply } from '../companion/replies'
+import { refreshMaterialCuration } from '../companion/materialCuration'
+import { createMaterialProposal, getMaterial, listMaterialSubjects, materialSubjectForProposal, rankMaterials, type MaterialSubject } from '../../../../../shared/niloMaterialLibrary.mjs'
+import { appendMaterialChoice, preferredMaterials, readMaterialChoices, saveMaterialChoices } from '../companion/materialPreferences'
 import { recordTurnOutcome } from '../companion/diagnostics'
 import type { BrushKind } from '../brushes'
 import { clarificationReasons, emptyMemory, localCommand, drawingPlanFits, prepareDrawingPlan, prepareTurnProposal, proposalStrokes, readMemory, saveMemory, summarizeStroke, validateProposal, type CompanionReply, type DrawingProposal, type StoryMemory } from '../companion/proposals'
@@ -22,7 +29,8 @@ function retainHistory(items: {role:'user'|'assistant';text:string}[]) {
   return [...items].reverse().filter(item=>item.role==='user'?++child<=4:++assistant<=2).reverse()
 }
 type Phase = 'idle' | 'thinking' | 'sketching' | 'projected'
-export interface Projection { pristineEdit?: boolean; editTargetId?: string; deleting?: boolean; id: string; revision: number; proposal: DrawingProposal; additions: DrawingProposal[]; alternatives: DrawingProposal[]; aspect: number; turn?: boolean; durationMs?: number; turnSource?: 'ai' | 'local' }
+interface VoiceFeedback { speak?: boolean; selectedObjectId?: string; traceId?: string; alternatives?: string[] }
+export interface Projection { tracing?: boolean; pristineEdit?: boolean; editTargetId?: string; deleting?: boolean; id: string; revision: number; proposal: DrawingProposal; additions: DrawingProposal[]; alternatives: DrawingProposal[]; aspect: number; turn?: boolean; durationMs?: number; turnSource?: 'ai' | 'local' }
 const planItems = (preview: Projection) => [preview.proposal, ...preview.additions]
 function attachmentFits(p: DrawingProposal, canvas: DrawingCanvasHandle, aspect = 1) {
   const tipScale = { round: 1, pencil: .4, marker: 1.8, crayon: 1, star: 2.5 }[p.brushKind ?? 'round']
@@ -32,7 +40,12 @@ function attachmentFits(p: DrawingProposal, canvas: DrawingCanvasHandle, aspect 
 }
 interface Options {
   ownerId: string; artworkId?: string; token?: string; locale: 'zh' | 'en'; enabled: boolean
+  /** Only an authenticated child's account ID may persist chosen drawing styles. */
+  preferenceChildId?: string
   allowDrawing?: boolean
+  /** Default to guides; false retains the previous ink-preview workflow. */
+  tracing?: boolean
+  initialGuide?: TracingGuide
   canvas: RefObject<DrawingCanvasHandle | null>
   aspect: () => number
   drawingStyle?: () => { brushKind: BrushKind; color: string; brushSize: number }
@@ -54,16 +67,22 @@ function requestFailureMessage(error: unknown, timedOut: boolean) {
   return '网络暂时没连上，连好后再点我试试吧。'
 }
 
-/** Drawing invitations leave undoable ink; explicitly requested previews await acceptance. */
+/** New ideas stay as tracing guides. Only edits to existing ink need confirmation. */
 export function useCompanion(options: Options) {
   const ref = useRef(options); ref.current = options
   const [phase, setPhaseState] = useState<Phase>('idle')
   const phaseRef = useRef<Phase>('idle')
   const setPhase = useCallback((next: Phase) => { phaseRef.current = next; setPhaseState(next) }, [])
   const [message, setMessage] = useState('')
-  const [projection, setProjectionState] = useState<Projection | null>(null)
+  const [projection, setProjectionState] = useState<Projection | null>(() => options.initialGuide
+    ? { ...options.initialGuide, id: options.initialGuide.id ?? randomId(), revision: 0, alternatives: [], tracing: true } : null)
   const [objectChoices, setObjectChoices] = useState<{objects:EditableNiloObject[];text:string}|null>(null)
-  const current = useRef<Projection | null>(null)
+  const [materialPicker, setMaterialPicker] = useState<{ guideId: string; subject: string | null; subjects: MaterialSubject[]; busy?: boolean; error?: string } | null>(null)
+  const [materialChoices, setMaterialChoices] = useState(() => readMaterialChoices(options.preferenceChildId))
+  const choicesRef = useRef(materialChoices)
+  const materialRequest = useRef(0)
+  const closeMaterialPicker = useCallback(() => { materialRequest.current++; setMaterialPicker(null) }, [])
+  const current = useRef<Projection | null>(projection)
   const [memory, setMemoryState] = useState<StoryMemory>(() => readMemory(options.ownerId, options.artworkId))
   const memoryRef = useRef(memory)
   const usedRecipes = useRef<string[]>([])
@@ -76,6 +95,13 @@ export function useCompanion(options: Options) {
   const voiceTarget = useRef<string | null>(null)
   const metrics = useRef({ requests: 0, accepted: 0, rejected: 0, stale: 0, localEdits: 0 })
   const identity = useRef({ ownerId: options.ownerId, artworkId: options.artworkId })
+  useEffect(() => {
+    if (!options.enabled) return
+    const refresh = () => { if (document.visibilityState === 'visible') void refreshMaterialCuration() }
+    refresh()
+    window.addEventListener('focus', refresh)
+    return () => window.removeEventListener('focus', refresh)
+  }, [options.enabled])
 
   const remember = useCallback((next: StoryMemory) => {
     memoryRef.current = next; setMemoryState(next)
@@ -83,22 +109,24 @@ export function useCompanion(options: Options) {
     if (artworkId) saveMemory(ownerId, artworkId, next)
   }, [])
   const rememberPlan = useCallback((items: DrawingProposal[], accepted: boolean) => {
-    usedRecipes.current=[...usedRecipes.current,...items.flatMap(p=>p.recipeId?[p.recipeId]:[])].slice(-12)
+    usedRecipes.current=[...usedRecipes.current,...items.flatMap(p=>p.illustrationId?[p.illustrationId]:p.recipeId?[p.recipeId]:[])].slice(-12)
     const previous = memoryRef.current
-    const templates = items.filter(item => item.template !== 'custom').map(item => item.template)
-    const subjects = items.flatMap(item => item.template === 'custom' && item.subject ? [item.subject] : [])
+    const templates = items.filter(item => item.template !== 'custom' && item.template !== 'illustration').map(item => item.template)
+    const subjects = items.flatMap(item => (item.template === 'custom' || item.template === 'illustration') && item.subject ? [item.subject] : [])
     // Rejecting a robot must not disable every future custom drawing.
     const recent = (old: string[], next: string[]) => [...new Set([...old, ...next])].slice(-4)
     remember(accepted
       ? { ...previous, recentTemplates: recent(previous.recentTemplates, templates), recentSubjects: recent(previous.recentSubjects, subjects) }
       : { ...previous, rejectedTemplates: recent(previous.rejectedTemplates, templates), rejectedSubjects: recent(previous.rejectedSubjects, subjects) })
   }, [remember])
-  const setProjection = useCallback((value: Projection | null) => { current.current = value; setProjectionState(value) }, [])
+  const setProjection = useCallback((value: Projection | null) => { current.current = value; setProjectionState(value); closeMaterialPicker() }, [closeMaterialPicker])
   const say = useCallback((text: string, speak = true) => {
-    setMessage(text)
-    if (speak) ref.current.onSpeak(t(text, ref.current.locale))
+    const localized = t(text, ref.current.locale)
+    setMessage(localized)
+    if (speak) ref.current.onSpeak(localized)
   }, [])
-  const cancel = useCallback((clearMessage = true) => {
+  const cancel = useCallback((clearMessage = true, preserveGuide = false) => {
+    const guide = preserveGuide && current.current?.tracing ? { ...current.current, turn: false } : null
     generation.current++
     active.current?.abort(); active.current = null
     if (timer.current) clearTimeout(timer.current)
@@ -106,44 +134,59 @@ export function useCompanion(options: Options) {
     busy.current = false
     ref.current.canvas.current?.previewWithoutObject?.(null)
     setObjectChoices(null)
-    setProjection(null); setPhase('idle')
+    setProjection(guide); setPhase(guide ? 'projected' : 'idle')
     if (clearMessage) setMessage('')
   }, [setProjection, setPhase])
+  const interrupt = useCallback(() => cancel(true, true), [cancel])
   useEffect(() => {
-    if (!options.enabled) cancel()
-  }, [options.enabled, cancel])
+    if (!options.enabled) interrupt()
+  }, [options.enabled, interrupt])
   useEffect(() => { if (options.allowDrawing === false) cancel() }, [options.allowDrawing, cancel])
   useEffect(() => {
     const previous = identity.current
     if (previous.ownerId === options.ownerId && previous.artworkId === options.artworkId) return
     identity.current = { ownerId: options.ownerId, artworkId: options.artworkId }
-    cancel(); lastRequest.current = -Infinity; usedRecipes.current=[]; voiceTarget.current=null
-    if (!(previous.ownerId === options.ownerId && !previous.artworkId && options.artworkId)) history.current = []
+    cancel(true, previous.ownerId === options.ownerId && !previous.artworkId && !!options.artworkId); lastRequest.current = -Infinity; usedRecipes.current=[]; voiceTarget.current=null
+    if (!(previous.ownerId === options.ownerId && !previous.artworkId && options.artworkId)) {
+      history.current = []
+    }
     // Saving a fresh draft assigns its first artwork id; retain that draft's own story.
     if (previous.ownerId === options.ownerId && !previous.artworkId && options.artworkId) remember(memoryRef.current)
     else remember(readMemory(options.ownerId, options.artworkId))
   }, [options.ownerId, options.artworkId, cancel, remember])
   useEffect(() => {
-    cancel()
+    const choices = readMaterialChoices(options.preferenceChildId)
+    choicesRef.current = choices; setMaterialChoices(choices); closeMaterialPicker()
+  }, [options.ownerId, options.preferenceChildId, closeMaterialPicker])
+  useEffect(() => {
+    interrupt()
     history.current = []
-  }, [options.locale, cancel])
+  }, [options.locale, interrupt])
   useEffect(() => {
     const lifecycle = { generation, active, timer }
-    const hide = () => { if (document.visibilityState !== 'visible') cancel() }
+    const hide = () => { if (document.visibilityState !== 'visible') interrupt() }
     document.addEventListener('visibilitychange', hide)
     return () => { document.removeEventListener('visibilitychange', hide); lifecycle.generation.current++; lifecycle.active.current?.abort(); if (lifecycle.timer.current) clearTimeout(lifecycle.timer.current) }
-  }, [cancel])
+  }, [interrupt])
 
   const valid = useCallback((p: Projection) => {
     const canvas = ref.current.canvas.current
+    if (p.tracing) return !!canvas && planItems(p).every(item => !!validateProposal(item) && placementFits(item, p.aspect, ref.current.surfaceSize?.()))
     return !!canvas && canvas.getRevision() === p.revision && (p.pristineEdit || p.deleting || (planItems(p).every(item => attachmentFits(item, canvas, p.aspect))
       && drawingPlanFits(planItems(p), (p.editTargetId ? canvas.getOccupancyWithoutObject?.(p.editTargetId,256) ?? canvas.getOccupancy(256) : canvas.getOccupancy(256)), p.aspect, ref.current.surfaceSize?.(), p.proposal.contact ? canvas.getCollisionPixels?.() : undefined)))
   }, [])
   // Saving exports committed ink only; it never accepts a preview.
   const finishTurn = useCallback(() => true, [])
   const show = useCallback((p: Projection, spoken: string, speak = true) => {
+    const hasIllustration = planItems(p).some(item => item.template === 'illustration')
+    if (hasIllustration) p = { ...p, tracing: true, editTargetId: undefined, pristineEdit: false, deleting: false }
     if (!valid(p)) { cancel(false); say('这里还没有合适的位置。告诉我想加什么，或继续画吧。', speak); return }
     ref.current.canvas.current?.previewWithoutObject?.(p.editTargetId ?? null)
+    if (hasIllustration || (!p.editTargetId && ref.current.tracing !== false)) {
+      setProjection({ ...p, tracing: true }); setPhase('projected')
+      rememberPlan(planItems(p), true); say(tracingReply(t(spoken, ref.current.locale), ref.current.locale, hasIllustration), speak)
+      return
+    }
     setProjection(p); setPhase('sketching')
     setMessage(t('我画好一个小主意，先放给你看看。', ref.current.locale))
     const version = generation.current
@@ -154,37 +197,45 @@ export function useCompanion(options: Options) {
       setPhase('projected')
       say(spoken || '先看看这个小主意，喜欢的话就留下来。', speak)
     }, window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 550)
-  }, [cancel, say, setPhase, setProjection, valid])
+  }, [cancel, rememberPlan, say, setPhase, setProjection, valid])
 
-  const drawTurn = useCallback((proposal: DrawingProposal, revision: number, aspect: number, caption = 'Nilo 正在接着画…', turnSource: 'ai' | 'local' = 'ai', speak = true) => {
+  const drawTurn = useCallback((proposal: DrawingProposal, revision: number, aspect: number, spoken: string, turnSource: 'ai' | 'local' = 'ai', speak = true) => {
+    if (proposal.template === 'illustration') {
+      show({ id: randomId(), revision, proposal, additions: [], alternatives: [], aspect, tracing: true }, spoken, speak)
+      return
+    }
     const version = generation.current
     const durationMs = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 1200
-    const turn: Projection = { id: randomId(), revision, proposal, additions: [], alternatives: [], aspect, turn: true, durationMs, turnSource }
-    setProjection(turn); setPhase('sketching'); say(caption, false)
+    const turn: Projection = { id: randomId(), revision, proposal, additions: [], alternatives: [], aspect, turn: true, durationMs, turnSource, tracing: ref.current.tracing !== false }
+    if (turn.tracing) rememberPlan([proposal], true)
+    setProjection(turn); setPhase('sketching'); say('Nilo 正在接着画…', false)
     timer.current = setTimeout(() => {
       timer.current = null
       if (generation.current === version && current.current?.id === turn.id) {
         if (!valid(turn)) { cancel(false); return }
-        setProjection({...turn,turn:false});setPhase('projected');say('先看看这个小主意，喜欢的话就留下来。',speak)
+        setProjection({...turn,turn:false});setPhase('projected');say(turn.tracing
+          ? tracingReply(t(spoken, ref.current.locale), ref.current.locale)
+          : spoken || '先看看这个小主意，喜欢的话就留下来。',speak)
       }
     }, durationMs)
-  }, [valid, cancel, say, setPhase, setProjection])
+  }, [valid, cancel, rememberPlan, say, setPhase, setProjection, show])
 
-  const ask = useCallback(async (utterance: string, requestDrawing = false, feedback: { alternatives?: string[]; speak?: boolean; inferDrawingIntent?: boolean; takeTurn?: boolean; commitDrawing?: boolean; voiceEdit?: boolean } = {}) => {
+  const ask = useCallback(async (utterance: string, requestDrawing = false, feedback: { alternatives?: string[]; speak?: boolean; inferDrawingIntent?: boolean; takeTurn?: boolean; commitDrawing?: boolean; voiceEdit?: boolean; variantOnly?: boolean } = {}) => {
     const speak = feedback.speak !== false
     const opt = ref.current
     if (!opt.enabled || !utterance.trim() || document.visibilityState === 'hidden') return
     const canvas = opt.canvas.current
     if (!canvas) return
-    if (busy.current) cancel(false)
+    if (busy.current) cancel(false, true)
     if (!feedback.takeTurn && !feedback.voiceEdit && Date.now() - lastRequest.current < 1500) { say('我在这里，稍等一下再说吧。', speak); return }
     requestDrawing = requestDrawing && opt.allowDrawing !== false
     const inferDrawingIntent = feedback.inferDrawingIntent === true && opt.allowDrawing !== false
     const canPropose = requestDrawing || inferDrawingIntent
     const takeTurn = feedback.takeTurn === true && requestDrawing
     const pending = current.current
-    const sceneDrawing=takeTurn||(requestDrawing&&!pending&&!!canvas.getCompanionScene().childBounds&&!/一半|半个|半边|左上角|右上角|左下角|右下角|\bhalf\b|(?:top|bottom) (?:left|right)/i.test(utterance))
-    cancel(false)
+    const variantOnly = feedback.variantOnly === true && requestDrawing && !!pending
+    const sceneDrawing=!variantOnly&&(takeTurn||(requestDrawing&&!pending&&!!canvas.getCompanionScene().childBounds&&!/一半|半个|半边|左上角|右上角|左下角|右下角|\bhalf\b|(?:top|bottom) (?:left|right)/i.test(utterance)))
+    cancel(false, true)
     const version = generation.current
     const revision = canvas.getRevision()
     const aspect = opt.aspect()
@@ -200,7 +251,7 @@ export function useCompanion(options: Options) {
     const userText = utterance.trim().slice(0, 400)
     const previous = history.current.slice(-6)
     const previousTheme = memoryRef.current.theme
-    if (!takeTurn) history.current = [...previous, { role: 'user', text: userText }]
+    if (!takeTurn && !variantOnly) history.current = [...previous, { role: 'user', text: userText }]
     const reportTurnFailure = (reason = 'invalid_response') => {
       if (!takeTurn || version !== generation.current || canvas.getRevision() !== revision
         || !ref.current.enabled || ref.current.allowDrawing === false || document.visibilityState === 'hidden') return false
@@ -219,7 +270,8 @@ export function useCompanion(options: Options) {
       const provenance = getCanvasProvenance(canvas.getDocument())
       const focusImage = image && canPropose ? canvas.exportCompanionFocus?.() : null
       const requestBody = { imageBase64: image?.split(',')[1], ...(focusImage ? { focusImage } : {}), context: {
-          locale: opt.locale, utterance: userText, asrAlternatives: feedback.alternatives, requestDrawing, inferDrawingIntent, takeTurn:sceneDrawing, useDrawingKnowledge:sceneDrawing, turnScope: sceneDrawing ? 'scene' : undefined, revision,
+          locale: opt.locale, utterance: userText, asrAlternatives: feedback.alternatives, requestDrawing, inferDrawingIntent, tracingGuide: opt.tracing !== false && !pending?.editTargetId, takeTurn:sceneDrawing, useDrawingKnowledge:sceneDrawing, turnScope: sceneDrawing ? 'scene' : undefined, revision,
+          ...(variantOnly ? { variantOnly: true } : {}),
           drawingProtocol: sceneDrawing ? 3 : undefined, collisionMap: sceneDrawing ? encodeOccupancy(canvas.getOccupancy(256)) : undefined,
           imageProvenance: provenance === 'unknown' ? 'unknown' : provenance === 'co-created' ? 'composite' : 'child',
           theme: memoryRef.current.theme, history: previous,
@@ -255,6 +307,20 @@ export function useCompanion(options: Options) {
         say(typeof result.reply === 'string' && result.reply.trim() ? result.reply.slice(0, 400) : '画画伙伴暂时没连上，稍后再点我试试。', speak)
         return
       }
+      if (variantOnly && pending) {
+        // Changing a drawing style never rejects its subject or changes the
+        // story. Do not trust old backends/cached alternatives to keep it.
+        history.current = previous
+        const candidate = validateProposal(result.proposal)
+        const proposal = candidate ? validateProposal(fitVariantToFrame(pending.proposal, candidate, pending.aspect)) : null
+        const next = proposal ? { ...pending, id: randomId(), revision, proposal, alternatives: [], pristineEdit: false, deleting: false } : null
+        if (next && valid(next)) show(next, '换个画法，看看这个怎么样。', speak)
+        else {
+          setProjection(pending); setPhase('projected')
+          say('这次没换好，我先保留原来的底图。可以再试一次。', speak)
+        }
+        return
+      }
       // These reason codes and questions are authored by the server after a
       // failed review. Preserve the actionable question instead of replacing
       // every failure with the same generic caption. Unreasoned model prose
@@ -283,7 +349,7 @@ export function useCompanion(options: Options) {
           ? result.geometryReviewed
             ? drawingPlanFits([proposed], canvas.getOccupancy(256), aspect, opt.surfaceSize?.(), proposed.contact ? canvas.getCollisionPixels?.() : undefined) ? proposed : null
             : prepareTurnProposal(proposed, canvas.getOccupancy(256), aspect, opt.surfaceSize?.(), proposed.contact ? canvas.getCollisionPixels?.() : undefined) : null
-        if (prepared) drawTurn(prepared, revision, aspect, undefined, undefined, speak)
+        if (prepared) drawTurn(prepared, revision, aspect, reply, undefined, speak)
         else reportTurnFailure(result.proposal ? 'geometry_rejected' : 'invalid_response')
         return
       }
@@ -328,7 +394,10 @@ export function useCompanion(options: Options) {
         canvas.previewWithoutObject?.(pending.pristineEdit?null:pending.editTargetId??null)
         setProjection(pending);setPhase('projected')
       }
-      if (version === generation.current) { busy.current = false; active.current = null }
+      if (version === generation.current) {
+        busy.current = false; active.current = null
+        if (current.current?.tracing && !timer.current) setPhase('projected')
+      }
     }
   }, [cancel, drawTurn, remember, say, setPhase, setProjection, show, valid])
 
@@ -344,6 +413,9 @@ export function useCompanion(options: Options) {
     if (phaseRef.current === 'sketching' || phaseRef.current === 'thinking') { if (speak) ref.current.onSpeak(''); return }
     const p = current.current, canvas = ref.current.canvas.current
     if (!p || !canvas) { say('现在没有要留下的投影。', speak); return }
+    if (p.tracing || planItems(p).some(item => item.template === 'illustration')) {
+      say(guideReply(planItems(p).some(item => item.template === 'illustration') ? 'illustrationGuide' : 'guide', ref.current.locale), speak); return
+    }
     if (!valid(p)) { cancel(); say('画面已经变了，我们重新看一下吧。', speak); return }
     if(p.pristineEdit){cancel(false);return}
     if (!canvas.commitCompanionStrokes(p.deleting ? [] : planItems(p).flatMap(item => proposalStrokes(item, p.aspect)), p.revision, {proposals:planItems(p),aspect:p.aspect}, p.editTargetId)) {
@@ -356,30 +428,78 @@ export function useCompanion(options: Options) {
     cancel(false); ref.current.onCommitted(); say(p.editTargetId?'修改好啦，接下来轮到你。':'留下啦，接下来轮到你。', speak)
   }, [cancel, rememberPlan, say, valid])
   const dismiss = useCallback((feedback: { speak?: boolean } = {}) => {
-    if (current.current) {
+    const tracing = current.current?.tracing
+    if (current.current && !tracing) {
       rememberPlan(planItems(current.current), false)
       metrics.current.rejected++
     }
-    cancel(false); say('收起来啦，你的画没有改变。', feedback.speak !== false)
+    cancel(false); say(tracing ? guideReply('guideCleared', ref.current.locale) : '收起来啦，你的画没有改变。', feedback.speak !== false)
   }, [cancel, rememberPlan, say])
-  const alternative = useCallback((feedback: { speak?: boolean } = {}) => {
+  const alternative = useCallback(async (feedback: { speak?: boolean } = {}) => {
     const speak = feedback.speak !== false
-    if (!ref.current.enabled) return
+    const available = () => ref.current.enabled && ref.current.allowDrawing !== false && document.visibilityState !== 'hidden'
+    if (!available()) return
     if (phaseRef.current !== 'projected') { if (speak) ref.current.onSpeak(''); return }
     const p = current.current
     if (!p || !valid(p)) { cancel(); say('画面已经变了，我们重新看一下吧。', speak); return }
-    rememberPlan(planItems(p), false)
-    metrics.current.rejected++
-    const variant = changeVariant(p.proposal)
+    const version = generation.current
+    await refreshMaterialCuration()
+    if (version !== generation.current || current.current?.id !== p.id || !available()) return
+    const variant = changeVariant(p.proposal, p.aspect)
     if (variant) {
-      const next={...p,pristineEdit:false,deleting:false,proposal:variant,id:randomId()}
-      if(valid(next)){show(next,'换个画法，看看这个怎么样。',speak);return}
+      const next={...p,pristineEdit:false,deleting:false,proposal:variant,id:randomId(),alternatives:[]}
+      if(valid(next)){metrics.current.localEdits++;show(next,'换个画法，看看这个怎么样。',speak);return}
     }
-    if (p.alternatives.length) {
-      cancel(false)
-      show({ ...p, id: randomId(), proposal: p.alternatives[0], additions: [], alternatives: p.alternatives.slice(1) }, t('换个小主意，看看这个怎么样。', ref.current.locale), speak)
-    } else void ask(t('请换一个和我的画有关的小主意。', ref.current.locale), true, feedback)
-  }, [ask, cancel, rememberPlan, say, show, valid])
+    if (p.proposal.template === 'illustration') {
+      say(ref.current.locale === 'en'
+        ? 'There is no other version of this reference yet. You can try adding your own details.'
+        : '这张参考图暂时没有别的画法，可以试试自己添细节。', speak)
+      return
+    }
+    const name = variantSubjectName(p.proposal, ref.current.locale)
+    const request = ref.current.locale === 'en'
+      ? `Show a different way to draw the same ${name} in this guide. Keep its content, size and position.`
+      : `请给当前底图中的“${name}”换一种画法，保留原来的内容、大小和位置。`
+    void ask(request, true, { ...feedback, voiceEdit: true, variantOnly: true })
+  }, [ask, cancel, say, show, valid])
+  const materialSubjects = useCallback(() => listMaterialSubjects().map(group => ({ ...group,
+    materials: rankMaterials(group.materials, preferredMaterials(choicesRef.current, group.subject)),
+  })), [])
+  const openMaterialPicker = useCallback(async () => {
+    const p = current.current, opt = ref.current
+    if (!p || !valid(p) || phaseRef.current !== 'projected' || !opt.enabled || opt.allowDrawing === false) return
+    const ticket = ++materialRequest.current, version = generation.current
+    await refreshMaterialCuration()
+    if (ticket !== materialRequest.current || version !== generation.current || current.current?.id !== p.id
+      || !ref.current.enabled || ref.current.allowDrawing === false || document.visibilityState === 'hidden') return
+    setMaterialPicker({ guideId: p.id, subject: materialSubjectForProposal(p.proposal), subjects: materialSubjects() })
+  }, [materialSubjects, valid])
+  const chooseMaterial = useCallback(async (materialId: string) => {
+    const p = current.current
+    const available = () => ref.current.enabled && ref.current.allowDrawing !== false && document.visibilityState !== 'hidden'
+    if (!p || materialPicker?.guideId !== p.id || materialPicker.busy || !valid(p) || phaseRef.current !== 'projected'
+      || !available()) return
+    const ticket = ++materialRequest.current, version = generation.current
+    setMaterialPicker(value => value ? { ...value, busy: true, error: undefined } : null)
+    await refreshMaterialCuration()
+    if (ticket !== materialRequest.current || version !== generation.current || current.current?.id !== p.id
+      || !available()) return
+    const material = getMaterial(materialId)
+    const proposal = material && validateProposal(createMaterialProposal(materialId, p.proposal, p.aspect))
+    const next: Projection | null = proposal ? { id: randomId(), revision: ref.current.canvas.current!.getRevision(),
+      proposal, additions: [], alternatives: [], aspect: p.aspect, tracing: true } : null
+    if (!material || !next || !valid(next)) {
+      const error = ref.current.locale === 'en' ? 'This picture is not available here. Try another one.' : '这张暂时不能放在这里，再挑一张试试吧。'
+      setMaterialPicker(value => value ? { ...value, subjects: materialSubjects(), busy: false, error } : null)
+      say(error, false)
+      return
+    }
+    show(next, ref.current.locale === 'en' ? 'Your chosen guide is ready. Draw it your way.' : '你选的底图准备好啦，画法由你决定。', false)
+    if (current.current?.id !== next.id) return
+    const choices = appendMaterialChoice(choicesRef.current, material)
+    choicesRef.current = choices; setMaterialChoices(choices)
+    saveMaterialChoices(ref.current.preferenceChildId, choices)
+  }, [materialPicker, materialSubjects, say, show, valid])
   const edit = useCallback((patch: Partial<DrawingProposal>, speak = false) => {
     if (!ref.current.enabled) return
     if (phaseRef.current !== 'projected') { ref.current.onSpeak(''); return }
@@ -401,11 +521,13 @@ export function useCompanion(options: Options) {
       ...(patch.brushKind !== undefined ? { brushKind: patch.brushKind } : {}),
       ...(patch.strokeWidth !== undefined ? { strokeWidth: patch.strokeWidth } : {}),
     })) : []
-    if (!main || additions.some(item => !item) || !drawingPlanFits([main, ...additions as DrawingProposal[]], (p.editTargetId ? ref.current.canvas.current!.getOccupancyWithoutObject?.(p.editTargetId,256) ?? ref.current.canvas.current!.getOccupancy(256) : ref.current.canvas.current!.getOccupancy(main.contact ? 256 : 64)), p.aspect, ref.current.surfaceSize?.(), main.contact ? ref.current.canvas.current!.getCollisionPixels?.() : undefined)) { say('这个位置会碰到你的画，换个位置试试吧。', speak); if (!speak) ref.current.onSpeak(''); return }
+    if (!main || additions.some(item => !item) || !(p.tracing
+      ? [main, ...additions as DrawingProposal[]].every(item => placementFits(item, p.aspect, ref.current.surfaceSize?.()))
+      : drawingPlanFits([main, ...additions as DrawingProposal[]], (p.editTargetId ? ref.current.canvas.current!.getOccupancyWithoutObject?.(p.editTargetId,256) ?? ref.current.canvas.current!.getOccupancy(256) : ref.current.canvas.current!.getOccupancy(main.contact ? 256 : 64)), p.aspect, ref.current.surfaceSize?.(), main.contact ? ref.current.canvas.current!.getCollisionPixels?.() : undefined))) { say(p.tracing ? '底图要放在画纸里面，再挪一点试试吧。' : '这个位置会碰到你的画，换个位置试试吧。', speak); if (!speak) ref.current.onSpeak(''); return }
     metrics.current.localEdits++
     ref.current.canvas.current?.previewWithoutObject?.(p.editTargetId??null)
     setProjection({ ...p, pristineEdit:false, deleting:false, id: randomId(), proposal: main, additions: additions as DrawingProposal[], alternatives: [] })
-    setPhase('projected'); say('调整好啦，喜欢的话就留下来。', speak)
+    setPhase('projected'); say(p.tracing ? guideReply('guideAdjusted', ref.current.locale) : '调整好啦，喜欢的话就留下来。', speak)
     if (!speak) ref.current.onSpeak('')
   }, [cancel, say, setPhase, setProjection, valid])
   const forget = useCallback(() => { cancel(); history.current = []; remember(emptyMemory()); say('我们从新的想法开始吧。') }, [cancel, remember, say])
@@ -417,17 +539,18 @@ export function useCompanion(options: Options) {
     say('选好了，可以移动、换色或换个画法。',false)
     setPhase('projected')
   },[cancel,say,setProjection,setPhase])
-  const receive = useCallback(async (text: string, feedback: { speak?: boolean; selectedObjectId?: string; traceId?: string; alternatives?: string[] } = {}) => {
+  const receive = useCallback(async (text: string, feedback: VoiceFeedback = {}) => {
     if (!ref.current.enabled || document.visibilityState === 'hidden') return
+    setObjectChoices(null)
     const traceId=feedback.traceId??newVoiceTrace(),speak=feedback.speak!==false,started=Date.now()
-    if(ref.current.allowDrawing===false){void ask(text,false,{...feedback,inferDrawingIntent:true});return}
+    if(ref.current.allowDrawing===false){await ask(text,false,{...feedback,inferDrawingIntent:true});return}
     const basic=localCommand(text)
     if (basic === 'accept') {
       if(/确认移除|confirm removal/i.test(text)&&!current.current?.deleting)return
       accept(feedback); return
     }
     if (basic === 'dismiss' && !/不要那|不要这/.test(text)) { dismiss(feedback); return }
-    if (basic === 'stop') { cancel(); ref.current.onSpeak(''); return }
+    if (basic === 'stop') { interrupt(); ref.current.onSpeak(''); return }
     if (basic === 'forget') { forget(); return }
     if(objectEditCommand(text)==='undo'){
       cancel(false)
@@ -439,7 +562,7 @@ export function useCompanion(options: Options) {
     if(basic==='alternative'){alternative(feedback);return}
     if(!isVoiceEditRequest(text)||/^(?:请)?(?:只)?(?:帮我)?(?:画|绘制)(?:一半|半个|半边|一个|个)|^(?:please )?(?:draw|paint) /i.test(text)){
       const requestsDrawing=/^只画|帮.*画|请.*画|你.*画|你来|轮到你|添|加.*(点|个|一)|画.*给我|^(?:请|帮我|给我)?\s*(?:画|绘制).+|\b(draw|add)\b|your turn|help.*(paint|sketch)/i.test(text)
-      void ask(text,requestsDrawing,{...feedback,inferDrawingIntent:!requestsDrawing});return
+      await ask(text,requestsDrawing,{...feedback,inferDrawingIntent:!requestsDrawing});return
     }
     const canvas=ref.current.canvas.current
     if(!canvas)return
@@ -447,7 +570,7 @@ export function useCompanion(options: Options) {
     active.current?.abort();active.current=null
     if(timer.current)clearTimeout(timer.current)
     const version=++generation.current,revision=canvas.getRevision(),pending=current.current
-    if(pending&&pending.revision!==revision){cancel(false);say('画面已经变了，我们重新看一下吧。',speak);return}
+    if(pending&&!pending.tracing&&pending.revision!==revision){cancel(false);say('画面已经变了，我们重新看一下吧。',speak);return}
     const objects=canvas.getEditableObjects?.()??[]
     const previewId=pending?.editTargetId??'@preview'
     const targets=pending?[...objects.filter(o=>o.id!==previewId),{id:previewId,name:pending.proposal.subject??pending.proposal.template,proposals:planItems(pending),aspect:pending.aspect}]:objects
@@ -505,7 +628,7 @@ export function useCompanion(options: Options) {
       recordVoiceEvent({turn:traceId,stage:'execute',outcome:result.reason,actions:plan.actions.map(a=>a.type)});return
     }
     if(result.deleting&&target.id==='@preview'){dismiss(feedback);return}
-    const next:Projection={id:randomId(),revision,proposal:result.items[0],additions:result.items.slice(1),alternatives:[],aspect:target.aspect,editTargetId:target.id==='@preview'?undefined:target.id,pristineEdit:false,deleting:result.deleting}
+    const next:Projection={id:randomId(),revision,proposal:result.items[0],additions:result.items.slice(1),alternatives:[],aspect:target.aspect,editTargetId:target.id==='@preview'?undefined:target.id,pristineEdit:false,deleting:result.deleting,tracing:target.id==='@preview'&&ref.current.tracing!==false}
     if(!valid(next)){
       say('这些调整会碰到画面里的内容，原来的投影先保留。',speak)
       recordVoiceEvent({turn:traceId,stage:'execute',outcome:'geometry',actions:plan.actions.map(a=>a.type)});return
@@ -513,10 +636,10 @@ export function useCompanion(options: Options) {
     setObjectChoices(null);canvas.previewWithoutObject?.(next.editTargetId??null)
     voiceTarget.current=next.editTargetId??null
     setProjection(next);setPhase('projected');metrics.current.localEdits++
-    say(next.deleting?'先收起来，确认后才会移除。':'调整好啦，喜欢的话就留下来。',speak)
+    say(next.tracing?guideReply('guideAdjusted',ref.current.locale):next.deleting?'先收起来，确认后才会移除。':'调整好啦，喜欢的话就留下来。',speak)
     if(!speak)ref.current.onSpeak('')
     recordVoiceEvent({turn:traceId,stage:'execute',outcome:'previewed',actions:plan.actions.map(a=>a.type)})
-  },[accept,alternative,ask,beginObjectEdit,cancel,dismiss,forget,say,setPhase,setProjection,valid])
+  },[accept,alternative,ask,beginObjectEdit,cancel,dismiss,forget,interrupt,say,setPhase,setProjection,valid])
   const chooseObject=useCallback((id:string)=>{
     const choice=objectChoices?.objects.find(o=>o.id===id),text=objectChoices?.text
     if(!choice)return
@@ -529,5 +652,5 @@ export function useCompanion(options: Options) {
     else say('还没有可以修改的 Nilo 作品。',false)
   },[say])
 
-  return { objectChoices, chooseObject, openObjects, phase, message, projection, memory, metrics: metrics.current, ask, takeTurn, receive, accept, dismiss, alternative, edit, cancel, finishTurn, say, forget }
+  return { objectChoices, chooseObject, openObjects, materialPicker, materialChoices, openMaterialPicker, closeMaterialPicker, chooseMaterial, phase, message, projection, memory, metrics: metrics.current, ask, takeTurn, receive, accept, dismiss, alternative, edit, cancel, interrupt, finishTurn, say, forget }
 }

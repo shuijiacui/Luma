@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-crab-medium-01",
+  "subject": "crab",
+  "name": "螃蟹",
+  "label": "侧走的海蟹",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "animal",
+  "related": [
+    "animal",
+    "water",
+    "beach",
+    "sea",
+    "螃蟹"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Create ONE elegant original observational line illustration of a shore crab for intermediate children's drawing practice. It MUST be in a perfectly clear TOP-DOWN view with bilateral body anatomy. Broad oval shell with six broad scalloped plates on its rim, two small raised eyes. TWO distinct large claw arms point upward from the front of the shell, slightly different claw sizes. EXACTLY FOUR slender articulated walking legs emerge along the LEFT side of the oval shell, and EXACTLY FOUR along the RIGHT side. Arrange each group like an open fan with large white gaps; all EIGHT walking legs have separately visible pointed tips. The TWO claws are additional arms, so TEN appendages total. No appendage hidden by perspective. Graceful organic contours, natural joints, coherent crab anatomy. BLACK INK OUTLINES ONLY and completely blank WHITE interiors. No gray or color, no shading, no texture, no stippling, no scene or numbers or text. Square pure white background, full subject centered with generous 12% margins.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d867-4f2a-7a71-af9d-4abb0bc4d288\\exec-4da37db5-9ee4-48e3-b86d-14a61ad50748.png",
+  "src": "/nilo-illustrations/illustration-library-crab-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

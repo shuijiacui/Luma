@@ -1,0 +1,32 @@
+{
+  "id": "illustration-library-cat-medium-01",
+  "subject": "cat",
+  "name": "小猫",
+  "label": "伸懒腰的小猫",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "animal",
+  "related": [
+    "character",
+    "animal",
+    "house",
+    "garden",
+    "小猫",
+    "猫"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book line illustration for Nilo children's drawing references. ONE complete subject centered in a square image, pure white or transparent background, at least 10 percent clear margin on all sides. Confident graceful dark charcoal-black ink contours, beautiful expressive proportions, generous open spaces. Monochrome outlines only, no colored fills, no gray wash, no hatching, no cast shadows, no dense texture. Do not mimic any named illustrator. No text, numbers, watermark, border, collage, grid, labels, tutorial steps or background scenery. Medium difficulty: a clearly drawn complete pose with 6–10 identifying structural details; noticeably richer and more natural than a geometric SVG icon, still spacious for tracing. One charming young domestic cat doing a full-body playful stretch: long gently arched back, BOTH front paws extended forward, hindquarters lifted, upright curved tail. A gentle side three-quarter view. Large natural cat ears, whiskers shown as two clean curves each side, two simple face features; readable four-leg anatomy with clean spaces. Fur described by only three large contour tufts, no individual hairs. This must be visually unlike a seated round cat or a cat with its tail coiled around its feet.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-3dcc1b78-2eb5-42da-b9f3-4b97ddf17904.png",
+  "src": "/nilo-illustrations/illustration-library-cat-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

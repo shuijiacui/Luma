@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-pineapple-medium-01",
+  "subject": "pineapple",
+  "name": "菠萝",
+  "label": "侧看的菠萝",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "food",
+    "fruit",
+    "tropical",
+    "菠萝"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book drawing reference for a child, medium complexity. ONE square raster line drawing of a whole pineapple with a separate pineapple ring slice beside it. Confident elegant BLACK CONTOURS ONLY on pure WHITE background. Pineapple body is a plump upright oval with only a COARSE open diamond grid: three wide diagonal curves each direction, empty cells, no marks inside the cells. Crown has five broad curved leaves with one centre vein each. Ring slice is simply one circular outer contour and one circular central hole, no radial texture, no wedges. Full subject centered with 12 percent blank margin. Beautiful graceful natural shape, clearly joined leaves, large open white areas. Absolutely no grayscale fill, shadows, highlights, spots, hatch marks, surface texture, tiny thorns, repeating eyes, words, lettering, numbers, border, watermark or collage. Keep every interior completely blank white except these specified lines.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-91c6bc28-4e3b-4982-b5c7-a79ffcd81ef8.png",
+  "src": "/nilo-illustrations/illustration-library-pineapple-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

@@ -5,6 +5,18 @@ const proposal: DrawingProposal = { template: 'flame', x: .3, y: .5, width: .15,
 const empty = () => Array(32 * 32).fill(0)
 vi.mock('../../server/src/services/tracing.js', () => ({traceNode:vi.fn(),traceLLM:vi.fn()}))
 
+test('raster references resolve only trusted catalogue IDs and can never compile into committed ink', () => {
+  const reference = { ...proposal, template: 'illustration', illustrationId: 'illustration-reading-child', subject: '读书的孩子' }
+  const valid = validateProposal(reference)!
+  expect(valid).not.toBeNull()
+  expect(proposalStrokes(valid)).toEqual([])
+  expect(validateProposal({ ...reference, illustrationId: 'https://untrusted.test/picture.png' })).toBeNull()
+  expect(validateProposal({ ...reference, src: '/nilo-illustrations/other.png' })).toBeNull()
+  expect(validateProposal({ ...reference, sketch: { aspect: 1, paths: [[['M', 0, 0], ['L', 1, 1]]] } })).toBeNull()
+  expect(validateProposal({ ...reference, recipeId: 'school-0' })).toBeNull()
+  expect(validateProposal({ ...proposal, illustrationId: 'illustration-reading-child' })).toBeNull()
+})
+
 test('an open click can grow the same attached part on the clear side without moving its joint', () => {
   const grid = Array(256 * 256).fill(0)
   for (let row = 26; row < 103; row++) grid[row * 256 + 128] = 1

@@ -1,0 +1,36 @@
+{
+  "id": "illustration-library-archedbridge-medium-01",
+  "subject": "archedbridge",
+  "name": "小石拱桥",
+  "label": "三孔矮拱桥",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "architecture",
+  "related": [
+    "building",
+    "town",
+    "archedbridge"
+  ],
+  "aliases": [
+    "小石拱桥",
+    "石拱桥",
+    "拱桥",
+    "小桥",
+    "桥",
+    "arched bridge"
+  ],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: illustration-story. Draw one original elegant picture-book building reference for children's tracing. One low gently arched stone footbridge seen from the side, THREE visible arch openings, low smooth parapet, only a few LARGE block joints around the arches. Open white spaces; no tiny masonry grid. Keep the distinctive three openings and graceful low bridge silhouette. No water, vegetation, landscape or people. ONE square 1024x1024 canvas. Pure BLACK INK CONTOURS on PURE WHITE. Zero shading, zero gray areas, zero gradients, zero texture. Every interior of every shape must be pure white. Fine confident expressive contours, generous margins, complete subject visible. No text, logo or border. This is a medium-difficulty coloring-outline illustration with clearly readable important structures, not a shaded render.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-efa09690-5a57-4856-90bc-a3bb28b8b119.png",
+  "src": "/nilo-illustrations/illustration-library-archedbridge-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

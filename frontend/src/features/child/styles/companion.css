@@ -155,3 +155,75 @@
 .nilo-projection-resize { position:absolute; right:-18px; bottom:-18px; display:grid; place-items:center; width:44px; height:44px; padding:6px; background:transparent; border:0; pointer-events:auto; touch-action:none; cursor:nwse-resize; }
 .nilo-projection-resize span { display:grid; place-items:center; width:30px; height:30px; border:2px solid white; border-radius:50%; color:white; background:#267f70; box-shadow:0 2px 8px #173f3a30; font-size:20px; }
 .nilo-projection-move:focus-visible,.nilo-projection-resize:focus-visible { outline:3px solid #d8a644; outline-offset:2px; }
+
+.nilo-footer-action { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; flex:none; min-width:46px; height:46px; padding:3px 7px; border:1px solid transparent; border-radius:12px; background:transparent; color:#315e52; font-size:10px; line-height:1.15; font-weight:600; }
+.nilo-footer-action svg { width:20px; height:20px; flex:none; }
+.nilo-footer-action span { white-space:nowrap; }
+.nilo-footer-action:hover { background:#eaf3ed; }
+.nilo-footer-action[aria-pressed=true] { color:#17644d; background:#dcefe3; border-color:#c6e1ce; }
+.nilo-footer-action:disabled { opacity:.4; }
+.nilo-guide-action { min-width:62px; background:#f0f6ef; border-color:#e2ebdf; }
+
+.nilo-tracing-projection { z-index:auto; animation:none; }
+.nilo-tracing-projection > canvas { z-index:0; }
+/* Older PNG-only works contain opaque paper; keep their guide visible too. */
+.nilo-tracing-over-ink > canvas { z-index:2; mix-blend-mode:multiply; }
+.nilo-tracing-projection .nilo-projection-controls { z-index:15; }
+.nilo-tracing-projection .nilo-drawing-pen { z-index:15; }
+.nilo-tracing-projection .nilo-projection-move { inset:auto; left:-18px; top:-18px; display:grid; place-items:center; width:44px; height:44px; padding:6px; }
+.nilo-tracing-projection .nilo-projection-move span { display:grid; place-items:center; width:30px; height:30px; border:2px solid white; border-radius:50%; color:white; background:#267f70; box-shadow:0 2px 8px #173f3a30; font-size:20px; }
+.nilo-illustration-guide { position:absolute; z-index:0; object-fit:contain; filter:grayscale(1); opacity:.25; pointer-events:none; user-select:none; transform-origin:center; }
+.nilo-illustration-guide.nilo-illustration-original { opacity:.9; filter:none; }
+.nilo-tracing-over-ink > .nilo-illustration-guide { z-index:2; mix-blend-mode:multiply; }
+.nilo-illustration-view { position:absolute; left:26px; top:-20px; padding:6px 10px; min-height:36px; border:1px solid #d4e8df; border-radius:18px; background:#fffdf8; color:#205e54; font-size:12px; white-space:nowrap; pointer-events:auto; }
+.nilo-illustration-view:focus-visible { outline:3px solid #d8a644; outline-offset:2px; }
+.nilo-illustration-notice { position:absolute; z-index:15; left:12px; bottom:12px; max-width:calc(100% - 24px); padding:6px 10px; border-radius:10px; background:#fffdf8; color:#52665e; font-size:12px; }
+
+.nilo-material-backdrop { position:fixed; inset:0; z-index:220; display:grid; place-items:center; padding:20px; background:#203d3447; backdrop-filter:blur(3px); }
+.nilo-material-picker { display:flex; flex-direction:column; width:min(940px,100%); height:min(760px,90dvh); min-height:0; overflow:hidden; padding:24px; color:#284f43; background:#fffdf7; border:1px solid #fff; border-radius:28px; box-shadow:0 18px 80px #193b342e; outline:none; }
+.nilo-material-header { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; }
+.nilo-material-header h2 { margin:0; font-size:24px; font-weight:700; }
+.nilo-material-header p { margin:6px 0 0; font-size:14px; color:#6a8075; }
+.nilo-material-close { flex:none; width:44px; height:44px; border:0; border-radius:50%; background:#eaf2e7; font-size:27px; line-height:1; }
+.nilo-material-search { display:flex; align-items:center; gap:14px; margin:22px 0 18px; }
+.nilo-material-search label { font-size:14px; font-weight:600; }
+.nilo-material-search input { flex:1; min-width:0; max-width:500px; min-height:46px; padding:10px 16px; border:1px solid #dce7dc; border-radius:16px; background:#fff; color:#284f43; font-size:15px; }
+.nilo-material-body { display:grid; grid-template-columns:150px minmax(0,1fr); gap:24px; flex:1; min-height:0; }
+.nilo-material-subjects { display:flex; flex-direction:column; align-content:start; gap:6px; min-height:0; overflow:auto; padding:2px 8px 12px 2px; scrollbar-width:thin; }
+.nilo-material-subjects button { display:flex; justify-content:space-between; align-items:center; gap:6px; min-height:46px; padding:10px 14px; border:1px solid transparent; border-radius:14px; background:transparent; text-align:left; font-size:15px; }
+.nilo-material-subjects small { opacity:.65; font-size:11px; }
+.nilo-material-subjects button[aria-pressed=true] { background:#dfeee0; border-color:#c8ddc7; color:#21593f; font-weight:700; }
+.nilo-material-options { min-height:0; overflow:auto; padding:2px 6px 12px; scrollbar-width:thin; }
+.nilo-material-options h3 { margin:0 0 14px; font-size:19px; font-weight:700; }
+.nilo-material-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; align-items:start; }
+.nilo-material-card { display:flex; flex-direction:column; width:100%; padding:8px; border:2px solid #e7ebe0; border-radius:20px; background:white; text-align:left; color:#355a49; transition:border-color .15s,transform .15s; }
+.nilo-material-card:hover { border-color:#89b59a; transform:translateY(-2px); }
+.nilo-material-card[aria-pressed=true] { border-color:#438269; background:#eff6ec; }
+.nilo-material-card:disabled { cursor:wait; opacity:.7; }
+.nilo-material-preview { display:grid; place-items:center; width:100%; aspect-ratio:1; overflow:hidden; border-radius:12px; background:white; }
+.nilo-material-preview img,.nilo-material-preview svg { display:block; width:100%; height:100%; object-fit:contain; padding:4px; user-select:none; }
+.nilo-material-card-caption { display:flex; flex-direction:column; gap:3px; min-height:46px; padding:8px 4px 2px; font-size:12px; }
+.nilo-material-card-caption small { color:#438269; font-size:10px; }
+.nilo-material-empty { padding:30px 10px; font-size:15px; color:#6a8075; }
+.nilo-material-error { margin:0 0 12px; padding:8px 12px; border-radius:10px; background:#f8f0dc; color:#785d32; font-size:13px; }
+.nilo-material-picker button:focus-visible,.nilo-material-picker input:focus-visible { outline:3px solid #c99a2e; outline-offset:2px; }
+@media(max-width:700px) {
+ .nilo-material-backdrop { padding:10px; }
+ .nilo-material-picker { height:min(780px,96dvh); padding:18px; border-radius:22px; }
+ .nilo-material-header h2 { font-size:21px; }
+ .nilo-material-header p { font-size:12px; }
+ .nilo-material-search { flex-direction:column; align-items:stretch; gap:6px; margin:14px 0; }
+ .nilo-material-search input { max-width:none; }
+ .nilo-material-body { grid-template-columns:110px minmax(0,1fr); gap:10px; }
+ .nilo-material-subjects { padding-right:3px; }
+ .nilo-material-subjects button { padding:9px 8px; font-size:13px; }
+ .nilo-material-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+ .nilo-material-card { padding:5px; border-radius:15px; }
+ .nilo-material-card-caption { padding-inline:2px; font-size:11px; }
+}
+@media(max-width:430px) {
+ .nilo-material-picker { padding:14px; }
+ .nilo-material-body { grid-template-columns:90px minmax(0,1fr); gap:6px; }
+ .nilo-material-grid { grid-template-columns:1fr; }
+}
+@media(prefers-reduced-motion:reduce) { .nilo-material-card { transition:none; } }

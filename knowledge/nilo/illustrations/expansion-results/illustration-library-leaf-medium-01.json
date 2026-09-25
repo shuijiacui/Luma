@@ -1,0 +1,32 @@
+{
+  "id": "illustration-library-leaf-medium-01",
+  "subject": "leaf",
+  "name": "树叶",
+  "label": "卷边的长叶",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "botanical",
+  "related": [
+    "plant",
+    "tree",
+    "forest",
+    "autumn",
+    "叶子",
+    "树叶"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One gently curling lance-shaped leaf in a diagonal composition, folded tip, expressive outer contour and six widely spaced veins.\nPure black ink CONTOURS ONLY, smooth completely blank interiors. Absolutely no hatching, shaded volumes, gray shading or tonal fill. All tips fully visible with 10% clear margins.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d867-4f2a-7a71-af9d-4abb0bc4d288\\exec-e1ea03cc-b872-436b-b80d-017a171404f5.png",
+  "src": "/nilo-illustrations/illustration-library-leaf-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

@@ -1,0 +1,33 @@
+{
+  "id": "illustration-library-palm-medium-01",
+  "subject": "palm",
+  "name": "棕榈树",
+  "label": "舒展的海岛棕榈",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "botanical",
+  "related": [
+    "plant",
+    "sea",
+    "beach",
+    "island",
+    "palm",
+    "椰子",
+    "海边"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Create ONE beautifully composed original palm tree black contour illustration for a children's intermediate drawing reference. Single palm with a gently leaning trunk divided by FIVE broad curved node lines, TWO oval coconuts, and FIVE arching fronds radiating gracefully. Each frond has a broad flowing outer contour interrupted by ONLY THREE large widely spaced triangular notches on each side; never many tiny leaflets or dense narrow strips. A single central vein per frond, all other leaf interiors blank white. Trunk base ends with two clear root curves. Elegant natural proportions and asymmetrical balanced leaf arrangement. BLACK OUTLINES ONLY, PURE WHITE background and interiors, no gray shading, no texture, no extra vegetation, no scenery or text. Full entire tree, roots and every frond tip visible, occupying only central 70 percent of square canvas with very large clear white margins.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d867-4f2a-7a71-af9d-4abb0bc4d288\\exec-e163c335-ef32-4a8b-a7c7-68c01b9afad5.png",
+  "src": "/nilo-illustrations/illustration-library-palm-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-lantern-medium-01",
+  "subject": "lantern",
+  "name": "提灯",
+  "label": "复古风灯",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "stilllife",
+    "object",
+    "生活物件",
+    "home"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One classic hurricane lantern in three-quarter view, curved protective frame, large glass chimney, top vent cap and arch handle, no flames beyond one simple shape.\nClearly connected purposeful construction, empty white interior, no texture or dense repeated decoration. No gray shading, no small screw heads, no added objects on or around the subject.\nEntire subject fully visible centered within 12 percent margin.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-87eb8135-1e7d-4ee4-89ca-24c15208ad13.png",
+  "src": "/nilo-illustrations/illustration-library-lantern-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

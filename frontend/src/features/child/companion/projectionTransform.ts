@@ -16,7 +16,9 @@ export function projectionTransform(items: DrawingProposal[], change: { dx?: num
   const right = Math.max(...boxes.map(p => p.x + p.width)), bottom = Math.max(...boxes.map(p => p.y + p.height))
   const minScale = Math.max(...items.flatMap(p => [.026 / p.width, .026 / p.height]))
   const maxScale = Math.min((1 - marginX * 2) / (right - left), (1 - marginY * 2) / (bottom - top),
-    ...items.flatMap(p => [.449999 / p.width, .449999 / p.height, Math.sqrt(.159 / (p.width * p.height))]))
+    ...items.flatMap(p => p.template === 'illustration'
+      ? [.899999 / p.width, .899999 / p.height]
+      : [.449999 / p.width, .449999 / p.height, Math.sqrt(.159 / (p.width * p.height))]))
   if (minScale > maxScale) return null
   const scale = Math.max(minScale, Math.min(maxScale, change.scale ?? 1))
   const x = Math.max(marginX, Math.min(1 - marginX - (right - left) * scale, left + (change.dx ?? 0)))

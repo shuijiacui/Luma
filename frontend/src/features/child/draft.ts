@@ -1,6 +1,7 @@
 import type { FeatureJSON } from '@/lib/api/lumaApi'
 import type { BrushKind } from './brushes'
 import type { Artwork } from './artworks'
+import type { TracingGuide } from './companion/tracingGuide'
 import { cloneCanvasDocument, type CanvasDocument, type CanvasProvenance } from './canvasDocument'
 
 export interface CanvasDraft { history: string[]; document?: CanvasDocument }
@@ -16,6 +17,7 @@ export interface ChildDraft {
   artworkId?: string
   artworkRevision?: number
   savedSnapshot?: string
+  tracingGuide?: TracingGuide
 }
 // The active document stays in memory. Recovery is explicit and scoped to the
 // account + editor URL in this browser tab, so another tab cannot overwrite it.

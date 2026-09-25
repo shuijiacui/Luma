@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-crab-beginner-01",
+  "subject": "crab",
+  "name": "螃蟹",
+  "label": "挥钳小螃蟹",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "animal",
+  "related": [
+    "animal",
+    "water",
+    "beach",
+    "sea",
+    "螃蟹"
+  ],
+  "aliases": [],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Create ONE original cute beginner crab coloring-book drawing on a plain white or transparent background. Draw it in a flat TOP VIEW, symmetric left to right, with a broad oval shell, two little eyes above its front edge, two raised claw arms at the front, and EXACTLY FOUR long clearly separated walking legs on each side of the oval body. Count: left side has 4 jointed walking legs, right side has 4 jointed walking legs, plus 2 front pincers = 10 appendages. All ten appendages must be fully visible with large empty gaps between neighboring legs. Simple rounded outline shapes, no perspective, no hidden legs, no background scenery. Smooth BLACK OUTLINES ONLY, all interiors blank white, no shading, no gray fill, no spots or shell texture, no text or numbers. Entire figure centered within 75% of square canvas with ample margins.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d867-4f2a-7a71-af9d-4abb0bc4d288\\exec-02f27f17-b83e-4248-a8a7-01464ddf77cf.png",
+  "src": "/nilo-illustrations/illustration-library-crab-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

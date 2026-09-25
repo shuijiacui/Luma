@@ -63,6 +63,9 @@ export function validateCustomSketch(raw) {
 /** For already validated proposals; limits apply to the group accepted in one action. */
 export function withinDrawingGroupBudget(proposals) {
   if (!Array.isArray(proposals) || proposals.length < 1 || proposals.length > 4) return false
+  // A rich image is one independent reference. It never shares a vector group
+  // or contributes fabricated stroke/path counts to the child's drawing.
+  if (proposals.some(proposal => proposal?.template === 'illustration')) return proposals.length === 1
   let pathCount = 0, customCommands = 0
   for (const proposal of proposals) {
     if (!proposal) return false

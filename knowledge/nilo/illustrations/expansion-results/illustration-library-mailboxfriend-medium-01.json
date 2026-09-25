@@ -1,0 +1,29 @@
+{
+  "id": "illustration-library-mailboxfriend-medium-01",
+  "subject": "mailboxfriend",
+  "name": "信箱朋友",
+  "label": "打开嘴巴的信箱朋友",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "fantasy",
+  "related": [
+    "fantasy",
+    "character",
+    "play"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One charming mailbox character in three-quarter view, lid open like a smiling mouth holding one large envelope, two simple arms and short boot-like feet. Essential rendering rule: this is flat OUTLINE ART for a child's tracing activity. Pure white interiors and pure white background; ONLY dark ink contour strokes. Never render volume with gray gradients or shadows. Keep the whole composition comfortably inside the square with clear margins. Large readable forms, no tiny repeated details.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-9d5c1823-ed83-489e-83b7-2fa1ca343f3f.png",
+  "src": "/nilo-illustrations/illustration-library-mailboxfriend-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

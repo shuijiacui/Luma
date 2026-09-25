@@ -1,0 +1,32 @@
+{
+  "id": "illustration-library-octopus-medium-01",
+  "subject": "octopus",
+  "name": "章鱼",
+  "label": "舒展腕足的章鱼",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "animal",
+  "related": [
+    "animal",
+    "water",
+    "sea",
+    "fish",
+    "章鱼"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Edit this same clean outline octopus illustration. It currently has SEVEN arms, four on the viewer LEFT and three on the viewer RIGHT. ADD EXACTLY ONE NEW ARM in the empty space on the viewer RIGHT between the existing middle-right and lower-right arms. Keep all seven existing arms unchanged. Final total must be EIGHT visible distinct arms: four left and four right. Keep round mantle, pose, eyes, sparse suckers, black outlines, white/transparent background, wide margins. No shading, no text, no other elements.",
+  "referencedImagePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d867-4f2a-7a71-af9d-4abb0bc4d288\\exec-67fcd6ec-8677-4b78-9639-b93b94f0c2c3.png",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d867-4f2a-7a71-af9d-4abb0bc4d288\\exec-fb3bacd5-ab85-4bc8-bba1-a0bb1695ad0f.png",
+  "src": "/nilo-illustrations/illustration-library-octopus-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

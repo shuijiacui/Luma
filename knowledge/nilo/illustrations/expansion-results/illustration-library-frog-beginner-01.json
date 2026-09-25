@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-frog-beginner-01",
+  "subject": "frog",
+  "name": "小青蛙",
+  "label": "蹲着的小青蛙",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "animal",
+  "related": [
+    "animal",
+    "pond",
+    "water",
+    "leaf",
+    "rain"
+  ],
+  "aliases": [],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Create a SQUARE 1:1 children's beginner coloring-page illustration on pure white paper. One adorable small frog sitting front-facing, with two large round eyes on top, a friendly small smile, broad simple round belly, two short forelegs leading to two clear front feet, and two folded hindlegs with broad outward feet. Correct coherent four-limb anatomy, no duplicate limbs. Soft rounded simple connected shapes, few interior lines. Draw only crisp smooth black outlines, all enclosed forms empty PURE WHITE. Absolutely NO GRAY, no gradient, no volume shading, no shadow, no wash, no texture or hatching, no colored fill. The frog occupies central 75 percent of square with wide white margin on every side. No pond, lily pad, props, text, border or other objects. Black contour line drawing only, suitable for a child to trace and freely color.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-12cbafbc-f777-4d82-bc66-f07de6c35a79.png",
+  "src": "/nilo-illustrations/illustration-library-frog-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

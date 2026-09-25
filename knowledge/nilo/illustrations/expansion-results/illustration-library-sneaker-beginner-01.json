@@ -1,0 +1,33 @@
+{
+  "id": "illustration-library-sneaker-beginner-01",
+  "subject": "sneaker",
+  "name": "运动鞋",
+  "label": "圆头小鞋",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "stilllife",
+  "related": [
+    "stilllife",
+    "object",
+    "生活物件",
+    "home"
+  ],
+  "aliases": [
+    "球鞋",
+    "鞋子"
+  ],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. BEGINNER reference: a warm simple picture-book drawing, 3–5 large easy-to-read forms and a small number of necessary interior marks. Broad rounded organic silhouettes; no repetitive decoration. One simple sneaker side view with rounded toe, one broad strap and a thick sole.\nCarefully coherent shoe construction with joined parts. No logos, decorative symbols, stitch dots, fabric texture, tread pattern, gray shading or black fill. Interior remains clean white. Broad hand-drawn contours; entire object centered with 10 percent margin on every side.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-c988dbd4-14c4-409b-ae41-46946ab2eb45.png",
+  "src": "/nilo-illustrations/illustration-library-sneaker-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

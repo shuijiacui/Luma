@@ -1,0 +1,33 @@
+{
+  "id": "illustration-library-grandmother-medium-01",
+  "subject": "grandmother",
+  "name": "奶奶",
+  "label": "坐着织围巾的奶奶",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "people",
+  "related": [
+    "character",
+    "person",
+    "grandmother"
+  ],
+  "aliases": [
+    "奶奶",
+    "外婆",
+    "老奶奶"
+  ],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Create an elegant medium-difficulty picture-book LINE ART drawing of ONE kindly grandmother sitting on a simple wooden chair and knitting a WIDE PLAIN SCARF. Gentle recognizable elderly face, round glasses, hair in one simple bun, a plain dress, natural shoulders/elbows/two hands holding two knitting needles. The scarf hangs over her knees as one WHITE UNFILLED strip with ONLY TWO long broad fold lines and FIVE loose fringe strokes at its end. Absolutely no stitch pattern, no yarn texture, no dots, no hatching, no repetitive knit rows. One simple round yarn ball by her foot, with two broad curves only. White blank interiors and background, graceful black ink contour strokes, no gray washes or shadows. Complete balanced body and chair fully visible with a generous white margin in a square. Not photorealistic; a refined clear observational children's book drawing, readable hands and pleasant proportions. No text.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-2355d186-4a4c-45a6-878b-844b55c5f8f5.png",
+  "src": "/nilo-illustrations/illustration-library-grandmother-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

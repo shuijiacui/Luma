@@ -1,5 +1,7 @@
-import { drawingRecipes, matchingRecipeSubjects } from '../../../shared/niloRecipes.mjs'
+import { drawingRecipes, matchingRecipeSubjects, requestedRecipeStyle } from '../../../shared/niloRecipes.mjs'
+import { isMaterialEnabled } from '../../../shared/niloCuration.mjs'
 import { niloAgeGuidance } from './niloAgeGuidance.js'
+import { storybookDrawingStyle } from './niloDrawingStyle.js'
 
 const boundedText = (value, max) => typeof value === 'string' && value.trim().length > 0 && value.trim().length <= max ? value.trim() : null
 export function sanitizeCreativeIdea(raw) {
@@ -13,11 +15,13 @@ export function sanitizeCreativeIdea(raw) {
 
 // Exact bilingual subject aliases, not association expansion: no match means
 // no candidates. Recent variants rank lower only within the same subject.
-export function retrieveIdeaRecipes(idea, recent = []) {
-  const named = [...new Set([idea.subject, ...idea.searchTerms].flatMap(matchingRecipeSubjects))]
-  return drawingRecipes.filter(r => named.includes(r.subject))
+export function retrieveIdeaRecipes(idea, recent = [], utterance = '') {
+  const named = [...new Set([idea.subject, ...idea.searchTerms].flatMap(term => matchingRecipeSubjects(term)))]
+  const style=requestedRecipeStyle(utterance)||requestedRecipeStyle(idea.subject)
+  return drawingRecipes.filter(r => isMaterialEnabled(r.id)&&named.includes(r.subject)&&(!style||r.style===style))
     .sort((a, b) => named.indexOf(a.subject) - named.indexOf(b.subject)
-      || Number(recent.includes(a.id)) - Number(recent.includes(b.id)))
+      || Number(recent.includes(a.id)) - Number(recent.includes(b.id))
+      || Number(b.style === 'storybook') - Number(a.style === 'storybook'))
     .slice(0, 6)
 }
 
@@ -32,12 +36,13 @@ CHILD CONTEXT: ${JSON.stringify({ utterance: context.utterance, history: context
 
 export function ideaRenderingPrompt(context, observation, idea, candidates) {
   return `You are Nilo's drawing stage. Render the LOCKED IDEA below on the given canvas. Its subject, connection and all essential details are already decided. Do not choose a different idea to fit the assets. No semantic approval round follows: make the silhouette and distinguishing features readable.
+${storybookDrawingStyle}
 Return ONLY JSON {"recipeId":null,"referenceRecipeId":null,"sketch":{"aspect":1,"paths":[]},"color":"#328ab5","at":[0.7,0.5],"scale":0.28,"sizeReason":"why this scale fits the scene"}.
 You may set recipeId to an exact CANDIDATES ID ONLY if requiresCustom is false AND that exact drawing depicts the entire idea and all details. Then sketch can be null. Otherwise recipeId MUST be null and provide the complete custom sketch. The candidate paths are optional construction references: you may adapt them and add the essential custom details, returning ALL final paths together. If you actually use one as a reference set referenceRecipeId; otherwise null. Empty candidates means draw freely. Do not substitute a backup object, omit essential details or simply rename a plain asset as an imaginary combination.
 PATHS: at most 24 strokes, 96 commands total. Each stroke is an array of command arrays: ["M",x,y], ["L",x,y], ["Q",cx,cy,x,y], ["C",c1x,c1y,c2x,c2y,x,y], ["Z"], or a separate ["E",cx,cy,rx,ry]. Begin open strokes with M. Coordinates and ellipse extents must stay within 0..1. aspect is physical width/height in .2..5. Use a coherent silhouette, recognizable parts and few clear details. Avoid disconnected fragments and accidental overlaps. For physically round ellipses, rx * aspect = ry.
 LAYOUT: at is the full-canvas centre, x rightward and y downward. scale is the desired LONG physical side divided by the canvas SHORT side. Choose proportionate size based on existing objects and the idea's role, not a fixed icon size. Prefer clear space near the visual feature mentioned in the relationship; crossing a line is allowed. Choose your own harmonious, visible #RRGGBB color, obeying any explicit child color request. Keep the child's brush texture and thickness.
 LOCKED IDEA: ${JSON.stringify(idea)}
-CANDIDATES: ${JSON.stringify(candidates.map(({ id, subject, name, label, colors, sketch }) => ({ id, subject, name, pose: label, colors, sketch })))}
+CANDIDATES: ${JSON.stringify(candidates.map(({ id, subject, name, label, colors, sketch, style }) => ({ id, subject, name, pose: label, colors, sketch, style })))}
 OBSERVATION: ${JSON.stringify(observation)}
 CHILD CONTEXT: ${JSON.stringify({ utterance: context.utterance, canvasAspect: context.canvasAspect })}`
 }

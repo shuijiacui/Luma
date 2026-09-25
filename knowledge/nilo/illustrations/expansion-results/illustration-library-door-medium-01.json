@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-door-medium-01",
+  "subject": "door",
+  "name": "门",
+  "label": "半开的木门",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "stilllife",
+    "object",
+    "生活物件",
+    "home"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One paneled wooden door partially open in three-quarter view, visible frame depth, two broad panels, simple handle and threshold.\nOne complete isolated door and its frame only. The door leaf is hinged convincingly on one side and opens toward the viewer, with a clear gap. Exactly two large recessed panels, one plain handle and a simple threshold. No woodgrain, tiny hardware details, texture, gray wash or shadows. Clean black contour, white empty interiors, generous margin.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-97d034f9-5e98-4b35-931c-745ad681bd6d.png",
+  "src": "/nilo-illustrations/illustration-library-door-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

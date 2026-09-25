@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-kite-medium-01",
+  "subject": "kite",
+  "name": "风筝",
+  "label": "燕子风筝",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "character",
+    "landscape",
+    "person",
+    "park"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. A swallow-shaped traditional kite with broad wing shapes, forked tail and two elegant trailing ribbons, no dense patterns.\nStrict correction: simplify the swallow kite into a single graceful bird-shaped outline, four broad wing panels in total, two simple tail ribbons, one cross spar and one string. All contours are clean single black strokes. No realistic feathers, no parallel double outlines, no joints, no miniature knots. Completely white opaque paper background, even inside the subject. The entire kite occupies only 75 percent of canvas.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d867-4f2a-7a71-af9d-4abb0bc4d288\\exec-32219471-2e5f-43b8-908f-8f13871f14e6.png",
+  "src": "/nilo-illustrations/illustration-library-kite-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

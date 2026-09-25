@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-moon-beginner-01",
+  "subject": "moon",
+  "name": "月亮",
+  "label": "弯弯的月牙",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "stilllife",
+  "related": [
+    "landscape",
+    "sky",
+    "space",
+    "night",
+    "月亮"
+  ],
+  "aliases": [],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "REQUIRED square 1:1 children's beginner coloring-page outline drawing, pure white background. Only ONE CRESCENT MOON, nothing else. The moon is one elegant broad crescent formed by two perfectly flowing smooth arcs meeting at the upper and lower tapered tips, opening towards the right. Inside the broad left crescent put just one tiny closed-eye arc and one little curved smile for a peaceful face. Pure white empty shape inside crisp confident black contour lines. Entire crescent centered at 70 percent of square height with wide clear margins all around. No gray, no shading, no shadows, no gradients or texture. Absolutely no animals, dog, bear, person, child, pillow, sleeping figure, stars, clouds, props, scenery, landscape, text, letters, border, dots or decorations. The entire image must contain ONLY the two-arc crescent outline plus the simple eye and smile on empty white.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-be33ed13-a458-4c6d-acf3-f597c8b2ac03.png",
+  "src": "/nilo-illustrations/illustration-library-moon-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

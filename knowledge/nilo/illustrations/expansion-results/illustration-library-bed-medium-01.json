@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-bed-medium-01",
+  "subject": "bed",
+  "name": "床",
+  "label": "有被角的小床",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "stilllife",
+    "object",
+    "生活物件",
+    "home"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One cozy single bed in three-quarter view with gently curved headboard, one plump pillow, a broad folded blanket corner and a visible footboard.\nA well-proportioned original picture-book object. Structural connections and perspective must be coherent. Simple empty surfaces, no carving, woodgrain, stitches, fabric texture, gray wash, shadows or decorative motifs. No extra room scenery. Entire silhouette centered within clear margins.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-7c7b2fed-6f14-4c00-b5e1-72f0b611ad27.png",
+  "src": "/nilo-illustrations/illustration-library-bed-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

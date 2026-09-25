@@ -1,0 +1,37 @@
+{
+  "id": "illustration-library-readingchild-beginner-01",
+  "subject": "readingchild",
+  "name": "读书的孩子",
+  "label": "抱着大书的孩子",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "people",
+  "related": [
+    "character",
+    "person",
+    "readingchild"
+  ],
+  "aliases": [
+    "读书的孩子",
+    "读书的儿童",
+    "读书的小孩",
+    "看书的孩子",
+    "看书的小孩",
+    "阅读的孩子",
+    "reading child"
+  ],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book line illustration for Nilo children's drawing references. ONE complete subject centered in a square image, pure white or transparent background, at least 10 percent clear margin on all sides. Confident graceful dark charcoal-black ink contours, beautiful expressive proportions, generous open spaces. Monochrome outlines only, no colored fills, no gray wash, no hatching, no cast shadows, no dense texture. Do not mimic any named illustrator. No text, numbers, watermark, border, collage, grid, labels, tutorial steps or background scenery. Beginner difficulty: 3–5 large simple shapes, only 3–5 necessary interior marks, no ornamental detail. One sweet young child STANDING front-facing, holding a large open book just below the chin. Two broad pages clearly make one open book with a central fold; the child looks gently down at the book. Head, simple two-lock bob haircut, a single plain A-line dress silhouette, two small hands at the outside book corners, two short legs and simple shoes. Approximately three head heights, soft elegant children's picture-book proportions. No stool, no trousers seams, no page writing, no glasses. Only essential outlines and a few face marks; no clothing folds. This is a FIRST-LEVEL tracing reference with far fewer marks than an intricate seated reading child.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-86b1ca87-be5a-4b45-a8f4-e38bd83becfa.png",
+  "src": "/nilo-illustrations/illustration-library-readingchild-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

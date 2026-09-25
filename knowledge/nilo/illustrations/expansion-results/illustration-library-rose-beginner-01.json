@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-rose-beginner-01",
+  "subject": "rose",
+  "name": "玫瑰",
+  "label": "含苞的小玫瑰",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "botanical",
+  "related": [
+    "plant",
+    "flower",
+    "garden",
+    "gift",
+    "玫瑰"
+  ],
+  "aliases": [],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. BEGINNER reference: a warm simple picture-book drawing, 3–5 large easy-to-read forms and a small number of necessary interior marks. Broad rounded organic silhouettes; no repetitive decoration. One simple rosebud on a curved stem with two leaves, bud defined by three broad petal curves and no thorns.\nSmooth confident pure-black ink contour illustration with completely blank white interiors and white background. Absolutely no gray shading, pencil texture, watercolor, crosshatching or shadow. Full subject and all leaf tips inside generous margins.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d867-4f2a-7a71-af9d-4abb0bc4d288\\exec-895b0c71-c661-45a8-879e-e986905890a1.png",
+  "src": "/nilo-illustrations/illustration-library-rose-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

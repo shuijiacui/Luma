@@ -3,5 +3,5 @@ export { validateDrawingDocument as validateCanvasDocument } from '../../../shar
 export function canvasProvenance(document) {
   if (!document) return 'unknown'
   if (document.baseImage && document.baseSource === 'unknown' && !document.operations.some(op => op.type === 'clear')) return 'unknown'
-  return document.coCreated || document.operations.some(op => op.owner === 'nilo') ? 'co-created' : 'child'
+  return document.coCreated || document.guided || document.operations.some(op => op.owner === 'nilo') ? 'co-created' : 'child'
 }

@@ -1,4 +1,5 @@
-import { getDrawingRecipe, recipeCatalogue, recipeMatchesSubject } from '../../../shared/niloRecipes.mjs'
+import { getDrawingRecipe, creativeRecipeCatalogue, recipeMatchesSubject } from '../../../shared/niloRecipes.mjs'
+import { isMaterialEnabled } from '../../../shared/niloCuration.mjs'
 import { validateCustomSketch } from './niloSketch.js'
 import { normalizeTurnSketch } from './niloCoCreation.js'
 import { projectionFits, placementFits } from '../../../shared/niloCollision.mjs'
@@ -66,6 +67,7 @@ export function compileDrawingPlan(raw,scene,context,validateProposal) {
   const drawing=raw.drawing,layout=drawing?.placement??raw.placement
   const recipe=getDrawingRecipe(drawing?.recipeId)
   if(drawing?.recipeId&&!recipe)return failure('recipe_reference')
+  if(recipe&&!isMaterialEnabled(recipe.id))return failure('recipe_unavailable')
   if(recipe&&intent.kind!=='object')return failure('recipe_requires_object')
   if(recipe&&!recipeMatchesSubject(recipe,intent.detail))return failure('recipe_subject_mismatch')
   if(!drawing||typeof drawing!=='object')return failure('path_syntax')
@@ -83,7 +85,7 @@ export function compileDrawingPlan(raw,scene,context,validateProposal) {
     if(minimumSpan>.38)return failure('object_too_small')
     const span=Math.min(.38,Math.max(minimumSpan,.12,layout.scale))
     const width=span*Math.min(1,sketch.aspect)/aspect,height=span/Math.max(1,sketch.aspect)
-    if(context.canvasSize&&Math.min(width*context.canvasSize.width,height*context.canvasSize.height)<(recipe?.minPixels??48))return failure('object_too_small')
+      if(context.canvasSize&&Math.min(width*context.canvasSize.width,height*context.canvasSize.height)+1e-6<(recipe?.minPixels??48))return failure('object_too_small')
     const style=context.drawingStyle??{color:'#568570',brushSize:4,brushKind:'round'}
     const proposal=validateProposal({template:'custom',subject:recipe?(context.locale==='en'?recipe.subject:recipe.name):intent.detail,
       target:subject.name,relation:intent.relationship,anchor:a,placement:'near',contribution:'object',
@@ -208,7 +210,7 @@ WHOLE OBJECTS: set intent.kind="object" with an existing subjectId/regionId as t
 Placement for DETAILS: object details MUST use inside, attached or contact. Detached above/below/left/right are allowed ONLY on subjects whose observed family is landscape (e.g. rain below a cloud). An antenna, ear, leaf or tail cannot use above/below as a substitute for attachment. Use the whole-subject region if a measured join is outside a smaller observed region. Modes inside or landscape above/below/left/right use at:[u,v] (.1..9) within the selected region, scale:.08..65 relative to its longest physical side, joinId:null. attached uses joinId from actual ink anchors of that subject (inside the selected region), at:null, and first M is the connecting end on a local box edge (prefer M 0 .5, drawing toward increasing x). The compiler rotates this local frame to grow OUTWARD from the selected ink side. It must grow AWAY from existing ink, not along or across it. An anchor label is NOT proof of anatomy. Exterior limbs/leaves/stems must be attached; separate neighboring objects need an actual scene interaction. Internal shapes must fit their region. Small details need readable gaps at the current brush size. Don't force an idea when its region is uncertain. If none is grounded return plans:[].
 When a new shape should meet TWO points or a SHORT CURVED BOUNDARY, use placement:{mode:"contact",contactId:"an actual supplied contact ID",contactKind:"points" or "contour"}, with no scale/at/joinId. The chosen contact must belong to the intent's region. In your LOCAL drawing y=1 is the contact baseline and y=0 grows away from the original boundary. x=0 and x=1 meet the two measured ends. points allows touch at only these two ends; contour fits the baseline to the measured curved ink, so a hat brim can sit naturally on the head. Include endpoints in the paths and, for contour, a continuous bottom path from (0,1) to (1,1). The app warps this bottom to the real contour and sizes the detail from its width and your physical aspect. Most new ink must extend into clear space, never trace/overwrite the original as the whole contribution. Do not use a contact label as evidence of object identity. Contact is optional; use inside for surface details and attached for a single endpoint.
 SCENE DATA: ${JSON.stringify(scene)}
-TARGET OBJECT RECIPE CATALOGUE: ${JSON.stringify(recipeCatalogue(scene.subjects,context.recentRecipeIds))}
+TARGET OBJECT RECIPE CATALOGUE (all IDs; expand @6 suffixes exactly as its index header specifies): ${JSON.stringify(creativeRecipeCatalogue(scene.subjects,context.recentRecipeIds))}
 DRAWING KNOWLEDGE (ideas and related forms): ${JSON.stringify(cards)}
 CHILD CONTEXT: ${JSON.stringify({locale:context.locale,utterance:context.utterance,history:context.history.filter(x=>x.role==='user'),scene:context.scene,drawingStyle:context.drawingStyle,canvasSize:context.canvasSize,recentSubjects:context.recentSubjects,rejectedSubjects:context.rejectedSubjects})}
 Name the new detail and relationship in ${context.locale==='en'?'English':'Chinese'}.`

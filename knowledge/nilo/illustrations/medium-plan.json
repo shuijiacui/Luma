@@ -1,0 +1,722 @@
+{
+  "version": 1,
+  "created": "2026-09-25",
+  "purpose": "30 original medium-difficulty standalone raster references; 15 people and 15 buildings; preserve optional tracing and child choice without style terminology.",
+  "format": "PNG",
+  "targetCount": 30,
+  "artDirection": {
+    "commonPrompt": "Create ONE original standalone monochrome children's picture-book line illustration, medium drawing difficulty for a child who can combine large shapes. Beautiful confident hand-drawn dark ink contours on a pure white background, with graceful rounded curves, thoughtful proportions and warm expression. Black outlines only: no color, gray washes, filled black masses, shading, hatching, texture or cast shadows. Favor a readable complete silhouette and only 4–8 identifying interior details. Naturally connected parts, generous open white spaces for the child's own drawing. Center the complete object with at least 10% clear margin on every side. No scene, landscape, framing panel, collage, contact sheet, instructional steps, labels, lettering, watermark, logo or photorealism. Avoid mechanical vector-icon stiffness and intricate linework. Do not imitate any named illustrator or copy a published picture.",
+    "people": "Keep one simple readable pose, gentle rounded anatomy, distinct limbs with breathing room, hair grouped in 2–4 large locks. Hands use a simple thumb and broad finger grouping. Childlike illustration proportions, approximately 4–5 head heights, not a fixed anatomy lesson. No crowded background. Use no more than one main prop plus one small supporting object.",
+    "architecture": "Use front or mild three-quarter view; coherent joined planes and level doors/windows. Choose 3–5 large structural shapes. At most six windows, two to three broad roof divisions, one identifying architectural feature. Avoid tiny roof tiles, brick grids, complex perspective and ornamental clutter.",
+    "difficultyRules": [
+      "First read the full silhouette at thumbnail size; the subject must stay identifiable when the dark outlines become a pale gray tracing guide.",
+      "Large shapes carry the image. Keep 4–8 optional identifying interior details, not many equal-weight decorative lines.",
+      "Make limb gaps, prop edges, doorways and window spacing visibly open at roughly 280px displayed size.",
+      "Use one unambiguous pose or facade; avoid tangled hands, extreme bends, dense scaffolding and repeated small marks.",
+      "Retain elegant expressive picture-book drawing through contour, proportion and gesture. Use monochrome outlines only; leave all color, shading and pattern choices to the child.",
+      "Offer a first step of outer contour, then one chosen detail. The child may skip, recolor, reshape or add to the reference.",
+      "Treat ages 5–8 as a starting design intention, not a measured ability cutoff; choose from the child's visible marks and request.",
+      "Inspect every full-size PNG and its pale-gray preview for anatomy, connections, clipping, unnecessary detail and recognizability."
+    ],
+    "originality": "Learn general observation/composition methods from the primary resources below. Generate original designs. No source book image is copied, downloaded as product art, or claimed licensed.",
+    "sourcesNote": "References support shape, observation, pose and storytelling principles; this batch deliberately uses monochrome outlines, not the sources' color media."
+  },
+  "sources": [
+    {
+      "title": "National Portrait Gallery — Portrait explorers",
+      "url": "https://www.npg.org.uk/schools-hub/gallery-resource-portrait-explorers",
+      "applies": "Primary-school resource encourages looking at pose, expression, clothing, objects and color. Here each person receives one clear gesture and one recognizable prop."
+    },
+    {
+      "title": "Drawing Room — Drawing Buildings (Anne Harild)",
+      "url": "https://drawingroom.org.uk/learning-resource/drawing-buildings/",
+      "applies": "Artist-led family activity starts with the shape of a familiar building and how rooms, floors and doors connect. Here building silhouettes and joined parts lead the image."
+    },
+    {
+      "title": "The Carle Museum — Shape Your Story",
+      "url": "https://carlemuseum.org/visit/programs-events/everyday-art-project-shape-your-story",
+      "applies": "Picture-book museum family activity combines shapes and watercolor pencils for storytelling. Here broad shapes, color and one readable action take precedence over ornament."
+    },
+    {
+      "title": "The Metropolitan Museum of Art — Make Your Mark family guide",
+      "url": "https://www.metmuseum.org/-/media/Files/Learn/Family%20Map%20and%20Guides/Make%20Your%20Mark.pdf",
+      "applies": "The family sketching sequence moves from outline to shapes to optional value. Here outer contour is the first invitation; tone and detail remain optional."
+    },
+    {
+      "title": "Quentin Blake — How I draw",
+      "url": "https://quentinblake.com/about-drawing/how-i-draw",
+      "applies": "The illustrator describes rough planning of stance, expression and placement before a lively finished drawing. Borrow planning discipline only; do not mimic his visual style or trace copyrighted illustrations."
+    }
+  ],
+  "assets": [
+    {
+      "id": "illustration-medium-reading-child",
+      "subject": "readingchild",
+      "name": "读书的孩子",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A child seated on a simple low stool, holding one large open book at chest height; head gently tilted toward the pages, both feet visible, short wavy hair, a sweater and trousers. Clearly separate hands, book and face. Only the book spine and two page arcs inside the book.",
+      "learning": "先看头和身体的大形状，再画打开的书；书页只挑两条喜欢的线。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "读书的孩子",
+        "读书的儿童",
+        "读书的小孩",
+        "看书的孩子",
+        "看书的小孩",
+        "阅读的孩子",
+        "reading child"
+      ]
+    },
+    {
+      "id": "illustration-medium-painting-child",
+      "subject": "paintingchild",
+      "name": "画画的孩子",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A child standing in a relaxed three-quarter view, holding one broad oval painter palette with three paint dabs in one hand and an upright brush in the other; bobbed hair, plain smock, one pocket, simple shoes. No easel or scenery.",
+      "learning": "先画身体和张开的两只手，再给调色盘添三块颜色。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "画画的孩子",
+        "画画的小孩",
+        "小画家",
+        "画家",
+        "painting child"
+      ]
+    },
+    {
+      "id": "illustration-medium-gardener",
+      "subject": "gardener",
+      "name": "园丁",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A cheerful gardener in a broad brim straw hat and plain overalls, standing with one large watering can tilted slightly outward; one small potted sprout at the feet. The watering can handle and spout are large and visibly separate. Two broad leaves only; no shower of tiny water drops.",
+      "learning": "先找帽子、身体和水壶的轮廓，再添两片大叶子。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "园丁",
+        "浇花的人",
+        "浇花的孩子"
+      ]
+    },
+    {
+      "id": "illustration-medium-baker",
+      "subject": "baker",
+      "name": "面包师",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A friendly baker standing front-facing in a soft tall chef hat and plain apron, holding one tray with a single round loaf at waist height. Two curved loaf scores, apron pocket and simple shoes; clear space between face and bread.",
+      "learning": "先画高帽子和围裙，再把圆面包放到托盘上。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "面包师",
+        "烘焙师"
+      ]
+    },
+    {
+      "id": "illustration-medium-firefighter",
+      "subject": "firefighter",
+      "name": "消防员",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A friendly firefighter standing in a stable wide stance, wearing a rounded helmet and simple jacket with two broad horizontal bands, holding a coiled hose at one side. One large loop only, with a clear short nozzle. No fire, truck or scene.",
+      "learning": "先画头盔和外套，再顺着大弧线画水管。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "消防员"
+      ]
+    },
+    {
+      "id": "illustration-medium-doctor",
+      "subject": "doctor",
+      "name": "医生",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A friendly doctor standing front-facing, short curly hair, a coat over a shirt, one clear U-shaped stethoscope with a round disc, arms relaxed, one coat pocket and simple shoes. No medical room or small accessories.",
+      "learning": "先画外套的大轮廓，再画听诊器的弯线和小圆。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "医生"
+      ]
+    },
+    {
+      "id": "illustration-medium-teacher",
+      "subject": "teacher",
+      "name": "老师",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A warm teacher standing in a relaxed pose, holding a large closed book against one side and gently raising the other open hand. Soft cardigan with three large buttons, knee-length skirt or wide trousers, simple glasses, neat hair. No chalkboard, pointer or lettering.",
+      "learning": "先看抬起的手和站姿，再给书和衣服添几条线。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "老师",
+        "教师"
+      ]
+    },
+    {
+      "id": "illustration-medium-mail-carrier",
+      "subject": "mailcarrier",
+      "name": "邮递员",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A friendly mail carrier taking a small step forward, cap, large cross-body satchel, one big sealed envelope held out in one hand, plain jacket and boots. One visible strap and one envelope flap, no text or logos.",
+      "learning": "先画跨出的脚，再画斜挎包和信封的大形状。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "邮递员",
+        "快递员",
+        "mail carrier"
+      ]
+    },
+    {
+      "id": "illustration-medium-guitarist",
+      "subject": "guitarist",
+      "name": "吉他手",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A relaxed young guitarist sitting on a plain stool with one acoustic guitar resting across the lap; clear guitar figure-eight body, round sound hole and thick short neck. Hands meet the guitar naturally. Three broad visible strings only, no tiny frets or background.",
+      "learning": "先画吉他的两段弧线，再观察手放在哪里；琴弦可以只画三条。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "吉他手",
+        "弹吉他的人"
+      ]
+    },
+    {
+      "id": "illustration-medium-ballerina",
+      "subject": "ballerina",
+      "name": "芭蕾舞者",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A child ballet dancer in a calm practice pose, one arm curved above the head and the other extended sideways, both feet touching the ground with one heel lifted. Simple bun, leotard and a soft skirt made from three broad scallops. No extreme body bend or stage.",
+      "learning": "先用大弧线画手臂，再看看裙摆和脚尖的方向。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "芭蕾舞者",
+        "跳芭蕾的孩子",
+        "芭蕾舞演员",
+        "舞者"
+      ]
+    },
+    {
+      "id": "illustration-medium-running-child",
+      "subject": "runningchild",
+      "name": "跑步的孩子",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A child running gently toward the right in a readable side three-quarter pose, one knee forward and the other leg behind, arms bent with clear gaps between limbs and torso. Short hair, shirt, shorts, simple sneakers. No speed lines or background.",
+      "learning": "先看哪条腿向前，再画弯起来的手臂；衣服细节可以慢慢添。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "跑步的孩子",
+        "跑步的人",
+        "奔跑的孩子",
+        "running child"
+      ]
+    },
+    {
+      "id": "illustration-medium-umbrella-user",
+      "subject": "umbrellauser",
+      "name": "撑伞的孩子",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A child in a simple raincoat and rain boots standing beneath one open umbrella. One hand holds a visibly separate straight umbrella shaft at the side of the face. Umbrella canopy has three broad sections, coat two buttons. No rain drops or puddle scene.",
+      "learning": "先画伞顶的大弧线，再画雨衣和两只雨靴。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "撑伞的孩子",
+        "撑伞的人",
+        "打伞的人",
+        "打伞的孩子",
+        "umbrella user"
+      ]
+    },
+    {
+      "id": "illustration-medium-grandmother",
+      "subject": "grandmother",
+      "name": "奶奶",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A smiling older woman with a soft bun and round glasses, standing while holding a small open basket in both hands at waist height. Plain cardigan, long skirt and comfortable shoes. Basket indicated by rim and two broad strips, no dense weave or facial wrinkles.",
+      "learning": "先画头发和眼镜，再画衣服与篮子；篮筐不用画满细线。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "奶奶",
+        "外婆",
+        "老奶奶"
+      ]
+    },
+    {
+      "id": "illustration-medium-wheelchair-user",
+      "subject": "wheelchairuser",
+      "name": "坐轮椅的孩子",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A cheerful child seated comfortably in a simple manual wheelchair in a slight side view, one hand raised in greeting. Both legs and feet rest naturally on one clear footrest. One large rear wheel with four spokes and one small front wheel, simple chair frame, plain orange top and trousers.",
+      "learning": "先画人物和大轮子的外轮廓，再添椅背、脚踏和几根轮辐。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "坐轮椅的孩子",
+        "坐轮椅的人",
+        "轮椅使用者",
+        "wheelchair user"
+      ]
+    },
+    {
+      "id": "illustration-medium-hiker",
+      "subject": "hiker",
+      "name": "小小登山者",
+      "category": "people",
+      "difficulty": "medium",
+      "prompt": "A child hiker taking one small step, side three-quarter view, wearing a broad soft hat, a rounded backpack with one large flap and one visible shoulder strap, holding a straight walking stick. Plain shorts and boots. No mountain or landscape.",
+      "learning": "先画背包和身体的大形状，再看看迈步的脚和手杖。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "小小登山者",
+        "登山者",
+        "徒步的孩子",
+        "登山的孩子"
+      ]
+    },
+    {
+      "id": "illustration-medium-school",
+      "subject": "school",
+      "name": "学校",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One small welcoming schoolhouse seen from the front: broad triangular roof, simple walls, central double doorway, four large windows, one small bell shape below the roof. One shallow doorstep. No flags, lettering, fence or children.",
+      "learning": "先画屋顶和墙的大形状，再找门两边成对的窗户。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "学校",
+        "校舍"
+      ]
+    },
+    {
+      "id": "illustration-medium-bookshop",
+      "subject": "bookshop",
+      "name": "书店",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One charming small bookshop facade, front view: one curved striped awning with three broad stripes, one tall door, one large display window containing just three upright book shapes, a small open-book-shaped hanging sign without letters. No street scene.",
+      "learning": "先画店面和遮阳棚，再把三本书放进大窗户里。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "书店"
+      ]
+    },
+    {
+      "id": "illustration-medium-bakery",
+      "subject": "bakery",
+      "name": "面包店",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One cozy bakery facade, front view: rounded awning, one door and one wide shop window, a large bread-shaped sign above the door, one loaf and two buns in the window. Simple and walls. No writing, bricks or surrounding street.",
+      "learning": "先画门和展示窗，再挑几块圆圆的面包放进去。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "面包店",
+        "烘焙店"
+      ]
+    },
+    {
+      "id": "illustration-medium-cottage",
+      "subject": "cottage",
+      "name": "乡间小屋",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One compact cottage in a gentle almost-front view: broad sloping roof, a single chimney, warm wall, one rounded door and two square windows with simple crossbars. One tiny two-leaf plant beside the door. No roof tiles or garden scene.",
+      "learning": "先画屋顶、墙和烟囱，再添门窗；小植物可以最后画。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "乡间小屋",
+        "小屋",
+        "房子",
+        "房屋",
+        "小房子",
+        "house",
+        "小木屋"
+      ]
+    },
+    {
+      "id": "illustration-medium-treehouse",
+      "subject": "treehouse",
+      "name": "树屋",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One small treehouse with a clear triangular roof and a single window, nestled on a broad forked tree trunk. One short ladder with four rungs, two large rounded foliage masses framing the roof, no individual leaves. Keep ladder separate from trunk and doorway.",
+      "learning": "先画分叉的树干和小房子，再给梯子添四根横档。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "树屋",
+        "树上的房子",
+        "tree house"
+      ]
+    },
+    {
+      "id": "illustration-medium-watermill",
+      "subject": "watermill",
+      "name": "水车小屋",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One compact cottage watermill, front three-quarter view: broad pitched roof, one doorway and one window, one large waterwheel attached clearly to the side with six broad paddles. One short curved water line beneath the wheel only, no stream landscape.",
+      "learning": "先画房子，再在旁边画大圆水轮和几根轮辐。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "水车小屋",
+        "水车房",
+        "水车屋",
+        "水磨坊",
+        "water mill"
+      ]
+    },
+    {
+      "id": "illustration-medium-clocktower",
+      "subject": "clocktower",
+      "name": "钟楼",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One friendly standalone clocktower with a tall tapered rectangular body, one broad conical roof, a large round clock face with two hands and four simple hour marks, one arched doorway and two small upper windows. No brick grid or skyline.",
+      "learning": "先画高高的塔身，再画圆钟面；刻度先画上下左右四个。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "钟楼",
+        "钟塔",
+        "clock tower"
+      ]
+    },
+    {
+      "id": "illustration-medium-pagoda",
+      "subject": "pagoda",
+      "name": "宝塔",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One small three-tier Chinese pagoda in a calm frontal view: three broad gently upturned roofs stacked clearly with generous gaps, warm walls, one central doorway and one opening on each upper tier. No tiny brackets, roof tiles, lanterns or scenery.",
+      "learning": "先一层一层画三层屋檐，再把门窗放在中间。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "宝塔",
+        "佛塔"
+      ]
+    },
+    {
+      "id": "illustration-medium-pavilion",
+      "subject": "pavilion",
+      "name": "中式亭子",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One graceful small open Chinese garden pavilion, front view: one wide softly upturned roof, four clear wooden posts, one low bench and two shallow steps. posts, roof, no ornate lattice or surrounding garden.",
+      "learning": "先画展开的屋顶，再让柱子连到台阶上。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "中式亭子",
+        "亭子",
+        "凉亭"
+      ]
+    },
+    {
+      "id": "illustration-medium-arched-bridge",
+      "subject": "archedbridge",
+      "name": "小石拱桥",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One short stone arch footbridge seen from the side, a single broad curved arch with a gently rounded top edge, four simple upright rail posts, a few large stone joints only. One soft water curve underneath, no riverbanks or landscape.",
+      "learning": "先画桥上、桥下两条弧线，再添几根短栏杆。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "小石拱桥",
+        "石拱桥",
+        "拱桥",
+        "小桥",
+        "桥",
+        "arched bridge"
+      ]
+    },
+    {
+      "id": "illustration-medium-igloo",
+      "subject": "igloo",
+      "name": "冰屋",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One small rounded igloo seen from the front and slightly to one side, clearly separate short tunnel entrance, three broad curved block rows with only two or three vertical joints per row. All blocks are unfilled white enclosed by dark contours. No snowfield or people.",
+      "learning": "先画圆圆的屋顶和小门洞，再添少量弯弯的砖缝。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "冰屋",
+        "雪屋"
+      ]
+    },
+    {
+      "id": "illustration-medium-yurt",
+      "subject": "yurt",
+      "name": "蒙古包",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One warm round yurt, slight front three-quarter view: low conical roof, broad rounded wall, large central doorway, one simple decorative horizontal band and a small round roof cap. No dense textiles, lattice, ropes or landscape.",
+      "learning": "先画圆顶和宽墙，再画门；花纹只选一条喜欢的线。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "蒙古包",
+        "毡房"
+      ]
+    },
+    {
+      "id": "illustration-medium-greenhouse",
+      "subject": "greenhouse",
+      "name": "温室",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One small greenhouse, gentle front three-quarter view: triangular roof, five broad transparent glass panels defined by simple dark green supports, clear central door. Inside only two big leaf silhouettes in two plain pots. No plant clutter or structural microdetail.",
+      "learning": "先画房子的框架，再分出几块大玻璃，最后添两盆植物。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "温室",
+        "玻璃温室"
+      ]
+    },
+    {
+      "id": "illustration-medium-railway-station",
+      "subject": "railwaystation",
+      "name": "火车站",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One modest small railway station facade, front view: broad hipped roof, one large central arched doorway, two big windows, one round clock above the entrance and one shallow canopy. No train, tracks, station lettering or extra buildings.",
+      "learning": "先画屋顶和大拱门，再把圆钟和窗户放在合适的位置。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "火车站",
+        "车站",
+        "railway station",
+        "train station"
+      ]
+    },
+    {
+      "id": "illustration-medium-apartment",
+      "subject": "apartment",
+      "name": "公寓楼",
+      "category": "architecture",
+      "difficulty": "medium",
+      "prompt": "One cheerful three-storey apartment building in a mild almost-front view, flat roof, six large windows in two columns, one central front door, a single broad balcony on the middle floor with three bars. No skyline or repeated tiny bricks.",
+      "learning": "先画长长的楼身，再一层一层安排窗户和阳台。",
+      "style": "storybook",
+      "detail": "moderate",
+      "minPixels": 220,
+      "ageBands": [
+        "5-7",
+        "8-9",
+        "10-12"
+      ],
+      "aliases": [
+        "公寓楼",
+        "公寓",
+        "住宅楼",
+        "楼房",
+        "大楼"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "id": "illustration-library-readingchild-medium-01",
+  "subject": "readingchild",
+  "name": "读书的孩子",
+  "label": "盘腿读书的孩子",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "people",
+  "related": [
+    "character",
+    "person",
+    "readingchild"
+  ],
+  "aliases": [
+    "读书的孩子",
+    "读书的儿童",
+    "读书的小孩",
+    "看书的孩子",
+    "看书的小孩",
+    "阅读的孩子",
+    "reading child"
+  ],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One child sitting cross-legged on the ground with a large open book resting across the knees, head gently tilted, short curly hair, plain long-sleeve top and trousers, both hands visible holding the pages. Natural four-head-tall illustration proportions. Person anatomy must be coherent: two arms, two legs, natural hand-to-object contact. Hair in two to four broad locks; no fine strands.  Essential rendering rule: this is flat OUTLINE ART for a child's tracing activity. Pure white interiors and pure white background; ONLY dark ink contour strokes. Never render volume with gray gradients or shadows. Keep the whole composition comfortably inside the square with clear margins. Large readable forms, no tiny repeated details.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-ea37be63-6572-4049-892b-f9f299df9ae8.png",
+  "src": "/nilo-illustrations/illustration-library-readingchild-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

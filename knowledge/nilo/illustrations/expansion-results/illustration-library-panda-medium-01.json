@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-panda-medium-01",
+  "subject": "panda",
+  "name": "熊猫",
+  "label": "趴在树枝上的熊猫",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "animal",
+  "related": [
+    "animal",
+    "bamboo",
+    "forest",
+    "character"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Square 1:1 children's coloring-page illustration. One sweet young panda resting belly-down on a SHORT standalone thick tree branch, head resting to the right, two front paws draped down, one hind paw visible and the fourth naturally hidden. Both ends of the branch are fully visible and end in clean round cut surfaces inside the image. Just one tiny twig with two leaves on the right. Panda eyes, ears and leg patches outlined and left empty for coloring. Medium reference: correct relaxed animal proportions and joined anatomy, clean fluid dark contours only on pure flat white background. All interiors pure white. No fur strokes, texture, hatching, gray, shadows or black fills apart from tiny pupils and nose. Full panda and full short log fit entirely inside the central 75 percent of the square, huge clear margin on ALL sides. No cropped branch, no scene, no text or border.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-96fd0b1b-79c1-4e6f-bfe9-d00923ccd5bc.png",
+  "src": "/nilo-illustrations/illustration-library-panda-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

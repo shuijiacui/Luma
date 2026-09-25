@@ -2,10 +2,17 @@
 import {PNG} from 'pngjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {drawingRecipes} from '../../shared/niloRecipes.mjs';
+import {isMaterialEnabled} from '../../shared/niloCuration.mjs';
+const activeRecipes=drawingRecipes.filter(r=>isMaterialEnabled(r.id));
 import {renderReviewCandidate} from '../src/services/niloPreview.js';
 import {sampleProposalGeometry} from '../../shared/niloGeometry.mjs';
-const groups=[...new Set(drawingRecipes.map(r=>r.subject))];
-const recipes=groups.flatMap(s=>drawingRecipes.filter(r=>r.subject===s));
+const cuteOnly=process.argv.includes('--cute');
+const studioOnly=process.argv.includes('--studio');
+const selected=process.argv.find(x=>x.startsWith('--ids='))?.slice(6).split(',');
+const source=selected?selected.map(id=>drawingRecipes.find(r=>r.id===id)).filter(Boolean):studioOnly?activeRecipes.filter(r=>r.collection==='studio'):cuteOnly?activeRecipes.filter(r=>r.style==='storybook'&&r.collection!=='studio'):activeRecipes;
+const name=selected?'review':studioOnly?'studio':cuteOnly?'cute':'expanded';
+const groups=[...new Set(source.map(r=>r.subject))];
+const recipes=groups.flatMap(s=>source.filter(r=>r.subject===s));
 const size=180,cell=200,cols=6,rows=Math.ceil(recipes.length/cols),perPage=54;
 const sheets=Array.from({length:Math.ceil(recipes.length/perPage)},(_,page)=>{
  const sheet=new PNG({width:cols*cell,height:Math.ceil(Math.min(perPage,recipes.length-page*perPage)/cols)*cell});sheet.data.fill(248);
@@ -25,6 +32,7 @@ for(const [index,r] of recipes.entries()){
  svg.push(`<g transform="translate(${index%cols*200+10},${Math.floor(index/cols)*220+5})"><rect width="180" height="180" rx="15" fill="white"/>${paths}<text x="90" y="199" font-family="sans-serif" font-size="12" text-anchor="middle" fill="#365449">${r.name} · ${r.label}</text><text x="90" y="214" font-family="sans-serif" font-size="10" text-anchor="middle" fill="#758478">${r.id}</text></g>`);
 }
 svg.push('</svg>');mkdirSync('.tmp',{recursive:true});
-sheets.forEach((sheet,i)=>writeFileSync(`.tmp/nilo-recipes-expanded-${i+1}.png`,PNG.sync.write(sheet)));
-mkdirSync('../knowledge/nilo/previews',{recursive:true});writeFileSync('../knowledge/nilo/previews/nilo-recipes.svg',svg.join('\n'));
+sheets.forEach((sheet,i)=>writeFileSync(`.tmp/nilo-recipes-${name}-${i+1}.png`,PNG.sync.write(sheet)));
+mkdirSync('../knowledge/nilo/previews',{recursive:true});if(!studioOnly)writeFileSync(`../knowledge/nilo/previews/nilo-recipes${selected?'-review':cuteOnly?'-cute':''}.svg`,svg.join('\n'));
+if(cuteOnly)writeFileSync('../knowledge/nilo/previews/nilo-recipes-cute-tracing.svg',svg.join('\n').replace(/stroke="#[a-f0-9]+" stroke-width="2"/g,'stroke="#9ca3af" stroke-width="1.6" stroke-dasharray="6 5"'));
 console.log(`${recipes.length} recipes rendered`);

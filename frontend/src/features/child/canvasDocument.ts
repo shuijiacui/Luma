@@ -26,6 +26,8 @@ export interface CanvasDocument {
   baseSource: 'child' | 'unknown'
   /** Accepted collaboration can influence later child-only strokes, even after undo. */
   coCreated?: true
+  /** A displayed guide can influence later strokes, even after it is dismissed. */
+  guided?: true
   operations: CanvasOperation[]
 }
 
@@ -51,7 +53,7 @@ export function visibleOperations(document: CanvasDocument): (CanvasStroke | Ext
 export function getCanvasProvenance(document: CanvasDocument): CanvasProvenance {
   const hasClear = document.operations.some(op => op.type === 'clear')
   if (document.baseImage && document.baseSource === 'unknown' && !hasClear) return 'unknown'
-  return document.coCreated || document.operations.some(op => op.owner === 'nilo') ? 'co-created' : 'child'
+  return document.coCreated || document.guided || document.operations.some(op => op.owner === 'nilo') ? 'co-created' : 'child'
 }
 
 export function paintCanvasOperation(context: CanvasRenderingContext2D, width: number, height: number, op: CanvasOperation) {

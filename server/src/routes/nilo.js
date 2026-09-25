@@ -8,6 +8,7 @@ import { voiceCapabilities, voiceConfig, transcribeVoice, synthesizeVoice } from
 import { defaultLimits, rateLimit } from '../services/security.js'
 import { interpretVoiceEdit } from '../services/niloVoiceIntent.js'
 import { ageBandForBirthDate } from '../services/niloAgeGuidance.js'
+import { refreshMaterialCuration } from '../services/niloCurationStore.js'
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
@@ -73,6 +74,10 @@ export function createNiloRouter({
   limits = {},
 } = {}) {
   const router = Router()
+  // Public catalogue decisions contain no child or account information.
+  router.get('/materials/curation', asyncRoute(async (_req, res) => {
+    res.set('Cache-Control', 'no-store').json(refreshMaterialCuration())
+  }))
   const configuredLimits = { ...defaultLimits(), ...limits }
   // One conversation may use ASR, drawing and TTS; each has its own finite cost bucket.
   // Read-only capabilities must not consume any model-call allowance.

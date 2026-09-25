@@ -1,5 +1,5 @@
 // Single collision and placement implementation for server and canvas.
-import {sampleProposalGeometry} from './niloGeometry.mjs'
+import {sampleProposalGeometry,proposalBoundsPoints} from './niloGeometry.mjs'
 import {contactProjectionFits,validateContact} from './niloContact.mjs'
 function occupancySize(occupancy) {
   const n = Math.sqrt(occupancy.length);
@@ -14,6 +14,7 @@ function brushMargins(p, n, surfaceSize) {
   };
 }
 function proposalFootprint(p, n, aspect, surfaceSize) {
+  if (p.template === 'illustration') return illustrationFootprint(p, n, aspect, surfaceSize);
   let strokes;
   try { strokes = sampleProposalGeometry(p, aspect); } catch { return null; }
   if (!strokes.length) return null;
@@ -33,6 +34,34 @@ function proposalFootprint(p, n, aspect, surfaceSize) {
           cells.add(row * n + col);
         }
       }
+    }
+  }
+  return cells;
+}
+// Reserve the full bitmap rectangle, including transparent areas. Its pixels
+// must not be mistaken for child ink, but the reference still needs clear space.
+function illustrationFootprint(p, n, aspect, surfaceSize) {
+  if (!Number.isInteger(n) || n < 1 || !Number.isFinite(aspect) || aspect <= 0) return null;
+  const points = proposalBoundsPoints(p, aspect);
+  if (points.length !== 4) return null;
+  const { x: marginX, y: marginY } = brushMargins(p, n, surfaceSize);
+  if (points.some(({x,y}) => x < Math.max(.015, marginX) || x > 1 - Math.max(.015, marginX)
+    || y < Math.max(.015, marginY) || y > 1 - Math.max(.015, marginY))) return null;
+  const left = Math.min(...points.map(point => point.x)), right = Math.max(...points.map(point => point.x));
+  const top = Math.min(...points.map(point => point.y)), bottom = Math.max(...points.map(point => point.y));
+  const angle = p.rotation * Math.PI / 180, cos = Math.cos(angle), sin = Math.sin(angle);
+  const cx = (p.x + p.width / 2) * aspect, cy = p.y + p.height / 2;
+  const halfCellX = (.5 / n + marginX) * aspect, halfCellY = .5 / n + marginY;
+  const localMarginX = Math.abs(cos) * halfCellX + Math.abs(sin) * halfCellY;
+  const localMarginY = Math.abs(sin) * halfCellX + Math.abs(cos) * halfCellY;
+  const cells = new Set();
+  for (let col = Math.max(0, Math.floor((left - marginX) * n)); col <= Math.min(n - 1, Math.floor((right + marginX) * n)); col++) {
+    for (let row = Math.max(0, Math.floor((top - marginY) * n)); row <= Math.min(n - 1, Math.floor((bottom + marginY) * n)); row++) {
+      const dx = (col + .5) / n * aspect - cx, dy = (row + .5) / n - cy;
+      // Rectangle/cell intersection in physical canvas space. Checking both
+      // rectangle axes avoids reserving the empty corners of a rotated frame.
+      if (Math.abs(cos * dx + sin * dy) <= p.width * aspect / 2 + localMarginX
+        && Math.abs(-sin * dx + cos * dy) <= p.height / 2 + localMarginY) cells.add(row * n + col);
     }
   }
   return cells;
@@ -57,7 +86,7 @@ function placementFits(p, aspect, surfaceSize) {
   if (p.contribution === "object") return !p.attachment && !p.contact;
   if (!p.anchor || !p.placement) return true;
   if (p.attachment) return true;
-  const points = sampleProposalGeometry(p, aspect).flatMap((stroke) => stroke.points);
+  const points = proposalBoundsPoints(p, aspect);
   if (!points.length) return false;
   const margin = brushMargins(p, 64, surfaceSize);
   const left = Math.min(...points.map((point) => point.x)) - margin.x;

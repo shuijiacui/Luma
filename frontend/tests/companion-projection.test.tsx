@@ -12,7 +12,7 @@ const proposal: DrawingProposal = { template: 'waves', x: .2, y: .2, width: .3, 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
   vi.stubGlobal('devicePixelRatio', 2)
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as CanvasRenderingContext2D)
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ setLineDash: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), stroke: vi.fn() } as unknown as CanvasRenderingContext2D)
   vi.spyOn(HTMLCanvasElement.prototype, 'getBoundingClientRect').mockReturnValue({ width: 320.25, height: 240.25 } as DOMRect)
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.clearAllMocks() })
@@ -109,4 +109,54 @@ test('keyboard controls move and resize; drawing animation exposes no drag handl
   cleanup()
   render(<CompanionProjection proposal={proposal} aspect={4/3} turnDuration={1200} onEdit={onEdit} />)
   expect(screen.queryByRole('button',{name:'拖动 Nilo 的投影'})).toBeNull()
+})
+
+
+test('tracing draws neutral dashed paths with constant CSS width regardless of model brush or color', () => {
+  vi.mocked(proposalStrokes).mockReturnValue([{ kind: 'custom', color: '#ff0000', width: 20, brushKind: 'marker',
+    points: [{ x: .2, y: .2 }, { x: .5, y: .4 }] }])
+  render(<CompanionProjection proposal={proposal} aspect={4 / 3} tracing onEdit={vi.fn()} />)
+  const overlay = screen.getByLabelText('Nilo 的灰色虚线描摹底图')
+  const canvas = overlay.querySelector('canvas')!, ctx = canvas.getContext('2d')!
+  const scale = canvas.width / 320.25
+  expect(ctx.strokeStyle).toBe('#9ca3af')
+  expect(ctx.lineWidth).toBeCloseTo(1.6 * scale)
+  expect(ctx.setLineDash).toHaveBeenCalledWith([6 * scale, 5 * scale])
+  expect(ctx.stroke).toHaveBeenCalledOnce()
+  expect(createStrokePainter).not.toHaveBeenCalled()
+  expect(overlay.classList.contains('pointer-events-none')).toBe(true)
+  expect(screen.getAllByRole('button')).toHaveLength(2)
+})
+
+test('a trusted illustration stays a separate reference, preserves image proportions, and can be inspected or moved', () => {
+  vi.mocked(proposalStrokes).mockReturnValue([])
+  const imageProposal: DrawingProposal = { ...proposal, template: 'illustration', illustrationId: 'illustration-reading-child', subject: '读书的孩子', rotation: 20 }
+  const onEdit = vi.fn()
+  render(<CompanionProjection proposal={imageProposal} aspect={4 / 3} tracing onEdit={onEdit} />)
+  const overlay = screen.getByLabelText('Nilo 的插画参考底图')
+  const reference = overlay.querySelector('img')!
+  expect(reference.getAttribute('src')).toMatch(/^\/nilo-illustrations\//)
+  expect(reference.draggable).toBe(false)
+  expect(reference.style.transform).toBe('rotate(20deg)')
+  expect(reference.classList.contains('nilo-illustration-original')).toBe(false)
+  fireEvent.click(screen.getByRole('button', { name: '看原图' }))
+  expect(reference.classList.contains('nilo-illustration-original')).toBe(true)
+  expect(screen.getByRole('button', { name: '继续描画' }).getAttribute('aria-pressed')).toBe('true')
+  fireEvent.click(screen.getByRole('button', { name: '继续描画' }))
+  expect(reference.classList.contains('nilo-illustration-original')).toBe(false)
+  fireEvent.keyDown(screen.getByRole('button', { name: '拖动 Nilo 的投影' }), { key: 'ArrowRight' })
+  expect(onEdit).toHaveBeenCalledOnce()
+  expect(onEdit.mock.calls[0][0].width).toBe(proposal.width)
+  expect(createStrokePainter).not.toHaveBeenCalled()
+  expect(overlay.classList.contains('pointer-events-none')).toBe(true)
+})
+
+test('an illustration load failure leaves the canvas accessible and reports a recoverable missing reference', () => {
+  vi.mocked(proposalStrokes).mockReturnValue([])
+  render(<CompanionProjection proposal={{ ...proposal, template: 'illustration', illustrationId: 'illustration-reading-child' }} aspect={4 / 3} tracing onEdit={vi.fn()} />)
+  fireEvent.error(document.querySelector('img')!)
+  expect(screen.getByRole('status').textContent).toContain('参考图暂时没加载好')
+  expect(screen.getByRole('button', { name: '拖动 Nilo 的投影' })).toBeTruthy()
+  fireEvent.load(document.querySelector('img')!)
+  expect(screen.queryByRole('status')).toBeNull()
 })

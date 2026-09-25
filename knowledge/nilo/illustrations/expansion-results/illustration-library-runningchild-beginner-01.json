@@ -1,0 +1,34 @@
+{
+  "id": "illustration-library-runningchild-beginner-01",
+  "subject": "runningchild",
+  "name": "跑步的孩子",
+  "label": "迈步的小朋友",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "people",
+  "related": [
+    "character",
+    "person",
+    "runningchild"
+  ],
+  "aliases": [
+    "跑步的孩子",
+    "跑步的人",
+    "奔跑的孩子",
+    "running child"
+  ],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Create a standalone beginner picture-book OUTLINE drawing of ONE small child running, EMPTY HANDED. Full body, three head heights, a plain short-sleeved T-shirt, plain shorts and very simple rounded shoes. One leg steps forward, one backward; both arms bent gently to swing, connected naturally to the shoulders. A happy readable face, hair as three broad locks. No toy, no teddy bear, no ball, no backpack, no held object whatsoever. Only the child. Very few spacious, confident black outline strokes, smooth WHITE empty interiors, NO gray shading, no clothing folds, no shoelaces or decorative marks. White background, generous margin, complete feet and hands visible, square raster artwork. The image must be extremely simple but graceful, not a geometric stick figure. No text or numbers.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-f9147525-45cc-43e0-b583-f52e72c65125.png",
+  "src": "/nilo-illustrations/illustration-library-runningchild-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-hamster-medium-01",
+  "subject": "hamster",
+  "name": "小仓鼠",
+  "label": "探身的小仓鼠",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "animal",
+  "related": [
+    "animal",
+    "home",
+    "seed",
+    "garden"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. Pure white background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: a clean elegant outline picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Only a few meaningful inner structures, without intricate texture or dense repeated marks. One Syrian hamster standing on hind feet, nose lifted, front paws gently raised, cheek pouches and short fur indicated with three soft contour tufts. Final line-work constraint: clean coloring-page contours, empty uniformly white interiors, no gray fill or highlights, no fine repeated texture. Medium complexity comes from a few meaningful structures, never shading. Smooth open contours and empty interiors: absolutely no fur strokes, hair, feather texture, scales or hatching. Keep 10 percent clear space on every side.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-6a53a72c-a220-44f0-9dd5-682832d39a6d.png",
+  "src": "/nilo-illustrations/illustration-library-hamster-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

@@ -53,3 +53,35 @@ test('corrupt data and unsafe or non-finite document values cannot reach the can
     expect(readStoredDraft('alice',null)).toBeNull()
   }
 })
+
+
+test('a guide-only draft recovers without fabricating ink, and a malformed guide cannot discard child strokes', () => {
+  const draft = drawing()
+  const document = draft.canvas.document!
+  draft.tracingGuide = { aspect: 4 / 3, additions: [], proposal: { template: 'sun', x: .3, y: .3,
+    width: .2, height: .2, rotation: 0, color: '#123456', strokeWidth: 4, target: '画纸', relation: '描摹太阳' } }
+  document.operations = []
+  expect(persistChildDraft('alice', null, draft)).toBe(true)
+  expect(readStoredDraft('alice', null)?.tracingGuide).toEqual(draft.tracingGuide)
+  expect(readStoredDraft('alice', null)?.canvas.document?.operations).toEqual([])
+  const key = sessionStorage.key(0)!, raw = JSON.parse(sessionStorage.getItem(key)!)
+  raw.tracingGuide.proposal.width = 10
+  sessionStorage.setItem(key, JSON.stringify(raw))
+  expect(readStoredDraft('alice', null)?.tracingGuide).toBeUndefined()
+  expect(readStoredDraft('alice', null)?.canvas.document).toEqual(document)
+})
+
+test('an illustration draft restores its trusted ID and frame separately from the child drawing', () => {
+  const draft = drawing()
+  draft.tracingGuide = { aspect: 4 / 3, additions: [], proposal: { template: 'illustration', illustrationId: 'illustration-reading-child', subject: '读书的孩子', x: .2, y: .2,
+    width: .25, height: .3, rotation: 12, color: '#123456', strokeWidth: 4, target: '画纸', relation: '观察读书的孩子' } }
+  expect(persistChildDraft('alice', null, draft)).toBe(true)
+  expect(readStoredDraft('alice', null)?.tracingGuide).toEqual(draft.tracingGuide)
+  const key = sessionStorage.key(0)!, saved = sessionStorage.getItem(key)!
+  expect(saved).not.toContain('/nilo-illustrations/')
+  const untrusted = JSON.parse(saved)
+  untrusted.tracingGuide.proposal.illustrationId = 'https://external.test/img.png'
+  sessionStorage.setItem(key, JSON.stringify(untrusted))
+  expect(readStoredDraft('alice', null)?.tracingGuide).toBeUndefined()
+  expect(readStoredDraft('alice', null)?.canvas.document).toEqual(draft.canvas.document)
+})

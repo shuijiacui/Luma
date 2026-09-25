@@ -94,3 +94,82 @@ test('shortcut respects solo mode, a missing image, cancellation and multi-eleme
   await run('换成星星', { currentProposal: previous, currentAdditions: [{ ...previous, x: .6 }] }, { chatWithImage: model })
   expect(model).toHaveBeenCalledTimes(2)
 })
+
+test.each([
+ ['画一只可爱的小水豚','capybara'],['帮我画一个小仓鼠','hamster'],
+ ['画一个小猫','cat'],['画一个圆圆的小蘑菇','mushroom'],['draw a cute red panda please','redpanda'],
+])('tracing speech selects the matching beginner PNG: %s',async(utterance,id)=>{
+ const vision=vi.fn(),text=vi.fn()
+ const result=await run(utterance,{tracingGuide:true,canvasSize:{width:900,height:600}},{chatWithImage:vision,chatText:text})
+ expect(result.status).toBe('ready')
+ expect(result.proposal.template).toBe('illustration')
+ expect(result.proposal.illustrationId).toBe(`illustration-library-${id}-beginner-01`)
+ expect(result.proposal.sketch).toBeUndefined()
+ expect(Math.min(result.proposal.width*900,result.proposal.height*600)).toBeGreaterThanOrEqual(143.99)
+ expect(result.reply).toContain('参考图')
+ expect(result.reply).not.toContain('留下来')
+ expect(vision).not.toHaveBeenCalled();expect(text).not.toHaveBeenCalled()
+})
+
+test('tracing shortcut honors corners and explicit re-requests after clearing',async()=>{
+ const vision=vi.fn()
+ const result=await run('画一个小水豚，放在右下角',{tracingGuide:true,recentRecipeIds:['capybara-0'],rejectedSubjects:['水豚']},{chatWithImage:vision})
+ expect(result.proposal?.illustrationId).toBe('illustration-library-capybara-beginner-01')
+ expect(result.proposal.x+result.proposal.width).toBeCloseTo(.96);expect(result.proposal.y+result.proposal.height).toBeCloseTo(.96)
+ expect(result.placementLocked).toBe(true)
+ expect(vision).not.toHaveBeenCalled()
+})
+
+test.each(['不要画小水豚','画一个小水豚再画一只猫','画一个水豚怪兽','画一个站着的小仓鼠','draw a red panda with wings'])('new recipes keep complex requests out of the shortcut: %s',text=>{
+ expect(parseSimpleDrawingRequest(text,true)).toBeNull()
+})
+
+test.each([{width:180,height:180},{width:320,height:600},{width:600,height:320}])('PNG guides remain valid on a small canvas: %j',async canvasSize=>{
+ const model=vi.fn()
+ const result=await run('画一个小水母',{tracingGuide:true,canvasSize,canvasAspect:canvasSize.width/canvasSize.height},{chatWithImage:model})
+ expect(result.proposal?.illustrationId).toBe('illustration-library-jellyfish-beginner-01')
+ expect(result.proposal.width).toBeLessThanOrEqual(.9)
+ expect(result.proposal.height).toBeLessThanOrEqual(.9)
+ expect(result.proposal.width*result.proposal.height).toBeLessThanOrEqual(.810001)
+ expect(result.proposal.width*canvasSize.width/result.proposal.height/canvasSize.height).toBeCloseTo(1)
+ expect(model).not.toHaveBeenCalled()
+})
+
+test.each([
+ ['画一个写实风的学校','illustration-school'],['画一个精美风的花瓶','illustration-library-vase-medium-01'],['画一个可爱的消防员','illustration-library-firefighter-beginner-01'],
+ ['draw a realistic railway station','illustration-library-railwaystation-medium-01'],['画一个精致的奶奶','illustration-library-grandmother-medium-01'],
+ ['画一朵写实风的牡丹','illustration-library-peony-medium-01'],['画一个精美风的书架','illustration-library-bookshelf-medium-01'],
+])('explicit subject and style select the exact authored variant without a model call: %s',async(utterance,id)=>{
+ const model=vi.fn()
+ const result=await run(utterance,{tracingGuide:true,canvasSize:{width:900,height:600}},{chatWithImage:model})
+ expect(result.proposal?.illustrationId??result.proposal?.recipeId).toBe(id)
+ expect(model).not.toHaveBeenCalled()
+})
+
+test('explicit style never silently falls back to cute, including after both variants were used',async()=>{
+ expect(parseSimpleDrawingRequest('画一个写实风的小水豚',true)).toBeNull()
+ for(const text of ['不要画写实风的学校','画一个写实风的学校再画一个精美风的花瓶','draw a realistic school with wings'])expect(parseSimpleDrawingRequest(text,true)).toBeNull()
+ const result=await run('画一个写实风的学校',{tracingGuide:true,recentRecipeIds:['school-4','school-5']})
+ expect(result.proposal?.illustrationId??result.proposal?.recipeId).toBe('illustration-school')
+})
+
+test.each([['画一座学校','illustration-library-school-beginner-01'],['画一个奶奶','illustration-library-grandmother-beginner-01'],['画一朵牡丹','illustration-library-peony-beginner-01'],['画一座学校，像真的一样','illustration-school'],['画一个圆圆的小蘑菇','illustration-library-mushroom-beginner-01']])('children can name a subject or ordinary detail preference: %s',async(utterance,id)=>{
+ const model=vi.fn()
+ const result=await run(utterance,{tracingGuide:true,canvasSize:{width:900,height:600}},{chatWithImage:model})
+ expect(result.proposal?.illustrationId??result.proposal?.recipeId).toBe(id)
+ expect(result.reply).not.toMatch(/精美|写实|风格|storybook|realistic|illustrated/)
+ expect(model).not.toHaveBeenCalled()
+})
+
+test('ordinary feedback preserves the guide subject, pose and placement over the child tracing',async()=>{
+ const first=await run('画一个精美风的火车站',{tracingGuide:true,canvasSize:{width:900,height:600},recentRecipeIds:['railwaystation-2']})
+ const previous={...first.proposal,x:.24,y:.3,width:.24,height:.31,rotation:12}
+ const model=vi.fn()
+ const result=await run('像真的一样',{tracingGuide:true,currentProposal:previous,canvasSize:{width:900,height:600},inkGrid:Array(64).fill(1)},{chatWithImage:model})
+ expect(result.proposal?.illustrationId).toBe('illustration-library-railwaystation-medium-01')
+ expect(result.proposal.x+result.proposal.width/2).toBeCloseTo(previous.x+previous.width/2)
+ expect(result.proposal.y+result.proposal.height/2).toBeCloseTo(previous.y+previous.height/2)
+ expect(result.proposal.rotation).toBe(12)
+ expect(result.placementLocked).toBe(true)
+ expect(model).not.toHaveBeenCalled()
+})

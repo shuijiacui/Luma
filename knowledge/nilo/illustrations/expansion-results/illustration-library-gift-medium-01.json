@@ -1,0 +1,32 @@
+{
+  "id": "illustration-library-gift-medium-01",
+  "subject": "gift",
+  "name": "礼物",
+  "label": "圆筒礼物盒",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "object",
+    "toy",
+    "party",
+    "birthday",
+    "gift",
+    "礼物"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Square children's coloring-page illustration: one graceful round cylindrical gift box seen in gentle three-quarter view, closed fitted oval lid, one broad ribbon around the body and one elegant two-loop bow above. A single blank tag hangs beside the bow. Clean hand-drawn black contour lines, pure flat white inside every shape, pure flat white background. Absolutely no gray, shadows, rendering, highlights, texture, tone or pattern. No transparent or shaded patches. The curves and joined shapes give the visual interest. Whole object completely visible and centered at 75 percent canvas height with wide white margins on every side. No text or scene. Medium drawing reference with only clear meaningful structures, original design.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-5ff55f2b-a69e-4def-917d-82ab297e435f.png",
+  "src": "/nilo-illustrations/illustration-library-gift-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

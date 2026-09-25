@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-sun-medium-01",
+  "subject": "sun",
+  "name": "太阳",
+  "label": "长短光芒的太阳",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "landscape",
+    "sky",
+    "sun",
+    "day",
+    "太阳"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One beautifully drawn sun disc with alternating long tapered and short curved rays, twelve broad rays total, a sparse expressive face, no sky. Draw flat pure black contour artwork on pure WHITE, NO gray shading, gradients, hatching or fine texture. All interiors completely WHITE. ONE square image with ample margins. Draw only the requested subject/composition. Keep beginner very simple and medium thoughtfully detailed, legible and spacious.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-bed1ae01-3f0b-4544-81e7-57c035d933a7.png",
+  "src": "/nilo-illustrations/illustration-library-sun-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

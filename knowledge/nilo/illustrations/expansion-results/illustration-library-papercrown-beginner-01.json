@@ -1,0 +1,29 @@
+{
+  "id": "illustration-library-papercrown-beginner-01",
+  "subject": "papercrown",
+  "name": "纸皇冠",
+  "label": "三角纸皇冠",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "fantasy",
+  "related": [
+    "fantasy",
+    "character",
+    "play"
+  ],
+  "aliases": [],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Create ONE standalone PAPER CROWN OBJECT ONLY as a beginner drawing reference. The subject is the crown itself, with nobody wearing it. A charming hand-drawn cut-paper crown with exactly THREE wide triangular peaks and ONE curved band at the bottom. One simple unfilled circle in the middle of the band, no other decoration. Show its gently oval opening in a simple three-quarter view. Elegant rounded joins, bold graceful black contour strokes on pure white, white empty interiors, no shading or textures. Center the complete crown in a square composition with 15 percent whitespace margins. No person, no child, no head, no face, no hands, no teddy bear, no toys, no gems, no surrounding objects. No letters, no numbers, no watermark. This must be very easy for a young child to trace, with a total of only a few spacious outlines.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-2e858e9a-0f8e-4e67-ae60-d9d34d5f2e96.png",
+  "src": "/nilo-illustrations/illustration-library-papercrown-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

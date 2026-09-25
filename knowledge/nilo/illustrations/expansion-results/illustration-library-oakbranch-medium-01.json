@@ -1,0 +1,33 @@
+{
+  "id": "illustration-library-oakbranch-medium-01",
+  "subject": "oakbranch",
+  "name": "橡树枝",
+  "label": "三叶橡树枝",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "botanical",
+  "related": [
+    "botanical",
+    "plant",
+    "garden",
+    "植物"
+  ],
+  "aliases": [
+    "橡树",
+    "oak branch"
+  ],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One curved oak branch with three differently angled lobed leaves and two acorns in clear cups, sparse leaf veins and no bark texture.\nComplete subject centered with generous 12% blank margins. Clean single contours and mostly empty interiors, no shading. An acorn cup is indicated by its boundary and at most three short curves, not a grid or scale texture. Only a few large leaf veins.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-2c1a7104-e2ea-43cd-b9b0-6a5f4c9f9af8.png",
+  "src": "/nilo-illustrations/illustration-library-oakbranch-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

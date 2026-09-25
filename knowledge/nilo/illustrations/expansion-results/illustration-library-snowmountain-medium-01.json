@@ -1,0 +1,34 @@
+{
+  "id": "illustration-library-snowmountain-medium-01",
+  "subject": "snowmountain",
+  "name": "雪山",
+  "label": "双峰雪山",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "landscape",
+  "related": [
+    "landscape",
+    "landscape",
+    "nature",
+    "风景"
+  ],
+  "aliases": [
+    "雪山风景",
+    "snow mountain"
+  ],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. Two natural snow mountains at different depths, clear ridges and broad snow shapes, a low foreground slope and no hatching.\nSTRICT: black contour strokes on a PURE WHITE background only. Interior shapes are solid pure white. Exactly two peaks, TWO broad angular snowcap shapes, THREE ridge lines and ONE low foreground curve. Total at most 15 outline strokes. No trees, no lake, no plants, absolutely NO gray wash, gradients, filled shadows, charcoal smudges, texture or hatching.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-d54c5113-7714-4d0a-83eb-d72551b26ad5.png",
+  "src": "/nilo-illustrations/illustration-library-snowmountain-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true,
+  "supersededSourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-7491e7d4-bd13-43ad-829a-30fb50181d2a.png"
+}

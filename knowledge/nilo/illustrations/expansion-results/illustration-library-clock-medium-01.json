@@ -1,0 +1,32 @@
+{
+  "id": "illustration-library-clock-medium-01",
+  "subject": "clock",
+  "name": "时钟",
+  "label": "摆钟",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "object",
+    "home",
+    "school",
+    "time",
+    "时钟",
+    "闹钟"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. Pure white background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: a clean elegant outline picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Only a few meaningful inner structures, without intricate texture or dense repeated marks. One compact mantel pendulum clock with a shaped wooden case, clear clock dial with four marks, a visible pendulum window and broad base. Final line-work constraint: clean coloring-page contours, empty uniformly white interiors, no gray fill or highlights, no fine repeated texture. Medium complexity comes from a few meaningful structures, never shading. Show only the specified object itself: no person, child, hands or scene around it.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-3f71a1c8-b94d-453a-9bea-7236bb86fc27.png",
+  "src": "/nilo-illustrations/illustration-library-clock-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

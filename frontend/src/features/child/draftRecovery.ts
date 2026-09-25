@@ -2,6 +2,7 @@ import { validateDrawingDocument } from '../../../../shared/niloDocument.mjs'
 import { BRUSHES } from './brushes'
 import type { CanvasDocument } from './canvasDocument'
 import type { ChildDraft } from './draft'
+import { validateTracingGuide } from './companion/tracingGuide'
 
 const MAX_LENGTH = 3_000_000
 const key = (owner: string, artwork: string | null) => `luma_canvas_draft_v1:${JSON.stringify([owner, artwork])}`
@@ -21,12 +22,12 @@ export function persistChildDraft(owner: string, artwork: string | null, draft: 
   try {
     const document = draft.canvas.document
     const legacyImage = draft.canvas.history.at(-1)
-    if (document ? !document.baseImage && !document.operations.length : !legacyImage) return discardStoredDraft(owner, artwork)
+    if (!draft.tracingGuide && (document ? !document.baseImage && !document.operations.length : !legacyImage)) return discardStoredDraft(owner, artwork)
     // Do not duplicate the full raster when replayable strokes exist, or store
     // analysis, pending requests, voice, or conversation in a recovery draft.
     const value = { version: 1, owner, artwork, document, image: document ? undefined : legacyImage,
       color: draft.color, brushSize: draft.brushSize, brushKind: draft.brushKind, isEraser: draft.isEraser,
-      artworkId: draft.artworkId, artworkRevision: draft.artworkRevision }
+      artworkId: draft.artworkId, artworkRevision: draft.artworkRevision, tracingGuide: draft.tracingGuide }
     const json = JSON.stringify(value)
     if (json.length > MAX_LENGTH) return false
     sessionStorage.setItem(key(owner, artwork), json)
@@ -47,6 +48,6 @@ export function readStoredDraft(owner: string, artwork: string | null): ChildDra
     return { canvas: { history: value.document ? [''] : [value.image as string], document: value.document as CanvasDocument | undefined },
       color: value.color as string, brushSize: value.brushSize, brushKind: value.brushKind as ChildDraft['brushKind'],
       isEraser: value.isEraser, artworkId: value.artworkId as string | undefined, artworkRevision: value.artworkRevision as number | undefined,
-      features: null, bubble: null }
+      tracingGuide: validateTracingGuide(value.tracingGuide) ?? undefined, features: null, bubble: null }
   } catch { return null }
 }

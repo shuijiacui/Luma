@@ -1,6 +1,7 @@
 import { visibleOperations, type CanvasDocument, type NiloObjectData } from '../canvasDocument'
 import { validateProposal, type DrawingProposal } from './proposals'
-import { getDrawingRecipe, drawingRecipes, matchingRecipeSubjects } from '../../../../../shared/niloRecipes.mjs'
+import { getDrawingRecipe, matchingRecipeSubjects } from '../../../../../shared/niloRecipes.mjs'
+import { nextDrawingVariant } from '../../../../../shared/niloVariants.mjs'
 
 export interface EditableNiloObject extends NiloObjectData { id: string; legacy?: boolean }
 export function editableObjects(document: CanvasDocument): EditableNiloObject[] {
@@ -57,11 +58,8 @@ export function resolveObject(text:string,objects:EditableNiloObject[],explicitO
   if(/刚才|上一个|最后|that|it|last|recent|小一点|大一点|往|向|smaller|larger|bigger/.test(s))return objects.slice(-1)
   return objects.length===1?objects:objects
 }
-export function changeVariant(p:DrawingProposal):DrawingProposal|null {
-  const recipe=getDrawingRecipe(p.recipeId??'')
-  if(!recipe)return null
-  const choices=drawingRecipes.filter(r=>r.subject===recipe.subject),next=choices[(choices.findIndex(r=>r.id===recipe.id)+1)%choices.length]
-  return validateProposal({...p,recipeId:next.id,sketch:structuredClone(next.sketch)})
+export function changeVariant(p:DrawingProposal,aspect?:number):DrawingProposal|null {
+  return validateProposal(nextDrawingVariant(p,aspect))
 }
 export function changePart(p:DrawingProposal,part:string,factor:number):DrawingProposal|null {
   const recipe=getDrawingRecipe(p.recipeId??''),indices=recipe?.parts[part]??recipe?.parts[`${part}s`]

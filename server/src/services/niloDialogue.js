@@ -4,6 +4,7 @@ import { decodeOccupancy } from '../../../shared/niloOccupancy.mjs'
 import { validateContact } from '../../../shared/niloContact.mjs'
 import { generateCreativeTurn } from './niloCreativeTurn.js'
 import { creativeIdeationPrompt, sanitizeCreativeIdea, retrieveIdeaRecipes } from './niloIdeaFirst.js'
+import { storybookDrawingStyle } from './niloDrawingStyle.js'
 import { generateProtocolTurn } from './niloProtocolTurn.js'
 import { drawingInkContacts } from './niloContactPlacement.js'
 import { readDrawingLayout } from './niloDrawingLayout.js'
@@ -15,12 +16,19 @@ import { chatWithImage as defaultVision, chatText as defaultText, llmConfig, LLM
 import { traceNode } from './tracing.js'
 import { validateCustomSketch, withinDrawingGroupBudget } from './niloSketch.js'
 import { parseSimpleDrawingRequest, planSimpleDrawing } from './simpleDrawing.js'
+import { planIllustrationDrawing } from './niloIllustrationDrawing.js'
+import { refreshMaterialCuration } from './niloCurationStore.js'
+import { isMaterialEnabled } from '../../../shared/niloCuration.mjs'
 import { buildDrawingSkillPrompt } from './niloDrawingSkills.js'
 import { expandDrawingPart } from './niloParts.js'
 import { approvesCoCreation, attachedLeafDetail, buildCoCreationPrompt, buildCoCreationReviewPrompt, buildCoCreationCorrectionPrompt, coCreationReviewFailure, turnAttentionFailure, continuationFailure, contourDetail, groundAttachment, hasGroundedTurn, normalizeTurnSketch, uncertainTurnReply, turnGroundingConfidence } from './niloCoCreation.js'
 import { AGE_BANDS, niloAgeGuidance, niloAgeClarification } from './niloAgeGuidance.js'
+import { niloReplyStyle } from './niloReplyStyle.js'
+import { generateNiloVariation } from './niloVariation.js'
+import { getDrawingIllustration } from '../../../shared/niloIllustrations.mjs'
+import { sameDrawingSubject } from '../../../shared/niloVariants.mjs'
 
-export const NILO_TEMPLATES = ['waves', 'fish', 'leaf', 'window', 'stars', 'cloud', 'flower', 'trail', 'flame', 'rain', 'grass', 'echo', 'sun', 'moon', 'tree', 'mountain', 'house', 'boat', 'bird', 'butterfly', 'heart', 'custom']
+export const NILO_TEMPLATES = ['waves', 'fish', 'leaf', 'window', 'stars', 'cloud', 'flower', 'trail', 'flame', 'rain', 'grass', 'echo', 'sun', 'moon', 'tree', 'mountain', 'house', 'boat', 'bird', 'butterfly', 'heart', 'custom', 'illustration']
 export const NILO_BRUSH_KINDS = ['round', 'pencil', 'marker', 'crayon', 'star']
 export const NILO_PLACEMENTS = ['above', 'below', 'left', 'right', 'inside', 'near']
 export const NILO_DIALOGUE_MAX_TOKENS = 3600
@@ -88,7 +96,7 @@ function requestedStyleChanges(utterance = '') {
 
 export function sanitizeDialogueContext(input = {}) {
   // Custom objects have individual subject memory; rejecting one must never disable all custom sketches.
-  const templates = list => Array.isArray(list) ? [...new Set(list.filter(item => item !== 'custom' && NILO_TEMPLATES.includes(item)))].slice(-12) : []
+  const templates = list => Array.isArray(list) ? [...new Set(list.filter(item => !['custom', 'illustration'].includes(item) && NILO_TEMPLATES.includes(item)))].slice(-12) : []
   const subjects = list => Array.isArray(list) ? [...new Set(list.filter(validSubject).map(item => item.trim()))].slice(-4) : []
   const point = p => p && typeof p.x === 'number' && typeof p.y === 'number' && p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1
   const lastStroke = Array.isArray(input?.lastStroke?.points) ? input.lastStroke.points.slice(-24).filter(point).map(({ x, y }) => ({ x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000 })) : []
@@ -103,6 +111,10 @@ export function sanitizeDialogueContext(input = {}) {
     ? validateProposal(input.renderFeedback.proposal, { canvasAspect }) : null
   const currentAdditions = currentProposal && Array.isArray(input?.currentAdditions) && input.currentAdditions.length <= 3
     ? input.currentAdditions.map(item => validateProposal(item, { canvasAspect })) : []
+  const validVariantGroup = currentProposal && (input?.currentAdditions === undefined
+    || (Array.isArray(input.currentAdditions) && input.currentAdditions.length <= 3))
+    && currentAdditions.every(Boolean) && withinDrawingGroupBudget([currentProposal, ...currentAdditions])
+    && [currentProposal, ...currentAdditions].reduce((area, item) => area + (item.template === 'illustration' ? 0 : item.width * item.height), 0) <= .24
   return {
     locale: input?.locale === 'en' ? 'en' : 'zh',
     ageBand: AGE_BANDS.includes(input?.ageBand) ? input.ageBand : null,
@@ -114,7 +126,9 @@ export function sanitizeDialogueContext(input = {}) {
       return ['user', 'assistant'].includes(item?.role) && text ? [{ role: item.role, text }] : []
     }) : [],
     requestDrawing: input?.requestDrawing === true,
-    recentRecipeIds: Array.isArray(input?.recentRecipeIds)?input.recentRecipeIds.filter(x=>typeof x==='string'&&/^[a-z]+-[0-9]+$/.test(x)).slice(-12):[],
+    variantOnly: input?.variantOnly === true && input?.requestDrawing === true && input?.takeTurn !== true && !!validVariantGroup,
+    tracingGuide: input?.tracingGuide === true,
+    recentRecipeIds: Array.isArray(input?.recentRecipeIds)?input.recentRecipeIds.filter(x=>typeof x==='string'&&(/^[a-z]+-[0-9]+$/.test(x)||getDrawingIllustration(x))).slice(-12):[],
     takeTurn: input?.takeTurn === true && input?.requestDrawing === true,
     useDrawingKnowledge: input?.useDrawingKnowledge === true && input?.takeTurn === true && input?.requestDrawing === true,
     turnScope: input?.turnScope === 'scene' && input?.takeTurn === true && input?.requestDrawing === true ? 'scene' : 'latest',
@@ -170,7 +184,8 @@ export function dialogueFallback(context, reason = 'invalid_response') {
 export function buildDialoguePrompt(context, hasImage) {
   const style = preferredStyle(context)
   if (context.takeTurn && hasImage) return `${speechUnderstandingRules}
-${buildCoCreationPrompt(context, NILO_TEMPLATES)}`
+${niloReplyStyle(context)}
+${buildCoCreationPrompt(context, NILO_TEMPLATES.filter(t=>t!=='illustration'))}`
   const drawingSkills = hasImage && (context.requestDrawing || context.inferDrawingIntent) ? buildDrawingSkillPrompt('plan') : ''
 
   return `${speechUnderstandingRules}
@@ -179,20 +194,22 @@ AGE-ADAPTED CONVERSATION (wording only, never restrict drawing subjects or geome
 ${drawingSkills}
 The child's own story takes priority over visual appearance: a boat called a spaceship must be treated as a spaceship. Theme must only be an exact excerpt of the child's latest utterance expressing their story, or the existing theme; never invent a theme from Nilo's additions or assistant history. Do not repeat rejected ideas or insist on them. If unsure, ask once or quietly stay with the child. Never pretend to have painted or committed anything.
 ${hasImage ? (context.imageProvenance === 'child' ? 'The image contains the separated child-authored layer (not proof of their feelings).' : 'The image has mixed or unknown authorship. Some objects may have been drawn by AI or imported; do not attribute them to the child or infer their intentions. Only the child\'s explicit statements establish the story.') + ' Understand the visible scene and existing contributions before choosing a related contribution; do not add objects already present unless the child requests more.' : 'No image was supplied. Do not claim you can see objects or choose a placement. Return a reply with no proposal.'}
+${storybookDrawingStyle}
 First classify this turn as intent: draw|edit|chat|clarify|stop, then understand the requested subject, color and spatial relationship, then choose geometry. Include intent and confidence (0–1, your uncertainty about the intended subject/action; not a measured accuracy score) in the JSON. Greetings, praise, questions about the picture, and descriptions of what the child is drawing are chat, not invitations. A new drawing needs a request/invitation; an edit needs a current preview and a request to change it. Without a current preview, a named request such as “再换一个星星” means draw a new preview of the requested star; never discard it as an impossible edit or substitute fish. With a preview, “换成X / 换一个X” names the desired replacement X, not an object to remove in favor of something unrelated. Short natural requests such as “画太阳” and “可以给它一个朋友吗” can be draw; “我自己画，你看着” is chat. Respect negation and corrections. Do not silently change an uncertain speech recognition word into a different object: ask a brief specific question with intent=clarify and no proposal. If confidence is below 0.5, clarify instead of guessing. Never interpret intent as permission to commit a preview.
 Drawing permission=${context.requestDrawing || context.inferDrawingIntent}. When false, omit proposal, additions AND alternatives, even if the child asks for drawing. When true AND an image is present AND intent is draw or edit, offer a proposal related to a visible target OR the child's explicit request/story. A client requestDrawing hint is not proof of intent; read the utterance and recent history. If the child asks for a supported element on a blank or sparse canvas, you may preview that requested element in a clear area; an existing recognizable object is not required. For an open request to co-create, prefer one small contribution that develops the existing subject. Only when the child explicitly requests a scene or several parts may you include related additions, never more than 4 total. Each addition must help the SAME story, not fill arbitrary empty space. For a request for one object/detail or a small edit, supply only the requested change, with no unsolicited scenery. Abstract art may receive an echo of an existing line; do not force it into a real-world object. A rejection or request to stop must yield no proposal or additions. If genuinely uncertain or crowded, ask one specific question about the visible line or child's story instead of saying "I have not thought of anything". Never a random decorative fallback.
-Templates: ${NILO_TEMPLATES.join(', ')}. The 21 built-in templates are reusable geometry, NOT a limit on what can be drawn. Reuse a built-in only when it truly depicts the requested subject. Otherwise use custom: a dinosaur request needs the dinosaur's real recognizable structure, never a fish standing in for it; a robot or rocket must not be replaced with flowers or stars. waves go below a boat in water (not a spaceship); flame can be a small spaceship exhaust; window only if the child wants it; leaf relates to a plant; fish belongs in explicitly supported water; stars only if consistent with the story; echo/trail continues a specific line. sun and moon belong to an appropriate sky; tree/mountain/house/boat/bird/butterfly/heart need an equally concrete requested or visible relationship. For example, an explicitly requested garden may include a flower and butterfly nearby; a boat scene may have ripples below and a fish in its water. These are examples, not fallback plans. Avoid merely attaching pleasant shapes to an empty corner.
+Templates: ${NILO_TEMPLATES.filter(t=>t!=='illustration').join(', ')}. The 21 built-in templates are reusable geometry, NOT a limit on what can be drawn. Reuse a built-in only when it truly depicts the requested subject. Otherwise use custom: a dinosaur request needs the dinosaur's real recognizable structure, never a fish standing in for it; a robot or rocket must not be replaced with flowers or stars. waves go below a boat in water (not a spaceship); flame can be a small spaceship exhaust; window only if the child wants it; leaf relates to a plant; fish belongs in explicitly supported water; stars only if consistent with the story; echo/trail continues a specific line. sun and moon belong to an appropriate sky; tree/mountain/house/boat/bird/butterfly/heart need an equally concrete requested or visible relationship. For example, an explicitly requested garden may include a flower and butterfly nearby; a boat scene may have ripples below and a fish in its water. These are examples, not fallback plans. Avoid merely attaching pleasant shapes to an empty corner.
 For template="custom", include subject (a concise name, trimmed length 1–60, in the reply language) and sketch:{aspect,paths}, with ONLY those two sketch fields. aspect is the natural PHYSICAL width/height ratio, between 0.2 and 5. paths is an array of 1–24 paths in the object's local [0,1] square. Each path is a compact array of numeric tuples: ["M",x,y], ["L",x,y], ["Q",cx,cy,x,y], ["C",c1x,c1y,c2x,c2y,x,y], and optional closing ["Z"]. A normal path starts with its sole M and includes at least one nondegenerate L/Q/C; Z can only be last. A complete ellipse uses a separate one-command path [["E",cx,cy,rx,ry]], positive radii, with the entire ellipse within [0,1]. All coordinates and control points are finite numbers in [0,1]. Never use objects for commands, SVG strings, arc/transform commands, executable code or point clouds. No more than 32 commands per path or 96 commands per custom object; no more than 192 custom commands across the whole group. Each path is one stroke; combined built-in and custom strokes across the group must be <=64. Built-in path counts (JSON mapping from template name to stroke count): {"waves":2,"fish":3,"leaf":5,"window":3,"stars":2,"cloud":1,"flower":8,"trail":2,"flame":2,"rain":6,"grass":6,"echo":1,"sun":9,"moon":1,"tree":6,"mountain":5,"house":5,"boat":4,"bird":7,"butterfly":7,"heart":1}. Use ONLY the exact template names listed above; counts are metadata, never append them to names (use "waves", never "waves2"). Non-custom objects must OMIT subject and sketch.
 Build a recognizable custom object from a clear outer silhouette plus 2–5 identifying details, using economical curves rather than a long list of points. Keep ALL of one object's parts inside that SAME sketch, not independent additions. Use canvasSize and the inherited strokeWidth to judge visible detail: with thick strokes or a small screen, simplify details and leave enough separation between eyes/windows/limbs that they do not merge; never secretly switch to a thinner brush. Preserve natural aspect and the child's requested identity. If an intricate request cannot be made recognizable within these limits, offer one specific simplified interpretation and ask, rather than substituting an unrelated template. recentSubjects and rejectedSubjects name distinct custom objects; do not repeat a rejected subject unless the child explicitly requests that same subject again. Rejecting one custom subject NEVER disables all custom objects.
 Local sketch coordinates also scale by sketch.aspect. For a PHYSICALLY circular E, choose rx*sketch.aspect == ry (rx==ry is only circular when aspect==1). For a physically square feature, localWidth*sketch.aspect == localHeight. Apply the same physical proportions to eyes, windows and other details; intentional ellipses should stay elliptical, not automatically be made circles.
 Custom format example ONLY (a simplified upright rocket): {"template":"custom","subject":"rocket","sketch":{"aspect":0.65,"paths":[[["M",0.5,0.05],["Q",0.12,0.3,0.22,0.78],["L",0.78,0.78],["Q",0.88,0.3,0.5,0.05],["Z"]],[["E",0.5,0.4,0.12,0.09]],[["M",0.22,0.6],["L",0.05,0.92],["L",0.27,0.83]],[["M",0.78,0.6],["L",0.95,0.92],["L",0.73,0.83]]]}}. Supply the regular box/style/target/relation fields as well. This example teaches the tuple format, not a default suggestion.
 Proposal coordinates x,y,width,height are normalized box left/top/width/height. Keep width and height between 0.025 and 0.45, each area <=0.16, SUM of primary and additions areas <=0.24, entire rotated box in [0,1]. Rotation is degrees [-180,180]. color is #rrggbb; strokeWidth is CSS pixels [1,32]. Optional brushKind is round/pencil/marker/crayon/star. Do not obscure the child's subject or another proposed element. target and relation are concise explanations in the reply language (required for EVERY element). When referring to a visible object, give anchor:{x,y,width,height}, the actual normalized bounding box of that target, and placement:above|below|left|right|inside|near. Anchors can refer to existing child OR confirmed Nilo objects; do not mislabel authorship. Anchor is NOT the new element's box. Use the image to identify an individual target; a scene-wide bounds rectangle is not automatically that target. Keep additions appropriately scaled to the target: details much smaller than it; small neighbors smaller than or comparable to it; waves may span a boat's width but stay shallow. Use canvasSize CSS dimensions or canvasAspect for PHYSICAL proportions: a circle needs width*canvasWidth == height*canvasHeight, not equal normalized dimensions on a wide canvas. Keep recognizable physical proportions; never a stretched fish, flat sun or miniature mismatched decoration. The client may preserve each template's natural aspect and adjust placement locally while keeping the target relationship.
-The preview will be checked locally and needs the child's explicit confirmation AS A GROUP. Describe the whole proposal briefly as a preview, never a finished change. additions is an array of at most 3 further proposal objects. Omit additions when unnecessary. You may provide at most one alternative with a different supported template or different custom subject ONLY for a single-element preview; never combine alternatives with additions. Output only the specified JSON data; no HTML, SVG, executable code, acceptance actions or extra fields.
+${context.tracingGuide ? "The proposal appears as a gray dashed tracing guide underneath the child's pen. It stays until the child clears or replaces it; there is no acceptance step. Invite the child to trace and learn. Moving or resizing changes only the guide. Never say that model paths were added to the artwork or tell the child to press keep/accept. currentProposal/currentAdditions describe this guide, which is absent from the authored-ink image." : "The preview will be checked locally and needs the child's explicit confirmation AS A GROUP. Describe the whole proposal briefly as a preview, never a finished change."} additions is an array of at most 3 further proposal objects. Omit additions when unnecessary. You may provide at most one alternative with a different supported template or different custom subject ONLY for a single-element preview; never combine alternatives with additions. Output only the specified JSON data; no HTML, SVG, executable code, acceptance actions or extra fields.
 Continue the child's drawing style instead of switching to clean thin blue outlines. Default style priority per dimension: currentProposal when editing, then drawingStyle (currently selected brush/color/brushSize), then lastStroke (color/width/brushKind). Current preferred style: ${JSON.stringify(style)}. Copy those supplied values exactly unless the child explicitly requests a different color, thickness or brush in this utterance. A color request changes only color; preserve other style dimensions. Do not mention a new color or brush in reply unless requested. brushKind describes stroke texture, not a new decorative object: using a star brush never authorizes adding stars or changing the chosen semantic template.
 currentProposal is an uncommitted preview; currentAdditions are its uncommitted group members. When editing, return the complete revised group, preserve untouched members and each member's style, and preserve its meaning unless the child asks to replace it; never return an accept action. inkGrid is row-major occupancy (4x4 or 8x8), lastStroke is child-authored recent geometry, canvasAspect is width/height. scene describes confirmed strokes only: childBounds/niloBounds and recentContributions with owner, bounds, brushKind, color, strokeCount. These are conservative localization hints (erased areas may still be included), not recognized objects or analysis evidence; the current composite IMAGE is authoritative for visible content. Nilo contributions may support continuity but must never create a new child intent or theme. Do not repeat a boat/flower/etc already visible just because it is absent from the child's layer. An echo is a small copy of the child's recent gesture in the same direction, not a generic curve or a continuation guarantee; use rotation=0 to retain its direction. The server supplies echoPoints from lastStroke, so never generate echoPoints. Without a reliable line, ask instead of substituting waves.
 Return ONLY JSON: {"intent":"draw","confidence":0.9,"reply":"short reply","theme":"optional grounded child theme","proposal":{"template":"waves","x":0.3,"y":0.7,"width":0.2,"height":0.07,"rotation":0,"color":"${style.color ?? '#5f7065'}","strokeWidth":${style.strokeWidth ?? 4},"brushKind":"${style.brushKind ?? 'round'}","target":"the visible boat","relation":"small ripples just below the boat","anchor":{"x":0.3,"y":0.5,"width":0.2,"height":0.15},"placement":"below"},"additions":[],"alternatives":[]}. Omit proposal when not appropriate. This schema example is not a suggested drawing.
 For a CONNECTED DETAIL on existing ink (leaf, stem, branch, limb, balloon string), placement includes the exact joint, not just the side of a bounding box. Supply anchor for the visible target and attachment:{x,y} ON its visible ink. A fruit stem joins the TOP NOTCH of its outline, never the bottom tip or an arbitrary side. A leaf joins the visible stem/branch, never floats near the fruit. If the stem is missing and the child asks for a stem and leaf, use ONE custom sketch of both connected parts starting at the fruit's visible top notch. For a leaf on an existing stem use template=leaf, attachment, placement=left|right|above|below as growth direction, omit subject/sketch; the application constructs a connected petiole, outline and vein. Other connected parts use custom with at most four paths; the first M is the connection end, and the new paths grow away from it. The app pins that M to attachment, preserves aspect and reviews the geometry against the image before returning it. Do not use a separate stock leaf for a detail request. If a reliable joint is not visible, ask one specific question instead of choosing a nearby gap. Standalone objects explicitly requested on blank space can remain separate. Never change intent or certainty to force a drawing.
 Anchor widths/heights must each be at least 0.01 and fully inside the canvas. Omit anchor and placement together only for genuinely separate objects. If a connected detail's junction cannot be located reliably, ask instead of inventing one.
+${niloReplyStyle(context)}
 CONTEXT: ${JSON.stringify(context)}`
 }
 
@@ -307,14 +324,15 @@ function compileVoiceDetails(raw, context) {
 
 export function validateProposal(raw, context = {}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !NILO_TEMPLATES.includes(raw.template)) return null
-  const simpleRequest = parseSimpleDrawingRequest(context.utterance)
-  if (raw.template !== 'custom' && context.rejectedTemplates?.includes(raw.template) && !explicitlyRequests(raw.template, context.utterance) && simpleRequest?.template !== raw.template) return null
-  const allowed = new Set(['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'echoPoints', 'anchor', 'placement', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'placementPolicy'])
+  const simpleRequest = parseSimpleDrawingRequest(context.utterance, context.tracingGuide === true)
+  if (!['custom', 'illustration'].includes(raw.template) && context.rejectedTemplates?.includes(raw.template) && !explicitlyRequests(raw.template, context.utterance) && simpleRequest?.template !== raw.template) return null
+  const allowed = new Set(['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'echoPoints', 'anchor', 'placement', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'illustrationId', 'placementPolicy'])
   if (Object.keys(raw).some(key => !allowed.has(key))) return null
   if (raw.placementPolicy !== undefined && (raw.placementPolicy !== 'free' || raw.contribution !== 'object')) return null
   if (raw.contribution !== undefined && raw.contribution !== 'object') return null
   if (raw.contribution === 'object' && (raw.attachment || raw.contact)) return null
   if (raw.recipeId !== undefined && (typeof raw.recipeId !== 'string' || !/^[a-z]+-[0-9]+$/.test(raw.recipeId))) return null
+  if (raw.template !== 'illustration' && Object.hasOwn(raw, 'illustrationId')) return null
   let subject, sketch
   if (raw.template === 'custom') {
     if (!validSubject(raw.subject)) return null
@@ -322,6 +340,17 @@ export function validateProposal(raw, context = {}) {
     if (context.rejectedSubjects?.includes(subject) && !explicitlyRequestsSubject(subject, context.utterance) && simpleRequest?.subject !== subject && simpleRequest?.english !== subject) return null
     sketch = validateCustomSketch(raw.sketch)
     if (!sketch) return null
+  } else if (raw.template === 'illustration') {
+    // A catalogue ID is the only image authority. Keep this lookup independent
+    // of review decisions so an existing draft can still restore its guide;
+    // planners filter curation before selecting a new illustration.
+    const illustration = typeof raw.illustrationId === 'string' ? getDrawingIllustration(raw.illustrationId) : undefined
+    if (!illustration || !validSubject(raw.subject)
+      || ['recipeId', 'sketch', 'attachment', 'contact', 'echoPoints'].some(key => Object.hasOwn(raw, key))) return null
+    subject = raw.subject.trim()
+    if (!sameDrawingSubject(raw, { template: 'illustration', illustrationId: illustration.id, subject: illustration.subject })) return null
+    if (context.rejectedSubjects?.includes(subject) && !explicitlyRequestsSubject(subject, context.utterance)
+      && simpleRequest?.subject !== subject && simpleRequest?.english !== subject) return null
   } else if (Object.hasOwn(raw, 'subject') || Object.hasOwn(raw, 'sketch')) return null
   // A button turn must grow a leaf from the picture, not place the stock icon
   // in unrelated empty space. Explicit voice requests keep their own preview flow.
@@ -333,7 +362,8 @@ export function validateProposal(raw, context = {}) {
   const normalized = { rotation: 0, strokeWidth: style.strokeWidth ?? 4, color: style.color, ...raw }
   if (['x', 'y', 'width', 'height', 'rotation', 'strokeWidth'].some(key => typeof normalized[key] !== 'number' || !Number.isFinite(normalized[key]))) return null
   const { x, y, width, height, rotation, strokeWidth } = normalized
-  if (width < 0.025 || height < 0.025 || width > 0.45 || height > 0.45 || width * height > 0.16 || Math.abs(rotation) > 180 || !validBrushSize(strokeWidth)) return null
+  const maxSpan = raw.template === 'illustration' ? .9 : .45, maxArea = raw.template === 'illustration' ? .81 : .16
+  if (width < 0.025 || height < 0.025 || width > maxSpan || height > maxSpan || width * height > maxArea || Math.abs(rotation) > 180 || !validBrushSize(strokeWidth)) return null
   if (x < 0 || y < 0 || x + width > 1 || y + height > 1) return null
   const angle = rotation * Math.PI / 180
   const aspect = Number.isFinite(context.canvasAspect) && context.canvasAspect > 0 ? context.canvasAspect : 1
@@ -369,7 +399,7 @@ export function validateProposal(raw, context = {}) {
   const color = !changes.color && validColor(style.color) ? style.color : normalized.color
   const finalWidth = !changes.strokeWidth && validBrushSize(style.strokeWidth) ? style.strokeWidth : strokeWidth
   const brushKind = !changes.brushKind && validBrushKind(style.brushKind) ? style.brushKind : raw.brushKind ?? style.brushKind
-  return { ...(raw.placementPolicy?{placementPolicy:raw.placementPolicy}:{}), ...(raw.contribution?{contribution:raw.contribution}:{}), ...(raw.recipeId?{recipeId:raw.recipeId}:{}), template: raw.template, x, y, width, height, rotation, color: color.toLowerCase(), strokeWidth: finalWidth, ...(brushKind ? { brushKind } : {}), target, relation, ...(sketch ? { subject, sketch } : {}), ...(echoPoints ? { echoPoints } : {}), ...(anchor ? { anchor } : {}), ...(raw.placement ? { placement: raw.placement } : {}), ...(attachment ? { attachment } : {}), ...(contact ? { contact } : {}) }
+  return { ...(raw.placementPolicy?{placementPolicy:raw.placementPolicy}:{}), ...(raw.contribution?{contribution:raw.contribution}:{}), ...(raw.recipeId?{recipeId:raw.recipeId}:{}), template: raw.template, x, y, width, height, rotation, color: color.toLowerCase(), strokeWidth: finalWidth, ...(brushKind ? { brushKind } : {}), target, relation, ...(sketch ? { subject, sketch } : raw.template === 'illustration' ? { subject, illustrationId: raw.illustrationId } : {}), ...(echoPoints ? { echoPoints } : {}), ...(anchor ? { anchor } : {}), ...(raw.placement ? { placement: raw.placement } : {}), ...(attachment ? { attachment } : {}), ...(contact ? { contact } : {}) }
 }
 
 export function validateDialogue(raw, context, hasImage) {
@@ -405,6 +435,13 @@ export function validateDialogue(raw, context, hasImage) {
   }
   if (raw.additions != null && (!Array.isArray(raw.additions) || raw.additions.length > 3)) return null
   if (context.takeTurn && (raw.additions?.length || raw.alternatives?.length)) return null
+  // This is a model-reply boundary, unlike validateProposal which also restores
+  // saved guides. Do not let a model bypass curation by naming a hidden ID.
+  // Moving/resizing an already present guide remains available after downlisting.
+  const availableSelection = (item, current) => ['recipeId', 'illustrationId'].every(key =>
+    !item?.[key] || isMaterialEnabled(item[key]) || (raw.intent === 'edit' && item[key] === current?.[key]))
+  if (!availableSelection(raw.proposal, context.currentProposal)
+    || (raw.additions ?? []).some((item, index) => !availableSelection(item, context.currentAdditions?.[index]))) return null
   if (raw.proposal != null) {
     const proposal = validateProposal(raw.proposal, context)
     if (!proposal) return null
@@ -416,10 +453,10 @@ export function validateDialogue(raw, context, hasImage) {
     }))
     if (additions.some(item => !item || (item.template === 'echo' && !context.lastStroke?.points?.length))) return null
     const group = [proposal, ...additions]
-    if (group.reduce((area, item) => area + item.width * item.height, 0) > 0.24 || !withinDrawingGroupBudget(group)) return null
+    if (group.reduce((area, item) => area + (item.template === 'illustration' ? 0 : item.width * item.height), 0) > 0.24 || !withinDrawingGroupBudget(group)) return null
     result.proposal = proposal
     if (additions.length) result.additions = additions
-    const alternative = !additions.length && Array.isArray(raw.alternatives) ? raw.alternatives.slice(0, 1).map(item => validateProposal(item, context)).find(item => item && (item.template !== proposal.template || (item.template === 'custom' && item.subject !== proposal.subject)) && (item.template !== 'echo' || context.lastStroke?.points?.length)) : null
+    const alternative = !additions.length && Array.isArray(raw.alternatives) ? raw.alternatives.slice(0, 1).filter(item => availableSelection(item, null)).map(item => validateProposal(item, context)).find(item => item && (item.template !== proposal.template || (item.template === 'custom' && item.subject !== proposal.subject)) && (item.template !== 'echo' || context.lastStroke?.points?.length)) : null
     if (alternative) result.alternatives = [alternative]
   } else {
     if (raw.additions?.length) return null
@@ -479,6 +516,7 @@ function rawPartCorrection(raw) {
 }
 
 export async function generateNiloDialogue({ imageBase64, focusImage, context: input, chatWithImage = defaultVision, chatText = defaultText, timeoutMs, signal, creativeMode = process.env.NILO_CREATIVE_MODE } = {}) {
+  refreshMaterialCuration()
   const context = sanitizeDialogueContext(input)
   const focus = imageBase64 && typeof focusImage?.imageBase64 === 'string' && focusImage.imageBase64.length <= 1024 * 1024
     && validateBounds(focusImage.bounds) ? { imageBase64: focusImage.imageBase64, bounds: validateBounds(focusImage.bounds) } : undefined
@@ -486,7 +524,9 @@ export async function generateNiloDialogue({ imageBase64, focusImage, context: i
   const hasImage = typeof imageBase64 === 'string' && imageBase64.length > 0
   if ((context.requestDrawing || context.inferDrawingIntent) && !hasImage) return dialogueFallback(context, 'missing_image')
   if (signal?.aborted) return dialogueFallback(context, 'timeout')
-  const simple = hasImage && !context.takeTurn ? planSimpleDrawing(context) : null
+  // Invalid variant context must never become a fresh drawing invitation.
+  if (input?.variantOnly === true && !context.variantOnly) return dialogueFallback(context, 'invalid_response')
+  const simple = hasImage && !context.takeTurn && !context.variantOnly ? planIllustrationDrawing(context) ?? planSimpleDrawing(context) : null
   if (simple) {
     // Same geometry/style validation as model proposals; never commit here.
     const validated = validateDialogue({ intent: 'draw', confidence: 1, reply: simple.reply, ...(simple.proposal ? { proposal: simple.proposal } : {}) }, context, hasImage)
@@ -531,6 +571,12 @@ export async function generateNiloDialogue({ imageBase64, focusImage, context: i
         throw error
       }
     }
+    if (context.variantOnly) {
+      const result = await generateNiloVariation({ context, call, opts, validateProposal, validateDialogue })
+      traceNode('nilo_companion', { kind: 'same_subject_variant', durationMs: Date.now() - started,
+        outcome: result ? 'preview' : 'invalid_variant', revision: context.revision })
+      return result ?? dialogueFallback(context, 'invalid_response')
+    }
     if (context.drawingProtocol === 3 && creativeMode === 'idea-first') {
       let observed
       try { observed = await call(creativeIdeationPrompt(context), { ...opts, kind: 'nilo_creative_ideate', maxTokens: 1000 }) }
@@ -538,7 +584,7 @@ export async function generateNiloDialogue({ imageBase64, focusImage, context: i
       controller.signal.throwIfAborted()
       const idea = sanitizeCreativeIdea(observed?.idea)
       if (!idea) return dialogueFallback(context, 'invalid_response')
-      const candidates = retrieveIdeaRecipes(idea, context.recentRecipeIds)
+      const candidates = retrieveIdeaRecipes(idea, context.recentRecipeIds, context.utterance)
       knowledge = { observation: sanitizeKnowledgeObservation(observed) }
       traceNode('nilo_knowledge', { outcome: 'idea_first_retrieved', cardCount: candidates.length, hasReference: false })
       return await generateCreativeTurn({ imageBase64, context, knowledge, idea, candidates, call, opts, validateProposal })
@@ -560,7 +606,7 @@ export async function generateNiloDialogue({ imageBase64, focusImage, context: i
     if(context.drawingProtocol===2)return await generateProtocolTurn({imageBase64,context,knowledge,call,opts,validateProposal})
     const basePrompt=knowledge?knowledgePlanningPrompt(context,knowledge):buildDialoguePrompt(context,hasImage)
     const prompt = context.renderFeedback
-      ? buildCoCreationCorrectionPrompt(context, NILO_TEMPLATES, context.renderFeedback.proposal, context.renderFeedback.reason,basePrompt)
+      ? buildCoCreationCorrectionPrompt(context, NILO_TEMPLATES.filter(t=>t!=='illustration'), context.renderFeedback.proposal, context.renderFeedback.reason,basePrompt)
       : basePrompt
     let result
     let failureCode = 'invalid_json'
@@ -575,7 +621,7 @@ export async function generateNiloDialogue({ imageBase64, focusImage, context: i
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       let raw
       try {
-        raw = await call(rejectedReview ? buildCoCreationCorrectionPrompt(context, NILO_TEMPLATES, rejectedReview.proposal, rejectedReview.reason, basePrompt) : attempt ? `${prompt}\nFORMAT CORRECTION (${failureCode}): grounding.visible must describe the observed marks as a STRING, never a boolean. Every custom proposal requires subject, sketch and placement; relation does not replace placement. ${rawPartCorrection(failedRaw)} ${rejectedContinuation ? 'The previous plan was detached decoration. An external custom part MUST have attachment on actual ink and its first M at the connecting end. Alternatively choose a genuinely internal feature with placement inside. Do not merely rename the rejected decoration or reclassify the same shape as an object to bypass this rule.' : 'The previous output was not valid drawing data.'} Inspect the image again and return one complete JSON object. A reply describing an addition without proposal does not draw anything. Custom requires subject and sketch, e.g. sketch:{"aspect":1,"paths":[[["M",0.1,0.1],["Q",0.5,0.4,0.9,0.9]]]}; replace these illustrative points with the actual new part. Use at most eight paths for one small contribution, coordinates in [0,1], attachment within anchor. A leaf requires template leaf, attachment on a visible stem, and left/right/above/below growth direction; omit subject/sketch. Output no prose, code fences or extra fields.\nFAILED_CANDIDATE_DATA: ${JSON.stringify(failedRaw)}` : prompt,
+        raw = await call(rejectedReview ? buildCoCreationCorrectionPrompt(context, NILO_TEMPLATES.filter(t=>t!=='illustration'), rejectedReview.proposal, rejectedReview.reason, basePrompt) : attempt ? `${prompt}\nFORMAT CORRECTION (${failureCode}): grounding.visible must describe the observed marks as a STRING, never a boolean. Every custom proposal requires subject, sketch and placement; relation does not replace placement. ${rawPartCorrection(failedRaw)} ${rejectedContinuation ? 'The previous plan was detached decoration. An external custom part MUST have attachment on actual ink and its first M at the connecting end. Alternatively choose a genuinely internal feature with placement inside. Do not merely rename the rejected decoration or reclassify the same shape as an object to bypass this rule.' : 'The previous output was not valid drawing data.'} Inspect the image again and return one complete JSON object. A reply describing an addition without proposal does not draw anything. Custom requires subject and sketch, e.g. sketch:{"aspect":1,"paths":[[["M",0.1,0.1],["Q",0.5,0.4,0.9,0.9]]]}; replace these illustrative points with the actual new part. Use at most eight paths for one small contribution, coordinates in [0,1], attachment within anchor. A leaf requires template leaf, attachment on a visible stem, and left/right/above/below growth direction; omit subject/sketch. Output no prose, code fences or extra fields.\nFAILED_CANDIDATE_DATA: ${JSON.stringify(failedRaw)}` : prompt,
           attempt ? { ...opts, maxTokens: 2200 } : opts)
       } catch (error) {
         if (context.takeTurn && error instanceof LLMParseError) {

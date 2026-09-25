@@ -1,0 +1,35 @@
+{
+  "id": "illustration-library-apartment-medium-01",
+  "subject": "apartment",
+  "name": "公寓楼",
+  "label": "错层阳台公寓",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "architecture",
+  "related": [
+    "building",
+    "town",
+    "apartment"
+  ],
+  "aliases": [
+    "公寓楼",
+    "公寓",
+    "住宅楼",
+    "楼房",
+    "大楼"
+  ],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: illustration-story. Draw one original elegant picture-book building reference for children's tracing. One charming three-story neighborhood apartment house in gentle three-quarter view, rounded corner balconies on the two upper floors, one tall ground-floor entry and a few large windows. Roof is a simple flat cap. Balcony rails consist of ONLY THREE widely spaced vertical bars each. All wall surfaces left perfectly WHITE. No brick textures, landscaping, furniture or people. ONE square 1024x1024 canvas. Pure BLACK INK CONTOURS on PURE WHITE. Zero shading, zero gray areas, zero gradients, zero texture. Every interior of every shape must be pure white. Fine confident expressive contours, generous margins, complete subject visible. No text, logo or border. This is a medium-difficulty coloring-outline illustration with clearly readable important structures, not a shaded render.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-a51697f4-42a0-4e18-9f82-48e0fc6a3d44.png",
+  "src": "/nilo-illustrations/illustration-library-apartment-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

@@ -1,0 +1,33 @@
+{
+  "id": "illustration-library-sneaker-medium-01",
+  "subject": "sneaker",
+  "name": "运动鞋",
+  "label": "系带高帮鞋",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "stilllife",
+  "related": [
+    "stilllife",
+    "object",
+    "生活物件",
+    "home"
+  ],
+  "aliases": [
+    "球鞋",
+    "鞋子"
+  ],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One high-top canvas sneaker in three-quarter view with four broad lace crossings, toe cap, ankle collar and a clearly layered sole.\nCarefully coherent shoe construction with joined parts. No logos, decorative symbols, stitch dots, fabric texture, tread pattern, gray shading or black fill. Interior remains clean white. Broad hand-drawn contours; entire object centered with 10 percent margin on every side.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-a2db90e2-a319-4445-908b-ec5bee7b5699.png",
+  "src": "/nilo-illustrations/illustration-library-sneaker-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

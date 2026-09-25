@@ -1,4 +1,5 @@
 import { halfShape } from '../../../shared/niloHalfShape.mjs'
+import { matchingRecipeSubjects, recipeCatalogue, getDrawingRecipe, requestedRecipeStyle } from '../../../shared/niloRecipes.mjs'
 // Explicit, whole-utterance requests only. Complex scenes still go to vision.
 // This is a requested drawing, never a random fallback for failed model calls.
 const subjects = [
@@ -14,7 +15,7 @@ const subjects = [
 const colors = { 红: '#d74952', 黄: '#edcd70', 蓝: '#4aa5d8', 绿: '#51a06c', 紫: '#7a82d8', 橙: '#f28c38', 粉: '#e889a9', 白: '#ffffff', 黑: '#303c36', red: '#d74952', yellow: '#edcd70', blue: '#4aa5d8', green: '#51a06c', purple: '#7a82d8', orange: '#f28c38', pink: '#e889a9', white: '#ffffff', black: '#303c36' }
 const ratios = { stars: 1, sun: 1, moon: .85, tree: .8, flower: .7, cloud: 1.7, fish: 1.55, boat: 1.4, house: 1, heart: 1, butterfly: 1.1, bird: 1.4, mountain: 1.55, leaf: .8 }
 
-export function parseSimpleDrawingRequest(utterance) {
+export function parseSimpleDrawingRequest(utterance, allowRecipes = false) {
   if (typeof utterance !== 'string') return null
   let text = utterance.trim().replace(/^[Nn]ilo[，,、\s]*/, '').replace(/[。！!？?]+$/g, '').trim()
   let region,half
@@ -28,12 +29,22 @@ export function parseSimpleDrawingRequest(utterance) {
   const englishHalf=text.match(/(?:the )?(top|bottom|left|right)? ?half (?:of )?(?:a |the )?/i)
   if(englishHalf&&/^(?:please )?(?:draw|paint)/i.test(text)){half=englishHalf[1]?.toLowerCase()??'top';text=text.replace(englishHalf[0],' a ').replace(/ +/g,' ')}
   const zh = text.match(/^(?:请)?(?:你)?(?:能不能|可以|能)?(?:帮我|给我)?(?:再)?(?:画上|画|加上|加|添上|添|来|换成|换|改成)(?:一下)?(?:一(?:个|颗|朵|棵|条|只|座|片)|个|颗|朵|棵|条|只|座|片)?(?:([红黄蓝绿紫橙粉白黑])色?的?)?(.+?)(?:吧|呀|好吗|好不好|可以吗|吗)?$/)
-  const en = text.toLowerCase().match(/^(?:please )?(?:can you |could you )?(?:help me )?(?:draw|add|paint|make|replace it with|change it to)(?: me)? (?:a |an |one |another )?(?:(red|yellow|blue|green|purple|orange|pink|white|black) )?([a-z]+)(?: please)?$/)
+  const en = text.toLowerCase().match(/^(?:please )?(?:can you |could you )?(?:help me )?(?:draw|add|paint|make|replace it with|change it to)(?: me)? (?:a |an |one |another )?(?:(red|yellow|blue|green|purple|orange|pink|white|black) )?([a-z ]+?)(?: please)?$/)
   const match = zh ?? en
   if (!match) return null
   const subject = subjects.find(([, , english, aliases]) => zh ? aliases.includes(match[2]) : english === match[2])
-  if (!subject) return null
-  return { ...(region?{region}:{}),...(half?{half}:{}),template: subject[0], subject: subject[1], english: subject[2], color: colors[match[1]], replace: /换|改成|replace|change/.test(text) }
+  const recipeStyle = requestedRecipeStyle(match[2])
+  const noun = match[2].replace(/^(?:(?:可爱|萌萌|卡通|精美|精致|细腻|装饰|写实|真实|素描)(?:风格|风)?(?:的)?|(?:像真的(?:一样)?|圆圆|简单(?:一)?点|细节多(?:一)?点)(?:的)?|(?:cute|cartoon|storybook|illustrated|detailed|decorative|realistic|naturalistic|simpler|rounder) )/, '')
+    .replace(/[，,]?(?:画得)?(?:像真的(?:一样)?|圆(?:一)?点|简单(?:一)?点|细节多(?:一)?点|多(?:一)?点细节|漂亮(?:一)?点)$/,'')
+  const named = allowRecipes ? matchingRecipeSubjects(noun, true) : []
+  // Match the whole noun; modifiers, negations and extra clauses need planning.
+  if (allowRecipes && !named.length && noun.startsWith('小')) named.push(...matchingRecipeSubjects(noun.slice(1), true))
+  const recipe = named.length === 1 ? getDrawingRecipe(recipeCatalogue([{subject:named[0]}],[],recipeStyle).find(r=>r.subject===named[0]&&(!recipeStyle||r.style===recipeStyle))?.id) : null
+  if(recipeStyle&&!recipe)return null
+  if (!subject && !recipe) return null
+  return { ...(region?{region}:{}),...(half?{half}:{}),
+    template: recipe ? 'custom' : subject[0], subject: recipe?.name ?? subject[1], english: recipe?.subject ?? subject[2],
+    ...(recipe?{recipeId:recipe.id,recipeStyle}:{}),color: colors[match[1]], replace: /换|改成|replace|change/.test(text) }
 }
 
 function oneStar() {
@@ -57,21 +68,64 @@ function fitsGrid(box, grid) {
   return true
 }
 
+function restyleRequest(context){
+ const current=getDrawingRecipe(context.currentProposal?.recipeId),recipeStyle=requestedRecipeStyle(context.utterance)
+ if(!current||!recipeStyle||!context.tracingGuide)return null
+ const words=context.utterance.trim().replace(/[。！!？?]+$/g,'')
+ if(!/^(?:(?:把|让)?(?:这个|它|底图))?(?:画得|画的|画|变得|变|再)?(?:更|再)?(?:圆(?:一)?点|简单(?:一)?点|细节多(?:一)?点|多(?:一)?点细节|漂亮(?:一)?点|像真的(?:一样)?)(?:吧)?$/.test(words)&&!/^(?:make (?:it|this) )?(?:simpler|rounder|more detailed|like a real one)(?: please)?$/i.test(words))return null
+ if(!recipeCatalogue([{subject:current.subject}],[],recipeStyle).some(r=>r.subject===current.subject&&r.style===recipeStyle))return null
+ return {template:'custom',subject:current.name,english:current.subject,recipeId:current.id,recipeStyle,replace:true,restyle:true}
+}
+
+function selectSimpleRecipe(request,context){
+ if(!request.recipeId)return null
+ const original=getDrawingRecipe(request.recipeId),recent=context.recentRecipeIds??[]
+ // Children name the object, not a style. This local shortcut uses visible
+ // size and existing guide continuity; the model route can also see the image.
+ let preferred=request.recipeStyle
+ if(!preferred&&original.collection==='studio'){
+  const current=getDrawingRecipe(context.currentProposal?.recipeId)
+  const shortSide=context.canvasSize?Math.min(context.canvasSize.width,context.canvasSize.height):600
+  preferred=current?.subject===original.subject?current.style:shortSide<360?'storybook':({people:'storybook',architecture:'illustrated',botanical:'realistic',landscape:'illustrated',stilllife:'illustrated'})[original.category]
+  const available=recipeCatalogue([{subject:request.english}],recent).filter(r=>r.subject===request.english)
+  if(available.filter(r=>r.style===preferred).every(r=>recent.includes(r.id)))preferred=available.find(r=>!recent.includes(r.id))?.style??preferred
+ }
+ const candidates=recipeCatalogue([{subject:request.english}],recent,preferred).filter(r=>r.subject===request.english&&(!request.recipeStyle||r.style===request.recipeStyle))
+ // Restyling preserves the selected pose whenever that style has a counterpart.
+ const pose=request.restyle?Number(context.currentProposal?.recipeId?.split('-')[1])%2:undefined
+ const chosen=pose===undefined?candidates[0]:candidates.find(r=>Number(r.id.split('-')[1])%2===pose)??candidates[0]
+ return getDrawingRecipe(chosen?.id)
+}
+
 export function planSimpleDrawing(context) {
   if (!context.requestDrawing && !context.inferDrawingIntent) return null
-  const request = parseSimpleDrawingRequest(context.utterance)
+  const request = parseSimpleDrawingRequest(context.utterance, context.tracingGuide === true)??restyleRequest(context)
   // Editing a group needs semantic planning so its other members are preserved.
   if (!request || context.currentAdditions?.length) return null
+  // On an existing picture, let the regular vision turn choose the visual
+  // language. Category defaults only serve empty canvases, without an extra call.
+  if(request.recipeId&&!request.recipeStyle&&getDrawingRecipe(request.recipeId)?.collection==='studio'&&(context.scene?.childBounds||context.inkGrid?.some(n=>n>.025)))return null
   // On an existing picture, a leaf may be a connected detail of a plant/fruit.
   // Only vision can decide that relationship; never drop the stock icon in a gap.
-  if (request.template === 'leaf' && (context.scene?.childBounds || context.scene?.niloBounds || context.lastStroke?.points?.length || context.inkGrid?.some(n => n > .025))) return null
+  if (request.english === 'leaf' && (context.scene?.childBounds || context.scene?.niloBounds || context.lastStroke?.points?.length || context.inkGrid?.some(n => n > .025))) return null
+  const recipe = selectSimpleRecipe(request,context)
   const en = context.locale === 'en', name = en ? request.english : request.subject
   const current = request.replace ? context.currentProposal : null
   const style = current ?? context.drawingStyle ?? context.lastStroke ?? {}
-  const ratio = ratios[request.template], aspect = context.canvasAspect || 1
+  const ratio = recipe?.sketch.aspect ?? ratios[request.template], aspect = context.canvasAspect || 1
   let height = .23, width = height * ratio / aspect
   const scale = Math.min(1, .28 / width, .28 / height)
   width *= scale; height *= scale
+  if (recipe && context.tracingGuide) {
+    const pixels = Math.max(64, recipe.minPixels) / (context.canvasSize?.height || 600)
+    const growth = Math.min(Math.max(1, pixels / Math.min(width * aspect, height)), .44 / width, .44 / height, Math.sqrt(.15 / (width * height)))
+    width *= growth; height *= growth
+  }
+  if(request.restyle&&current){
+    // Keep the child's placement and physical envelope when changing detail.
+    width=Math.min(current.width,current.height*ratio/aspect)
+    height=width*aspect/ratio
+  }
   const candidates = []
   if (current && !request.region) candidates.push([current.x + current.width / 2 - width / 2, current.y + current.height / 2 - height / 2])
   // The child named a standalone subject, with no requested spatial relationship.
@@ -80,22 +134,24 @@ export function planSimpleDrawing(context) {
     const right=request.region.endsWith('right'),bottom=request.region.startsWith('bottom')
     for(const inset of [.04,.08,.12])candidates.push([right?1-width-inset:inset,bottom?1-height-inset:inset])
   }else for (const y of [.12, .38, .65]) for (const x of [.38, .08, .68]) candidates.push([x, y])
-  const box = candidates.map(([x, y]) => ({ x, y, width, height })).find(box => box.x >= .02 && box.y >= .02 && box.x + width <= .98 && box.y + height <= .98 && fitsGrid(box, context.inkGrid ?? []))
+  const box = candidates.map(([x, y]) => ({ x, y, width, height })).find(box => box.x >= .02 && box.y >= .02 && box.x + width <= .98 && box.y + height <= .98 && (request.restyle || fitsGrid(box, context.inkGrid ?? [])))
   if (!box) return { status: 'clarify', reply: en ? `Where would you like the ${name}? You can make a little space for it.` : `${name}想放在哪里呢？可以先给它留一小块空白。` }
   let proposal = {
     template: request.template === 'stars' ? 'custom' : request.template,
+    ...(recipe ? { recipeId: recipe.id, subject: name, sketch: recipe.sketch } : {}),
     ...(request.template === 'stars' ? { subject: name, sketch: oneStar() } : {}),
-    ...box, rotation: 0, color: request.color ?? style.color ?? '#5f7065',
+    ...box, rotation: request.restyle?current.rotation??0:0, color: request.color ?? style.color ?? '#5f7065',
     strokeWidth: style.strokeWidth ?? style.brushSize ?? style.width ?? 4,
     brushKind: style.brushKind ?? 'round',
     target: en ? `The ${name} you requested` : `你想要的${name}`,
-    relation: en ? 'A preview in open space, awaiting your confirmation' : '先放在空白处预览，等你确认留下',
+    relation: context.tracingGuide ? (en ? 'A tracing guide in open space' : '放在空白处的描摹底图') : (en ? 'A preview in open space, awaiting your confirmation' : '先放在空白处预览，等你确认留下'),
   }
   if(request.half){
     proposal=halfShape({...proposal,...(proposal.template==='custom'?{}:{subject:name})},request.half,aspect)
     if(!proposal)return {status:'clarify',reply:en?'Which half would you like to show?':'你想让它露出哪一半呢？'}
   }
   const location=request.region?(en?' in the '+request.region.replace('-',' ')+' corner':'，放在'+Object.entries({'左上角':'top-left','右上角':'top-right','左下角':'bottom-left','右下角':'bottom-right'}).find(([,v])=>v===request.region)[0]):''
+  if(context.tracingGuide)return {status:'ready',...(request.restyle||request.half||request.region?{placementLocked:true}:{}),proposal,reply:en?`Here's ${request.half?'half of ':''}a ${name}${location}. Trace the gray lines, or move and resize it first.`:`${request.half?'半个':''}${name}的底图来啦${location}。可以先调大小和位置，再沿着灰色虚线画一画。`}
   if(request.half||request.region)return {status:'ready',placementLocked:true,proposal,reply:en?('Here is '+(request.half?'half of ':'')+'the '+name+location+'. Keep it if you like it.'):('先放'+(request.half?'半个':'一个')+name+location+'给你看看，喜欢就留下来。')}
   return { status: 'ready', reply: en ? `Here's a ${name} to preview. Say “keep it” or tap the button if you like it.` : `先放一个${name}给你看看，喜欢就说“留下来”或点按钮。`, proposal }
 }

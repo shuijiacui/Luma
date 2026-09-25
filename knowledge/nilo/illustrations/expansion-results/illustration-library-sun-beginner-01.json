@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-sun-beginner-01",
+  "subject": "sun",
+  "name": "太阳",
+  "label": "圆圆的太阳",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "stilllife",
+  "related": [
+    "landscape",
+    "sky",
+    "sun",
+    "day",
+    "太阳"
+  ],
+  "aliases": [],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Square 1:1 black-outline drawing on a pure white background, for a beginner child to trace. The ENTIRE artwork contains ONLY ONE SUN: a single clean large circle, exactly eight evenly spaced short round-ended ray strokes around the outside, two tiny black dot eyes and one small simple curved smile inside the circle. Sun centered, complete and occupying the middle 65 percent of the square, very generous white margin on all sides. Smooth confident black contour lines; circle interior is pure white. Minimal sweet handmade appearance. NOTHING ELSE: absolutely no bear, animals, characters, people, flowers, plants, clouds, rainbow, scenery, ground, objects, text, letters, border, color, gray, shading, gradients or texture. Only the circle, eight short rays, two dot eyes and curved smile on an otherwise empty white square.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86c-3317-7e03-9e88-effd6fb453df\\exec-2675360f-b4c9-420e-b537-9b3366d8bd59.png",
+  "src": "/nilo-illustrations/illustration-library-sun-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

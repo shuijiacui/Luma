@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-daffodil-beginner-01",
+  "subject": "daffodil",
+  "name": "水仙",
+  "label": "喇叭小水仙",
+  "difficulty": "beginner",
+  "detail": "simple",
+  "style": "storybook",
+  "category": "botanical",
+  "related": [
+    "botanical",
+    "plant",
+    "garden",
+    "植物"
+  ],
+  "aliases": [],
+  "learning": "先看大的轮廓，再挑一两处喜欢的地方画。",
+  "minPixels": 180,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. BEGINNER reference: a warm simple picture-book drawing, 3–5 large easy-to-read forms and a small number of necessary interior marks. Broad rounded organic silhouettes; no repetitive decoration. One daffodil front view, six broad petals around a simple trumpet center and one long leaf.\nComplete subject within central 76%, 12% margin. Pure dark contours only. Flower center must be a simple plain oval with ONLY THREE sparse interior marks, not many stamens or seeds. A beginner flower has at most five broad petal shapes and two leaves, with only ONE simple central vein per leaf. No folds within beginner petals. Medium may have more natural connected structural detail but no dense center.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-681a0298-c037-4eca-8f60-e1464a81a4ec.png",
+  "src": "/nilo-illustrations/illustration-library-daffodil-beginner-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

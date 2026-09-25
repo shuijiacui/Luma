@@ -1,0 +1,37 @@
+{
+  "id": "illustration-library-cottage-medium-01",
+  "subject": "cottage",
+  "name": "乡间小屋",
+  "label": "圆顶乡间小屋",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "architecture",
+  "related": [
+    "building",
+    "town",
+    "cottage"
+  ],
+  "aliases": [
+    "乡间小屋",
+    "小屋",
+    "房子",
+    "房屋",
+    "小房子",
+    "house",
+    "小木屋"
+  ],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: illustration-story. Standalone original picture-book medium reference for children's drawing practice. ONE square PNG. One charming cozy countryside cottage in gentle three-quarter view. Distinctive softly rounded thatched roof expressed by its LARGE outer contour plus ONLY THREE broad curved seam lines, a little chimney, rounded doorway and two round-paned windows. One low curved doorstep and two broad leaf shapes in a pot beside the door. Graceful slightly asymmetrical picture-book proportions. Strictly NO individual thatch strands, hatch marks, brick patterns, roof tiles, shadows, gray wash, landscape or extra objects. Elegant confident dark ink outlines ONLY, generous white empty interiors and a PURE WHITE background. Flat contour artwork, absolutely no shading or grayscale modeling. Complete subject centered, with generous clear margin on every side. No text, watermark, border or collage. Make the structure legible and delightful to trace.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d45d-36ee-7d42-acce-c72a3ef90983\\exec-2172cb5d-1060-46a7-8f1a-2e1b0a753a3e.png",
+  "src": "/nilo-illustrations/illustration-library-cottage-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

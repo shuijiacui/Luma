@@ -1,14 +1,25 @@
-import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { t, useLocale } from '@/i18n'
 import { createStrokePainter } from '../brushes'
 import { proposalStrokes, type DrawingProposal } from '../companion/proposals'
 import { projectionTransform } from '../companion/projectionTransform'
+import { getDrawingIllustration } from '../../../../../shared/niloIllustrations.mjs'
 
-/** Only the preview's box receives gestures; the rest of the paper stays drawable. */
-export function CompanionProjection({ proposal, additions, aspect, turnDuration, onEdit, onInteractionStart }: { proposal: DrawingProposal; additions?: DrawingProposal[]; aspect: number; turnDuration?: number; onEdit?: (patch: Partial<DrawingProposal>) => void; onInteractionStart?: () => void }) {
+/** Tracing paths pass through to the paper; only the two handles receive gestures. */
+export function CompanionProjection({ proposal, additions, aspect, turnDuration, tracing = false, overInk = false, onEdit, onInteractionStart }: { proposal: DrawingProposal; additions?: DrawingProposal[]; aspect: number; turnDuration?: number; tracing?: boolean; overInk?: boolean; onEdit?: (patch: Partial<DrawingProposal>) => void; onInteractionStart?: () => void }) {
   useLocale()
   const ref = useRef<HTMLCanvasElement>(null)
   const pen = useRef<HTMLSpanElement>(null)
+  const [viewOriginal, setViewOriginal] = useState(false)
+  const [failedImages, setFailedImages] = useState<string[]>([])
+  const illustrations = useMemo(() => [proposal, ...(additions ?? [])].flatMap(item => {
+    const asset = item.template === 'illustration' && item.illustrationId ? getDrawingIllustration(item.illustrationId) : undefined
+    return asset ? [{ proposal: item, asset }] : []
+  }), [proposal, additions])
+  const illustrationKey = illustrations.map(item => item.asset.id).join(',')
+  useEffect(() => { setViewOriginal(false); setFailedImages([]) }, [illustrationKey])
+  // Raster illustrations are references only, including when opened from an older workflow.
+  const isGuide = tracing || illustrations.length > 0
   const gesture = useRef<{ id: number; x: number; y: number; rect: DOMRect; items: DrawingProposal[]; mode: 'move' | 'resize'; width: number; height: number } | null>(null)
   const editable = !!onEdit && turnDuration === undefined
   function start(event: ReactPointerEvent<HTMLButtonElement>, mode: 'move' | 'resize') {
@@ -62,9 +73,17 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
       left = Math.min(left, point.x); top = Math.min(top, point.y)
       right = Math.max(right, point.x); bottom = Math.max(bottom, point.y)
     }
+    for (const { proposal: p } of illustrations) {
+      const angle = p.rotation * Math.PI / 180
+      const width = Math.abs(p.width * Math.cos(angle)) + Math.abs(p.height * Math.sin(angle)) / aspect
+      const height = Math.abs(p.height * Math.cos(angle)) + Math.abs(p.width * Math.sin(angle)) * aspect
+      const x = p.x + (p.width - width) / 2, y = p.y + (p.height - height) / 2
+      left = Math.min(left, x); top = Math.min(top, y)
+      right = Math.max(right, x + width); bottom = Math.max(bottom, y + height)
+    }
     return Number.isFinite(left) && Number.isFinite(top) && Number.isFinite(right) && Number.isFinite(bottom)
       ? { left, top, right, bottom } : null
-  }, [strokes])
+  }, [strokes, illustrations, aspect])
   useEffect(() => {
     const canvas = ref.current
     if (!canvas) return
@@ -88,7 +107,15 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
       for (const { spec, points } of paths) {
         if (!points.length) continue
         if (turnDuration !== undefined && remaining <= 0) break
-        const painter = createStrokePainter(ctx, { kind: spec.brushKind ?? 'round', color: spec.color, size: spec.width * scale, eraser: false }, points[0])
+        if (isGuide) {
+          ctx.strokeStyle = '#9ca3af'
+          ctx.lineWidth = 1.6 * scale
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+          ctx.setLineDash([6 * scale, 5 * scale])
+          ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y)
+        }
+        const painter = isGuide ? { moveTo: (point: { x: number; y: number }) => ctx.lineTo(point.x, point.y) }
+          : createStrokePainter(ctx, { kind: spec.brushKind ?? 'round', color: spec.color, size: spec.width * scale, eraser: false }, points[0])
         tip = points[0]
         for (let i = 1; i < points.length; i++) {
           const previous = points[i - 1], next = points[i]
@@ -100,6 +127,7 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
           }
           painter.moveTo(next); tip = next; remaining -= distance
         }
+        if (isGuide) ctx.stroke()
       }
       if (pen.current) {
         pen.current.style.opacity = tip && progress < 1 ? '1' : '0'
@@ -110,19 +138,27 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
     draw()
     const observer = new ResizeObserver(() => { cancelAnimationFrame(frame); draw() }); observer.observe(canvas)
     return () => { observer.disconnect(); cancelAnimationFrame(frame) }
-  }, [strokes, turnDuration])
+  }, [strokes, turnDuration, isGuide])
   if (!bounds) return null
   const { left, top, right, bottom } = bounds
-  return <div className={`nilo-projection pointer-events-none absolute inset-0${turnDuration !== undefined ? ' nilo-turn-drawing' : ''}`} aria-label={t(turnDuration !== undefined ? 'Nilo 正在画，接着你的这一笔' : 'Nilo 的投影，尚未加入画作')}>
+  return <div className={`nilo-projection pointer-events-none absolute inset-0${isGuide ? ' nilo-tracing-projection' : ''}${isGuide && overInk ? ' nilo-tracing-over-ink' : ''}${turnDuration !== undefined ? ' nilo-turn-drawing' : ''}`} aria-label={t(illustrations.length ? 'Nilo 的插画参考底图' : tracing ? 'Nilo 的灰色虚线描摹底图' : turnDuration !== undefined ? 'Nilo 正在画，接着你的这一笔' : 'Nilo 的投影，尚未加入画作')}>
     <canvas ref={ref} className="absolute inset-0 size-full" aria-hidden="true" />
+    {illustrations.map(({ proposal: p, asset }) => <img key={asset.id} src={asset.src} alt={asset.name} draggable={false}
+      className={`nilo-illustration-guide${viewOriginal ? ' nilo-illustration-original' : ''}`}
+      style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.width * 100}%`, height: `${p.height * 100}%`, transform: `rotate(${p.rotation}deg)` }}
+      onError={() => setFailedImages(ids => ids.includes(asset.id) ? ids : [...ids, asset.id])}
+      onLoad={() => setFailedImages(ids => ids.filter(id => id !== asset.id))} />)}
+    {failedImages.length > 0 && <span className="nilo-illustration-notice" role="status">{t('参考图暂时没加载好，可以继续画或换个画法。')}</span>}
     {turnDuration !== undefined ? <span ref={pen} className="nilo-drawing-pen" aria-hidden="true">✎</span> : <>
-      <div className="absolute rounded-xl border border-dashed border-luma-teal-500/60" style={{ left: `${left * 100}%`, top: `${top * 100}%`, width: `${(right - left) * 100}%`, height: `${(bottom - top) * 100}%` }}>
+      <div className={`nilo-projection-controls absolute rounded-xl${isGuide ? '' : ' border border-dashed border-luma-teal-500/60'}`} style={{ left: `${left * 100}%`, top: `${top * 100}%`, width: `${(right - left) * 100}%`, height: `${(bottom - top) * 100}%` }}>
+        {illustrations.length > 0 && <button type="button" className="nilo-illustration-view" aria-pressed={viewOriginal}
+          onClick={() => { onInteractionStart?.(); setViewOriginal(value => !value) }}>{t(viewOriginal ? '继续描画' : '看原图')}</button>}
         {editable && <>
-          <button type="button" className="nilo-projection-move" aria-label={t('拖动 Nilo 的投影')} onPointerDown={e => start(e, 'move')} onPointerMove={move} onPointerUp={e => end(e)} onPointerCancel={e => end(e, true)} onLostPointerCapture={e => end(e, true)} onKeyDown={e => keyboard(e, false)} />
+          <button type="button" className="nilo-projection-move" aria-label={t('拖动 Nilo 的投影')} onPointerDown={e => start(e, 'move')} onPointerMove={move} onPointerUp={e => end(e)} onPointerCancel={e => end(e, true)} onLostPointerCapture={e => end(e, true)} onKeyDown={e => keyboard(e, false)}>{isGuide && <span aria-hidden="true">✥</span>}</button>
           <button type="button" className="nilo-projection-resize" aria-label={t('调整 Nilo 投影大小')} onPointerDown={e => start(e, 'resize')} onPointerMove={move} onPointerUp={e => end(e)} onPointerCancel={e => end(e, true)} onLostPointerCapture={e => end(e, true)} onKeyDown={e => keyboard(e, true)}><span aria-hidden="true">↘</span></button>
         </>}
       </div>
-      <span className="absolute rounded-full bg-white/95 px-2 py-1 text-[10px] font-bold text-luma-teal-800 shadow-sm" style={{ left: `${Math.min(75, left * 100)}%`, top: `max(0px, calc(${top * 100}% - 28px))` }}>{t(editable ? '拖一拖，拉角角变大小' : 'Nilo 的想法')}</span>
+      {!isGuide && <span className="absolute rounded-full bg-white/95 px-2 py-1 text-[10px] font-bold text-luma-teal-800 shadow-sm" style={{ left: `${Math.min(75, left * 100)}%`, top: `max(0px, calc(${top * 100}% - 28px))` }}>{t(editable ? '拖一拖，拉角角变大小' : 'Nilo 的想法')}</span>}
     </>}
   </div>
 }

@@ -1,0 +1,30 @@
+{
+  "id": "illustration-library-fern-medium-01",
+  "subject": "fern",
+  "name": "蕨类",
+  "label": "卷芽与蕨叶",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "realistic",
+  "category": "botanical",
+  "related": [
+    "botanical",
+    "plant",
+    "garden",
+    "植物"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One arching fern frond with eight broad paired leaflets and one clearly curled young fiddlehead beside it, uncluttered open leaf structure.\nComplete subject inside the central 76% of the square, generous 12% clear margins on every side. Pure ink outlines only with blank interiors. No gray fills, leaf shading or surface texture. Keep each leaf to its clean silhouette and one main vein.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d86a-28f8-74d0-96c4-8524e9d31784\\exec-992872c2-d124-4729-bb32-d12f5cf8b750.png",
+  "src": "/nilo-illustrations/illustration-library-fern-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}

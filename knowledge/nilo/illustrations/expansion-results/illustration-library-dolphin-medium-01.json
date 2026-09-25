@@ -1,0 +1,31 @@
+{
+  "id": "illustration-library-dolphin-medium-01",
+  "subject": "dolphin",
+  "name": "海豚",
+  "label": "转身的海豚",
+  "difficulty": "medium",
+  "detail": "moderate",
+  "style": "illustrated",
+  "category": "animal",
+  "related": [
+    "animal",
+    "water",
+    "sea",
+    "ocean",
+    "海豚"
+  ],
+  "aliases": [],
+  "learning": "先观察主体各部分怎样连接，再挑几处有特点的细节。",
+  "minPixels": 220,
+  "ageBands": [
+    "5-7",
+    "8-9",
+    "10-12"
+  ],
+  "collection": "png-expansion-2026-09-25",
+  "prompt": "Use case: original standalone picture-book illustration for Nilo children's drawing references. Make ONE square monochrome raster artwork, beautifully hand-drawn with confident dark charcoal-black contours, graceful proportions and clean open white spaces. White or genuinely transparent background, preserve ample clear margin all around, complete subject fully visible. No color fills, gray washes, shading, dense hatching, fine texture, logos, letters, numbers, border, collage, grid, watermark or instructional steps. Do not imitate a named artist. MEDIUM reference: an elegant observational picture-book drawing with a clear coherent silhouette, 6–10 separated distinguishing structural details and natural joined parts. Richer form than an icon, without intricate texture or dense repeated marks. One bottlenose dolphin swimming in a three-quarter turning pose, clearly joined pectoral fins, rounded forehead and elegant tapered body, no sea.\nPure black contour drawing with completely blank interiors. No hatching, shading or gray fills. Complete connected anatomy. Keep the whole subject centered within the middle 75 percent of the image, clear margins on all sides.",
+  "sourcePath": "C:\\Users\\CUIShuijia\\.codex\\generated_images\\01a0d867-4f2a-7a71-af9d-4abb0bc4d288\\exec-55084ca6-f021-4096-b2e5-febfe9c23b61.png",
+  "src": "/nilo-illustrations/illustration-library-dolphin-medium-01.png",
+  "generationMode": "built-in image_gen",
+  "inspected": true
+}
