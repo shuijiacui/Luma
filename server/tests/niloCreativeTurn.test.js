@@ -66,9 +66,11 @@ test.each([{width:900,height:600},{width:320,height:600},{width:180,height:180}]
 
 test('creative drawing returns natural guide speech from the same generation call', async () => {
   const text = '松鼠的虚线底图来啦，想给它穿什么颜色的衣服都可以。'
-  const { result, model } = await run({}, { ...choice, reply: text }, { tracingGuide: true })
+  const { result, model } = await run({}, { ...choice, reply: text }, { tracingGuide: true, recentReplies: ['上次的小主意'] })
   expect(result.reply).toBe(text)
   expect(model).toHaveBeenCalledTimes(2)
+  expect(model.mock.calls[1][1]).toContain('RECENT NILO WORDING')
+  expect(model.mock.calls[1][1]).toContain('上次的小主意')
   expect(model.mock.calls[1][1]).toContain('ONLY tracing guides')
 })
 

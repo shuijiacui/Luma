@@ -18,6 +18,18 @@ const TURN_PROPOSAL = { ...PROPOSAL, anchor: { x: .3, y: .3, width: .3, height: 
 const TURN_RESPONSE = { ...RESPONSE, sceneType: 'object', grounding: GROUNDING, proposal: TURN_PROPOSAL }
 const turnVision = raw => vi.fn().mockResolvedValueOnce(raw).mockResolvedValueOnce(REVIEW)
 
+test('a structural guide receives the explicit selection without permissions or arbitrary geometry fields', () => {
+  const selectedDrawing={id:'selected',name:'选中的画',source:'child',bounds:{x:.2,y:.3,width:.3,height:.4}}
+  const context=sanitizeDialogueContext({...CONTEXT,tracingGuide:true,selectedDrawing:{...selectedDrawing,permission:'commit',paths:['hidden']}})
+  expect(context.selectedDrawing).toEqual(selectedDrawing)
+  const prompt=buildDialoguePrompt(context,true)
+  expect(prompt).toContain('Existing selected ink remains visible')
+  expect(JSON.parse(prompt.split('CONTEXT: ').at(-1)).selectedDrawing).toEqual(selectedDrawing)
+  for(const invalid of [{...selectedDrawing,source:'unknown'},{...selectedDrawing,bounds:{x:.9,y:.3,width:.3,height:.4}},{...selectedDrawing,id:''}]){
+    expect(sanitizeDialogueContext({...CONTEXT,selectedDrawing:invalid}).selectedDrawing).toBeNull()
+  }
+})
+
 test('companion API validates the optional crop and strips client-injected focus coordinates', async()=>{
   const generateDialogue=vi.fn(async()=>({status:'clarify',reply:'test'}))
   const app=express(); app.use(express.json({limit:'4mb'})); app.use('/api/nilo',createNiloRouter({generateDialogue,limits:{nilo:{max:100,windowMs:60000}}}))

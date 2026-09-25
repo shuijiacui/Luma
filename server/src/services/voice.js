@@ -21,6 +21,7 @@ const AUDIO_TYPES = new Map([
   ['audio/x-wav', 'wav'], ['audio/flac', 'flac'],
 ])
 const clean = value => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f]/g, ' ').trim() : ''
+const enabled = (value, fallback) => clean(value) ? /^(true|1|on)$/i.test(clean(value)) : fallback
 export class VoiceError extends Error {
   constructor(code, status = 502) { super(code); this.status = status }
 }
@@ -32,6 +33,9 @@ export function voiceConfig(env = process.env) {
     provider,
     baseUrl: (clean(env.VOICE_BASE_URL) || (dashscope ? 'https://dashscope.aliyuncs.com' : '')).replace(/\/+$/, ''),
     apiKey: clean(env.VOICE_API_KEY),
+    // Adding a TTS key must not silently replace browser recognition.
+    asrEnabled: enabled(env.VOICE_ASR_ENABLED, false),
+    ttsEnabled: enabled(env.VOICE_TTS_ENABLED, false),
     asrModel: clean(env.VOICE_ASR_MODEL) || (dashscope ? 'qwen3-asr-flash' : ''),
     ttsModel: clean(env.VOICE_TTS_MODEL) || (dashscope ? 'qwen3-tts-flash' : ''),
     voice: clean(env.VOICE_TTS_VOICE) || (dashscope ? 'Mochi' : ''),
@@ -40,9 +44,11 @@ export function voiceConfig(env = process.env) {
 }
 
 export function voiceCapabilities(config = voiceConfig()) {
-  const localFunasr = config.provider === 'funasr' && (()=>{try{const u=new URL(config.baseUrl);return ['http:','https:'].includes(u.protocol)&&(!!config.apiKey||['127.0.0.1','localhost','[::1]'].includes(u.hostname))}catch{return false}})()
-  const ready = localFunasr || Boolean(config.baseUrl && config.apiKey && (!config.provider || ['dashscope', 'openai-compatible'].includes(config.provider)))
-  return { asr: ready && Boolean(config.asrModel), tts: config.provider !== 'funasr' && ready && Boolean(config.ttsModel && config.voice) }
+  const ready = Boolean(config.baseUrl && config.apiKey && (!config.provider || ['dashscope', 'openai-compatible'].includes(config.provider)))
+  return {
+    asr: config.asrEnabled !== false && ready && Boolean(config.asrModel),
+    tts: config.ttsEnabled !== false && ready && Boolean(config.ttsModel && config.voice),
+  }
 }
 
 export function readAudio(input = {}) {
@@ -148,7 +154,6 @@ export async function transcribeVoice(input, { config = voiceConfig(), signal, f
   form.append('model', config.asrModel)
   form.append('language', locale)
   form.append('response_format', 'json')
-  if(config.provider==='funasr')form.append('hotwords',voiceRecognitionContext(input.context,locale))
   return voiceRequest('/audio/transcriptions', form, {
     config, signal, fetchImpl, kind: 'asr', audioBytes: audio.length,
     onResponse: bytes => {

@@ -466,8 +466,9 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         if (voice) utterance.voice = voice
         // Without enumeration, ask the platform to match the requested language.
         utterance.lang = voice?.lang ?? (locale === 'zh' ? 'zh-CN' : 'en-US')
-        utterance.pitch = companionSpeechProfile.pitch
-        utterance.rate = companionSpeechProfile.rate
+        const profile = companionSpeechProfile(voice, locale)
+        utterance.pitch = profile.pitch
+        utterance.rate = profile.rate
         utterance.onend = () => { if (valid(turn)) { recordVoiceEvent({turn:traceId,stage:'speak',outcome:'played',durationMs:Date.now()-speakStarted}); releasePlayback(); resume() } }
         utterance.onerror = () => { if (valid(turn)) fail('声音没播放成功，点麦克风或看字幕继续。') }
         updateStatus('speaking')

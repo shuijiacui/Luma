@@ -1,5 +1,5 @@
 // A bounded edit language shared by the API and the canvas. Never contains paths,
-// code, an auto-commit instruction, or permission to modify child-owned strokes.
+// code or an auto-commit instruction. The canvas separately authorizes targets.
 const finite=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max
 export function validateVoiceActions(value){
  if(!Array.isArray(value)||value.length<1||value.length>6)return null
@@ -29,4 +29,10 @@ export function validateVoicePlan(raw,ids){
  if(raw.status!=='edit'||!ids.includes(raw.targetId))return null
  const actions=validateVoiceActions(raw.actions)
  return actions?{status:'edit',targetId:raw.targetId,actions}:null
+}
+
+/** Direct help changes attributes of existing ink; new geometry remains a guide. */
+export function validateAssistedActions(value){
+ const actions=validateVoiceActions(value)
+ return actions&&actions.every(a=>['color','move','scale','place'].includes(a.type))?actions:null
 }

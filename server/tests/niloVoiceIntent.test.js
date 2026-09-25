@@ -2,7 +2,7 @@ import express from 'express'
 import request from 'supertest'
 import {expect,test,vi} from 'vitest'
 import {interpretVoiceEdit,sanitizeVoiceEditInput} from '../src/services/niloVoiceIntent.js'
-import {validateVoiceActions,validateVoicePlan} from '../../shared/niloVoiceActions.mjs'
+import {validateAssistedActions,validateVoiceActions,validateVoicePlan} from '../../shared/niloVoiceActions.mjs'
 import {createNiloRouter} from '../src/routes/nilo.js'
 
 const input={utterance:'不要红色，改蓝色再小一点，往左挪',selectedTargetId:'bird',objects:[{id:'bird',name:'小鸟',subjects:['bird'],bounds:{x:.3,y:.3,width:.2,height:.2}}]}
@@ -66,4 +66,39 @@ test('ASR candidates are bounded, whole-sentence context and never rewrite the p
  expect(sanitizeVoiceEditInput(voice).asrAlternatives).toHaveLength(2)
  expect(sanitizeVoiceEditInput(voice).asrAlternatives[1]).toHaveLength(400)
  expect(chatText).toHaveBeenCalledOnce()
+})
+
+test('assisted ink targets expose only precise transforms, regardless of model or supplied capabilities',async()=>{
+ const assisted={...input,editingMode:'assisted',objects:[{...input.objects[0],source:'child',capabilities:['delete','part']}]}
+ const context=sanitizeVoiceEditInput(assisted)
+ expect(context.objects[0]).toMatchObject({source:'child',capabilities:['color','move','scale','place']})
+ expect(await interpretVoiceEdit(assisted,{chatText:async()=>({status:'edit',targetId:'bird',actions:[{type:'delete'}]})}))
+  .toEqual({status:'clarify',reason:'instruction',candidateIds:[]})
+ expect(await interpretVoiceEdit(assisted,{chatText:async()=>({status:'edit',targetId:'bird',actions:[{type:'part',part:'wing',factor:1.2}]})}))
+  .toEqual({status:'redraw',targetId:'bird'})
+ expect(validateAssistedActions([{type:'color',value:'#ffffff'},{type:'delete'}])).toBeNull()
+ expect(validateAssistedActions([{type:'color',value:'#ffffff'},{type:'variant'}])).toBeNull()
+})
+
+test.each(['child','guided'])('%s provenance enforces direct-edit restrictions even without an editing mode',async source=>{
+ const assisted={...input,objects:[{...input.objects[0],source}]}
+ expect(await interpretVoiceEdit(assisted,{chatText:async()=>({status:'edit',targetId:'bird',actions:[{type:'delete'}]})}))
+  .toMatchObject({status:'clarify',reason:'instruction'})
+})
+
+test('existing Nilo ink in assisted mode has the same restrictions; preview geometry may change',async()=>{
+ const create=source=>({...input,editingMode:'assisted',objects:[{...input.objects[0],source}]})
+ const reply=async()=>({status:'edit',targetId:'bird',actions:[{type:'variant'}]})
+ expect(await interpretVoiceEdit(create('nilo'),{chatText:reply})).toEqual({status:'redraw',targetId:'bird'})
+ expect(await interpretVoiceEdit(create('preview'),{chatText:reply})).toEqual({status:'edit',targetId:'bird',actions:[{type:'variant'}]})
+})
+
+test('prompt preserves whole-object corner geometry, opinion questions and selected-target context',async()=>{
+ const chatText=vi.fn(async()=>({status:'noop'}))
+ await interpretVoiceEdit({...input,editingMode:'assisted'},{chatText})
+ const prompt=chatText.mock.calls[0][0]
+ expect(prompt).toContain('width/2 + margin')
+ expect(prompt).toContain('do not shrink unless requested')
+ expect(prompt).toContain('Would blue look better?')
+ expect(prompt).toContain('never guess or choose the most recent stroke')
 })

@@ -13,7 +13,7 @@ import { clearChildDraft, getChildDraft, restoreChildArtwork, resumeChildDraft }
 import { discardStoredDraft, persistChildDraft, readStoredDraft } from '../draftRecovery'
 import { DraftRecovery } from '../components/DraftRecovery'
 import { readArtwork, saveArtwork } from '../artworks'
-import { getCanvasProvenance, type CanvasProvenance } from '../canvasDocument'
+import { getCanvasProvenance, lastUndoOwner, type CanvasProvenance } from '../canvasDocument'
 import { DrawingTools } from '../components/DrawingTools'
 import { DrawingMusic } from '../components/DrawingMusic'
 import type { BrushKind } from '../brushes'
@@ -21,6 +21,9 @@ import { DrawingCanvas, type DrawingCanvasHandle } from '../components/DrawingCa
 import { WelcomeOverlay } from '../components/WelcomeOverlay'
 import { CompanionProjection } from '../components/CompanionProjection'
 import { CompanionDock } from '../components/CompanionDock'
+import { CanvasSelection } from '../components/CanvasSelection'
+import type { SelectionBounds } from '../companion/selectionGeometry'
+import { proposalBounds } from '../companion/voiceActions'
 import { DrawingSurface } from '../components/DrawingSurface'
 import { useCompanion } from '../hooks/useCompanion'
 import { recordTurnOutcome } from '../companion/diagnostics'
@@ -116,18 +119,19 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   const [showWelcome, setShowWelcome] = useState(() => !hasWelcomed(ownerId) && !draft.artworkId && !draft.canvas.document?.operations.length && !draft.canvas.history.some(Boolean))
   const [moreOpen, setMoreOpen] = useState(false)
   const [shapeId, setShapeId] = useState<WarmupShapeId | null>(null)
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selection, setSelection] = useState<{ groupIds: string[]; bounds: SelectionBounds | null }>({ groupIds: [], bounds: null })
   const startCanvasTour = useOnboardingTour('canvas', 'child')
   const { completeInteraction, active: tourActive } = useOnboarding()
   const busy = saving || analysis === 'loading'
   const companionEnabled = !showWelcome && niloVisible && !busy && !tourActive
   const speakRef = useRef<(message: string) => void>(() => {})
   const voiceCancelRef = useRef<() => void>(() => {})
-  const inviteAfterModeChange = useRef(false)
   const companion = useCompanion({
     ownerId, artworkId: draft.artworkId, token: session?.token, locale,
     preferenceChildId: session?.role === 'child' && !session.isGuest ? session.id : undefined,
-    initialGuide: draft.tracingGuide,
     enabled: companionEnabled, allowDrawing: mode === 'together', canvas: canvasRef,
+    initialGuide: draft.tracingGuide,
     aspect: () => { const rect = paperRef.current?.getBoundingClientRect(); return rect?.height ? rect.width / rect.height : 1 },
     surfaceSize: () => { const rect = paperRef.current?.getBoundingClientRect(); return { width: rect?.width ?? 0, height: rect?.height ?? 0 } },
     drawingStyle: () => {
@@ -146,17 +150,21 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   speakRef.current = voice.speak
   voiceCancelRef.current = voice.cancel
   const currentProjection = companion.projection
+  const settledGuideId = useRef<string | null>(null)
+  useEffect(() => {
+    if(!currentProjection?.tracing){settledGuideId.current=null;return}
+    if(companion.phase!=='projected'||settledGuideId.current===currentProjection.id)return
+    // A fresh guide becomes the conversational target only after its reveal.
+    // Linked ink edits keep the same id, so their explicit selection survives.
+    settledGuideId.current=currentProjection.id
+    if(canvasRef.current?.getSelection?.().groupIds.length)canvasRef.current.setSelection?.([])
+  },[currentProjection,companion.phase])
   useEffect(() => {
     const projection = currentProjection
     draft.tracingGuide = projection?.tracing
       ? { id: projection.id, proposal: projection.proposal, additions: projection.additions, aspect: projection.aspect } : undefined
     setDraftError(!persistChildDraft(ownerId, draftSlot, draft))
   }, [currentProjection, draft, ownerId, draftSlot])
-  useEffect(() => {
-    if (!inviteAfterModeChange.current || mode !== 'together' || !companionEnabled || companion.phase !== 'idle') return
-    inviteAfterModeChange.current = false
-    void companion.takeTurn()
-  }, [mode, companionEnabled, companion.phase, companion.takeTurn])
   useEffect(() => { mounted.current = true; refreshCanvasVersion(); return () => { mounted.current = false } }, [])
   useEffect(() => {
     draft.color = color; draft.features = features; draft.brushSize = brushSize
@@ -199,8 +207,25 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   }, [cancelProjection])
 
   function refreshCanvasVersion() { setCanvasVersion(version => version + 1) }
+  function refreshSelection() {
+    setSelection(canvasRef.current?.getSelection?.() ?? { groupIds: [], bounds: null })
+    refreshCanvasVersion()
+    companion.notifySelectionChanged(false)
+  }
+  function finishSelection() {
+    setSelectionMode(false)
+    companion.notifySelectionChanged()
+  }
+  function toggleSelection() {
+    if (mode !== 'together' || !companionEnabled || isDrawing) return
+    if (selectionMode) { finishSelection(); return }
+    voice.cancel(); companion.notifySelectionChanged(false); setSelectionMode(true)
+  }
   function invalidateDrawing() {
     refreshCanvasVersion(); setSaveMessage(null); setAnalysis('idle'); setFeatures(null)
+    // A direct edit keeps selection identity but changes its visible bounds.
+    // Refresh its highlight without treating our own completed edit as stale.
+    setSelection(canvasRef.current?.getSelection?.() ?? { groupIds: [], bounds: null })
     submission.current = null; draft.submission = undefined
     setDraftError(!persistChildDraft(ownerId, draftSlot, draft))
   }
@@ -219,20 +244,25 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     // The visible in-progress/preview drawing is the latest action. Removing
     // that layer must not also remove an earlier committed child contribution.
     if (hasTemporaryDrawing) return
-    const owner = canvasRef.current?.getDocument().operations.at(-1)?.owner
+    const document = canvasRef.current?.getDocument()
+    const owner = document ? lastUndoOwner(document) : null
     if (canvasRef.current?.undo()) {
-      if (owner === 'nilo') recordTurnOutcome('nilo_undone')
+      if (owner === 'nilo') {
+        recordTurnOutcome('nilo_undone')
+        // Undo can restore an earlier ink position. Retire its visible reference
+        // instead of leaving a now-misaligned guide over the restored picture.
+        if (companion.projection?.tracing) companion.dismiss({ speak: false })
+      }
       invalidateDrawing()
     }
   }
   function changeMode(next: 'off' | 'together') {
+    setSelectionMode(false); canvasRef.current?.setSelection?.([])
     companion.cancel(); voice.cancel(); setMode(next); saveMode(ownerId, next)
     if (next === 'together') { setNiloVisible(true); saveNiloVisible(true) }
   }
   function inviteNilo() {
-    if (mode === 'together') { void companion.takeTurn(); return }
-    inviteAfterModeChange.current = true
-    changeMode('together')
+    if (mode === 'together') void companion.takeTurn()
   }
   function enter(next: 'off' | 'together') { changeMode(next); markWelcomed(ownerId); setShowWelcome(false) }
   function changeNiloVisible(next: boolean) {
@@ -272,7 +302,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     finally { savingRef.current = false; if (mounted.current) setSaving(false) }
     if (!mounted.current) return
     if (!imageBase64 || provenance === 'unknown') {
-      setSaveMessage('画已保存。这幅旧画没有笔迹来源记录，暂不生成成长分析。'); return
+      setSaveMessage(provenance === 'co-created' ? '这幅画包含共同修改，已保存创作过程。' : '画已保存。这幅旧画没有笔迹来源记录，暂不生成成长分析。'); return
     }
     setAnalysis('loading')
     try {
@@ -323,19 +353,24 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
         onColor={value => { setColor(value); setIsEraser(false) }} onBrush={value => { setBrushKind(value); setIsEraser(false) }}
         onSize={setBrushSize} onEraser={() => setIsEraser(value => !value)} onNextShape={handleNextShape} onClearShape={() => setShapeId(null)}
         onUndo={undoLastStroke} onClear={() => { companion.cancel(); voice.cancel(); canvasRef.current?.clear(); invalidateDrawing() }} onSave={handleSave} onFinish={handleFinish}
-        footerAddon={<CompanionDock companion={companion} voice={voice} mode={mode} visible={niloVisible} enabled={companionEnabled} isDrawing={isDrawing || busy} onVisible={changeNiloVisible} onInvite={inviteNilo} />}>
+        footerAddon={<CompanionDock companion={companion} voice={voice} mode={mode} visible={niloVisible} enabled={companionEnabled} isDrawing={isDrawing || busy} onVisible={changeNiloVisible} onInvite={inviteNilo}
+          selection={{ active: selectionMode, count: selection.groupIds.length, onToggle: toggleSelection, onClear: () => canvasRef.current?.setSelection?.([]), onComplete: () => setSelectionMode(false) }} />}>
         <section className="relative flex min-h-0 min-w-0 w-full flex-1">
           {draftError && <p role="alert" className="absolute bottom-3 left-3 right-3 z-30 mx-auto w-fit rounded-xl bg-white/95 px-4 py-2 text-sm text-red-700">{t('草稿暂存失败，请先保存或下载，再刷新页面。')}</p>}
           {(busy || saveMessage) && <p role="status" className="pointer-events-none absolute top-3 right-3 left-3 z-30 mx-auto w-fit max-w-[90%] rounded-2xl bg-luma-teal-50/95 px-4 py-2 text-center text-sm font-bold text-luma-teal-800 shadow-luma-sm">{t(saving ? '正在保存图画…' : analysis === 'loading' ? 'Nilo 正在仔细看你的画…' : saveMessage!)}</p>}
           <div data-onboarding="canvas-paper" className="relative mx-auto flex min-h-0 min-w-0 w-full flex-col">
             <DrawingSurface surfaceRef={paperRef} document={draft.canvas.document} guideAspect={projected ? projected.aspect : undefined} onReady={refreshCanvasVersion}>
-              <DrawingCanvas draft={draft.canvas} disabled={busy} ref={canvasRef} color={color} brushSize={brushSize} brushKind={brushKind} isEraser={isEraser} onStrokeComplete={handleStrokeComplete} onStrokeStart={handleStrokeStart} guideVisible={!!projected?.tracing} />
+              <DrawingCanvas draft={draft.canvas} disabled={busy} ref={canvasRef} color={color} brushSize={brushSize} brushKind={brushKind} isEraser={isEraser} onStrokeComplete={handleStrokeComplete} onStrokeStart={handleStrokeStart}
+                guideVisible={!!projected?.tracing} onSelectionChange={refreshSelection} onRequestSelection={() => setSelectionMode(true)} />
               <DrawingGuide shapeId={shapeId} />
               {companion.objectChoices?.objects.map((object,index)=>{
-                const p=object.proposals[0]
-                return <button type="button" key={object.id} className="absolute z-30 rounded-xl border-2 border-dashed border-luma-teal-600 bg-luma-teal-100/20 text-left text-sm font-bold text-luma-teal-900" style={{left:(p.x*100)+'%',top:(p.y*100)+'%',width:(p.width*100)+'%',height:(p.height*100)+'%'}} onClick={()=>companion.chooseObject(object.id)} aria-label={t('选择')+' '+(index+1)+': '+t(object.name)}>{index+1}</button>
+                const p='bounds' in object ? object.bounds : proposalBounds(object.proposals)
+                if (!p) return null
+                return <button type="button" key={object.id} className="absolute z-30 rounded-xl border-2 border-dashed border-luma-teal-600 bg-luma-teal-100/20 text-left text-sm font-bold text-luma-teal-900" style={{left:(p.x*100)+'%',top:(p.y*100)+'%',width:(p.width*100)+'%',height:(p.height*100)+'%'}} onClick={()=>{companion.chooseObject(object.id);setSelectionMode(false)}} aria-label={t('选择')+' '+(index+1)+': '+t(object.name)}>{index+1}</button>
               })}
-              {projected && !projected.pristineEdit && !projected.deleting && <CompanionProjection proposal={projected.proposal} additions={projected.additions} aspect={projected.aspect} tracing={projected.tracing} overInk={!!draft.canvas.document?.baseImage} turnDuration={projected.turn ? projected.durationMs : undefined} onEdit={mode === 'together' && companionEnabled && !busy && !isDrawing && companion.phase === 'projected' ? companion.edit : undefined} onInteractionStart={voice.cancel} />}
+              {projected && !projected.pristineEdit && !projected.deleting && <CompanionProjection proposal={projected.proposal} additions={projected.additions} aspect={projected.aspect} tracing={projected.tracing} overInk={!!draft.canvas.document?.baseImage} turnDuration={projected.turn ? projected.durationMs : undefined} onEdit={mode === 'together' && companionEnabled && !busy && !isDrawing && !selectionMode && companion.phase === 'projected' ? companion.edit : undefined} onInteractionStart={voice.cancel} />}
+              <CanvasSelection active={selectionMode && mode === 'together' && companionEnabled && !busy} candidates={selectionMode || selection.groupIds.length ? canvasRef.current?.getSelectionCandidates?.() ?? [] : []} selected={selection.groupIds} bounds={selection.bounds}
+                onChange={ids => canvasRef.current?.setSelection?.(ids)} onDone={finishSelection} onCancel={() => { setSelectionMode(false); companion.interrupt() }} />
             </DrawingSurface>
           </div>
         </section>

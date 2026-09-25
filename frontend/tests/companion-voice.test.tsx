@@ -435,6 +435,30 @@ test('voice selection prefers youthful names only within the requested language'
   expect(selectCompanionVoice([englishChild], 'zh')).toBeNull()
 })
 
+test.each([
+  ['zh', 'Microsoft Xiaoyou Online (Natural)', 'zh-CN'],
+  ['zh', 'zh-CN-XiaoshuangNeural', 'zh-CN'],
+  ['en', 'Microsoft Ana Online (Natural)', 'en-US'],
+  ['en', 'en-GB-MaisieNeural', 'en-GB'],
+] as const)('available %s child voice %s beats an adult default and keeps its natural pitch', async (locale, name, lang) => {
+  const child = browserVoice(name, lang)
+  const adult = browserVoice(locale === 'zh' ? 'Microsoft Xiaoxiao Online' : 'Microsoft Jenny Online', lang, true)
+  synth.getVoices.mockReturnValue([adult, child])
+  const { result } = renderHook(() => useCompanionVoice({ ...baseOptions(), locale }))
+  await ready()
+  const text = locale === 'zh' ? '按你的想法试试看，我陪着你。' : 'Try your idea. I am here with you.'
+  act(() => result.current.speak(text))
+  expect(FakeUtterance.instances[0]).toMatchObject({ voice: child, text, pitch: 1 })
+  expect(FakeUtterance.instances[0].rate).toBeLessThan(1)
+  expect(vi.mocked(authFetch).mock.calls.some(([path]) => path.endsWith('/speak'))).toBe(false)
+})
+
+test('child voice selection also recognizes a localized display name by its voice URI', () => {
+  const child = { ...browserVoice('系统语音二', 'zh-CN'), voiceURI: 'zh-CN-XiaoyouNeural' }
+  expect(selectCompanionVoice([browserVoice('婷婷', 'zh-CN', true), child], 'zh')).toBe(child)
+  expect(selectCompanionVoice([child], 'en')).toBeNull()
+})
+
 test.each(['zh', 'en'] as const)('browser speech uses the %s voice and a gentle pitch and pace', async locale => {
   const { result } = renderHook(() => useCompanionVoice({ ...baseOptions(), locale }))
   await ready()

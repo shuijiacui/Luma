@@ -17,7 +17,7 @@
 
 ### 当前底图的“换个画法”
 
-当前儿童端的新绘画结果保留为灰色描摹底图，由孩子自行描画；换画法不提交笔迹。普通内置物体或带可靠 `recipeId` 的素材，优先在前端循环同一主体的全部画法，保留用户调整过的位置、外框尺寸、旋转、颜色和画笔。其他同组对象保持不变，不把“换画法”记作拒绝这个物体。
+当前儿童端的新绘画结果保留为灰色参考底图，由孩子自行描画；换画法不提交笔迹。点击“换一个”打开按具体题材组织的素材面板，展示审核可用的 SVG 与 PNG，可搜索或选择其他题材。替换保留用户调整过的位置、旋转及合适的外框尺寸，其他同组对象保持不变；只有孩子实际点选并成功替换后才保存风格偏好，不把换图记作拒绝整个题材。明确的语音“换个画法”仍可沿同题材变体路径执行。
 
 不能本地切换的自由图形发送 `context.variantOnly:true, requestDrawing:true, takeTurn:false`，同时传入 `currentProposal`、`currentAdditions` 和 `canvasAspect`。服务端走独立的同主体变体请求，一次模型调用，共用现有超时预算；不进入新主意流程。返回值重新校验主体和连接，按原外框等比容纳新轮廓；不允许换主体、增加对象或用完整素材覆盖没有素材编号的半形图。前端再次核对主体，失败时保留原底图。自由生成轮廓的具体语义仍依赖模型，主体名称校验不等于视觉语义保证。明确说“请画月亮”等新请求仍可更换物体，不携带 `variantOnly`。
 
@@ -203,23 +203,25 @@ API 的最终 proposal 使用 `contact:{kind:"points"|"contour",points:[{x,y},..
 
 ## 语音配置
 
-必须在服务端显式配置；不会复用视觉模型凭据：
+默认使用浏览器识别和朗读，不需要 Python 语音服务。云端 ASR、TTS 是相互独立的可选能力，必须在服务端显式配置；不会复用视觉模型凭据。示例保留提供商参数，但关闭两项云端能力：
 
 ```dotenv
 VOICE_PROVIDER=dashscope
 VOICE_BASE_URL=https://dashscope.aliyuncs.com
 VOICE_API_KEY=
+VOICE_ASR_ENABLED=false
 VOICE_ASR_MODEL=qwen3-asr-flash
+VOICE_TTS_ENABLED=false
 VOICE_TTS_MODEL=qwen3-tts-flash
 VOICE_TTS_VOICE=Mochi
 VOICE_TIMEOUT_MS=12000
 ```
 
-示例选用阿里百炼北京 Qwen3-ASR-Flash 与 Qwen3-TTS-Flash。必须单独配置百炼北京 API Key；现有 ModelScope 密钥不能代替，程序也不自动复用任何其他密钥。缺少 `VOICE_API_KEY` 时云端语音保持禁用；前端仅在浏览器支持时提供浏览器语音，否则继续使用按钮。尚未执行真实供应商付费调用。
+示例为后续可选服务保留阿里百炼北京 Qwen3-ASR-Flash 与 Qwen3-TTS-Flash 参数。需要统一云端音色时，可只设 `VOICE_TTS_ENABLED=true`，将 `VOICE_ASR_ENABLED=false` 保留为浏览器识别；需要云端识别时另行启用 ASR。两者都需要单独配置百炼北京 API Key，现有 ModelScope 密钥不能代替，程序也不自动复用任何其他密钥。缺少 `VOICE_API_KEY` 时云端语音仍禁用；前端仅在浏览器支持时提供浏览器语音，否则继续使用文字与按钮。当前没有启用付费云语音。
 
 云端默认音色为 `Mochi`（沙小弥），官方列为童真男声，支持中文与英文，可用于 `qwen3-tts-flash`。已有部署若显式设置了其他 `VOICE_TTS_VOICE`，仍以该设置为准；想切换到此音色需修改配置并重启服务。音色依据：[阿里百炼音色列表](https://help.aliyun.com/zh/model-studio/qwen-tts-voice-list)。
 
-浏览器降级只从当前语言中挑选音色，优先名称明确标注为儿童／少年，再选较温和的候选（中文 Xiaoxiao、Xiaoyi、Tingting；英文 Ana、Jenny、Aria、Samantha），并使用 `pitch=1.18`、`rate=0.96`。列表尚未加载时最多等待 1 秒；无法枚举时仍通过 `utterance.lang` 请求系统匹配。若已列出的音色确实没有当前语言，则使用字幕与按钮。浏览器声音取决于设备，不能保证为真实童声或跨设备一致；要稳定使用 Mochi，必须启用云端语音。
+浏览器朗读只从当前语言中挑选音色，优先设备可用的童声（例如中文 Xiaoyou、Xiaoshuang，英文 Ana、Maisie），没有时再选轻柔候选。已有童声保持 `pitch=1`，成人音色使用温和的 `pitch=1.18`；中文语速 `rate=0.94`，英文 `rate=0.96`。列表尚未加载时最多等待 1 秒；无法枚举时仍通过 `utterance.lang` 请求系统匹配。若已列出的音色确实没有当前语言，则使用字幕与按钮。浏览器声音取决于设备，不能保证有真实童声或跨设备一致；当前以浏览器可用音色为准，Mochi 仅为可选云端配置。
 
 `dashscope` 使用 ASR `POST /compatible-mode/v1/chat/completions` 的 `input_audio` data URL，以及 TTS `POST /api/v1/services/aigc/multimodal-generation/generation` 的 `input.text/voice/language_type`。ASR建议上传浏览器本地转换后的单声道 WAV。TTS生成的 WAV 由服务器从固定的百炼北京/乌兰察布结果 OSS 主机下载，仅用 HTTPS，不带 API key，不允许任意域名或重定向；不会把带签名的链接返回前端或写入日志。
 
@@ -363,6 +365,6 @@ npm test -- --run tests/niloDialogue.test.js tests/voice.test.js tests/nilo.test
 
 此阶段限制：没有提高 ASR 模型本身的识别准确率；没有建立跨会话角色记忆；一次不能同时修改多个独立物体。模型只能依据已提供的 Nilo 物体位置解析空间指代，不会假装知道孩子所画“树旁边”的精确位置。改画形状仍依赖现有绘图规划器，不能据此保证任意改画成功。
 
-### 可选开源语音后端
+### 整句候选与位置约束
 
-`VOICE_PROVIDER=funasr` 将 `/voice/transcribe` 代理到配置的 `/v1/audio/transcriptions`，热词以有界 `hotwords` JSON 字段发送。`asrAlternatives` 可传入 companion context 或 voice/interpret 请求，最多三条，每条最多 400 字，作为不可信候选数据参与现有推理。FunASR 能力声明始终 `tts:false`，客户端保留浏览器朗读。无密钥仅允许 loopback 服务；安装与对比步骤见 [speech/README.md](../speech/README.md)。明确半形/角落的绘画响应可带 `placementLocked:true`，客户端不可自动把它搬到别处。
+`asrAlternatives` 可传入 companion context 或 voice/interpret 请求，最多三条，每条最多 400 字，作为不可信候选数据参与现有推理。此能力保留在浏览器识别流程中，不依赖额外本地识别模型。完整句子用于区分改口与否定，不能只取第一个颜色或按标点切断指令；浏览器漏词时仍可能需要澄清。明确半形/角落的绘画响应可带 `placementLocked:true`，客户端不可自动把它搬到别处。

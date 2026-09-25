@@ -1,0 +1,16 @@
+.nilo-canvas-selection { position:absolute; inset:0; width:100%; height:100%; z-index:31; overflow:visible; pointer-events:none; }
+.nilo-canvas-selection[data-active=true] { pointer-events:auto; touch-action:none; cursor:crosshair; }
+.nilo-canvas-selection:focus-visible { outline:2px solid #b9a34a; outline-offset:-3px; }
+.nilo-selected-stroke { fill:none; stroke:#318cbb; stroke-width:7px; stroke-opacity:.3; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+.nilo-selection-box { fill:none; stroke:#237d72; stroke-width:1.5px; stroke-dasharray:5 4; vector-effect:non-scaling-stroke; }
+.nilo-selection-lasso { fill:#72b5a21a; stroke:#237d72; stroke-width:2px; stroke-dasharray:5 4; vector-effect:non-scaling-stroke; }
+.nilo-selection-controls { display:flex; align-items:center; gap:3px; border-right:1px solid #dce7df; padding-right:5px; margin-right:2px; }
+.nilo-selection-toggle { display:flex; align-items:center; gap:4px; white-space:nowrap; }
+.nilo-selection-toggle[aria-pressed=true] { background:#dcefe6; color:#1c6a55; }
+.nilo-selection-toggle svg { width:18px; height:18px; flex:none; }
+.nilo-selection-hint { position:absolute; bottom:calc(100% + 8px); right:0; width:max-content; max-width:min(420px,calc(100vw - 24px)); padding:8px 12px; border:1px solid #dce7df; border-radius:12px; background:#fffdf8f5; color:#315c50; font-size:12px; line-height:1.5; box-shadow:0 4px 18px #19453815; }
+@media(max-height:520px),(max-width:760px) {
+ .nilo-selection-controls { padding-right:2px; gap:0; margin-right:0; }
+ .nilo-selection-toggle { padding-inline:4px; min-width:34px; }
+ .nilo-selection-toggle:not([aria-pressed=true]) span { display:none; }
+}

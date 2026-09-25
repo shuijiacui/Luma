@@ -69,7 +69,7 @@ test('ASR timeout cancels the provider and routes share cost rate limits and chi
 })
 
 test('DashScope config uses independent Beijing credentials and native ASR payload', async () => {
-  const dashscope = voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder' })
+  const dashscope = voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder', VOICE_ASR_ENABLED: 'true' })
   expect(dashscope).toMatchObject({ baseUrl: 'https://dashscope.aliyuncs.com', asrModel: 'qwen3-asr-flash', ttsModel: 'qwen3-tts-flash', voice: 'Mochi' })
   expect(voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_TTS_VOICE: 'Cherry' }).voice).toBe('Cherry')
   expect(voiceCapabilities(voiceConfig({ VOICE_PROVIDER: 'dashscope', LLM_API_KEY: 'placeholder', DASHSCOPE_API_KEY: 'placeholder' }))).toEqual({ asr: false, tts: false })
@@ -84,7 +84,7 @@ test('DashScope config uses independent Beijing credentials and native ASR paylo
 })
 
 test('DashScope receives drawing vocabulary and context as bounded background data', async () => {
-  const dashscope = voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder' })
+  const dashscope = voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder', VOICE_ASR_ENABLED: 'true' })
   const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: '画一只恐龙' } }] })))
   await transcribeVoice({ ...input, context: { theme: '恐龙\n世界', subjects: ['霸王龙'], history: 'not sent' } }, { config: dashscope, fetchImpl })
   const payload = JSON.parse(fetchImpl.mock.calls[0][1].body)
@@ -103,7 +103,7 @@ test('DashScope receives drawing vocabulary and context as bounded background da
 test.each([['en', 'Hello', 'English'], ['zh', '你好', 'Chinese']])('DashScope TTS uses the childlike voice in %s and downloads trusted WAV without authorization', async (locale, text, language) => {
   const wav = Buffer.alloc(48)
   wav.write('RIFF', 0); wav.write('WAVE', 8)
-  const dashscope = voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder' })
+  const dashscope = voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder', VOICE_TTS_ENABLED: 'true' })
   const fetchImpl = vi.fn()
     .mockResolvedValueOnce(new Response(JSON.stringify({ output: { audio: { url: 'http://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/audio.wav?signature=test' } }, usage: { characters: 5 } })))
     .mockResolvedValueOnce(new Response(wav, { headers: { 'Content-Type': 'audio/wav' } }))
@@ -117,7 +117,7 @@ test.each([['en', 'Hello', 'English'], ['zh', '你好', 'Chinese']])('DashScope 
 
 test('DashScope download rejects SSRF destinations, redirects and malformed audio', async () => {
   for (const url of ['http://127.0.0.1/audio.wav', 'https://evil.oss-cn-beijing.aliyuncs.com/audio.wav', 'https://dashscope-result-bj.oss-cn-beijing.aliyuncs.com.evil.test/audio.wav', 'https://user@dashscope-result-bj.oss-cn-beijing.aliyuncs.com/audio.wav', 'https://dashscope-result-bj.oss-cn-beijing.aliyuncs.com:8000/audio.wav', 'file:///tmp/audio.wav']) expect(() => trustedDashscopeAudioUrl(url)).toThrow('untrusted_voice_audio_url')
-  const dashscope = voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder' })
+  const dashscope = voiceConfig({ VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder', VOICE_TTS_ENABLED: 'true' })
   const malicious = vi.fn(async () => new Response(JSON.stringify({ output: { audio: { url: 'http://169.254.169.254/latest/meta-data' } } })))
   await expect(synthesizeVoice({ text: '你好' }, { config: dashscope, fetchImpl: malicious })).rejects.toThrow('untrusted_voice_audio_url')
   expect(malicious).toHaveBeenCalledTimes(1)
@@ -126,13 +126,24 @@ test('DashScope download rejects SSRF destinations, redirects and malformed audi
 })
 
 
-test('FunASR is opt-in, sends bounded drawing hotwords, and never advertises unsupported TTS',async()=>{
- const local={...config,provider:'funasr',baseUrl:'http://127.0.0.1:8765/v1',apiKey:'',asrModel:'paraformer'}
- expect(voiceCapabilities(local)).toEqual({asr:true,tts:false})
- expect(voiceCapabilities({...local,baseUrl:'http://remote.example/v1'})).toEqual({asr:false,tts:false})
- const fetchImpl=vi.fn(async()=>new Response(JSON.stringify({text:'太阳'})))
- await transcribeVoice({audioBase64:Buffer.from('test').toString('base64'),mimeType:'audio/wav',context:{subjects:['小船']}},{config:local,fetchImpl})
- const options=fetchImpl.mock.calls[0][1]
- expect(options.headers.Authorization).toBeUndefined()
- expect(JSON.parse(options.body.get('hotwords')).vocabulary).toEqual(expect.arrayContaining(['太阳','小船']))
+test('unsupported providers do not advertise or send speech requests', async () => {
+  const unsupported = { ...config, provider: 'unsupported', baseUrl: 'http://127.0.0.1:8765/v1' }
+  expect(voiceCapabilities(unsupported)).toEqual({ asr: false, tts: false })
+  const fetchImpl = vi.fn()
+  await expect(transcribeVoice(input, { config: unsupported, fetchImpl })).rejects.toThrow('voice_asr_not_configured')
+  await expect(synthesizeVoice({ text: '你好' }, { config: unsupported, fetchImpl })).rejects.toThrow('voice_tts_not_configured')
+  expect(fetchImpl).not.toHaveBeenCalled()
+})
+
+test('recognition and reading can be disabled independently without a TTS key switching browser ASR', async () => {
+  const env = { VOICE_PROVIDER: 'dashscope', VOICE_API_KEY: 'test-only-placeholder' }
+  expect(voiceCapabilities(voiceConfig(env))).toEqual({ asr: false, tts: false })
+  expect(voiceCapabilities(voiceConfig({ ...env, VOICE_TTS_ENABLED: 'true' }))).toEqual({ asr: false, tts: true })
+  expect(voiceCapabilities(voiceConfig({ ...env, VOICE_ASR_ENABLED: 'true', VOICE_TTS_ENABLED: 'false' }))).toEqual({ asr: true, tts: false })
+  const browserOnly = voiceConfig({ ...env, VOICE_ASR_ENABLED: 'false', VOICE_TTS_ENABLED: 'false' })
+  expect(voiceCapabilities(browserOnly)).toEqual({ asr: false, tts: false })
+  const fetchImpl = vi.fn()
+  await expect(transcribeVoice(input, { config: browserOnly, fetchImpl })).rejects.toThrow('voice_asr_not_configured')
+  await expect(synthesizeVoice({ text: '你好' }, { config: browserOnly, fetchImpl })).rejects.toThrow('voice_tts_not_configured')
+  expect(fetchImpl).not.toHaveBeenCalled()
 })

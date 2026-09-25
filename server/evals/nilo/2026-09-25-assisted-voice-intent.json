@@ -1,0 +1,88 @@
+{
+  "date": "2026-09-25T06:56:01.827Z",
+  "scope": "Synthetic text intent only; not microphone recognition, drawing quality or child usability.",
+  "passed": 6,
+  "total": 6,
+  "results": [
+    {
+      "utterance": "把这个改成红色，哦，不，换成蓝色，再小一点",
+      "plan": {
+        "status": "edit",
+        "targetId": "child-sun",
+        "actions": [
+          {
+            "type": "color",
+            "value": "#0000ff"
+          },
+          {
+            "type": "scale",
+            "factor": 0.85
+          }
+        ]
+      },
+      "passed": true,
+      "latencyMs": 671
+    },
+    {
+      "utterance": "把它缩小一点，放到左上角",
+      "plan": {
+        "status": "edit",
+        "targetId": "child-sun",
+        "actions": [
+          {
+            "type": "scale",
+            "factor": 0.85
+          },
+          {
+            "type": "place",
+            "x": 0.112,
+            "y": 0.095
+          }
+        ]
+      },
+      "passed": true,
+      "latencyMs": 647
+    },
+    {
+      "utterance": "蓝色会不会更好？",
+      "plan": {
+        "status": "unhandled"
+      },
+      "passed": true,
+      "latencyMs": 435
+    },
+    {
+      "utterance": "把这个缩小一点",
+      "plan": {
+        "status": "clarify",
+        "reason": "target",
+        "candidateIds": [
+          "child-sun"
+        ]
+      },
+      "passed": true,
+      "latencyMs": 508
+    },
+    {
+      "utterance": "给这个人加个帽子",
+      "plan": {
+        "status": "redraw",
+        "targetId": "child-sun"
+      },
+      "passed": true,
+      "latencyMs": 466
+    },
+    {
+      "utterance": "把这个换成红色哦哦哦，不换成蓝色",
+      "plan": {
+        "status": "clarify",
+        "reason": "instruction",
+        "candidateIds": [
+          "child-sun"
+        ]
+      },
+      "passed": true,
+      "latencyMs": 581
+    }
+  ]
+}

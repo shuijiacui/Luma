@@ -201,7 +201,7 @@ test('selecting vector art from a large raster guide fits the existing size budg
   expect(hook.commit).not.toHaveBeenCalled()
 })
 
-test('tracing preserves the model idea, speaks exactly the displayed text', async () => {
+test('tracing preserves the model idea, speaks exactly the displayed text and remembers wording separately', async () => {
   const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
   const text = '给飞船一个弯弯的尾焰，让你的故事继续出发。'
   vi.mocked(authFetch).mockResolvedValueOnce({ ...reply, reply: text })
@@ -209,6 +209,13 @@ test('tracing preserves the model idea, speaks exactly the displayed text', asyn
   expect(hook.result.current.message).toContain(text)
   expect(hook.onSpeak).toHaveBeenLastCalledWith(hook.result.current.message)
   expect(hook.commit).not.toHaveBeenCalled()
+  const spoken = hook.result.current.message
+  act(() => vi.advanceTimersByTime(1600))
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '嗯，画法由你决定。' })
+  await act(async () => { await hook.result.current.ask('我想换个画法') })
+  const context = (vi.mocked(authFetch).mock.calls[1][1]!.body as { context: { recentReplies: string[]; history: { text: string }[] } }).context
+  expect(context.recentReplies).toContain(spoken)
+  expect(context.history.some(item => item.text === spoken)).toBe(false)
 })
 
 test('click-turn guide also keeps its context-aware reply after the reveal animation', async () => {

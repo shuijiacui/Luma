@@ -119,6 +119,26 @@ test('parent image uses the authorized saved composite while the model and dedup
   expect((await request(app).post('/api/analyze').send({ imageBase64: 'aGVsbG8=', displayImageBase64: png })).status).toBe(200)
 })
 
+test('assisted child strokes round-trip with originals but cannot masquerade as child-only analysis', async () => {
+  const observed=[]
+  const {app,child,db}=fixture({chatWithImage:async image=>{observed.push(image);return structuredClone(FEATURES)}})
+  const artworkId=crypto.randomUUID()
+  const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aO2kAAAAASUVORK5CYII='
+  const original={type:'stroke',owner:'child',groupId:'sun',color:'#ff0000',size:4,brushKind:'round',eraser:false,referenceWidth:800,referenceHeight:600,points:[{x:.3,y:.3},{x:.4,y:.4}]}
+  const document={version:1,baseSource:'child',coCreated:true,operations:[original,
+    {type:'assist',owner:'nilo',groupId:'change',targetIds:['sun'],actions:[{type:'color',value:'#0000ff'},{type:'scale',factor:.85}]}]}
+  const auth=`Bearer ${child.token}`
+  const saved=await request(app).put(`/api/artworks/${artworkId}`).set('Authorization',auth).send({image:png,revision:0,document}).expect(200)
+  const restored=await request(app).get(`/api/artworks/${artworkId}`).set('Authorization',auth).expect(200)
+  expect(restored.body.document).toEqual(document)
+  expect(restored.body.document.operations[0]).toEqual(original)
+  const analysis=await request(app).post('/api/analyze').set('Authorization',auth).send({imageBase64:'aGVsbG8=',provenance:'co-created',artworkId,artworkRevision:saved.body.revision})
+  expect(analysis.status).toBe(422)
+  expect(analysis.body.error).toBe('assisted_artwork_requires_process_review')
+  expect(observed).toHaveLength(0)
+  expect(db.prepare('SELECT COUNT(*) AS n FROM analyses').get().n).toBe(0)
+})
+
 test('saved artwork changes during analysis cannot attach a stale composite', async () => {
   let enter, release
   const started = new Promise(resolve => { enter = resolve })

@@ -82,9 +82,14 @@ export function createApiRouter({ chatWithImage, db, uploadDir = path.resolve('u
       if (displayImageBase64 !== undefined || typeof artworkId !== 'string' || !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(artworkId)
         || !Number.isSafeInteger(artworkRevision) || artworkRevision < 1) return res.status(400).json({ error: 'invalid artwork reference' })
       if (!db || req.auth?.role !== 'child') return res.status(401).json({ error: 'login required for artwork reference' })
-      const saved = db.prepare('SELECT image_base64, revision, provenance FROM artworks WHERE id = ? AND child_id = ?').get(artworkId, req.auth.accountId)
+      const saved = db.prepare('SELECT image_base64, revision, provenance, document_json FROM artworks WHERE id = ? AND child_id = ?').get(artworkId, req.auth.accountId)
       if (!saved) return res.status(404).json({ error: 'artwork not found' })
       if (saved.revision !== artworkRevision || saved.provenance !== provenance) return res.status(409).json({ error: 'artwork version or provenance changed' })
+      const drawing = saved.document_json ? JSON.parse(saved.document_json) : null
+      if (drawing?.operations?.some(op => op.type === 'assist')) return res.status(422).json({
+        error: 'assisted_artwork_requires_process_review',
+        message: '作品和修改过程已保存。共同修改后的画面不作为孩子自主表达的特征分析。',
+      })
       displayBuffer = displayPng(saved.image_base64)
       if (!displayBuffer) return res.status(400).json({ error: 'invalid saved artwork image' })
       displayMime = 'image/png'

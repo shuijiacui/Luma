@@ -1,12 +1,23 @@
 import {expect,test,afterEach} from 'vitest'
-import {applyVoiceActions,simpleVoiceActions} from '@/features/child/companion/voiceActions'
+import {applyVoiceActions,simpleVoiceActions,isVoiceSuggestion} from '@/features/child/companion/voiceActions'
 import {readVoiceDiagnostics,recordVoiceEvent,setVoiceDebugContent} from '@/features/child/companion/voiceDiagnostics'
 import {voiceTranscriptionError} from '@/features/child/hooks/voiceErrors'
 import {ApiError} from '@/lib/api/client'
 import type {DrawingProposal} from '@/features/child/companion/proposals'
 const p:DrawingProposal={template:'cloud',x:.2,y:.2,width:.2,height:.1,rotation:0,color:'#123456',strokeWidth:4,target:'canvas',relation:'cloud near tree'}
 afterEach(()=>setVoiceDebugContent(false))
+test.each([
+ '我想把这个换成红色，哦，不，换成蓝色',
+ '先把这个换成红色哦哦哦哦，不换成蓝色。',
+ '我想把这个换成红色哦哦哦不换成蓝色',
+ '换成红色，不要换成蓝色',
+ '不是蓝色，换成红色',
+ '不要换成蓝色',
+ '换成蓝色，不，还是保持原样',
+ '换成红色，哦不，换成蓝色，再小一点',
+])('spoken repairs and prohibitions must reach whole-utterance interpretation: %s',text=>expect(simpleVoiceActions(text)).toBeNull())
 test.each(['不要红色，要蓝色','改蓝色再小一点','不要删掉那只鸟','往树的右边挪','不是这只，是左边那只','make it blue and smaller','改成蓝色，但是不要移动','红色不是蓝色','把小鸟和小猫改成蓝色','删掉小鸟或者小猫'])('complex speech cannot execute a partial regex match: %s',text=>expect(simpleVoiceActions(text)).toBeNull())
+test.each(['蓝色？','改成蓝色？','往左一点？','red?','smaller?'])('question punctuation cannot be stripped into an immediate edit: %s',text=>expect(simpleVoiceActions(text)).toBeNull())
 test('unambiguous whole commands keep the local fast path',()=>{
  expect(simpleVoiceActions('把松鼠改成蓝色')).toEqual([{type:'color',value:'#459fd1'}])
  expect(simpleVoiceActions('不要那只鸟了')).toEqual([{type:'delete'}])
@@ -28,6 +39,11 @@ test('unsupported and out-of-bounds actions do not publish earlier colour change
  expect(applyVoiceActions([p],[{type:'color',value:'#abcdef'},{type:'part',part:'tail',factor:1.2}])).toEqual({ok:false,reason:'unsupported'})
  expect(applyVoiceActions([p],[{type:'color',value:'#abcdef'},{type:'place',x:0,y:0}])).toEqual({ok:false,reason:'geometry'})
  expect(p.color).toBe('#123456')
+})
+test('opinion questions do not grant edit permission, while explicit polite requests still can',()=>{
+ expect(isVoiceSuggestion('你觉得蓝色会不会更好？')).toBe(true)
+ expect(isVoiceSuggestion('Would blue look better?')).toBe(true)
+ expect(isVoiceSuggestion('你能不能把这个换成蓝色？')).toBe(false)
 })
 test('diagnostics omit speech and plans by default and debug content is bounded and cleared',()=>{
  recordVoiceEvent({turn:'a',stage:'asr',outcome:'ok',text:'private child speech',plan:{targetId:'secret'}})

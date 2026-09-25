@@ -407,6 +407,39 @@ test.each([['我自己画', 'off'], ['和 Nilo 一起画', 'together']] as const
   expect(startTour).toHaveBeenCalledOnce()
 })
 
+test('solo mode disables drawing assistance without blocking voice or changing the canvas, and explicit together mode restores it', async () => {
+  vi.stubGlobal('crypto', { getRandomValues: globalThis.crypto.getRandomValues.bind(globalThis.crypto) })
+  const canvas = prepare(); draw(canvas)
+  const original = structuredClone(operations())
+  await act(async () => {})
+  for (const name of ['Nilo，你来画', '圈选修改']) {
+    const button = screen.getByRole('button', { name }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+    fireEvent.click(button)
+  }
+  for (const name of ['和 Nilo 说话', '开启 Nilo 声音', '开启连续对话']) {
+    expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(false)
+  }
+  expect(screen.getByRole('button', { name: '我自己画' }).getAttribute('aria-pressed')).toBe('true')
+  expect(screen.queryByRole('group', { name: '圈选要修改的笔迹' })).toBeNull()
+  expect(requests()).toHaveLength(0)
+  expect(operations()).toEqual(original)
+  fireEvent.click(screen.getByRole('button', { name: '和 Nilo 一起画' }))
+  expect(operations()).toEqual(original)
+  expect((screen.getByRole('button', { name: '圈选修改' }) as HTMLButtonElement).disabled).toBe(false)
+  expect((screen.getByRole('button', { name: 'Nilo，你来画' }) as HTMLButtonElement).disabled).toBe(false)
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Nilo，你来画' })))
+  expect(screen.getByRole('button', { name: '和 Nilo 一起画' }).getAttribute('aria-pressed')).toBe('true')
+  await act(async () => vi.advanceTimersByTimeAsync(1200))
+  expect(requests()).toHaveLength(1)
+  expect(screen.getByLabelText('Nilo 的灰色虚线描摹底图')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: '留下来' })).toBeNull()
+  expect(operations().map(op => op.owner)).toEqual(['child'])
+  expect(document.querySelector('canvas')).toBe(canvas)
+})
+
+
+
 test('drag and resize a gray guide, then save and reopen exactly the chosen position and size',async()=>{
   const recipe=getDrawingRecipe('rabbit-2')!
   companionReply=()=>Promise.resolve({reply:'来一只小兔子',geometryReviewed:true,proposal:{template:'custom',subject:recipe.name,recipeId:recipe.id,
@@ -601,8 +634,7 @@ test('voice remains in the bottom strip and music in the header, with no text bo
   await act(async () => {})
   const dock = screen.getByRole('group', { name: 'Nilo 与声音' })
   const footer = screen.getByRole('contentinfo').parentElement!
-  expect(within(dock).queryByRole('button', { name: '开启连续对话' })).toBeNull()
-  fireEvent.click(within(dock).getByRole('button', { name: '声音选项' }))
+  expect(within(dock).queryByRole('button', { name: '声音选项' })).toBeNull()
   for (const name of ['Nilo，你来画', '和 Nilo 说话', '开启 Nilo 声音', '开启连续对话']) {
     const button = within(dock).getByRole('button', { name })
     expect(footer.contains(button)).toBe(true)
@@ -626,3 +658,174 @@ async function sayToNilo(text:string) {
     await vi.advanceTimersByTimeAsync(2800)
   })
 }
+test('legacy model objects support explicit direct edits, saving and non-destructive undo',async()=>{
+  localStorage.setItem('luma_companion_mode:guest-child','together')
+  const canvas=prepare();draw(canvas)
+  const original=structuredClone(operations())
+  const proposal = { ...customSketchExamples[0], subject: '松鼠', recipeId: 'squirrel-3', sketch: getDrawingRecipe('squirrel-3')!.sketch }
+  const legacy = proposalStrokes(proposal, 4 / 3).map((spec, index) => ({
+    owner: 'nilo' as const, type: 'stroke' as const, groupId: 'legacy-squirrel', points: spec.points,
+    color: spec.color, size: spec.width, brushKind: spec.brushKind ?? 'round' as const, eraser: false, referenceWidth: 320, referenceHeight: 240,
+    ...(index === 0 ? { object: { proposals: [proposal], aspect: 4 / 3, name: '松鼠' } } : {}),
+  }))
+  getChildDraft('guest-child').canvas.document!.operations.push(...legacy)
+  const accepted = structuredClone(operations()), niloId = 'legacy-squirrel'
+  cleanup(); prepare()
+  fireEvent.click(screen.getByRole('button', { name: '继续上次画布' }))
+  await sayToNilo('把松鼠改成蓝色')
+  expect(requests()).toHaveLength(0)
+  expect(screen.queryByRole('button',{name:'确认修改'})).toBeNull()
+  const edited=getChildDraft('guest-child').canvas.document!
+  expect(edited.operations.at(-1)).toMatchObject({type:'assist',targetIds:[niloId]})
+  expect(edited.operations.slice(0,accepted.length)).toEqual(accepted)
+  expect(visibleOperations(edited).filter(op=>op.owner==='child')).toEqual(original)
+  expect(visibleOperations(edited).filter(op=>op.type==='stroke'&&op.owner==='nilo').every(op=>op.type==='stroke'&&op.color==='#459fd1')).toBe(true)
+  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'保存'})))
+  const saved:Artwork=JSON.parse(localStorage.getItem('luma_guest_artworks_v1')!)[0]
+  expect(saved.document).toEqual(edited)
+  cleanup();clearChildDraft();prepare()
+  fireEvent.click(screen.getByRole('button',{name:'继续上次画布'}))
+  fireEvent.click(screen.getByRole('button',{name:'撤销',exact:true}))
+  expect(visibleOperations(getChildDraft('guest-child').canvas.document!)).toEqual(accepted)
+  expect(operations().at(-1)).toMatchObject({type:'assist-revert'})
+})
+
+test('an unspecified voice edit waits for explicit selection, then changes the child ink once and saves without a fabricated analysis', async () => {
+  localStorage.setItem('luma_companion_mode:guest-child', 'together')
+  const canvas = prepare(); draw(canvas)
+  const original = structuredClone(operations())
+  await sayToNilo('改成蓝色')
+  const overlay = screen.getByRole('group', { name: '圈选要修改的笔迹' }) as unknown as SVGSVGElement
+  vi.spyOn(overlay, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 320, height: 240 } as DOMRect)
+  overlay.setPointerCapture = vi.fn(); overlay.hasPointerCapture = vi.fn(() => true); overlay.releasePointerCapture = vi.fn()
+  const touch = (type: string) => {
+    const event = new Event(type, { bubbles: true, cancelable: true })
+    Object.assign(event, { pointerId: 1, isPrimary: true, button: 0, clientX: 20, clientY: 30, pointerType: 'touch' })
+    fireEvent(overlay, event)
+  }
+  touch('pointerdown'); touch('pointerup')
+  expect(operations()).toEqual(original)
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '选好了', exact: true })))
+  expect(operations().filter(op => op.type === 'assist')).toHaveLength(1)
+  expect(operations()[0]).toEqual(original[0])
+  expect(visibleOperations(getChildDraft('guest-child').canvas.document!).at(-1)).toMatchObject({ type: 'stroke', owner: 'child', color: '#459fd1' })
+  expect(screen.queryByRole('button', { name: '确认修改' })).toBeNull()
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '完成', exact: true })))
+  expect(analyzeDrawing).not.toHaveBeenCalled()
+  expect(screen.getByText('这幅画包含共同修改，已保存创作过程。')).toBeTruthy()
+  expect(JSON.parse(localStorage.getItem('luma_guest_artworks_v1')!)[0].document.operations.at(-1)).toMatchObject({ type: 'assist' })
+})
+
+test('drawing beside a guide needs no mode switch and does not guess associations; clearing retains all child ink', async () => {
+  localStorage.setItem('luma_companion_mode:guest-child', 'together')
+  const canvas = prepare(); draw(canvas); await project()
+  const guideId = getChildDraft('guest-child').tracingGuide?.id
+  expect(guideId).toBeTruthy()
+  draw(canvas)
+  expect(operations().at(-1)).not.toHaveProperty('guidance')
+  expect(getChildDraft('guest-child').canvas.document?.guided).toBe(true)
+  expect(screen.queryByRole('button', { name: '沿着画', exact: true })).toBeNull()
+  expect(screen.queryByRole('button', { name: '描好了', exact: true })).toBeNull()
+  draw(canvas)
+  expect(operations().at(-1)).not.toHaveProperty('guidance')
+  const before = structuredClone(operations())
+  fireEvent.click(screen.getByRole('button', { name: '清除底图' }))
+  expect(operations()).toEqual(before)
+  expect(screen.queryByRole('button', { name: '沿着画' })).toBeNull()
+})
+
+async function selectDrawnPoint(){
+  fireEvent.click(screen.getByRole('button',{name:'圈选修改'}))
+  const overlay=screen.getByRole('group',{name:'圈选要修改的笔迹'}) as unknown as SVGSVGElement
+  vi.spyOn(overlay,'getBoundingClientRect').mockReturnValue({left:0,top:0,width:320,height:240} as DOMRect)
+  overlay.setPointerCapture=vi.fn();overlay.hasPointerCapture=vi.fn(()=>true);overlay.releasePointerCapture=vi.fn()
+  for(const type of ['pointerdown','pointerup']){
+    const event=new Event(type,{bubbles:true,cancelable:true})
+    Object.assign(event,{pointerId:1,isPrimary:true,button:0,clientX:20,clientY:30,pointerType:'touch'})
+    fireEvent(overlay,event)
+  }
+  await act(async()=>fireEvent.click(screen.getByRole('button',{name:'选好了',exact:true})))
+}
+
+test('switching to solo retires the active selection, preserves ink, and leaves the drawing surface usable', async () => {
+  localStorage.setItem('luma_companion_mode:guest-child', 'together')
+  const canvas = prepare(); draw(canvas)
+  const original = structuredClone(operations())
+  await selectDrawnPoint()
+  fireEvent.click(screen.getByRole('button', { name: '调整选区' }))
+  expect(screen.getByRole('group', { name: '圈选要修改的笔迹' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: '取消选中' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '我自己画' }))
+  expect(screen.queryByRole('group', { name: '圈选要修改的笔迹' })).toBeNull()
+  expect(screen.queryByRole('button', { name: '取消选中' })).toBeNull()
+  expect((screen.getByRole('button', { name: '圈选修改' }) as HTMLButtonElement).disabled).toBe(true)
+  expect(operations()).toEqual(original)
+  draw(canvas)
+  expect(operations()).toHaveLength(original.length + 1)
+  expect(operations().slice(0, original.length)).toEqual(original)
+  expect(document.querySelector('canvas')).toBe(canvas)
+  expect(requests()).toHaveLength(0)
+  fireEvent.click(screen.getByRole('button', { name: '和 Nilo 一起画' }))
+  expect((screen.getByRole('button', { name: '圈选修改' }) as HTMLButtonElement).disabled).toBe(false)
+  expect(screen.queryByRole('button', { name: '取消选中' })).toBeNull()
+  expect(operations()).toHaveLength(original.length + 1)
+})
+
+test('solo voice remains conversational and cannot generate or edit ink', async () => {
+  const canvas = prepare(); draw(canvas)
+  const original = structuredClone(operations())
+  companionReply = async () => ({ ...proposed, reply: '这朵花像在和你打招呼。' })
+  await sayToNilo('这朵花好看吗')
+  expect(requests()).toHaveLength(1)
+  expect(requests()[0][1]?.body).toMatchObject({ context: { requestDrawing: false, inferDrawingIntent: false } })
+  expect(screen.getByText('这朵花像在和你打招呼。')).toBeTruthy()
+  expect(screen.queryByLabelText('Nilo 的灰色虚线描摹底图')).toBeNull()
+  expect(operations()).toEqual(original)
+  expect(screen.getByRole('button', { name: '我自己画' }).getAttribute('aria-pressed')).toBe('true')
+})
+
+test('a fresh settled guide clears an old ink selection so subsequent size commands adjust only that guide',async()=>{
+  localStorage.setItem('luma_companion_mode:guest-child','together')
+  const canvas=prepare();draw(canvas)
+  await selectDrawnPoint()
+  expect(screen.getByRole('button',{name:'调整选区'})).toBeTruthy()
+  const before=structuredClone(operations())
+  await project()
+  expect(screen.queryByRole('button',{name:'调整选区'})).toBeNull()
+  const width=getChildDraft('guest-child').tracingGuide!.proposal.width
+  await sayToNilo('小一点')
+  expect(getChildDraft('guest-child').tracingGuide!.proposal.width).toBeCloseTo(width*.85)
+  expect(operations()).toEqual(before)
+})
+
+test('selected child ink stays selected after an edit without changing its independent guide',async()=>{
+  localStorage.setItem('luma_companion_mode:guest-child','together')
+  const canvas=prepare();await project();draw(canvas)
+  await selectDrawnPoint()
+  const guide=structuredClone(getChildDraft('guest-child').tracingGuide)
+  await sayToNilo('小一点')
+  expect(operations().filter(op=>op.type==='assist')).toHaveLength(1)
+  expect(getChildDraft('guest-child').tracingGuide).toEqual(guide)
+  expect(screen.getByRole('button',{name:'调整选区'})).toBeTruthy()
+})
+
+test('choosing a known candidate finishes selection and displays the replayed edit feedback without a second done tap',async()=>{
+  localStorage.setItem('luma_companion_mode:guest-child','together')
+  const canvas=prepare();await project();draw(canvas)
+  // Older documents can carry an explicit tracing association; keep it editable
+  // without adding new associations just because a child draws near a guide.
+  const stroke=getChildDraft('guest-child').canvas.document!.operations.at(-1)!
+  if(stroke.type!=='stroke') throw new Error('Expected child stroke')
+  stroke.guidance={guideId:getChildDraft('guest-child').tracingGuide!.id!,name:'waves',subjects:['waves']}
+  cleanup();prepare()
+  fireEvent.click(screen.getByRole('button',{name:'继续上次画布'}))
+  fireEvent.click(screen.getByRole('button',{name:'清除底图'}))
+  await sayToNilo('改成蓝色')
+  expect(screen.getByRole('group',{name:'圈选要修改的笔迹'})).toBeTruthy()
+  const choices=screen.getByRole('group',{name:'选择要修改的作品'})
+  await act(async()=>fireEvent.click(within(choices).getAllByRole('button')[0]))
+  expect(operations().filter(op=>op.type==='assist')).toHaveLength(1)
+  expect(screen.queryByRole('group',{name:'圈选要修改的笔迹'})).toBeNull()
+  expect(screen.queryByRole('button',{name:'选好了',exact:true})).toBeNull()
+  expect(screen.getByText('改好啦！保留了你的线条，不喜欢可以撤销。')).toBeTruthy()
+})

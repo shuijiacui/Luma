@@ -2,7 +2,7 @@ import { validateProposal, type DrawingProposal } from './proposals'
 
 /** A learning aid, separate from authored canvas operations and image exports. */
 export interface TracingGuide {
-  /** Stable across reloads so the same reference can be restored. */
+  /** Stable across reloads so explicitly traced strokes keep their association. */
   id?: string
   proposal: DrawingProposal
   additions: DrawingProposal[]
