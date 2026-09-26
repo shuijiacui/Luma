@@ -135,6 +135,18 @@ access token 默认 120 分钟，refresh token 30 天且使用后轮换。带无
 
 每次读取先核对家庭权限与最新来源哈希。最多读取最近 30 条新版报告，选择不同可见元素，已有结果由 `communication_guides` 按孩子、语言持久化缓存（随 SQLite 备份）。缓存缺失或上下文变化时最多调用一次文本模型，12 秒超时；失败或校验不通过使用并缓存分龄模板。刷新相同来源不重复调用，进程内并发请求复用生成。返回前再次核对来源，期间发生变更返回 409；家庭不再存在返回 403。响应设置 `Cache-Control: no-store`。
 
+## 家长聊天 `/children/:childId/chat`
+
+仅同家庭的家长可用，需 Bearer token。聊天按孩子和家长账号隔离；所有响应 `Cache-Control: no-store`。
+
+- `GET ?locale=zh`（或 `en`）：返回 `{revision,available,turns,memory}`。`available` 表示服务端是否已配置文本模型。`memory` 为 `{works,scannedCount,limit:50}`；作品包含 `sourceId,createdAt,imageUrl,title,observation,evidenceIds,provenance`，仅来自最近 50 条分析中可确认的画面观察，不包含心理评分或原始自由描述。未生成家长解读的有效分析也可以提供记忆。
+- `POST`：请求 `{text,requestId,revision,sourceId?,locale?}`。`text` 为 1–2000 字符，`requestId` 为 8–100 位字母、数字、下划线或短横线，`revision` 使用最近读取的版本。可选 `sourceId` 必须属于当前孩子的可用作品。返回 `{revision,turn}`；`turn` 为 `{id,userText,reply,createdAt,sourceId,sources}`，`sources` 只投影实际引用的服务端作品。
+- `POST /reset`：请求 `{revision}`，删除当前家长与该孩子的聊天、增加版本，返回 `{revision}`。画作记忆保留；清空前开始生成的回复不得重新写入。
+
+已完成的相同请求重试复用结果，重复编号但内容不同返回 409；并发的同一请求共享生成，不同请求返回 409。版本或生成期间的来源变化返回 409；作品不可用返回 404；参数错误 400；未配置模型 503；上游失败或两次输出校验均失败 502；总生成预算 40 秒、超时 504。失败不写入伪造回复。文本模型复用 `LLM_BASE_URL/LLM_API_KEY/LLM_TEXT_MODEL`，密钥留在服务端；默认聊天限额为每 15 分钟 60 次（`RATE_LIMIT_PARENT_CHAT`），结构或明确不合适内容失败时最多额外重写一次。
+
+每个会话保留最近 60 轮，模型读取其中最近 12 轮且总文本最多 14000 字符，以及最多 4 件相关作品观察。生活问题无需作品；作品引用 ID 受校验，语义准确性仍依赖模型，不能将结果当作心理诊断。日志不记录聊天正文。删除作品时删除明确选择或引用该作品的聊天轮次并更新版本；注销家庭时一并清除会话和轮次。家长在聊天里输入但未绑定来源的文字不按画作自动识别删除，可用清空聊天删除。
+
 ## 儿童可继续绘画的小画册
 
 小画册与分析记录分开保存；保存合成 PNG 与可编辑笔迹文档不依赖模型，提交分析是另一条流程。登录儿童仅可访问自己的图画，家长返回 403、未登录返回 401、其他儿童的作品返回 404。游客在当前浏览器保存，不调用此接口。

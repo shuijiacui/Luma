@@ -41,6 +41,9 @@ export function createApiRouter({ chatWithImage, db, uploadDir = path.resolve('u
     try {
       db.prepare('DELETE FROM period_reports WHERE child_id = ?').run(row.child_id)
       db.prepare('DELETE FROM communication_guides WHERE child_id = ?').run(row.child_id)
+      db.prepare(`DELETE FROM parent_conversation_turns WHERE child_id = ? AND (selected_source_id = ?
+        OR EXISTS (SELECT 1 FROM json_each(source_ids_json) WHERE value = ?))`).run(row.child_id, req.params.analysisId, req.params.analysisId)
+      db.prepare('UPDATE parent_conversations SET revision = revision + 1 WHERE child_id = ?').run(row.child_id)
       db.prepare('DELETE FROM analyses WHERE id = ?').run(req.params.analysisId)
       db.exec('COMMIT')
     } catch (error) { db.exec('ROLLBACK'); if (staged) fs.renameSync(staged, original); throw error }

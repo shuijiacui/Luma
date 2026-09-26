@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { CommunicationSection } from '@/features/parents/components/CommunicationSection'
+import { ArtworkSuggestions as CommunicationSection } from '@/features/parents/components/ArtworkSuggestions'
 import { getCommunicationGuides, type CommunicationResponse } from '@/lib/api/communicationApi'
 import { setLocale } from '@/i18n'
 

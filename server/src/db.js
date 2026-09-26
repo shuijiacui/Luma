@@ -94,5 +94,25 @@ export function createDb(path = process.env.DB_PATH || DEFAULT_DB_PATH) {
     response_json TEXT NOT NULL,
     PRIMARY KEY(child_id, locale)
   )`)
+  db.exec(`CREATE TABLE IF NOT EXISTS parent_conversations (
+    child_id TEXT NOT NULL REFERENCES accounts(id),
+    parent_id TEXT NOT NULL REFERENCES accounts(id),
+    revision INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY(child_id, parent_id)
+  );
+  CREATE TABLE IF NOT EXISTS parent_conversation_turns (
+    child_id TEXT NOT NULL,
+    parent_id TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    user_text TEXT NOT NULL,
+    assistant_text TEXT NOT NULL,
+    source_ids_json TEXT NOT NULL,
+    selected_source_id TEXT,
+    locale TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY(child_id, parent_id, request_id),
+    FOREIGN KEY(child_id, parent_id) REFERENCES parent_conversations(child_id, parent_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_parent_conversation_time ON parent_conversation_turns(child_id, parent_id, created_at);`)
   return db
 }

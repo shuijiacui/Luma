@@ -1,5 +1,18 @@
 /* ========== 家长端响应式外框：固定顶部/底部，中间内容独立滚动 ========== */
 
+/* The chat workspace fills the remaining viewport; only its content panes scroll. */
+.luma-parent-chat-page .luma-app-scroll { overflow: hidden; }
+.luma-parent-chat-page .luma-app-content { height: 100%; display: flex; flex-direction: column; padding-bottom: 12px; }
+.luma-parent-chat-page .luma-app-content > div { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.luma-parent-chat-page .luma-app-title { flex-shrink: 0; }
+.luma-parent-chat-page .luma-chat-view { flex: 1; min-height: 0; overflow: hidden; margin-top: 6px; }
+@media (max-height: 650px) {
+  .luma-parent-chat-page .luma-app-title p { display: none; }
+  .luma-parent-chat-page .luma-app-title h1 { font-size: 22px; }
+  .luma-parent-chat-page .luma-app-title { padding-block: 2px 6px; }
+  .luma-parent-chat-page .luma-app-content { padding-bottom: 6px; }
+}
+
 .luma-parent-app {
   --parent-gutter: clamp(10px, 3.5vw, 18px);
   --parent-section-gap: clamp(12px, 2.5vw, 20px);

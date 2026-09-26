@@ -9,7 +9,7 @@ import { createCommunicationRouter } from './routes/communication.js'
 import { createDb } from './db.js'
 import { authenticate } from './services/authService.js'
 import { corsMiddleware, rateLimit, defaultLimits } from './services/security.js'
-import { chatText, llmConfig } from './services/llmClient.js'
+import { chatText, chatMessages, llmConfig } from './services/llmClient.js'
 import { startReportScheduler } from './services/periodReports.js'
 
 // deps 注入便于测试：{ chatWithImage, db, limits, corsOrigins, staticDir }
@@ -49,6 +49,8 @@ export function createApp(deps = {}) {
   app.use('/api', createCommunicationRouter({
     db, limits, timeoutMs: deps.communicationTimeoutMs,
     chatText: deps.communicationChatText ?? (process.env.NODE_ENV !== 'test' && llmConfig().apiKey ? chatText : null),
+    chatMessages: deps.parentChatMessages ?? (process.env.NODE_ENV !== 'test' && llmConfig().apiKey ? chatMessages : null),
+    chatTimeoutMs: deps.parentChatTimeoutMs,
   }))
   app.use('/api/analyze', rateLimit(limits.analyze)) // LLM 成本保护
   app.use('/api/report', rateLimit(limits.analyze))

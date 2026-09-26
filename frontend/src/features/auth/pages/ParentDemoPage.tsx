@@ -729,7 +729,7 @@ export function ParentDemoPage() {
       : null
 
   return (
-    <main className="luma-parent-app luma-parent-shell text-[#3a463c]">
+    <main className={cn('luma-parent-app luma-parent-shell text-[#3a463c]', activeView === 'communication' && 'luma-parent-chat-page')}>
       <div className="luma-parent-stage">
         {/* 背景：柔和水彩底图 + 奶油色叠加，营造治愈氛围 */}
         <div className="luma-stage-bg" aria-hidden="true">
@@ -926,7 +926,7 @@ export function ParentDemoPage() {
                 </Card>
               </motion.section>
             ) : (
-              <div className={activeView === 'overview' ? 'mt-4' : 'mt-6'}>
+              <div className={activeView === 'communication' ? 'luma-chat-view' : activeView === 'overview' ? 'mt-4' : 'mt-6'}>
                 {activeView === 'overview' && (
                   <>
                     {overview ? (

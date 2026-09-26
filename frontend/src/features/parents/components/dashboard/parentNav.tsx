@@ -58,7 +58,7 @@ export const NAV_ENTRIES: NavEntry[] = [
     label: '沟通建议',
     icon: <ChatIcon className="size-4" />,
     title: 'AI 沟通助手',
-    subtitle: '从孩子的一幅画开始，让交流自然发生。',
+    subtitle: '陪你想想，那些不太容易开口的时刻。',
   },
 ]
 

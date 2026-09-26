@@ -5,7 +5,7 @@ import { ParentDemoPage } from '@/features/auth/pages/ParentDemoPage'
 import { ArchivePage } from '@/features/parents/pages/ArchivePage'
 import { fetchMe } from '@/lib/api/authApi'
 import { useChildHistory } from '@/hooks/useChildHistory'
-import { getCommunicationGuides } from '@/lib/api/communicationApi'
+import { getParentChat } from '@/lib/api/communicationApi'
 
 const { logout } = vi.hoisted(() => ({ logout: vi.fn() }))
 vi.mock('@/features/auth/AuthContext', () => ({ useAuth: () => ({ session: { id: 'P', token: 'token', role: 'parent', displayName: '家长', isGuest: false }, logout }) }))
@@ -13,7 +13,7 @@ vi.mock('@/features/onboarding/useOnboardingTour', () => ({ useOnboardingTour: (
 vi.mock('@/lib/api/authApi', () => ({ fetchMe: vi.fn(), listAnalyses: vi.fn(), fetchTrend: vi.fn() }))
 vi.mock('@/hooks/useChildHistory', () => ({ useChildHistory: vi.fn() }))
 vi.mock('@/hooks/useAuthedImage', () => ({ useAuthedImage: () => null }))
-vi.mock('@/lib/api/communicationApi', () => ({ getCommunicationGuides: vi.fn() }))
+vi.mock('@/lib/api/communicationApi', () => ({ getCommunicationGuides: vi.fn(), getParentChat: vi.fn() }))
 afterEach(() => { cleanup(); vi.clearAllMocks() })
 function family() {
   vi.mocked(fetchMe).mockResolvedValue({ children: [{ id: 'C', nickname: '小朋友', createdAt: '2026-01-01' }], family: { inviteCode: 'TEST23' } } as Awaited<ReturnType<typeof fetchMe>>)
@@ -23,11 +23,11 @@ test('communication page presents the assistant title exactly once', async () =>
   family()
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
   vi.mocked(useChildHistory).mockReturnValue({ analyses: [], error: null, reload: vi.fn() })
-  vi.mocked(getCommunicationGuides).mockResolvedValue({ version: 'communication-v1', locale: 'zh', cards: [], mode: 'template', emptyReason: 'no_observations', generatedAt: '' })
+  vi.mocked(getParentChat).mockResolvedValue({ revision: 0, available: true, turns: [], memory: { works: [], scannedCount: 0, limit: 50 } })
   render(<MemoryRouter><ParentDemoPage /></MemoryRouter>)
   await screen.findByText('小朋友 的第一幅画，正在路上')
   fireEvent.click(screen.getAllByText('沟通建议')[0])
-  await screen.findByText('从一幅画，开始一次交流')
+  await screen.findByText('今天，有什么想聊聊的？')
   expect(screen.getAllByText('AI 沟通助手')).toHaveLength(1)
   expect(screen.getByRole('heading', { name: 'AI 沟通助手', level: 1 })).toBeTruthy()
 })

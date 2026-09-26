@@ -138,3 +138,9 @@ export async function chatText(prompt, opts = {}) {
   const config = opts.config ?? llmConfig()
   return chat([{ role: 'user', content: prompt }], { ...opts, model: opts.model ?? config.textModel, config, kind: opts.kind ?? 'text' })
 }
+
+// Keep system instructions separate from untrusted family messages and artwork data.
+export async function chatMessages(messages, opts = {}) {
+  const config = opts.config ?? llmConfig()
+  return chat(messages, { ...opts, model: opts.model ?? config.textModel, config, kind: opts.kind ?? 'text' })
+}

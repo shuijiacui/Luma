@@ -19,7 +19,7 @@ export function parentSteps(hasChildren: boolean, show: (view: 'overview' | 'set
 }
 export const communicationSteps: OnboardingStep[] = [{
   id: 'parent-communication', target: '[data-onboarding="parent-communication-title"]', title: '找一个温柔的开场白',
-  body: '每张卡片对应一幅作品，先选一句开场白，需要时展开接话建议。点击缩略图可以回看原画。',
+  body: '可以聊日常相处中的困惑，也可以从孩子的作品开始。作品记忆和建议在旁边，想用时再展开。',
 }]
 export const settingsSteps: OnboardingStep[] = [
   { id: 'settings-invite', target: '[data-onboarding="parent-invite"]', title: '邀请孩子加入家庭', body: '家庭邀请码在这里，也可以随时复制给新加入的孩子。' },
