@@ -852,10 +852,10 @@ export function ParentDemoPage() {
               {/* 页面标题区 */}
               {activeView !== 'overview' && (
                 <motion.div variants={fadeUp} className="luma-app-title">
-                  <div className="flex items-center gap-2 text-[#a0906b]">
+                  {activeView !== 'communication' && <div className="flex items-center gap-2 text-[#a0906b]">
                     <SparkleDot className="size-3.5 text-luma-gold-300" />
                     <span className="luma-eyebrow text-[0.62rem] tracking-[0.22em]">{t("Luma · 家长空间")}</span>
-                  </div>
+                  </div>}
                   <h1 data-onboarding={activeView === 'communication' ? 'parent-communication-title' : undefined}>{lt(meta.title)}</h1>
                   <p>{lt(meta.subtitle)}</p>
                 </motion.div>
@@ -1069,6 +1069,8 @@ export function ParentDemoPage() {
                     childName={selectedChild?.nickname ?? '孩子'}
                     childId={feedChildId}
                     token={feedToken}
+                    isGuest={isGuest}
+                    onChooseArtwork={() => { selectView('overview'); setReadingOpen(true) }}
                   />
                 )}
 

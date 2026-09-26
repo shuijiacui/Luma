@@ -121,6 +121,20 @@ access token 默认 120 分钟，refresh token 30 天且使用后轮换。带无
 
 `confidence: 0` 是兼容历史客户端的占位字段，**不是对识图质量的评分**。`evidence` 的 OBS ID 对应 [画面观察词表](../knowledge/observation/catalog.json)。`referenceEvidence` 是一般研究背景，包含 `sourceId,sourceFile,sourceUrl,text,limitation,role:reference_only`，来源于[人工核对目录](../knowledge/psychology/literature/curated-context.json)，不因作品内容而改变。`observationStatus: insufficient` 表示没有足够清晰、位于词表内的细节；不表示没有作品内容。正式结果保存 `provenance`、`analysisScope` 与审计版本；共创报告另有 `provenanceNote`，明确只分析孩子笔迹。生日用于选择 5–7、8–9、10–12 岁的沟通措辞，`ageContext` 向家长说明提问方式；它们不改变画作观察，也不是发展常模或心理评分。生日未知时使用通用提问。
 
+## POST `/children/:childId/communication`
+
+仅同家庭家长，需 Bearer token。请求 `{"locale":"zh"}`（可选 `en`，默认 `zh`）；沿用分析接口的频率限制。无需也不接受客户端作为来源提供的画面事实。
+
+返回 `{version:"communication-v1",locale,cards,mode,emptyReason,generatedAt}`。`cards` 最多两张，每项包含：
+
+- `id, sourceId, createdAt, imageUrl`：卡片编号、分析记录编号、作品时间和受保护图片地址。
+- `subject, focus, title, observation, evidenceIds, provenanceNote`：服务端根据可见特征构造的主题、交流方向（story/process）、标题、事实依据、OBS 证据 ID 和可选共创说明。
+- `opener, followUp, alternative`：开场白、孩子愿意继续讲时的接话、孩子只答几句时的轻量邀请。
+
+`mode` 为 `model` 或 `template`，用于审计；前端无需展示技术来源。`emptyReason` 为 `null`、`no_observations` 或 `age_out_of_scope`，后两种情况 `cards` 为空。没有合适作品不调用模型，也不填入演示数据。
+
+每次读取先核对家庭权限与最新来源哈希。最多读取最近 30 条新版报告，选择不同可见元素，已有结果由 `communication_guides` 按孩子、语言持久化缓存（随 SQLite 备份）。缓存缺失或上下文变化时最多调用一次文本模型，12 秒超时；失败或校验不通过使用并缓存分龄模板。刷新相同来源不重复调用，进程内并发请求复用生成。返回前再次核对来源，期间发生变更返回 409；家庭不再存在返回 403。响应设置 `Cache-Control: no-store`。
+
 ## 儿童可继续绘画的小画册
 
 小画册与分析记录分开保存；保存合成 PNG 与可编辑笔迹文档不依赖模型，提交分析是另一条流程。登录儿童仅可访问自己的图画，家长返回 403、未登录返回 401、其他儿童的作品返回 404。游客在当前浏览器保存，不调用此接口。
@@ -148,7 +162,7 @@ access token 默认 120 分钟，refresh token 30 天且使用后轮换。带无
 
 ### POST `/analyses/:analysisId/delete`
 
-仅同家庭家长；成功 `{ok:true}`，删除该分析保存的展示图、分析和单幅报告，同时使该孩子周期摘要失效。**不会删除独立 `artworks` 表中的可续画记录**。数据库失败回滚；已提交后若媒体清理失败，日志记录待处理文件。
+仅同家庭家长；成功 `{ok:true}`，删除该分析保存的展示图、分析和单幅报告，同时使该孩子周期摘要和沟通建议缓存失效。**不会删除独立 `artworks` 表中的可续画记录**。数据库失败回滚；已提交后若媒体清理失败，日志记录待处理文件。
 
 ### POST `/children/:childId/profile`
 

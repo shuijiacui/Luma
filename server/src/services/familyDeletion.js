@@ -16,6 +16,7 @@ export function deleteFamily(db, familyId, uploadDir) {
       staged.push({ original, temporary })
     }
     db.prepare('DELETE FROM period_reports WHERE child_id IN (SELECT id FROM accounts WHERE family_id = ?)').run(familyId)
+    db.prepare('DELETE FROM communication_guides WHERE child_id IN (SELECT id FROM accounts WHERE family_id = ?)').run(familyId)
     db.prepare('DELETE FROM analyses WHERE family_id = ?').run(familyId)
     db.prepare('DELETE FROM artworks WHERE child_id IN (SELECT id FROM accounts WHERE family_id = ?)').run(familyId)
     for (const table of ['sessions', 'refresh_tokens']) db.prepare(`DELETE FROM ${table} WHERE account_id IN (SELECT id FROM accounts WHERE family_id = ?)`).run(familyId)

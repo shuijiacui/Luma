@@ -1,197 +1,150 @@
-import { lt, t, useLocale } from '@/i18n'
-import { useChildHistory } from '@/hooks/useChildHistory'
+import { t, useLocale } from '@/i18n'
 import { motion } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
-
-import { Card } from '@/components/ui'
+import { useEffect, useRef, useState } from 'react'
 import { fadeUp } from '@/design-system'
-import { type AnalysisSummary } from '@/lib/api/authApi'
-import { cn } from '@/lib/cn'
+import { getCommunicationGuides, type CommunicationGuide, type CommunicationResponse } from '@/lib/api/communicationApi'
+import { AuthedArtwork } from './dashboard/AuthedArtwork'
+import type { ArtworkKind } from './dashboard/artworks'
+import './communication.css'
 
-type Tone = 'teal' | 'gold' | 'violet'
-const TONES: Tone[] = ['teal', 'gold', 'violet']
+type CardGuide = CommunicationGuide & { demoKind?: ArtworkKind }
 
-type Observation = {
-  id: string
-  tag: string
-  detail: string
-  suggestions: { intent: string; prompt: string }[]
-  tone: Tone
+function demoGuides(locale: 'zh' | 'en'): CardGuide[] {
+  const en = locale === 'en'
+  return [
+    {
+      id: 'demo-boat', sourceId: 'demo-boat', createdAt: '2026-09-08T00:00:00Z', imageUrl: null, demoKind: 'boat',
+      subject: en ? 'boat' : '小船', focus: 'story', evidenceIds: [], provenanceNote: null,
+      title: en ? 'Hear the boat’s story' : '听听小船的故事',
+      observation: en ? 'There is a small boat in this picture.' : '这幅画里，有一艘小船。',
+      opener: en ? 'Would you like to tell me about the little boat in your picture?' : '你愿意给我讲讲，画里的这艘小船吗？',
+      followUp: en ? 'Which part of your story would you like to tell me more about?' : '你刚才讲的故事里，还有哪一点想让我知道呀？',
+      alternative: en ? 'We can just look together. You can point to a part you like, if you want.' : '我们也可以一起看看。你愿意的话，指给我看一处你喜欢的地方就好。',
+    },
+    {
+      id: 'demo-tree', sourceId: 'demo-tree', createdAt: '2026-09-06T00:00:00Z', imageUrl: null, demoKind: 'nature',
+      subject: en ? 'tree' : '树', focus: 'process', evidenceIds: [], provenanceNote: null,
+      title: en ? 'Explore how the tree was drawn' : '看看树是怎么画的',
+      observation: en ? 'There are trees in this picture.' : '这幅画里，可以看到树。',
+      opener: en ? 'Would you like to show me where you started drawing this tree?' : '你愿意指给我看看，这棵树是从哪里开始画的吗？',
+      followUp: en ? 'Was there a part of drawing it that you would like to share?' : '画的过程里，有没有哪一步是你想和我分享的？',
+      alternative: en ? 'You don’t have to explain. I’d be happy just looking at your picture with you.' : '不用解释也没关系，和你一起看看这幅画，我就很开心。',
+    },
+  ]
 }
 
-const DEMO_OBS: Observation[] = [
-  {
-    id: 'o1',
-    tag: '独处场景',
-    detail: '最近三次画作中，孩子经常创造独处场景——主角一个人探索、一个人等待。',
-    suggestions: [
-      { intent: '顺着孩子的表达问', prompt: '"你画里的角色喜欢一个人待着吗？"' },
-      { intent: '保持开放，不预设', prompt: '"这个角色一个人的时候，在想什么？"' },
-    ],
-    tone: 'teal',
-  },
-  {
-    id: 'o2',
-    tag: '未完成的结局',
-    detail: '近期画作里，孩子频繁让画面停在悬念处，没有明确的结局。',
-    suggestions: [
-      { intent: '让孩子掌控叙事', prompt: '"如果接下来发生的事由你来定，会是什么？"' },
-      { intent: '不急着给答案', prompt: '"你喜欢让画面停在这里吗？"' },
-    ],
-    tone: 'gold',
-  },
-  {
-    id: 'o3',
-    tag: '重复出现的物件',
-    detail: '小船、灯笼、钥匙这几个意象在不同作品中反复出现。',
-    suggestions: [
-      { intent: '好奇地跟进', prompt: '"这把钥匙能打开什么？"' },
-      { intent: '让孩子来解释', prompt: '"这个东西对画里的角色来说重要吗？"' },
-    ],
-    tone: 'violet',
-  },
-]
+function SourcePreview({ guide, token, onClose }: { guide: CardGuide; token?: string; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null)
+  useEffect(() => { dialog.current?.showModal() }, [])
+  return (
+    <dialog ref={dialog} className="communication-preview" onClose={onClose} aria-label={t('来源作品')}
+      onClick={event => { if (event.target === event.currentTarget) dialog.current?.close() }}>
+      <div className="communication-preview-body">
+        <div className="communication-preview-heading">
+          <h2>{guide.title}</h2>
+          <button type="button" autoFocus onClick={() => dialog.current?.close()}>{t('关闭')}</button>
+        </div>
+        <div className="communication-preview-image">
+          <AuthedArtwork path={guide.imageUrl} token={token} kind={guide.demoKind}
+            className="absolute inset-0 h-full w-full object-contain" emptyText="暂时无法显示作品" />
+        </div>
+        <p>{guide.observation}</p>
+        {guide.provenanceNote && <p className="communication-provenance">{guide.provenanceNote}</p>}
+      </div>
+    </dialog>
+  )
+}
 
-function deriveObservations(analyses: AnalysisSummary[]): Observation[] {
-  // 收集所有 parentAdvice（去重）
-  const allAdvice: string[] = []
-  const elementFreq = new Map<string, number>()
-
-  for (const a of analyses) {
-    if (a.report?.kind === 'observation-v1' && a.report.parentAdvice) {
-      for (const advice of a.report.parentAdvice) {
-        if (!allAdvice.includes(advice)) allAdvice.push(advice)
-      }
-    }
-    for (const el of a.summary.elements) {
-      elementFreq.set(el, (elementFreq.get(el) ?? 0) + 1)
-    }
-  }
-
-  if (allAdvice.length === 0) return []
-
-  // 取前 3 条建议，每条作为一个观察项
-  const topAdvice = allAdvice.slice(0, 3)
-
-  // 取高频元素（出现 ≥2 次）
-  const freqEls = Array.from(elementFreq.entries())
-    .filter(([, c]) => c >= 2)
-    .sort((a, b) => b[1] - a[1])
-    .map(([el]) => el)
-    .slice(0, 3)
-
-  return topAdvice.map((advice, i): Observation => ({
-    id: `r${i}`,
-    tag: freqEls[i] ? `关于"${freqEls[i]}"` : `洞察 ${i + 1}`,
-    detail: advice,
-    suggestions: [
-      { intent: '从创作出发', prompt: `"你最近画的${freqEls[i] ?? '画'}，最想让我看哪一部分？"` },
-      { intent: '把选择留给孩子', prompt: '"关于这幅画，你有什么想告诉我的吗？"' },
-    ],
-    tone: TONES[i % TONES.length],
-  }))
+function SuggestionCard({ guide, token, onPreview }: { guide: CardGuide; token?: string; onPreview: () => void }) {
+  const locale = useLocale()
+  const date = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'zh-CN', {
+    year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Shanghai',
+  }).format(new Date(guide.createdAt))
+  return (
+    <article className={`communication-card communication-card--${guide.focus}`} aria-labelledby={`guide-${guide.id}`}>
+      <div className="communication-source">
+        <button type="button" className="communication-thumbnail" onClick={onPreview} aria-label={t('查看来源作品')}>
+          <AuthedArtwork path={guide.imageUrl} token={token} kind={guide.demoKind}
+            className="absolute inset-0 h-full w-full object-contain" emptyText="查看作品" />
+        </button>
+        <div className="communication-source-copy">
+          <span className="communication-date">{guide.demoKind ? t('示例作品') : <time dateTime={guide.createdAt}>{date}</time>}</span>
+          <h2 id={`guide-${guide.id}`}>{guide.title}</h2>
+          <p>{guide.observation}</p>
+        </div>
+      </div>
+      <div className="communication-opening">
+        <span className="communication-label">{t('可以这样开口')}</span>
+        <blockquote>“{guide.opener}”</blockquote>
+      </div>
+      <details className="communication-followup">
+        <summary>{t('接下来怎么聊')}<span aria-hidden="true">＋</span></summary>
+        <div className="communication-followup-content">
+          <div><h3>{t('孩子愿意继续讲')}</h3><p>“{guide.followUp}”</p></div>
+          <div><h3>{t('如果只说了一两句')}</h3><p>“{guide.alternative}”</p></div>
+        </div>
+      </details>
+    </article>
+  )
 }
 
 interface Props {
   childName: string
   childId?: string
   token?: string
+  isGuest?: boolean
+  onChooseArtwork?: () => void
 }
 
-export function CommunicationSection({ childName, childId, token }: Props) {
-  useLocale()
-  const isReal = !!(childId && token)
-  const { analyses, error, reload } = useChildHistory(childId, token)
-
-  const observations = useMemo(() => {
-    if (!isReal) return DEMO_OBS
-    if (analyses === null) return null
-    const derived = deriveObservations(analyses)
-    return derived.length > 0 ? derived : null
-  }, [isReal, analyses])
-
-  const [openId, setOpenId] = useState<string>('')
+export function CommunicationSection({ childName, childId, token, isGuest = false, onChooseArtwork }: Props) {
+  const locale = useLocale()
+  const [revision, setRevision] = useState(0)
+  const [state, setState] = useState<{ key: string; response?: CommunicationResponse; error?: boolean }>({ key: '' })
+  const [preview, setPreview] = useState<{ key: string; guide: CardGuide } | null>(null)
+  const key = `${childId ?? ''}:${token ?? ''}:${locale}:${revision}`
   useEffect(() => {
-    if (observations && observations.length > 0) setOpenId(observations[0].id)
-  }, [observations])
-
+    if (isGuest || !childId || !token) return
+    const controller = new AbortController()
+    getCommunicationGuides(childId, token, locale, controller.signal).then(response => {
+      if (!controller.signal.aborted) setState({ key, response })
+    }).catch(() => { if (!controller.signal.aborted) setState({ key, error: true }) })
+    return () => controller.abort()
+  }, [childId, token, locale, key, isGuest])
+  useEffect(() => {
+    const refresh = () => setRevision(value => value + 1)
+    window.addEventListener('focus', refresh)
+    return () => window.removeEventListener('focus', refresh)
+  }, [])
+  const current = state.key === key ? state : null
+  const guides = isGuest ? demoGuides(locale) : current?.response?.cards
+  const missingChild = !isGuest && (!childId || !token)
+  const outOfScope = current?.response?.emptyReason === 'age_out_of_scope'
+  const loading = !isGuest && !missingChild && !current
   return (
-    <motion.section variants={fadeUp} id="communication" className="mt-5">
-      <Card
-        eyebrow="AI 沟通助手"
-        title={t(`和 ${childName} 聊什么？`)}
-        description="从创作观察出发，给你一个和孩子开口的理由"
-      >
-        {error && <p role="alert">{lt(error)}<button onClick={reload}>{t("重试")}</button></p>}
-        {observations === null ? (
-          <p className="py-6 text-center text-sm text-luma-muted">
-            {lt(analyses === null ? '加载中…' : '孩子完成更多创作并生成报告后，沟通建议会出现在这里。')}
-          </p>
-        ) : (
-          <div className="mt-4 space-y-3">
-            {observations.map((obs) => {
-              const isOpen = openId === obs.id
-              return (
-                <div
-                  key={obs.id}
-                  className={cn(
-                    'overflow-hidden rounded-2xl border transition-all',
-                    isOpen
-                      ? 'border-luma-teal-200 bg-white shadow-luma-sm'
-                      : 'border-luma-ivory-200 bg-luma-ivory-50',
-                  )}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenId(isOpen ? '' : obs.id)}
-                    className="flex w-full items-center gap-3 px-5 py-4 text-left"
-                  >
-                    <span
-                      className={cn(
-                        'shrink-0 rounded-full px-3 py-0.5 text-xs font-bold',
-                        obs.tone === 'teal' && 'bg-luma-teal-50 text-luma-teal-700',
-                        obs.tone === 'gold' && 'bg-luma-gold-100 text-luma-gold-700',
-                        obs.tone === 'violet' && 'bg-[#eeeffe] text-[#5a62c0]',
-                      )}
-                    >
-                      {lt(obs.tag)}
-                    </span>
-                    <span className="flex-1 text-sm font-semibold text-luma-teal-900 line-clamp-1">
-                      {lt(obs.detail)}
-                    </span>
-                    <span className={cn('shrink-0 text-luma-muted transition-transform', isOpen && 'rotate-180')}>
-                      ▾
-                    </span>
-                  </button>
-
-                  {isOpen && (
-                    <div className="border-t border-luma-ivory-200 px-5 pb-5 pt-4">
-                      <p className="text-sm leading-relaxed text-luma-muted">
-                        <span className="font-bold text-luma-teal-900">{t("观察：")}</span>
-                        {lt(obs.detail)}
-                      </p>
-                      <div className="mt-4 space-y-3">
-                        {obs.suggestions.map((s) => (
-                          <div key={s.prompt} className="rounded-xl bg-luma-ivory-50 p-4">
-                            <div className="text-xs font-bold uppercase tracking-wider text-luma-gold-700">
-                              {lt(s.intent)}
-                            </div>
-                            <p className="mt-2 font-display text-lg font-semibold leading-relaxed text-luma-teal-900">
-                              {lt(s.prompt)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-4 text-xs text-luma-muted">
-                        {t("这些问题没有标准答案，孩子可以选择不回答。")}</div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+    <motion.section variants={fadeUp} id="communication" className="communication-workspace" aria-label={t(`和 ${childName} 聊什么？`)}>
+      {loading ? (
+        <div className="communication-empty" role="status"><p>{t('正在为这次交流准备话题…')}</p></div>
+      ) : current?.error ? (
+        <div className="communication-empty" role="alert">
+          <p>{t('暂时无法加载沟通建议，请稍后重试。')}</p>
+          <button type="button" onClick={() => setRevision(value => value + 1)}>{t('重试')}</button>
+        </div>
+      ) : !guides?.length ? (
+        <div className="communication-empty">
+          <h2>{t(outOfScope ? '先一起欣赏孩子的作品' : '从一幅画，开始一次交流')}</h2>
+          <p>{t(outOfScope ? '当前分龄沟通建议适用于 5–12 岁。你仍然可以和孩子一起回看作品。'
+            : missingChild ? '连接孩子的创作空间后，就能从作品里找到话题。' : '先为一幅作品生成画面观察，这里就会出现对应的开场白和接话建议。')}</p>
+          {!missingChild && !outOfScope && onChooseArtwork && <button type="button" onClick={onChooseArtwork}>{t('选择作品生成解读')}</button>}
+        </div>
+      ) : (
+        <>
+          <div className="communication-grid">
+            {guides.map(guide => <SuggestionCard key={`${locale}:${guide.id}`} guide={guide} token={token} onPreview={() => setPreview({ key, guide })} />)}
           </div>
-        )}
-      </Card>
+          <p className="communication-note">{t('选一个话题就好。先听孩子说；暂时不想聊，一起看看画也很好。')}</p>
+        </>
+      )}
+      {preview?.key === key && <SourcePreview guide={preview.guide} token={token} onClose={() => setPreview(null)} />}
     </motion.section>
   )
 }

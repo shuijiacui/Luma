@@ -127,7 +127,7 @@ npm --prefix server ci
 npm --prefix frontend ci
 ```
 
-复制 `server/.env.example` 为 `server/.env`，填写服务商提供的 `LLM_BASE_URL`、`LLM_API_KEY` 与实际可用的 `LLM_VISION_MODEL`。示例模型名只是配置占位，不保证账号可用；`LLM_TEXT_MODEL` 用于可选说明增强。密钥只放服务端。
+复制 `server/.env.example` 为 `server/.env`，填写服务商提供的 `LLM_BASE_URL`、`LLM_API_KEY` 与实际可用的 `LLM_VISION_MODEL`。示例模型名只是配置占位，不保证账号可用；`LLM_TEXT_MODEL` 用于 Nilo 文本交流与家长沟通卡片的措辞生成。家长卡片按作品缓存，文本生成失败时使用有来源的分龄模板。密钥只放服务端。
 
 两个终端分别运行；前端命令会同时启动官网、家长端和儿童端：
 
