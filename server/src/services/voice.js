@@ -134,7 +134,9 @@ export async function transcribeVoice(input, { config = voiceConfig(), signal, f
     return voiceRequest('/compatible-mode/v1/chat/completions', {
       model: config.asrModel,
       messages: [
-        { role: 'system', content: voiceRecognitionContext(input.context, locale) },
+        // Qwen ASR requires text content parts even for the system context;
+        // a plain string is rejected with invalid_parameter_error.
+        { role: 'system', content: [{ type: 'text', text: voiceRecognitionContext(input.context, locale) }] },
         { role: 'user', content: [{ type: 'input_audio', input_audio: { data: `data:${mimeType};base64,${audio.toString('base64')}` } }] },
       ],
       stream: false,

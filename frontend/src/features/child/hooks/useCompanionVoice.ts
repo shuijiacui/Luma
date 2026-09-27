@@ -539,10 +539,10 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
     function onVisibility() { if (document.visibilityState === 'hidden') cancel() }
 
     setSoundOn(sound); setContinuousState(false); setTranscript(''); setError(null)
-    // Browser recognition is usable immediately, regardless of TTS or a slow
-    // cloud capability check. This does not start recording or request permission.
-    mode = enabled && secureContext && RecognitionApi ? 'browser' : 'unavailable'
-    setVoiceReady(mode === 'browser'); setBackend(mode); updateStatus('idle')
+    // Resolve the configured input service before allowing a microphone start.
+    // Merely exposing SpeechRecognition does not mean the device can use its
+    // recognition service, even when microphone permission has been granted.
+    setVoiceReady(false); setBackend(mode); updateStatus('idle')
     actions.current = { start, stop, cancel, speak: text => { void speak(text) }, toggleSound, setContinuous }
     document.addEventListener('visibilitychange', onVisibility)
     let capabilityTimer: ReturnType<typeof setTimeout> | undefined
@@ -550,9 +550,11 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
       if (disposed || capabilitySettled) return
       capabilitySettled = true
       if (capabilityTimer) clearTimeout(capabilityTimer)
-      capabilityFailed = !value
-      if (value) config = { asr: value.asr === true, tts: value.tts === true }
-      mode = !secureContext ? 'unavailable' : config.asr && canRecord ? 'server' : RecognitionApi ? 'browser' : 'unavailable'
+      capabilityFailed = !value || typeof value.asr !== 'boolean' || typeof value.tts !== 'boolean'
+      if (!capabilityFailed && value) config = { asr: value.asr, tts: value.tts }
+      if (!secureContext || capabilityFailed) mode = 'unavailable'
+      else if (config.asr) mode = canRecord ? 'server' : 'unavailable'
+      else mode = RecognitionApi ? 'browser' : 'unavailable'
       setBackend(mode); setVoiceReady(true)
     }
     if (enabled) {
