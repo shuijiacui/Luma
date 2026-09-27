@@ -4,6 +4,7 @@ import path from 'node:path'
 import { createApiRouter } from './routes/analyze.js'
 import { createAuthRouter } from './routes/auth.js'
 import { createArtworkRouter } from './routes/artworks.js'
+import { createParentQuestionnaireRouter } from './routes/parentQuestionnaire.js'
 import { createNiloRouter } from './routes/nilo.js'
 import { createCommunicationRouter } from './routes/communication.js'
 import { createDb } from './db.js'
@@ -46,6 +47,7 @@ export function createApp(deps = {}) {
   app.use('/api/auth', rateLimit(limits.auth))
   app.use('/api', createAuthRouter({ db, uploadDir }))
   app.use('/api/artworks', createArtworkRouter({ db }))
+  app.use('/api/parent-questionnaire', createParentQuestionnaireRouter({ db }))
   app.use('/api', createCommunicationRouter({
     db, limits, timeoutMs: deps.communicationTimeoutMs,
     chatText: deps.communicationChatText ?? (process.env.NODE_ENV !== 'test' && llmConfig().apiKey ? chatText : null),

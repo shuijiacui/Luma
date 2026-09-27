@@ -4,6 +4,7 @@ import { useChildHistory } from '@/hooks/useChildHistory'
 import { ChildBirthDate } from '@/features/parents/components/ChildBirthDate'
 import { PeriodicReportsSection } from '@/features/parents/components/PeriodicReportsSection'
 import { FamilyDataSettings } from '@/features/parents/components/FamilyDataSettings'
+import { ParentQuestionnaireSection } from '@/features/parents/components/ParentQuestionnaireSection'
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -630,6 +631,8 @@ export function ParentDemoPage() {
             </div>
           </div>
         </motion.section>
+
+        <ParentQuestionnaireSection ownerId={session?.id ?? 'guest-parent'} token={isGuest ? undefined : session?.token} />
 
         <motion.section variants={fadeUp} className={CARD_CLASS}>
           <div className="p-6 sm:p-7">

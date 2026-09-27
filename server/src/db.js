@@ -87,6 +87,19 @@ export function createDb(path = process.env.DB_PATH || DEFAULT_DB_PATH) {
   const artworkColumns = new Set(db.prepare('PRAGMA table_info(artworks)').all().map(c => c.name))
   if (!artworkColumns.has('document_json')) db.exec('ALTER TABLE artworks ADD COLUMN document_json TEXT')
   if (!artworkColumns.has('provenance')) db.exec("ALTER TABLE artworks ADD COLUMN provenance TEXT NOT NULL DEFAULT 'unknown'")
+  db.exec(`CREATE TABLE IF NOT EXISTS parent_questionnaire_versions (
+    id TEXT PRIMARY KEY,
+    parent_id TEXT NOT NULL REFERENCES accounts(id),
+    family_id TEXT NOT NULL REFERENCES families(id),
+    revision INTEGER NOT NULL,
+    child_age INTEGER NOT NULL,
+    answers_json TEXT NOT NULL,
+    scores_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(parent_id, revision)
+  );
+  CREATE INDEX IF NOT EXISTS idx_parent_questionnaire_versions
+    ON parent_questionnaire_versions(parent_id, revision DESC);`)
   db.exec(`CREATE TABLE IF NOT EXISTS communication_guides (
     child_id TEXT NOT NULL REFERENCES accounts(id),
     locale TEXT NOT NULL CHECK(locale IN ('zh', 'en')),

@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { ParentDemoPage } from '@/features/auth/pages/ParentDemoPage'
@@ -6,6 +6,7 @@ import { ArchivePage } from '@/features/parents/pages/ArchivePage'
 import { fetchMe } from '@/lib/api/authApi'
 import { useChildHistory } from '@/hooks/useChildHistory'
 import { getParentChat } from '@/lib/api/communicationApi'
+import { listParentQuestionnaireRecords } from '@/lib/api/parentQuestionnaireApi'
 
 const { logout } = vi.hoisted(() => ({ logout: vi.fn() }))
 vi.mock('@/features/auth/AuthContext', () => ({ useAuth: () => ({ session: { id: 'P', token: 'token', role: 'parent', displayName: '家长', isGuest: false }, logout }) }))
@@ -14,7 +15,9 @@ vi.mock('@/lib/api/authApi', () => ({ fetchMe: vi.fn(), listAnalyses: vi.fn(), f
 vi.mock('@/hooks/useChildHistory', () => ({ useChildHistory: vi.fn() }))
 vi.mock('@/hooks/useAuthedImage', () => ({ useAuthedImage: () => null }))
 vi.mock('@/lib/api/communicationApi', () => ({ getCommunicationGuides: vi.fn(), getParentChat: vi.fn() }))
+vi.mock('@/lib/api/parentQuestionnaireApi', () => ({ listParentQuestionnaireRecords: vi.fn(), saveParentQuestionnaireRecord: vi.fn() }))
 afterEach(() => { cleanup(); vi.clearAllMocks() })
+beforeEach(() => { vi.mocked(listParentQuestionnaireRecords).mockResolvedValue({ records: [], nextOffset: null }) })
 function family() {
   vi.mocked(fetchMe).mockResolvedValue({ children: [{ id: 'C', nickname: '小朋友', createdAt: '2026-01-01' }], family: { inviteCode: 'TEST23' } } as Awaited<ReturnType<typeof fetchMe>>)
 }
@@ -99,6 +102,9 @@ test('a family without children can still access account deletion in settings', 
   await screen.findByText('邀请孩子加入家庭空间')
   fireEvent.click(screen.getAllByText('家庭设置')[0])
   await screen.findByText('注销整个家庭')
+  await screen.findByText('亲子日常陪伴小调查')
+  fireEvent.click(screen.getByRole('button', { name: '开始了解' }))
+  await screen.findByText('先说说孩子的年龄')
   const accountSection = screen.getAllByRole('button', { name: '退出登录' })
     .map(button => button.closest('section')).find(Boolean)
   expect(accountSection?.parentElement?.firstElementChild).toBe(accountSection)
