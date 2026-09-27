@@ -1,4 +1,5 @@
 import {speechAlternatives,speechUnderstandingRules} from '../../../shared/niloSpeechContext.mjs'
+import { drawingProposalLimits, hasRegisteredRecipeGeometry } from '../../../shared/niloProposalLimits.mjs'
 import { drawingReferenceSheet } from './niloDrawingReferences.js'
 import { decodeOccupancy } from '../../../shared/niloOccupancy.mjs'
 import { validateContact } from '../../../shared/niloContact.mjs'
@@ -121,7 +122,7 @@ export function sanitizeDialogueContext(input = {}) {
   const validVariantGroup = currentProposal && (input?.currentAdditions === undefined
     || (Array.isArray(input.currentAdditions) && input.currentAdditions.length <= 3))
     && currentAdditions.every(Boolean) && withinDrawingGroupBudget([currentProposal, ...currentAdditions])
-    && [currentProposal, ...currentAdditions].reduce((area, item) => area + (item.template === 'illustration' ? 0 : item.width * item.height), 0) <= .24
+    && [currentProposal, ...currentAdditions].reduce((area, item) => area + (item.template === 'illustration' || hasRegisteredRecipeGeometry(item) ? 0 : item.width * item.height), 0) <= .24
   return {
     locale: input?.locale === 'en' ? 'en' : 'zh',
     ageBand: AGE_BANDS.includes(input?.ageBand) ? input.ageBand : null,
@@ -385,7 +386,7 @@ export function validateProposal(raw, context = {}) {
   const normalized = { rotation: 0, strokeWidth: style.strokeWidth ?? 4, color: style.color, ...raw }
   if (['x', 'y', 'width', 'height', 'rotation', 'strokeWidth'].some(key => typeof normalized[key] !== 'number' || !Number.isFinite(normalized[key]))) return null
   const { x, y, width, height, rotation, strokeWidth } = normalized
-  const maxSpan = raw.template === 'illustration' ? .9 : .45, maxArea = raw.template === 'illustration' ? .81 : .16
+  const { maxSpan, maxArea } = drawingProposalLimits(raw)
   if (width < 0.025 || height < 0.025 || width > maxSpan || height > maxSpan || width * height > maxArea || Math.abs(rotation) > 180 || !validBrushSize(strokeWidth)) return null
   if (x < 0 || y < 0 || x + width > 1 || y + height > 1) return null
   const angle = rotation * Math.PI / 180

@@ -1,0 +1,2578 @@
+{
+  "illustration-library-boat-beginner-01": {
+    "aspect": 1,
+    "left": 0.06797,
+    "top": 0.29297,
+    "right": 0.93203,
+    "bottom": 0.73516
+  },
+  "illustration-library-boat-medium-01": {
+    "aspect": 1,
+    "left": 0.11172,
+    "top": 0.03359,
+    "right": 0.91484,
+    "bottom": 0.96641
+  },
+  "illustration-library-kite-beginner-01": {
+    "aspect": 1,
+    "left": 0.20859,
+    "top": 0.04922,
+    "right": 0.79297,
+    "bottom": 0.95391
+  },
+  "illustration-library-kite-medium-01": {
+    "aspect": 1,
+    "left": 0.08984,
+    "top": 0.11328,
+    "right": 0.90859,
+    "bottom": 0.90703
+  },
+  "illustration-library-bench-beginner-01": {
+    "aspect": 1,
+    "left": 0.04141,
+    "top": 0.21016,
+    "right": 0.95859,
+    "bottom": 0.83672
+  },
+  "illustration-library-bench-medium-01": {
+    "aspect": 1,
+    "left": 0.04453,
+    "top": 0.16172,
+    "right": 0.95703,
+    "bottom": 0.82891
+  },
+  "illustration-library-butterfly-beginner-01": {
+    "aspect": 1,
+    "left": 0.03828,
+    "top": 0.11484,
+    "right": 0.96016,
+    "bottom": 0.86797
+  },
+  "illustration-library-butterfly-medium-01": {
+    "aspect": 1,
+    "left": 0.11953,
+    "top": 0.01953,
+    "right": 0.87266,
+    "bottom": 0.98516
+  },
+  "illustration-library-squirrel-beginner-01": {
+    "aspect": 1,
+    "left": 0.09297,
+    "top": 0.12109,
+    "right": 0.90703,
+    "bottom": 0.91797
+  },
+  "illustration-library-squirrel-medium-01": {
+    "aspect": 1,
+    "left": 0.03047,
+    "top": 0.13359,
+    "right": 0.97109,
+    "bottom": 0.86641
+  },
+  "illustration-library-bird-beginner-01": {
+    "aspect": 1,
+    "left": 0.11641,
+    "top": 0.13828,
+    "right": 0.94141,
+    "bottom": 0.91484
+  },
+  "illustration-library-bird-medium-01": {
+    "aspect": 1,
+    "left": 0.06953,
+    "top": 0.09297,
+    "right": 0.94922,
+    "bottom": 0.85703
+  },
+  "illustration-library-cat-beginner-01": {
+    "aspect": 1,
+    "left": 0.04609,
+    "top": 0.18359,
+    "right": 0.96953,
+    "bottom": 0.79609
+  },
+  "illustration-library-cat-medium-01": {
+    "aspect": 1,
+    "left": 0.07422,
+    "top": 0.03047,
+    "right": 0.89766,
+    "bottom": 0.94141
+  },
+  "illustration-library-rabbit-beginner-01": {
+    "aspect": 1,
+    "left": 0.22109,
+    "top": 0.02266,
+    "right": 0.77734,
+    "bottom": 0.97734
+  },
+  "illustration-library-rabbit-medium-01": {
+    "aspect": 1,
+    "left": 0.09609,
+    "top": 0.09922,
+    "right": 0.92109,
+    "bottom": 0.89297
+  },
+  "illustration-library-fish-beginner-01": {
+    "aspect": 1,
+    "left": 0.06641,
+    "top": 0.16641,
+    "right": 0.93359,
+    "bottom": 0.79609
+  },
+  "illustration-library-fish-medium-01": {
+    "aspect": 1,
+    "left": 0.03984,
+    "top": 0.07734,
+    "right": 0.96172,
+    "bottom": 0.90391
+  },
+  "illustration-library-turtle-beginner-01": {
+    "aspect": 1,
+    "left": 0.04453,
+    "top": 0.23047,
+    "right": 0.96641,
+    "bottom": 0.76953
+  },
+  "illustration-library-turtle-medium-01": {
+    "aspect": 1,
+    "left": 0.02266,
+    "top": 0.17734,
+    "right": 0.97422,
+    "bottom": 0.86641
+  },
+  "illustration-library-flower-beginner-01": {
+    "aspect": 1,
+    "left": 0.14766,
+    "top": 0.04922,
+    "right": 0.85859,
+    "bottom": 0.96172
+  },
+  "illustration-library-flower-medium-01": {
+    "aspect": 1,
+    "left": 0.08672,
+    "top": 0.02109,
+    "right": 0.94766,
+    "bottom": 0.97422
+  },
+  "illustration-library-mushroom-beginner-01": {
+    "aspect": 1,
+    "left": 0.10703,
+    "top": 0.08359,
+    "right": 0.89297,
+    "bottom": 0.92422
+  },
+  "illustration-library-mushroom-medium-01": {
+    "aspect": 1,
+    "left": 0.13672,
+    "top": 0.06328,
+    "right": 0.84141,
+    "bottom": 0.93828
+  },
+  "illustration-library-tree-beginner-01": {
+    "aspect": 1,
+    "left": 0.10859,
+    "top": 0.04141,
+    "right": 0.88359,
+    "bottom": 0.96016
+  },
+  "illustration-library-tree-medium-01": {
+    "aspect": 1,
+    "left": 0.02734,
+    "top": 0.01641,
+    "right": 0.97422,
+    "bottom": 0.98672
+  },
+  "illustration-library-rocket-beginner-01": {
+    "aspect": 1,
+    "left": 0.20078,
+    "top": 0.06328,
+    "right": 0.79141,
+    "bottom": 0.93516
+  },
+  "illustration-library-rocket-medium-01": {
+    "aspect": 1,
+    "left": 0.17109,
+    "top": 0.01484,
+    "right": 0.87422,
+    "bottom": 0.97578
+  },
+  "illustration-library-balloon-beginner-01": {
+    "aspect": 1,
+    "left": 0.27734,
+    "top": 0.07422,
+    "right": 0.72266,
+    "bottom": 0.94766
+  },
+  "illustration-library-balloon-medium-01": {
+    "aspect": 1,
+    "left": 0.14609,
+    "top": 0.02109,
+    "right": 0.85547,
+    "bottom": 0.96641
+  },
+  "illustration-library-umbrella-beginner-01": {
+    "aspect": 1,
+    "left": 0.05703,
+    "top": 0.06016,
+    "right": 0.94297,
+    "bottom": 0.93984
+  },
+  "illustration-library-umbrella-medium-01": {
+    "aspect": 1,
+    "left": 0.06172,
+    "top": 0.06328,
+    "right": 0.95391,
+    "bottom": 0.94297
+  },
+  "illustration-library-robot-beginner-01": {
+    "aspect": 1,
+    "left": 0.12422,
+    "top": 0.01016,
+    "right": 0.87109,
+    "bottom": 0.98359
+  },
+  "illustration-library-robot-medium-01": {
+    "aspect": 1,
+    "left": 0.05078,
+    "top": 0.07109,
+    "right": 0.95859,
+    "bottom": 0.92578
+  },
+  "illustration-library-giraffe-beginner-01": {
+    "aspect": 1,
+    "left": 0.16641,
+    "top": 0.02422,
+    "right": 0.84922,
+    "bottom": 0.96328
+  },
+  "illustration-library-giraffe-medium-01": {
+    "aspect": 1,
+    "left": 0.30391,
+    "top": 0.01953,
+    "right": 0.69141,
+    "bottom": 0.97422
+  },
+  "illustration-library-horse-beginner-01": {
+    "aspect": 1,
+    "left": 0.06797,
+    "top": 0.06797,
+    "right": 0.93984,
+    "bottom": 0.93984
+  },
+  "illustration-library-horse-medium-01": {
+    "aspect": 1,
+    "left": 0.03516,
+    "top": 0.07734,
+    "right": 0.97578,
+    "bottom": 0.88359
+  },
+  "illustration-library-duck-beginner-01": {
+    "aspect": 1,
+    "left": 0.08516,
+    "top": 0.12109,
+    "right": 0.92266,
+    "bottom": 0.86016
+  },
+  "illustration-library-duck-medium-01": {
+    "aspect": 1,
+    "left": 0.02266,
+    "top": 0.06328,
+    "right": 0.97109,
+    "bottom": 0.95391
+  },
+  "illustration-library-penguin-beginner-01": {
+    "aspect": 1,
+    "left": 0.14766,
+    "top": 0.06016,
+    "right": 0.85234,
+    "bottom": 0.93984
+  },
+  "illustration-library-penguin-medium-01": {
+    "aspect": 1,
+    "left": 0.10859,
+    "top": 0.03672,
+    "right": 0.81484,
+    "bottom": 0.96172
+  },
+  "illustration-library-owl-beginner-01": {
+    "aspect": 1,
+    "left": 0.19766,
+    "top": 0.12578,
+    "right": 0.80234,
+    "bottom": 0.84766
+  },
+  "illustration-library-owl-medium-01": {
+    "aspect": 1,
+    "left": 0.03047,
+    "top": 0.14766,
+    "right": 0.97109,
+    "bottom": 0.77891
+  },
+  "illustration-library-whale-beginner-01": {
+    "aspect": 1,
+    "left": 0.06172,
+    "top": 0.09609,
+    "right": 0.96797,
+    "bottom": 0.87578
+  },
+  "illustration-library-whale-medium-01": {
+    "aspect": 1,
+    "left": 0.08984,
+    "top": 0.14766,
+    "right": 0.90859,
+    "bottom": 0.85547
+  },
+  "illustration-library-dolphin-beginner-01": {
+    "aspect": 1,
+    "left": 0.19609,
+    "top": 0.10703,
+    "right": 0.88047,
+    "bottom": 0.90859
+  },
+  "illustration-library-dolphin-medium-01": {
+    "aspect": 1,
+    "left": 0.11328,
+    "top": 0.09766,
+    "right": 0.88984,
+    "bottom": 0.87266
+  },
+  "illustration-library-octopus-beginner-01": {
+    "aspect": 1,
+    "left": 0.13516,
+    "top": 0.10391,
+    "right": 0.86484,
+    "bottom": 0.87891
+  },
+  "illustration-library-octopus-medium-01": {
+    "aspect": 1,
+    "left": 0.06953,
+    "top": 0.11172,
+    "right": 0.93672,
+    "bottom": 0.89297
+  },
+  "illustration-library-crab-beginner-01": {
+    "aspect": 1,
+    "left": 0.04141,
+    "top": 0.12266,
+    "right": 0.95703,
+    "bottom": 0.86641
+  },
+  "illustration-library-crab-medium-01": {
+    "aspect": 1,
+    "left": 0.03047,
+    "top": 0.06172,
+    "right": 0.96953,
+    "bottom": 0.88672
+  },
+  "illustration-library-cactus-beginner-01": {
+    "aspect": 1,
+    "left": 0.23203,
+    "top": 0.05547,
+    "right": 0.76641,
+    "bottom": 0.94766
+  },
+  "illustration-library-cactus-medium-01": {
+    "aspect": 1,
+    "left": 0.22891,
+    "top": 0.02734,
+    "right": 0.76641,
+    "bottom": 0.97734
+  },
+  "illustration-library-leaf-beginner-01": {
+    "aspect": 1,
+    "left": 0.16641,
+    "top": 0.09453,
+    "right": 0.84922,
+    "bottom": 0.94609
+  },
+  "illustration-library-leaf-medium-01": {
+    "aspect": 1,
+    "left": 0.10547,
+    "top": 0.04766,
+    "right": 0.93359,
+    "bottom": 0.95078
+  },
+  "illustration-library-palm-beginner-01": {
+    "aspect": 1,
+    "left": 0.13047,
+    "top": 0.05703,
+    "right": 0.87422,
+    "bottom": 0.94297
+  },
+  "illustration-library-palm-medium-01": {
+    "aspect": 1,
+    "left": 0.16484,
+    "top": 0.05859,
+    "right": 0.83984,
+    "bottom": 0.94297
+  },
+  "illustration-library-rose-beginner-01": {
+    "aspect": 1,
+    "left": 0.14141,
+    "top": 0.04609,
+    "right": 0.85547,
+    "bottom": 0.96641
+  },
+  "illustration-library-rose-medium-01": {
+    "aspect": 1,
+    "left": 0.16797,
+    "top": 0.02578,
+    "right": 0.84141,
+    "bottom": 0.97109
+  },
+  "illustration-library-tulip-beginner-01": {
+    "aspect": 1,
+    "left": 0.20391,
+    "top": 0.06641,
+    "right": 0.80703,
+    "bottom": 0.96172
+  },
+  "illustration-library-tulip-medium-01": {
+    "aspect": 1,
+    "left": 0.14453,
+    "top": 0.02266,
+    "right": 0.87578,
+    "bottom": 0.97891
+  },
+  "illustration-library-bamboo-beginner-01": {
+    "aspect": 1,
+    "left": 0.24141,
+    "top": 0.06797,
+    "right": 0.88984,
+    "bottom": 0.94141
+  },
+  "illustration-library-bamboo-medium-01": {
+    "aspect": 1,
+    "left": 0.07266,
+    "top": 0.03359,
+    "right": 0.91328,
+    "bottom": 0.96484
+  },
+  "illustration-library-sun-beginner-01": {
+    "aspect": 1,
+    "left": 0.12422,
+    "top": 0.12422,
+    "right": 0.87422,
+    "bottom": 0.86016
+  },
+  "illustration-library-sun-medium-01": {
+    "aspect": 1,
+    "left": 0.04609,
+    "top": 0.03359,
+    "right": 0.95391,
+    "bottom": 0.92422
+  },
+  "illustration-library-moon-beginner-01": {
+    "aspect": 1,
+    "left": 0.22422,
+    "top": 0.13828,
+    "right": 0.77422,
+    "bottom": 0.85547
+  },
+  "illustration-library-moon-medium-01": {
+    "aspect": 1,
+    "left": 0.08984,
+    "top": 0.08984,
+    "right": 0.91016,
+    "bottom": 0.91016
+  },
+  "illustration-library-cloud-beginner-01": {
+    "aspect": 1,
+    "left": 0.11172,
+    "top": 0.25547,
+    "right": 0.88672,
+    "bottom": 0.74453
+  },
+  "illustration-library-cloud-medium-01": {
+    "aspect": 1,
+    "left": 0.04609,
+    "top": 0.21016,
+    "right": 0.95391,
+    "bottom": 0.78828
+  },
+  "illustration-library-grass-beginner-01": {
+    "aspect": 1,
+    "left": 0.05859,
+    "top": 0.06328,
+    "right": 0.94297,
+    "bottom": 0.93047
+  },
+  "illustration-library-grass-medium-01": {
+    "aspect": 1,
+    "left": 0.07422,
+    "top": 0.02578,
+    "right": 0.93672,
+    "bottom": 0.97578
+  },
+  "illustration-library-car-beginner-01": {
+    "aspect": 1,
+    "left": 0.04297,
+    "top": 0.23047,
+    "right": 0.95547,
+    "bottom": 0.75547
+  },
+  "illustration-library-car-medium-01": {
+    "aspect": 1,
+    "left": 0.00703,
+    "top": 0.25078,
+    "right": 0.98828,
+    "bottom": 0.77422
+  },
+  "illustration-library-bus-beginner-01": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.24141,
+    "right": 0.96797,
+    "bottom": 0.73047
+  },
+  "illustration-library-bus-medium-01": {
+    "aspect": 1,
+    "left": 0.02266,
+    "top": 0.08672,
+    "right": 0.98516,
+    "bottom": 0.91172
+  },
+  "illustration-library-truck-beginner-01": {
+    "aspect": 1,
+    "left": 0.04453,
+    "top": 0.24609,
+    "right": 0.95859,
+    "bottom": 0.76016
+  },
+  "illustration-library-truck-medium-01": {
+    "aspect": 1,
+    "left": 0.03672,
+    "top": 0.07422,
+    "right": 0.96484,
+    "bottom": 0.90391
+  },
+  "illustration-library-train-beginner-01": {
+    "aspect": 1,
+    "left": 0.05234,
+    "top": 0.08203,
+    "right": 0.94922,
+    "bottom": 0.91172
+  },
+  "illustration-library-train-medium-01": {
+    "aspect": 1,
+    "left": 0.02422,
+    "top": 0.21016,
+    "right": 0.97422,
+    "bottom": 0.78203
+  },
+  "illustration-library-airplane-beginner-01": {
+    "aspect": 1,
+    "left": 0.07891,
+    "top": 0.09141,
+    "right": 0.91953,
+    "bottom": 0.91328
+  },
+  "illustration-library-airplane-medium-01": {
+    "aspect": 1,
+    "left": 0.02734,
+    "top": 0.22891,
+    "right": 0.98047,
+    "bottom": 0.82891
+  },
+  "illustration-library-helicopter-beginner-01": {
+    "aspect": 1,
+    "left": 0.02734,
+    "top": 0.24453,
+    "right": 0.97578,
+    "bottom": 0.75547
+  },
+  "illustration-library-helicopter-medium-01": {
+    "aspect": 1,
+    "left": 0.02578,
+    "top": 0.15859,
+    "right": 0.98828,
+    "bottom": 0.82422
+  },
+  "illustration-library-submarine-beginner-01": {
+    "aspect": 1,
+    "left": 0.04141,
+    "top": 0.12891,
+    "right": 0.95703,
+    "bottom": 0.81953
+  },
+  "illustration-library-submarine-medium-01": {
+    "aspect": 1,
+    "left": 0.05703,
+    "top": 0.11016,
+    "right": 0.96484,
+    "bottom": 0.88984
+  },
+  "illustration-library-bicycle-beginner-01": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.16484,
+    "right": 0.96484,
+    "bottom": 0.82422
+  },
+  "illustration-library-bicycle-medium-01": {
+    "aspect": 1,
+    "left": 0.06172,
+    "top": 0.13672,
+    "right": 0.92578,
+    "bottom": 0.85859
+  },
+  "illustration-library-apple-beginner-01": {
+    "aspect": 1,
+    "left": 0.12109,
+    "top": 0.07891,
+    "right": 0.90234,
+    "bottom": 0.92422
+  },
+  "illustration-library-apple-medium-01": {
+    "aspect": 1,
+    "left": 0.07266,
+    "top": 0.10703,
+    "right": 0.92891,
+    "bottom": 0.88984
+  },
+  "illustration-library-pear-beginner-01": {
+    "aspect": 1,
+    "left": 0.20859,
+    "top": 0.08516,
+    "right": 0.82109,
+    "bottom": 0.92266
+  },
+  "illustration-library-pear-medium-01": {
+    "aspect": 1,
+    "left": 0.05859,
+    "top": 0.06953,
+    "right": 0.95391,
+    "bottom": 0.92734
+  },
+  "illustration-library-banana-beginner-01": {
+    "aspect": 1,
+    "left": 0.06172,
+    "top": 0.09141,
+    "right": 0.94297,
+    "bottom": 0.90234
+  },
+  "illustration-library-banana-medium-01": {
+    "aspect": 1,
+    "left": 0.14922,
+    "top": 0.02734,
+    "right": 0.84609,
+    "bottom": 0.97109
+  },
+  "illustration-library-strawberry-beginner-01": {
+    "aspect": 1,
+    "left": 0.16641,
+    "top": 0.07734,
+    "right": 0.83203,
+    "bottom": 0.92422
+  },
+  "illustration-library-strawberry-medium-01": {
+    "aspect": 1,
+    "left": 0.09297,
+    "top": 0.09141,
+    "right": 0.90547,
+    "bottom": 0.90859
+  },
+  "illustration-library-watermelon-beginner-01": {
+    "aspect": 1,
+    "left": 0.08984,
+    "top": 0.10391,
+    "right": 0.91016,
+    "bottom": 0.92109
+  },
+  "illustration-library-watermelon-medium-01": {
+    "aspect": 1,
+    "left": 0.04766,
+    "top": 0.07891,
+    "right": 0.95391,
+    "bottom": 0.92266
+  },
+  "illustration-library-cherry-beginner-01": {
+    "aspect": 1,
+    "left": 0.10078,
+    "top": 0.08828,
+    "right": 0.90078,
+    "bottom": 0.90703
+  },
+  "illustration-library-cherry-medium-01": {
+    "aspect": 1,
+    "left": 0.09609,
+    "top": 0.05547,
+    "right": 0.90859,
+    "bottom": 0.93203
+  },
+  "illustration-library-grapes-beginner-01": {
+    "aspect": 1,
+    "left": 0.16016,
+    "top": 0.06328,
+    "right": 0.87578,
+    "bottom": 0.93047
+  },
+  "illustration-library-grapes-medium-01": {
+    "aspect": 1,
+    "left": 0.10078,
+    "top": 0.01797,
+    "right": 0.92266,
+    "bottom": 0.92734
+  },
+  "illustration-library-pineapple-beginner-01": {
+    "aspect": 1,
+    "left": 0.20859,
+    "top": 0.04141,
+    "right": 0.79141,
+    "bottom": 0.96016
+  },
+  "illustration-library-pineapple-medium-01": {
+    "aspect": 1,
+    "left": 0.14766,
+    "top": 0.04297,
+    "right": 0.86328,
+    "bottom": 0.94141
+  },
+  "illustration-library-carrot-beginner-01": {
+    "aspect": 1,
+    "left": 0.25859,
+    "top": 0.06328,
+    "right": 0.88047,
+    "bottom": 0.93828
+  },
+  "illustration-library-carrot-medium-01": {
+    "aspect": 1,
+    "left": 0.13828,
+    "top": 0.03516,
+    "right": 0.89766,
+    "bottom": 0.95703
+  },
+  "illustration-library-icecream-beginner-01": {
+    "aspect": 1,
+    "left": 0.23516,
+    "top": 0.05078,
+    "right": 0.76484,
+    "bottom": 0.94766
+  },
+  "illustration-library-icecream-medium-01": {
+    "aspect": 1,
+    "left": 0.18516,
+    "top": 0.02266,
+    "right": 0.83047,
+    "bottom": 0.97109
+  },
+  "illustration-library-cake-beginner-01": {
+    "aspect": 1,
+    "left": 0.18203,
+    "top": 0.09141,
+    "right": 0.81797,
+    "bottom": 0.90859
+  },
+  "illustration-library-cake-medium-01": {
+    "aspect": 1,
+    "left": 0.12109,
+    "top": 0.04766,
+    "right": 0.87891,
+    "bottom": 0.96016
+  },
+  "illustration-library-cupcake-beginner-01": {
+    "aspect": 1,
+    "left": 0.16953,
+    "top": 0.08047,
+    "right": 0.81641,
+    "bottom": 0.92109
+  },
+  "illustration-library-cupcake-medium-01": {
+    "aspect": 1,
+    "left": 0.17734,
+    "top": 0.02109,
+    "right": 0.81953,
+    "bottom": 0.97266
+  },
+  "illustration-library-ball-beginner-01": {
+    "aspect": 1,
+    "left": 0.11328,
+    "top": 0.11016,
+    "right": 0.88516,
+    "bottom": 0.88516
+  },
+  "illustration-library-ball-medium-01": {
+    "aspect": 1,
+    "left": 0.10078,
+    "top": 0.09609,
+    "right": 0.89922,
+    "bottom": 0.89297
+  },
+  "illustration-library-drum-beginner-01": {
+    "aspect": 1,
+    "left": 0.13672,
+    "top": 0.18516,
+    "right": 0.86328,
+    "bottom": 0.80391
+  },
+  "illustration-library-drum-medium-01": {
+    "aspect": 1,
+    "left": 0.15078,
+    "top": 0.02734,
+    "right": 0.84766,
+    "bottom": 0.96016
+  },
+  "illustration-library-guitar-beginner-01": {
+    "aspect": 1,
+    "left": 0.29922,
+    "top": 0.01953,
+    "right": 0.69766,
+    "bottom": 0.96953
+  },
+  "illustration-library-guitar-medium-01": {
+    "aspect": 1,
+    "left": 0.10547,
+    "top": 0.02734,
+    "right": 0.93516,
+    "bottom": 0.98203
+  },
+  "illustration-library-book-beginner-01": {
+    "aspect": 1,
+    "left": 0.06328,
+    "top": 0.16953,
+    "right": 0.93516,
+    "bottom": 0.87109
+  },
+  "illustration-library-book-medium-01": {
+    "aspect": 1,
+    "left": 0.03984,
+    "top": 0.17578,
+    "right": 0.98047,
+    "bottom": 0.79141
+  },
+  "illustration-library-pencil-beginner-01": {
+    "aspect": 1,
+    "left": 0.11641,
+    "top": 0.08984,
+    "right": 0.90547,
+    "bottom": 0.88828
+  },
+  "illustration-library-pencil-medium-01": {
+    "aspect": 1,
+    "left": 0.06953,
+    "top": 0.05547,
+    "right": 0.93984,
+    "bottom": 0.93359
+  },
+  "illustration-library-crayon-beginner-01": {
+    "aspect": 1,
+    "left": 0.15547,
+    "top": 0.16328,
+    "right": 0.84922,
+    "bottom": 0.83047
+  },
+  "illustration-library-crayon-medium-01": {
+    "aspect": 1,
+    "left": 0.17734,
+    "top": 0.07578,
+    "right": 0.82109,
+    "bottom": 0.92266
+  },
+  "illustration-library-paintpalette-beginner-01": {
+    "aspect": 1,
+    "left": 0.05547,
+    "top": 0.12422,
+    "right": 0.94297,
+    "bottom": 0.85547
+  },
+  "illustration-library-paintpalette-medium-01": {
+    "aspect": 1,
+    "left": 0.03203,
+    "top": 0.13828,
+    "right": 0.96641,
+    "bottom": 0.87266
+  },
+  "illustration-library-wateringcan-beginner-01": {
+    "aspect": 1,
+    "left": 0.08047,
+    "top": 0.13516,
+    "right": 0.93984,
+    "bottom": 0.84922
+  },
+  "illustration-library-wateringcan-medium-01": {
+    "aspect": 1,
+    "left": 0.07891,
+    "top": 0.15703,
+    "right": 0.92734,
+    "bottom": 0.83359
+  },
+  "illustration-library-teapot-beginner-01": {
+    "aspect": 1,
+    "left": 0.04609,
+    "top": 0.16016,
+    "right": 0.96641,
+    "bottom": 0.82891
+  },
+  "illustration-library-teapot-medium-01": {
+    "aspect": 1,
+    "left": 0.02422,
+    "top": 0.12578,
+    "right": 0.97734,
+    "bottom": 0.88047
+  },
+  "illustration-library-cup-beginner-01": {
+    "aspect": 1,
+    "left": 0.10703,
+    "top": 0.17422,
+    "right": 0.94297,
+    "bottom": 0.84609
+  },
+  "illustration-library-cup-medium-01": {
+    "aspect": 1,
+    "left": 0.05234,
+    "top": 0.16953,
+    "right": 0.95234,
+    "bottom": 0.81641
+  },
+  "illustration-library-clock-beginner-01": {
+    "aspect": 1,
+    "left": 0.12266,
+    "top": 0.08516,
+    "right": 0.87578,
+    "bottom": 0.91641
+  },
+  "illustration-library-clock-medium-01": {
+    "aspect": 1,
+    "left": 0.15078,
+    "top": 0.02109,
+    "right": 0.84766,
+    "bottom": 0.96172
+  },
+  "illustration-library-gift-beginner-01": {
+    "aspect": 1,
+    "left": 0.17109,
+    "top": 0.12734,
+    "right": 0.82734,
+    "bottom": 0.87734
+  },
+  "illustration-library-gift-medium-01": {
+    "aspect": 1,
+    "left": 0.12734,
+    "top": 0.11172,
+    "right": 0.87266,
+    "bottom": 0.88672
+  },
+  "illustration-library-ufo-beginner-01": {
+    "aspect": 1,
+    "left": 0.03828,
+    "top": 0.21484,
+    "right": 0.95859,
+    "bottom": 0.76172
+  },
+  "illustration-library-ufo-medium-01": {
+    "aspect": 1,
+    "left": 0.03984,
+    "top": 0.11641,
+    "right": 0.96016,
+    "bottom": 0.87578
+  },
+  "illustration-library-dinosaur-beginner-01": {
+    "aspect": 1,
+    "left": 0.06797,
+    "top": 0.08359,
+    "right": 0.94766,
+    "bottom": 0.91172
+  },
+  "illustration-library-dinosaur-medium-01": {
+    "aspect": 1,
+    "left": 0.05234,
+    "top": 0.09453,
+    "right": 0.94297,
+    "bottom": 0.91484
+  },
+  "illustration-library-bear-beginner-01": {
+    "aspect": 1,
+    "left": 0.14922,
+    "top": 0.11484,
+    "right": 0.84766,
+    "bottom": 0.89141
+  },
+  "illustration-library-bear-medium-01": {
+    "aspect": 1,
+    "left": 0.09297,
+    "top": 0.11484,
+    "right": 0.90234,
+    "bottom": 0.87578
+  },
+  "illustration-library-dog-beginner-01": {
+    "aspect": 1,
+    "left": 0.20703,
+    "top": 0.05234,
+    "right": 0.79922,
+    "bottom": 0.93359
+  },
+  "illustration-library-dog-medium-01": {
+    "aspect": 1,
+    "left": 0.07734,
+    "top": 0.10547,
+    "right": 0.91953,
+    "bottom": 0.87891
+  },
+  "illustration-library-panda-beginner-01": {
+    "aspect": 1,
+    "left": 0.16641,
+    "top": 0.10391,
+    "right": 0.83047,
+    "bottom": 0.91016
+  },
+  "illustration-library-panda-medium-01": {
+    "aspect": 1,
+    "left": 0.06172,
+    "top": 0.25859,
+    "right": 0.95078,
+    "bottom": 0.69609
+  },
+  "illustration-library-capybara-beginner-01": {
+    "aspect": 1,
+    "left": 0.11953,
+    "top": 0.15547,
+    "right": 0.87109,
+    "bottom": 0.83672
+  },
+  "illustration-library-capybara-medium-01": {
+    "aspect": 1,
+    "left": 0.08828,
+    "top": 0.10078,
+    "right": 0.91641,
+    "bottom": 0.90078
+  },
+  "illustration-library-hamster-beginner-01": {
+    "aspect": 1,
+    "left": 0.16016,
+    "top": 0.11016,
+    "right": 0.83828,
+    "bottom": 0.89453
+  },
+  "illustration-library-hamster-medium-01": {
+    "aspect": 1,
+    "left": 0.26641,
+    "top": 0.06953,
+    "right": 0.76641,
+    "bottom": 0.93828
+  },
+  "illustration-library-otter-beginner-01": {
+    "aspect": 1,
+    "left": 0.17891,
+    "top": 0.10547,
+    "right": 0.93203,
+    "bottom": 0.89453
+  },
+  "illustration-library-otter-medium-01": {
+    "aspect": 1,
+    "left": 0.06797,
+    "top": 0.09922,
+    "right": 0.93359,
+    "bottom": 0.89922
+  },
+  "illustration-library-hedgehog-beginner-01": {
+    "aspect": 1,
+    "left": 0.07578,
+    "top": 0.19453,
+    "right": 0.93203,
+    "bottom": 0.81016
+  },
+  "illustration-library-hedgehog-medium-01": {
+    "aspect": 1,
+    "left": 0.03516,
+    "top": 0.11328,
+    "right": 0.96484,
+    "bottom": 0.89922
+  },
+  "illustration-library-seal-beginner-01": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.12266,
+    "right": 0.97422,
+    "bottom": 0.86328
+  },
+  "illustration-library-seal-medium-01": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.21016,
+    "right": 0.96641,
+    "bottom": 0.78672
+  },
+  "illustration-library-redpanda-beginner-01": {
+    "aspect": 1,
+    "left": 0.11016,
+    "top": 0.07422,
+    "right": 0.91641,
+    "bottom": 0.92734
+  },
+  "illustration-library-redpanda-medium-01": {
+    "aspect": 1,
+    "left": 0.05078,
+    "top": 0.10078,
+    "right": 0.98047,
+    "bottom": 0.88984
+  },
+  "illustration-library-chick-beginner-01": {
+    "aspect": 1,
+    "left": 0.19297,
+    "top": 0.07891,
+    "right": 0.80547,
+    "bottom": 0.91953
+  },
+  "illustration-library-chick-medium-01": {
+    "aspect": 1,
+    "left": 0.12578,
+    "top": 0.03828,
+    "right": 0.88672,
+    "bottom": 0.96016
+  },
+  "illustration-library-frog-beginner-01": {
+    "aspect": 1,
+    "left": 0.05547,
+    "top": 0.08984,
+    "right": 0.94141,
+    "bottom": 0.90547
+  },
+  "illustration-library-frog-medium-01": {
+    "aspect": 1,
+    "left": 0.02891,
+    "top": 0.09766,
+    "right": 0.97109,
+    "bottom": 0.91797
+  },
+  "illustration-library-jellyfish-beginner-01": {
+    "aspect": 1,
+    "left": 0.15859,
+    "top": 0.08203,
+    "right": 0.82422,
+    "bottom": 0.90547
+  },
+  "illustration-library-jellyfish-medium-01": {
+    "aspect": 1,
+    "left": 0.08672,
+    "top": 0.06797,
+    "right": 0.91484,
+    "bottom": 0.94297
+  },
+  "illustration-library-snail-beginner-01": {
+    "aspect": 1,
+    "left": 0.03672,
+    "top": 0.14609,
+    "right": 0.96328,
+    "bottom": 0.81484
+  },
+  "illustration-library-snail-medium-01": {
+    "aspect": 1,
+    "left": 0.02422,
+    "top": 0.19609,
+    "right": 0.97734,
+    "bottom": 0.82891
+  },
+  "illustration-library-pudding-beginner-01": {
+    "aspect": 1,
+    "left": 0.06953,
+    "top": 0.22109,
+    "right": 0.92891,
+    "bottom": 0.78047
+  },
+  "illustration-library-pudding-medium-01": {
+    "aspect": 1,
+    "left": 0.04141,
+    "top": 0.06953,
+    "right": 0.95703,
+    "bottom": 0.93516
+  },
+  "illustration-library-daisy-beginner-01": {
+    "aspect": 1,
+    "left": 0.19297,
+    "top": 0.03047,
+    "right": 0.80391,
+    "bottom": 0.97422
+  },
+  "illustration-library-daisy-medium-01": {
+    "aspect": 1,
+    "left": 0.18828,
+    "top": 0.08672,
+    "right": 0.83047,
+    "bottom": 0.91484
+  },
+  "illustration-library-poppy-beginner-01": {
+    "aspect": 1,
+    "left": 0.19609,
+    "top": 0.09922,
+    "right": 0.80234,
+    "bottom": 0.92422
+  },
+  "illustration-library-poppy-medium-01": {
+    "aspect": 1,
+    "left": 0.14766,
+    "top": 0.07734,
+    "right": 0.85234,
+    "bottom": 0.92109
+  },
+  "illustration-library-orchid-beginner-01": {
+    "aspect": 1,
+    "left": 0.06641,
+    "top": 0.07734,
+    "right": 0.93203,
+    "bottom": 0.92266
+  },
+  "illustration-library-orchid-medium-01": {
+    "aspect": 1,
+    "left": 0.05703,
+    "top": 0.05234,
+    "right": 0.95078,
+    "bottom": 0.95391
+  },
+  "illustration-library-hydrangea-beginner-01": {
+    "aspect": 1,
+    "left": 0.14141,
+    "top": 0.08359,
+    "right": 0.84766,
+    "bottom": 0.91797
+  },
+  "illustration-library-hydrangea-medium-01": {
+    "aspect": 1,
+    "left": 0.10703,
+    "top": 0.04766,
+    "right": 0.87422,
+    "bottom": 0.95703
+  },
+  "illustration-library-lavender-beginner-01": {
+    "aspect": 1,
+    "left": 0.33984,
+    "top": 0.04922,
+    "right": 0.64922,
+    "bottom": 0.94922
+  },
+  "illustration-library-lavender-medium-01": {
+    "aspect": 1,
+    "left": 0.23359,
+    "top": 0.04453,
+    "right": 0.74453,
+    "bottom": 0.95859
+  },
+  "illustration-library-peony-beginner-01": {
+    "aspect": 1,
+    "left": 0.15703,
+    "top": 0.07891,
+    "right": 0.82109,
+    "bottom": 0.93516
+  },
+  "illustration-library-peony-medium-01": {
+    "aspect": 1,
+    "left": 0.16172,
+    "top": 0.06797,
+    "right": 0.84609,
+    "bottom": 0.93984
+  },
+  "illustration-library-daffodil-beginner-01": {
+    "aspect": 1,
+    "left": 0.15703,
+    "top": 0.02891,
+    "right": 0.83984,
+    "bottom": 0.97422
+  },
+  "illustration-library-daffodil-medium-01": {
+    "aspect": 1,
+    "left": 0.13672,
+    "top": 0.02578,
+    "right": 0.84609,
+    "bottom": 0.96484
+  },
+  "illustration-library-hibiscus-beginner-01": {
+    "aspect": 1,
+    "left": 0.09453,
+    "top": 0.09922,
+    "right": 0.91328,
+    "bottom": 0.91016
+  },
+  "illustration-library-hibiscus-medium-01": {
+    "aspect": 1,
+    "left": 0.07266,
+    "top": 0.07578,
+    "right": 0.92734,
+    "bottom": 0.92734
+  },
+  "illustration-library-fern-beginner-01": {
+    "aspect": 1,
+    "left": 0.15547,
+    "top": 0.08203,
+    "right": 0.84297,
+    "bottom": 0.91484
+  },
+  "illustration-library-fern-medium-01": {
+    "aspect": 1,
+    "left": 0.17734,
+    "top": 0.06641,
+    "right": 0.77578,
+    "bottom": 0.93516
+  },
+  "illustration-library-monstera-beginner-01": {
+    "aspect": 1,
+    "left": 0.13203,
+    "top": 0.04453,
+    "right": 0.86953,
+    "bottom": 0.95391
+  },
+  "illustration-library-monstera-medium-01": {
+    "aspect": 1,
+    "left": 0.06797,
+    "top": 0.06172,
+    "right": 0.92109,
+    "bottom": 0.94453
+  },
+  "illustration-library-ginkgoleaf-beginner-01": {
+    "aspect": 1,
+    "left": 0.09453,
+    "top": 0.09453,
+    "right": 0.90859,
+    "bottom": 0.91328
+  },
+  "illustration-library-ginkgoleaf-medium-01": {
+    "aspect": 1,
+    "left": 0.06328,
+    "top": 0.07578,
+    "right": 0.93672,
+    "bottom": 0.91797
+  },
+  "illustration-library-mapleleaf-beginner-01": {
+    "aspect": 1,
+    "left": 0.07734,
+    "top": 0.06172,
+    "right": 0.92422,
+    "bottom": 0.94141
+  },
+  "illustration-library-mapleleaf-medium-01": {
+    "aspect": 1,
+    "left": 0.06172,
+    "top": 0.04609,
+    "right": 0.93516,
+    "bottom": 0.94141
+  },
+  "illustration-library-oakbranch-beginner-01": {
+    "aspect": 1,
+    "left": 0.11172,
+    "top": 0.14141,
+    "right": 0.89453,
+    "bottom": 0.86953
+  },
+  "illustration-library-oakbranch-medium-01": {
+    "aspect": 1,
+    "left": 0.07109,
+    "top": 0.04922,
+    "right": 0.93359,
+    "bottom": 0.95078
+  },
+  "illustration-library-beachscene-beginner-01": {
+    "aspect": 1,
+    "left": 0.05547,
+    "top": 0.10859,
+    "right": 0.94297,
+    "bottom": 0.90547
+  },
+  "illustration-library-beachscene-medium-01": {
+    "aspect": 1,
+    "left": 0.06328,
+    "top": 0.07109,
+    "right": 0.93672,
+    "bottom": 0.93828
+  },
+  "illustration-library-riverscene-beginner-01": {
+    "aspect": 1,
+    "left": 0.03516,
+    "top": 0.22266,
+    "right": 0.96797,
+    "bottom": 0.82891
+  },
+  "illustration-library-riverscene-medium-01": {
+    "aspect": 1,
+    "left": 0.05078,
+    "top": 0.09766,
+    "right": 0.95078,
+    "bottom": 0.89609
+  },
+  "illustration-library-lakescene-beginner-01": {
+    "aspect": 1,
+    "left": 0.03984,
+    "top": 0.15859,
+    "right": 0.96016,
+    "bottom": 0.84141
+  },
+  "illustration-library-lakescene-medium-01": {
+    "aspect": 1,
+    "left": 0.01328,
+    "top": 0.17422,
+    "right": 0.98672,
+    "bottom": 0.84609
+  },
+  "illustration-library-volcano-beginner-01": {
+    "aspect": 1,
+    "left": 0.05547,
+    "top": 0.05547,
+    "right": 0.94141,
+    "bottom": 0.94609
+  },
+  "illustration-library-volcano-medium-01": {
+    "aspect": 1,
+    "left": 0.04297,
+    "top": 0.04297,
+    "right": 0.95859,
+    "bottom": 0.95703
+  },
+  "illustration-library-desert-beginner-01": {
+    "aspect": 1,
+    "left": 0.01484,
+    "top": 0.13672,
+    "right": 0.98047,
+    "bottom": 0.71328
+  },
+  "illustration-library-desert-medium-01": {
+    "aspect": 1,
+    "left": 0.01484,
+    "top": 0.27266,
+    "right": 0.98516,
+    "bottom": 0.89766
+  },
+  "illustration-library-oasis-beginner-01": {
+    "aspect": 1,
+    "left": 0.04766,
+    "top": 0.14609,
+    "right": 0.95234,
+    "bottom": 0.81797
+  },
+  "illustration-library-oasis-medium-01": {
+    "aspect": 1,
+    "left": 0.04609,
+    "top": 0.12891,
+    "right": 0.95391,
+    "bottom": 0.86172
+  },
+  "illustration-library-snowmountain-beginner-01": {
+    "aspect": 1,
+    "left": 0.04922,
+    "top": 0.13203,
+    "right": 0.95078,
+    "bottom": 0.86016
+  },
+  "illustration-library-snowmountain-medium-01": {
+    "aspect": 1,
+    "left": 0.01797,
+    "top": 0.23828,
+    "right": 0.98047,
+    "bottom": 0.75547
+  },
+  "illustration-library-forestpath-beginner-01": {
+    "aspect": 1,
+    "left": 0.02578,
+    "top": 0.10703,
+    "right": 0.97578,
+    "bottom": 0.93203
+  },
+  "illustration-library-forestpath-medium-01": {
+    "aspect": 1,
+    "left": 0.04141,
+    "top": 0.08203,
+    "right": 0.94141,
+    "bottom": 0.92266
+  },
+  "illustration-library-island-beginner-01": {
+    "aspect": 1,
+    "left": 0.07422,
+    "top": 0.08516,
+    "right": 0.92734,
+    "bottom": 0.85547
+  },
+  "illustration-library-island-medium-01": {
+    "aspect": 1,
+    "left": 0.06016,
+    "top": 0.07422,
+    "right": 0.93828,
+    "bottom": 0.90547
+  },
+  "illustration-library-cavescene-beginner-01": {
+    "aspect": 1,
+    "left": 0.03203,
+    "top": 0.19141,
+    "right": 0.96797,
+    "bottom": 0.80859
+  },
+  "illustration-library-cavescene-medium-01": {
+    "aspect": 1,
+    "left": 0.02578,
+    "top": 0.11016,
+    "right": 0.97266,
+    "bottom": 0.87891
+  },
+  "illustration-library-backpack-beginner-01": {
+    "aspect": 1,
+    "left": 0.14141,
+    "top": 0.10859,
+    "right": 0.85859,
+    "bottom": 0.89609
+  },
+  "illustration-library-backpack-medium-01": {
+    "aspect": 1,
+    "left": 0.10703,
+    "top": 0.04609,
+    "right": 0.86328,
+    "bottom": 0.95078
+  },
+  "illustration-library-sneaker-beginner-01": {
+    "aspect": 1,
+    "left": 0.04297,
+    "top": 0.26641,
+    "right": 0.96016,
+    "bottom": 0.74922
+  },
+  "illustration-library-sneaker-medium-01": {
+    "aspect": 1,
+    "left": 0.07422,
+    "top": 0.11953,
+    "right": 0.92891,
+    "bottom": 0.87891
+  },
+  "illustration-library-rainboot-beginner-01": {
+    "aspect": 1,
+    "left": 0.15703,
+    "top": 0.08984,
+    "right": 0.87891,
+    "bottom": 0.91172
+  },
+  "illustration-library-rainboot-medium-01": {
+    "aspect": 1,
+    "left": 0.06016,
+    "top": 0.09922,
+    "right": 0.92891,
+    "bottom": 0.89766
+  },
+  "illustration-library-strawhat-beginner-01": {
+    "aspect": 1,
+    "left": 0.04141,
+    "top": 0.20078,
+    "right": 0.95703,
+    "bottom": 0.76016
+  },
+  "illustration-library-strawhat-medium-01": {
+    "aspect": 1,
+    "left": 0.04297,
+    "top": 0.19453,
+    "right": 0.95703,
+    "bottom": 0.81172
+  },
+  "illustration-library-mittens-beginner-01": {
+    "aspect": 1,
+    "left": 0.14609,
+    "top": 0.06172,
+    "right": 0.86641,
+    "bottom": 0.94922
+  },
+  "illustration-library-mittens-medium-01": {
+    "aspect": 1,
+    "left": 0.04766,
+    "top": 0.08828,
+    "right": 0.95391,
+    "bottom": 0.91328
+  },
+  "illustration-library-lantern-beginner-01": {
+    "aspect": 1,
+    "left": 0.26953,
+    "top": 0.04453,
+    "right": 0.73047,
+    "bottom": 0.95547
+  },
+  "illustration-library-lantern-medium-01": {
+    "aspect": 1,
+    "left": 0.28047,
+    "top": 0.02578,
+    "right": 0.72109,
+    "bottom": 0.96484
+  },
+  "illustration-library-desk-beginner-01": {
+    "aspect": 1,
+    "left": 0.03828,
+    "top": 0.19297,
+    "right": 0.95859,
+    "bottom": 0.84141
+  },
+  "illustration-library-desk-medium-01": {
+    "aspect": 1,
+    "left": 0.03516,
+    "top": 0.17109,
+    "right": 0.96484,
+    "bottom": 0.83047
+  },
+  "illustration-library-lamp-beginner-01": {
+    "aspect": 1,
+    "left": 0.16328,
+    "top": 0.08828,
+    "right": 0.83359,
+    "bottom": 0.91484
+  },
+  "illustration-library-lamp-medium-01": {
+    "aspect": 1,
+    "left": 0.12891,
+    "top": 0.03047,
+    "right": 0.82109,
+    "bottom": 0.96484
+  },
+  "illustration-library-bed-beginner-01": {
+    "aspect": 1,
+    "left": 0.04766,
+    "top": 0.23359,
+    "right": 0.95234,
+    "bottom": 0.76797
+  },
+  "illustration-library-bed-medium-01": {
+    "aspect": 1,
+    "left": 0.06641,
+    "top": 0.11016,
+    "right": 0.94453,
+    "bottom": 0.88828
+  },
+  "illustration-library-wardrobe-beginner-01": {
+    "aspect": 1,
+    "left": 0.16172,
+    "top": 0.05234,
+    "right": 0.83672,
+    "bottom": 0.94766
+  },
+  "illustration-library-wardrobe-medium-01": {
+    "aspect": 1,
+    "left": 0.20078,
+    "top": 0.05078,
+    "right": 0.79766,
+    "bottom": 0.94922
+  },
+  "illustration-library-bookshelf-beginner-01": {
+    "aspect": 1,
+    "left": 0.15547,
+    "top": 0.16016,
+    "right": 0.84453,
+    "bottom": 0.85391
+  },
+  "illustration-library-bookshelf-medium-01": {
+    "aspect": 1,
+    "left": 0.07891,
+    "top": 0.12891,
+    "right": 0.93203,
+    "bottom": 0.86953
+  },
+  "illustration-library-window-beginner-01": {
+    "aspect": 1,
+    "left": 0.11953,
+    "top": 0.12578,
+    "right": 0.88047,
+    "bottom": 0.87422
+  },
+  "illustration-library-window-medium-01": {
+    "aspect": 1,
+    "left": 0.05703,
+    "top": 0.10859,
+    "right": 0.94453,
+    "bottom": 0.89141
+  },
+  "illustration-library-door-beginner-01": {
+    "aspect": 1,
+    "left": 0.23828,
+    "top": 0.06797,
+    "right": 0.76328,
+    "bottom": 0.93516
+  },
+  "illustration-library-door-medium-01": {
+    "aspect": 1,
+    "left": 0.22891,
+    "top": 0.04141,
+    "right": 0.75234,
+    "bottom": 0.95547
+  },
+  "illustration-library-violin-beginner-01": {
+    "aspect": 1,
+    "left": 0.31484,
+    "top": 0.02109,
+    "right": 0.68203,
+    "bottom": 0.96641
+  },
+  "illustration-library-violin-medium-01": {
+    "aspect": 1,
+    "left": 0.10391,
+    "top": 0.02266,
+    "right": 0.94141,
+    "bottom": 0.96641
+  },
+  "illustration-library-trumpet-beginner-01": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.25234,
+    "right": 0.96641,
+    "bottom": 0.66953
+  },
+  "illustration-library-trumpet-medium-01": {
+    "aspect": 1,
+    "left": 0.02422,
+    "top": 0.26172,
+    "right": 0.97422,
+    "bottom": 0.73984
+  },
+  "illustration-library-camera-beginner-01": {
+    "aspect": 1,
+    "left": 0.02891,
+    "top": 0.13047,
+    "right": 0.96641,
+    "bottom": 0.80234
+  },
+  "illustration-library-camera-medium-01": {
+    "aspect": 1,
+    "left": 0.18672,
+    "top": 0.05391,
+    "right": 0.75703,
+    "bottom": 0.94297
+  },
+  "illustration-library-telescope-beginner-01": {
+    "aspect": 1,
+    "left": 0.08047,
+    "top": 0.07109,
+    "right": 0.91797,
+    "bottom": 0.91953
+  },
+  "illustration-library-telescope-medium-01": {
+    "aspect": 1,
+    "left": 0.11797,
+    "top": 0.02266,
+    "right": 0.85391,
+    "bottom": 0.95703
+  },
+  "illustration-library-microscope-beginner-01": {
+    "aspect": 1,
+    "left": 0.23984,
+    "top": 0.03516,
+    "right": 0.75859,
+    "bottom": 0.95859
+  },
+  "illustration-library-microscope-medium-01": {
+    "aspect": 1,
+    "left": 0.18359,
+    "top": 0.02578,
+    "right": 0.82891,
+    "bottom": 0.97422
+  },
+  "illustration-library-sewingmachine-beginner-01": {
+    "aspect": 1,
+    "left": 0.02422,
+    "top": 0.11953,
+    "right": 0.98203,
+    "bottom": 0.87109
+  },
+  "illustration-library-sewingmachine-medium-01": {
+    "aspect": 1,
+    "left": 0.02109,
+    "top": 0.11484,
+    "right": 0.98828,
+    "bottom": 0.91016
+  },
+  "illustration-library-teacupset-beginner-01": {
+    "aspect": 1,
+    "left": 0.03047,
+    "top": 0.21172,
+    "right": 0.97109,
+    "bottom": 0.76953
+  },
+  "illustration-library-teacupset-medium-01": {
+    "aspect": 1,
+    "left": 0.02578,
+    "top": 0.10703,
+    "right": 0.97266,
+    "bottom": 0.87891
+  },
+  "illustration-library-vase-beginner-01": {
+    "aspect": 1,
+    "left": 0.15547,
+    "top": 0.11172,
+    "right": 0.84297,
+    "bottom": 0.91328
+  },
+  "illustration-library-vase-medium-01": {
+    "aspect": 1,
+    "left": 0.26328,
+    "top": 0.04297,
+    "right": 0.73203,
+    "bottom": 0.96172
+  },
+  "illustration-library-bottle-beginner-01": {
+    "aspect": 1,
+    "left": 0.16328,
+    "top": 0.06641,
+    "right": 0.82734,
+    "bottom": 0.94609
+  },
+  "illustration-library-bottle-medium-01": {
+    "aspect": 1,
+    "left": 0.20078,
+    "top": 0.05547,
+    "right": 0.79766,
+    "bottom": 0.94922
+  },
+  "illustration-library-breadbasket-beginner-01": {
+    "aspect": 1,
+    "left": 0.05391,
+    "top": 0.21172,
+    "right": 0.94453,
+    "bottom": 0.78828
+  },
+  "illustration-library-breadbasket-medium-01": {
+    "aspect": 1,
+    "left": 0.02266,
+    "top": 0.07734,
+    "right": 0.97578,
+    "bottom": 0.90391
+  },
+  "illustration-library-scooter-beginner-01": {
+    "aspect": 1,
+    "left": 0.08203,
+    "top": 0.08359,
+    "right": 0.93672,
+    "bottom": 0.91172
+  },
+  "illustration-library-scooter-medium-01": {
+    "aspect": 1,
+    "left": 0.13047,
+    "top": 0.03828,
+    "right": 0.92578,
+    "bottom": 0.94922
+  },
+  "illustration-library-hotairballoon-beginner-01": {
+    "aspect": 1,
+    "left": 0.19453,
+    "top": 0.04766,
+    "right": 0.80391,
+    "bottom": 0.95234
+  },
+  "illustration-library-hotairballoon-medium-01": {
+    "aspect": 1,
+    "left": 0.19141,
+    "top": 0.03359,
+    "right": 0.80078,
+    "bottom": 0.95859
+  },
+  "illustration-library-sleepycloud-beginner-01": {
+    "aspect": 1,
+    "left": 0.06016,
+    "top": 0.21016,
+    "right": 0.93828,
+    "bottom": 0.77734
+  },
+  "illustration-library-sleepycloud-medium-01": {
+    "aspect": 1,
+    "left": 0.05391,
+    "top": 0.16953,
+    "right": 0.94453,
+    "bottom": 0.82891
+  },
+  "illustration-library-mailboxfriend-beginner-01": {
+    "aspect": 1,
+    "left": 0.19297,
+    "top": 0.10547,
+    "right": 0.87109,
+    "bottom": 0.88672
+  },
+  "illustration-library-mailboxfriend-medium-01": {
+    "aspect": 1,
+    "left": 0.08828,
+    "top": 0.04609,
+    "right": 0.96328,
+    "bottom": 0.92578
+  },
+  "illustration-library-moonboat-beginner-01": {
+    "aspect": 1,
+    "left": 0.09609,
+    "top": 0.07734,
+    "right": 0.90391,
+    "bottom": 0.92422
+  },
+  "illustration-library-moonboat-medium-01": {
+    "aspect": 1,
+    "left": 0.04453,
+    "top": 0.02578,
+    "right": 0.97734,
+    "bottom": 0.94766
+  },
+  "illustration-library-papercrown-beginner-01": {
+    "aspect": 1,
+    "left": 0.07422,
+    "top": 0.17578,
+    "right": 0.92422,
+    "bottom": 0.83047
+  },
+  "illustration-library-papercrown-medium-01": {
+    "aspect": 1,
+    "left": 0.03516,
+    "top": 0.08672,
+    "right": 0.96641,
+    "bottom": 0.88359
+  },
+  "illustration-library-toytrain-beginner-01": {
+    "aspect": 1,
+    "left": 0.05547,
+    "top": 0.17109,
+    "right": 0.93984,
+    "bottom": 0.83359
+  },
+  "illustration-library-toytrain-medium-01": {
+    "aspect": 1,
+    "left": 0.02422,
+    "top": 0.24141,
+    "right": 0.97422,
+    "bottom": 0.75391
+  },
+  "illustration-library-readingchild-beginner-01": {
+    "aspect": 1,
+    "left": 0.26484,
+    "top": 0.02734,
+    "right": 0.73672,
+    "bottom": 0.97578
+  },
+  "illustration-library-readingchild-medium-01": {
+    "aspect": 1,
+    "left": 0.14922,
+    "top": 0.02891,
+    "right": 0.84922,
+    "bottom": 0.96641
+  },
+  "illustration-library-paintingchild-beginner-01": {
+    "aspect": 1,
+    "left": 0.21328,
+    "top": 0.04141,
+    "right": 0.70859,
+    "bottom": 0.95703
+  },
+  "illustration-library-paintingchild-medium-01": {
+    "aspect": 1,
+    "left": 0.17266,
+    "top": 0.03672,
+    "right": 0.85234,
+    "bottom": 0.95859
+  },
+  "illustration-library-gardener-beginner-01": {
+    "aspect": 1,
+    "left": 0.21484,
+    "top": 0.02578,
+    "right": 0.74609,
+    "bottom": 0.96484
+  },
+  "illustration-library-gardener-medium-01": {
+    "aspect": 1,
+    "left": 0.05547,
+    "top": 0.03203,
+    "right": 0.93359,
+    "bottom": 0.96641
+  },
+  "illustration-library-baker-beginner-01": {
+    "aspect": 1,
+    "left": 0.27266,
+    "top": 0.02422,
+    "right": 0.70391,
+    "bottom": 0.97578
+  },
+  "illustration-library-baker-medium-01": {
+    "aspect": 1,
+    "left": 0.17734,
+    "top": 0.01641,
+    "right": 0.80234,
+    "bottom": 0.96953
+  },
+  "illustration-library-firefighter-beginner-01": {
+    "aspect": 1,
+    "left": 0.22109,
+    "top": 0.02578,
+    "right": 0.70234,
+    "bottom": 0.96328
+  },
+  "illustration-library-firefighter-medium-01": {
+    "aspect": 1,
+    "left": 0.23516,
+    "top": 0.02578,
+    "right": 0.72266,
+    "bottom": 0.96797
+  },
+  "illustration-library-doctor-beginner-01": {
+    "aspect": 1,
+    "left": 0.21797,
+    "top": 0.02266,
+    "right": 0.70547,
+    "bottom": 0.95703
+  },
+  "illustration-library-doctor-medium-01": {
+    "aspect": 1,
+    "left": 0.27422,
+    "top": 0.01797,
+    "right": 0.72266,
+    "bottom": 0.97266
+  },
+  "illustration-library-teacher-beginner-01": {
+    "aspect": 1,
+    "left": 0.34453,
+    "top": 0.02422,
+    "right": 0.64766,
+    "bottom": 0.97266
+  },
+  "illustration-library-teacher-medium-01": {
+    "aspect": 1,
+    "left": 0.22891,
+    "top": 0.01484,
+    "right": 0.78203,
+    "bottom": 0.97734
+  },
+  "illustration-library-mailcarrier-beginner-01": {
+    "aspect": 1,
+    "left": 0.29453,
+    "top": 0.02266,
+    "right": 0.69453,
+    "bottom": 0.96484
+  },
+  "illustration-library-mailcarrier-medium-01": {
+    "aspect": 1,
+    "left": 0.18828,
+    "top": 0.02422,
+    "right": 0.76953,
+    "bottom": 0.97734
+  },
+  "illustration-library-guitarist-beginner-01": {
+    "aspect": 1,
+    "left": 0.28203,
+    "top": 0.03672,
+    "right": 0.72734,
+    "bottom": 0.94453
+  },
+  "illustration-library-guitarist-medium-01": {
+    "aspect": 1,
+    "left": 0.22891,
+    "top": 0.02578,
+    "right": 0.85234,
+    "bottom": 0.97109
+  },
+  "illustration-library-ballerina-beginner-01": {
+    "aspect": 1,
+    "left": 0.07891,
+    "top": 0.02578,
+    "right": 0.90078,
+    "bottom": 0.95859
+  },
+  "illustration-library-ballerina-medium-01": {
+    "aspect": 1,
+    "left": 0.21016,
+    "top": 0.02109,
+    "right": 0.83672,
+    "bottom": 0.97109
+  },
+  "illustration-library-runningchild-beginner-01": {
+    "aspect": 1,
+    "left": 0.22578,
+    "top": 0.02891,
+    "right": 0.76484,
+    "bottom": 0.95391
+  },
+  "illustration-library-runningchild-medium-01": {
+    "aspect": 1,
+    "left": 0.21484,
+    "top": 0.02734,
+    "right": 0.81016,
+    "bottom": 0.96328
+  },
+  "illustration-library-umbrellauser-beginner-01": {
+    "aspect": 1,
+    "left": 0.13047,
+    "top": 0.02422,
+    "right": 0.79141,
+    "bottom": 0.97109
+  },
+  "illustration-library-umbrellauser-medium-01": {
+    "aspect": 1,
+    "left": 0.13047,
+    "top": 0.02734,
+    "right": 0.81953,
+    "bottom": 0.96484
+  },
+  "illustration-library-grandmother-beginner-01": {
+    "aspect": 1,
+    "left": 0.30078,
+    "top": 0.02578,
+    "right": 0.68516,
+    "bottom": 0.97891
+  },
+  "illustration-library-grandmother-medium-01": {
+    "aspect": 1,
+    "left": 0.21328,
+    "top": 0.02422,
+    "right": 0.74141,
+    "bottom": 0.94453
+  },
+  "illustration-library-wheelchairuser-beginner-01": {
+    "aspect": 1,
+    "left": 0.18828,
+    "top": 0.02891,
+    "right": 0.81328,
+    "bottom": 0.94766
+  },
+  "illustration-library-wheelchairuser-medium-01": {
+    "aspect": 1,
+    "left": 0.14453,
+    "top": 0.02578,
+    "right": 0.84609,
+    "bottom": 0.96484
+  },
+  "illustration-library-hiker-beginner-01": {
+    "aspect": 1,
+    "left": 0.24766,
+    "top": 0.03516,
+    "right": 0.73203,
+    "bottom": 0.94609
+  },
+  "illustration-library-hiker-medium-01": {
+    "aspect": 1,
+    "left": 0.23047,
+    "top": 0.01953,
+    "right": 0.74766,
+    "bottom": 0.97891
+  },
+  "illustration-library-school-beginner-01": {
+    "aspect": 1,
+    "left": 0.07734,
+    "top": 0.06484,
+    "right": 0.91953,
+    "bottom": 0.91953
+  },
+  "illustration-library-school-medium-01": {
+    "aspect": 1,
+    "left": 0.01484,
+    "top": 0.11797,
+    "right": 0.98516,
+    "bottom": 0.82734
+  },
+  "illustration-library-bookshop-beginner-01": {
+    "aspect": 1,
+    "left": 0.07109,
+    "top": 0.12891,
+    "right": 0.92734,
+    "bottom": 0.87266
+  },
+  "illustration-library-bookshop-medium-01": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.04766,
+    "right": 0.96953,
+    "bottom": 0.89453
+  },
+  "illustration-library-bakery-beginner-01": {
+    "aspect": 1,
+    "left": 0.02891,
+    "top": 0.10391,
+    "right": 0.96953,
+    "bottom": 0.87422
+  },
+  "illustration-library-bakery-medium-01": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.05391,
+    "right": 0.97109,
+    "bottom": 0.91016
+  },
+  "illustration-library-cottage-beginner-01": {
+    "aspect": 1,
+    "left": 0.07578,
+    "top": 0.11172,
+    "right": 0.90547,
+    "bottom": 0.88359
+  },
+  "illustration-library-cottage-medium-01": {
+    "aspect": 1,
+    "left": 0.06172,
+    "top": 0.09609,
+    "right": 0.93828,
+    "bottom": 0.89453
+  },
+  "illustration-library-treehouse-beginner-01": {
+    "aspect": 1,
+    "left": 0.09141,
+    "top": 0.05234,
+    "right": 0.90703,
+    "bottom": 0.93984
+  },
+  "illustration-library-treehouse-medium-01": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.03203,
+    "right": 0.97266,
+    "bottom": 0.96797
+  },
+  "illustration-library-watermill-beginner-01": {
+    "aspect": 1,
+    "left": 0.09141,
+    "top": 0.17266,
+    "right": 0.90859,
+    "bottom": 0.79297
+  },
+  "illustration-library-watermill-medium-01": {
+    "aspect": 1,
+    "left": 0.02422,
+    "top": 0.10859,
+    "right": 0.97578,
+    "bottom": 0.89609
+  },
+  "illustration-library-clocktower-beginner-01": {
+    "aspect": 1,
+    "left": 0.23516,
+    "top": 0.04453,
+    "right": 0.76172,
+    "bottom": 0.95078
+  },
+  "illustration-library-clocktower-medium-01": {
+    "aspect": 1,
+    "left": 0.27578,
+    "top": 0.02422,
+    "right": 0.72422,
+    "bottom": 0.95859
+  },
+  "illustration-library-pagoda-beginner-01": {
+    "aspect": 1,
+    "left": 0.05859,
+    "top": 0.09453,
+    "right": 0.93984,
+    "bottom": 0.88047
+  },
+  "illustration-library-pagoda-medium-01": {
+    "aspect": 1,
+    "left": 0.12422,
+    "top": 0.02734,
+    "right": 0.87578,
+    "bottom": 0.96797
+  },
+  "illustration-library-pavilion-beginner-01": {
+    "aspect": 1,
+    "left": 0.04922,
+    "top": 0.08984,
+    "right": 0.95078,
+    "bottom": 0.91016
+  },
+  "illustration-library-pavilion-medium-01": {
+    "aspect": 1,
+    "left": 0.04766,
+    "top": 0.03047,
+    "right": 0.95234,
+    "bottom": 0.94453
+  },
+  "illustration-library-archedbridge-beginner-01": {
+    "aspect": 1,
+    "left": 0.01953,
+    "top": 0.30391,
+    "right": 0.97734,
+    "bottom": 0.71484
+  },
+  "illustration-library-archedbridge-medium-01": {
+    "aspect": 1,
+    "left": 0.01953,
+    "top": 0.33203,
+    "right": 0.98047,
+    "bottom": 0.64922
+  },
+  "illustration-library-igloo-beginner-01": {
+    "aspect": 1,
+    "left": 0.07109,
+    "top": 0.16172,
+    "right": 0.92891,
+    "bottom": 0.83047
+  },
+  "illustration-library-igloo-medium-01": {
+    "aspect": 1,
+    "left": 0.05234,
+    "top": 0.15078,
+    "right": 0.94922,
+    "bottom": 0.84297
+  },
+  "illustration-library-yurt-beginner-01": {
+    "aspect": 1,
+    "left": 0.03672,
+    "top": 0.16484,
+    "right": 0.95547,
+    "bottom": 0.84297
+  },
+  "illustration-library-yurt-medium-01": {
+    "aspect": 1,
+    "left": 0.03984,
+    "top": 0.13203,
+    "right": 0.96172,
+    "bottom": 0.86172
+  },
+  "illustration-library-greenhouse-beginner-01": {
+    "aspect": 1,
+    "left": 0.07891,
+    "top": 0.11016,
+    "right": 0.91328,
+    "bottom": 0.87266
+  },
+  "illustration-library-greenhouse-medium-01": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.18047,
+    "right": 0.96797,
+    "bottom": 0.85078
+  },
+  "illustration-library-railwaystation-beginner-01": {
+    "aspect": 1,
+    "left": 0.04297,
+    "top": 0.16641,
+    "right": 0.95703,
+    "bottom": 0.82891
+  },
+  "illustration-library-railwaystation-medium-01": {
+    "aspect": 1,
+    "left": 0.01484,
+    "top": 0.13047,
+    "right": 0.98828,
+    "bottom": 0.86484
+  },
+  "illustration-library-apartment-beginner-01": {
+    "aspect": 1,
+    "left": 0.07578,
+    "top": 0.10547,
+    "right": 0.91953,
+    "bottom": 0.92578
+  },
+  "illustration-library-apartment-medium-01": {
+    "aspect": 1,
+    "left": 0.11172,
+    "top": 0.01484,
+    "right": 0.88984,
+    "bottom": 0.94609
+  },
+  "illustration-medium-reading-child": {
+    "aspect": 1,
+    "left": 0.25391,
+    "top": 0.02891,
+    "right": 0.74922,
+    "bottom": 0.96328
+  },
+  "illustration-medium-painting-child": {
+    "aspect": 1,
+    "left": 0.24141,
+    "top": 0.02266,
+    "right": 0.78516,
+    "bottom": 0.96797
+  },
+  "illustration-medium-gardener": {
+    "aspect": 1,
+    "left": 0.19609,
+    "top": 0.03203,
+    "right": 0.88203,
+    "bottom": 0.96016
+  },
+  "illustration-medium-baker": {
+    "aspect": 1,
+    "left": 0.32891,
+    "top": 0.02266,
+    "right": 0.66797,
+    "bottom": 0.96172
+  },
+  "illustration-medium-firefighter": {
+    "aspect": 1,
+    "left": 0.24922,
+    "top": 0.01641,
+    "right": 0.74453,
+    "bottom": 0.97109
+  },
+  "illustration-medium-doctor": {
+    "aspect": 1,
+    "left": 0.32578,
+    "top": 0.02578,
+    "right": 0.66328,
+    "bottom": 0.96953
+  },
+  "illustration-medium-teacher": {
+    "aspect": 1,
+    "left": 0.30391,
+    "top": 0.02109,
+    "right": 0.76484,
+    "bottom": 0.97266
+  },
+  "illustration-medium-mail-carrier": {
+    "aspect": 1,
+    "left": 0.24922,
+    "top": 0.02422,
+    "right": 0.84297,
+    "bottom": 0.97422
+  },
+  "illustration-medium-guitarist": {
+    "aspect": 1,
+    "left": 0.21328,
+    "top": 0.03047,
+    "right": 0.87734,
+    "bottom": 0.95391
+  },
+  "illustration-medium-ballerina": {
+    "aspect": 1,
+    "left": 0.29297,
+    "top": 0.02891,
+    "right": 0.79922,
+    "bottom": 0.94766
+  },
+  "illustration-medium-running-child": {
+    "aspect": 1,
+    "left": 0.18047,
+    "top": 0.03516,
+    "right": 0.78047,
+    "bottom": 0.95391
+  },
+  "illustration-medium-umbrella-user": {
+    "aspect": 1,
+    "left": 0.21172,
+    "top": 0.02578,
+    "right": 0.77734,
+    "bottom": 0.96953
+  },
+  "illustration-medium-grandmother": {
+    "aspect": 1,
+    "left": 0.33047,
+    "top": 0.02109,
+    "right": 0.65859,
+    "bottom": 0.97891
+  },
+  "illustration-medium-wheelchair-user": {
+    "aspect": 1,
+    "left": 0.18672,
+    "top": 0.02891,
+    "right": 0.82734,
+    "bottom": 0.95078
+  },
+  "illustration-medium-hiker": {
+    "aspect": 1,
+    "left": 0.25078,
+    "top": 0.01797,
+    "right": 0.73828,
+    "bottom": 0.96641
+  },
+  "illustration-medium-school": {
+    "aspect": 1,
+    "left": 0.04297,
+    "top": 0.07891,
+    "right": 0.95547,
+    "bottom": 0.84297
+  },
+  "illustration-medium-bookshop": {
+    "aspect": 1,
+    "left": 0.05234,
+    "top": 0.08516,
+    "right": 0.96172,
+    "bottom": 0.88047
+  },
+  "illustration-medium-bakery": {
+    "aspect": 1,
+    "left": 0.04766,
+    "top": 0.13672,
+    "right": 0.94922,
+    "bottom": 0.84453
+  },
+  "illustration-medium-cottage": {
+    "aspect": 1,
+    "left": 0.03672,
+    "top": 0.11641,
+    "right": 0.96172,
+    "bottom": 0.94141
+  },
+  "illustration-medium-treehouse": {
+    "aspect": 1,
+    "left": 0.06328,
+    "top": 0.09141,
+    "right": 0.93672,
+    "bottom": 0.90547
+  },
+  "illustration-medium-watermill": {
+    "aspect": 1,
+    "left": 0.06016,
+    "top": 0.13672,
+    "right": 0.94922,
+    "bottom": 0.85078
+  },
+  "illustration-medium-clocktower": {
+    "aspect": 1,
+    "left": 0.25078,
+    "top": 0.13672,
+    "right": 0.74922,
+    "bottom": 0.83672
+  },
+  "illustration-medium-pagoda": {
+    "aspect": 1,
+    "left": 0.14297,
+    "top": 0.16016,
+    "right": 0.85703,
+    "bottom": 0.83828
+  },
+  "illustration-medium-pavilion": {
+    "aspect": 1,
+    "left": 0.10703,
+    "top": 0.13047,
+    "right": 0.89297,
+    "bottom": 0.83203
+  },
+  "illustration-medium-arched-bridge": {
+    "aspect": 1,
+    "left": 0.05391,
+    "top": 0.28672,
+    "right": 0.94609,
+    "bottom": 0.69297
+  },
+  "illustration-medium-igloo": {
+    "aspect": 1,
+    "left": 0.07422,
+    "top": 0.20078,
+    "right": 0.92734,
+    "bottom": 0.77109
+  },
+  "illustration-medium-yurt": {
+    "aspect": 1,
+    "left": 0.03516,
+    "top": 0.16797,
+    "right": 0.96641,
+    "bottom": 0.78516
+  },
+  "illustration-medium-greenhouse": {
+    "aspect": 1,
+    "left": 0.08672,
+    "top": 0.12109,
+    "right": 0.91172,
+    "bottom": 0.86641
+  },
+  "illustration-medium-railway-station": {
+    "aspect": 1,
+    "left": 0.03359,
+    "top": 0.28359,
+    "right": 0.96641,
+    "bottom": 0.71172
+  },
+  "illustration-medium-apartment": {
+    "aspect": 1,
+    "left": 0.16484,
+    "top": 0.13047,
+    "right": 0.83516,
+    "bottom": 0.84922
+  },
+  "illustration-reading-child": {
+    "aspect": 1,
+    "left": 0.22363,
+    "top": 0.02246,
+    "right": 0.81934,
+    "bottom": 0.96191
+  },
+  "illustration-bookshop": {
+    "aspect": 1,
+    "left": 0.04883,
+    "top": 0.05664,
+    "right": 0.95508,
+    "bottom": 0.93945
+  },
+  "illustration-gardener": {
+    "aspect": 1,
+    "left": 0.14551,
+    "top": 0.01465,
+    "right": 0.8291,
+    "bottom": 0.96387
+  },
+  "illustration-school": {
+    "aspect": 1,
+    "left": 0.01406,
+    "top": 0.01406,
+    "right": 0.98281,
+    "bottom": 0.96094
+  }
+}

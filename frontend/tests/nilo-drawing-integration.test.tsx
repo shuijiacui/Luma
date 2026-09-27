@@ -12,6 +12,7 @@ import type { Artwork } from '@/features/child/artworks'
 import { proposalStrokes, type CompanionReply } from '@/features/child/companion/proposals'
 import { setLocale } from '@/i18n'
 import { customSketchExamples } from './fixtures/customSketches'
+import { loadIllustrationTrace } from '@/features/child/companion/illustrationTracing'
 
 const { startTour } = vi.hoisted(() => ({ startTour: vi.fn() }))
 vi.mock('@/features/auth/AuthContext', () => ({
@@ -21,6 +22,9 @@ vi.mock('@/features/onboarding/OnboardingContext', () => ({ useOnboarding: () =>
 vi.mock('@/features/onboarding/useOnboardingTour', () => ({ useOnboardingTour: () => startTour }))
 vi.mock('@/lib/api/authFetch', () => ({ authFetch: vi.fn() }))
 vi.mock('@/features/child/companion/materialCuration', () => ({ refreshMaterialCuration: vi.fn(async () => {}) }))
+vi.mock('@/features/child/companion/illustrationTracing', async importOriginal => ({
+  ...await importOriginal<typeof import('@/features/child/companion/illustrationTracing')>(), loadIllustrationTrace: vi.fn(),
+}))
 vi.mock('../../server/src/services/tracing.js', () => ({ traceLLM: vi.fn(), traceNode: vi.fn() }))
 vi.mock('@/lib/api/lumaApi', () => ({ analyzeDrawing: vi.fn(), requestNiloPraise: vi.fn(), requestNiloStroke: vi.fn() }))
 vi.mock('framer-motion', async original => ({
@@ -44,6 +48,7 @@ let ink: WeakMap<HTMLCanvasElement, Set<string>>
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
   vi.clearAllMocks()
+  vi.mocked(loadIllustrationTrace).mockResolvedValue({ version: 1, aspect: 1, paths: [[[.1, .1], [.5, .9], [.9, .1]]] })
   vi.stubGlobal('SpeechRecognition', PreviewRecognition)
   localStorage.clear(); sessionStorage.clear(); clearChildDraft(); act(() => setLocale('zh'))
   // Audio hardware and recognition have their own permission/race tests.
@@ -198,7 +203,8 @@ test('refresh restores the guide separately from authored strokes; clearing pres
   expect(operations()).toHaveLength(1)
 })
 
-test('a high-resolution illustration can be traced, inspected and restored without entering saved ink', async () => {
+test.each(['dashed', 'gray'] as const)('a %s illustration can be traced, inspected and restored without entering saved ink', async projectionMode => {
+  vi.mocked(loadIllustrationTrace).mockResolvedValue({ version: 1, aspect: 1, projection: projectionMode, paths: [[[.1, .1], [.5, .9], [.9, .1]]] })
   localStorage.setItem('luma_companion_mode:guest-child', 'together')
   companionReply = async () => ({ reply: '看看书页和手的位置，再画出你的版本。', proposal: {
     ...proposed.proposal!, template: 'illustration', illustrationId: 'illustration-reading-child', subject: '读书的孩子',
@@ -207,18 +213,31 @@ test('a high-resolution illustration can be traced, inspected and restored witho
   const canvas = prepare(); draw(canvas)
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Nilo，你来画' })))
   const overlay = screen.getByLabelText('Nilo 的插画参考底图')
-  const reference = overlay.querySelector('img')!
-  expect(reference.getAttribute('src')).toMatch(/^\/nilo-illustrations\//)
+  expect(loadIllustrationTrace).toHaveBeenCalledWith('illustration-reading-child')
+  const guideCanvas = overlay.querySelector('canvas')!
+  if (projectionMode === 'gray') {
+    expect(overlay.querySelector('img')?.dataset.illustrationProjection).toBe('gray')
+    expect(ink.get(guideCanvas)).toEqual(new Set())
+  } else {
+    expect(overlay.querySelector('img')).toBeNull()
+    expect(ink.get(guideCanvas)).toEqual(new Set(['#9ca3af']))
+    expect(guideCanvas.getContext('2d')!.setLineDash).toHaveBeenCalledWith([6, 5])
+  }
   expect(screen.queryByRole('button', { name: '留下来' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '看原图' }))
+  const reference = overlay.querySelector('img')!
+  expect(reference.getAttribute('src')).toMatch(/^\/nilo-illustrations\//)
   expect(reference.classList.contains('nilo-illustration-original')).toBe(true)
   draw(canvas)
   const inkBefore = structuredClone(operations())
   expect(inkBefore.every(operation => operation.owner === 'child')).toBe(true)
   expect(readStoredDraft('guest-child', null)?.tracingGuide?.proposal.illustrationId).toBe('illustration-reading-child')
   cleanup(); clearChildDraft(); prepare()
-  fireEvent.click(screen.getByRole('button', { name: '继续上次画布' }))
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '继续上次画布' })))
   expect(screen.getByLabelText('Nilo 的插画参考底图')).toBeTruthy()
+  const restoredImage = screen.getByLabelText('Nilo 的插画参考底图').querySelector('img')
+  if (projectionMode === 'gray') expect(restoredImage?.dataset.illustrationProjection).toBe('gray')
+  else expect(restoredImage).toBeNull()
   expect(screen.getByRole('button', { name: '看原图' })).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '清除底图' }))
   expect(screen.queryByLabelText('Nilo 的插画参考底图')).toBeNull()
@@ -268,8 +287,20 @@ test('refresh flushes an in-progress stroke; blocked storage warns and requests 
 })
 const requests = () => vi.mocked(authFetch).mock.calls.filter(([path]) => path === '/nilo/companion')
 const operations = () => getChildDraft('guest-child').canvas.document!.operations
+async function startReadyMicrophone() {
+  // Capability discovery is asynchronous even for the resolved test response.
+  // Flush that request, then assert the UI has exposed an available service;
+  // clicking earlier intentionally reports "voice is preparing" without input.
+  await act(async () => { await Promise.resolve() })
+  expect((screen.getByRole('button', { name: '开启连续对话' }) as HTMLButtonElement).disabled).toBe(false)
+  const previous = PreviewRecognition.current
+  fireEvent.click(screen.getByRole('button', { name: '和 Nilo 说话' }))
+  expect(PreviewRecognition.current).toBeDefined()
+  expect(PreviewRecognition.current).not.toBe(previous)
+  expect(screen.getByRole('button', { name: '说完了' }).getAttribute('aria-pressed')).toBe('true')
+}
 async function project() {
-  await act(async () => fireEvent.click(screen.getByRole('button', { name: '和 Nilo 说话' })))
+  await startReadyMicrophone()
   await act(async () => {
     PreviewRecognition.current.onresult?.({ results: [{ isFinal: true, 0: { transcript: '请帮我画一个有关的小主意' } }] })
     await vi.advanceTimersByTimeAsync(2800)
@@ -538,7 +569,7 @@ test('drawing keeps the guide while invalidating a pending replacement', async (
   expect(operations().every(op => op.owner === 'child')).toBe(true)
 })
 
-test('choose-another opens a concrete subject gallery and a clicked raster replaces only the guide', async () => {
+test('choose-another only offers the current subject and a clicked raster replaces only the guide', async () => {
   const canvas = prepare(); draw(canvas)
   companionReply = async () => ({ reply: '小猫的底图来啦。', proposal: { ...proposed.proposal!, x: .3, y: .3, width: .28, height: .3,
     template: 'custom', subject: '小猫', recipeId: 'cat-0', sketch: getDrawingRecipe('cat-0')!.sketch } })
@@ -550,12 +581,15 @@ test('choose-another opens a concrete subject gallery and a clicked raster repla
   fireEvent.click(screen.getByRole('button', { name: '关闭，不换底图' }))
   expect(getChildDraft('guest-child').tracingGuide).toEqual(guide)
   await act(async () => fireEvent.click(screen.getByRole('button', { name: '换一个' })))
-  fireEvent.change(screen.getByLabelText('找找想画什么'), { target: { value: '学校' } })
+  expect(screen.queryByRole('textbox')).toBeNull()
+  expect(screen.queryByRole('navigation', { name: '想画的东西' })).toBeNull()
   const cards = within(screen.getByRole('region', { name: '可选画法' })).getAllByRole('button')
-  const schoolCard = cards.find(card => card.querySelector('img')?.getAttribute('src') === '/nilo-illustrations/illustration-medium-school.png')!
-  await act(async () => fireEvent.click(schoolCard))
-  expect(screen.queryByRole('dialog', { name: '挑一张来画' })).toBeNull()
-  expect(getChildDraft('guest-child').tracingGuide?.proposal).toMatchObject({ template: 'illustration', illustrationId: 'illustration-medium-school' })
+  expect(cards.every(card => card.getAttribute('aria-label')?.startsWith('选择小猫画法'))).toBe(true)
+  const catCard = cards.find(card => card.querySelector('img'))!
+  await act(async () => fireEvent.click(catCard))
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(getChildDraft('guest-child').tracingGuide?.proposal).toMatchObject({ template: 'illustration', illustrationId: 'illustration-library-cat-beginner-01',
+    x: guide!.proposal.x, y: guide!.proposal.y, width: guide!.proposal.width, height: guide!.proposal.height, rotation: guide!.proposal.rotation })
   expect(operations()).toEqual(childInk)
   expect(requests()).toHaveLength(1)
   await act(async () => fireEvent.click(screen.getByRole('button', { name: '保存' })))
@@ -652,7 +686,7 @@ test('voice remains in the bottom strip and music in the header, with no text bo
 })
 
 async function sayToNilo(text:string) {
-  fireEvent.click(screen.getByRole('button',{name:'和 Nilo 说话'}))
+  await startReadyMicrophone()
   await act(async()=>{
     PreviewRecognition.current.onresult?.({results:[{isFinal:true,0:{transcript:text}}]})
     await vi.advanceTimersByTimeAsync(2800)

@@ -101,13 +101,12 @@ describe('explicitly selected reference proposals', () => {
     expect(source.attachment).toEqual({ x: .2, y: .2 })
   })
 
-  test('large image to vector retains centre, rotation and proportions within unchanged vector limits', () => {
+  test('large image to vector keeps the chosen frame instead of hitting the old generated-vector limit', () => {
     const cat = getMaterialChoices('cat').find(item => item.kind === 'recipe')
     const source = { ...frame, x: .16, y: .16, width: .68, height: .68 }
     const proposal = createMaterialProposal(cat.id, source)
-    expect(proposal.width).toBeLessThanOrEqual(.45)
-    expect(proposal.height).toBeLessThanOrEqual(.45)
-    expect(proposal.width * proposal.height).toBeLessThanOrEqual(.16)
+    expect(proposal.width).toBe(source.width)
+    expect(proposal.height).toBe(source.height)
     expect(proposal.width / proposal.height).toBeCloseTo(source.width / source.height)
     expect(proposal.x + proposal.width / 2).toBeCloseTo(source.x + source.width / 2)
     expect(proposal.y + proposal.height / 2).toBeCloseTo(source.y + source.height / 2)

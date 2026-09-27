@@ -70,6 +70,12 @@ async function project(hook: ReturnType<typeof setup>) {
   act(() => vi.advanceTimersByTime(550))
   expect(hook.result.current.phase).toBe('projected')
 }
+async function projectCat(hook: ReturnType<typeof setup>) {
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '小猫的底图来啦。', proposal: { ...proposal, template: 'custom', subject: '小猫',
+    recipeId: 'cat-2', sketch: getDrawingRecipe('cat-2')!.sketch } })
+  await act(async () => { await hook.result.current.ask('画小猫', true) })
+  expect(hook.result.current.phase).toBe('projected')
+}
 
 test('a raster illustration is always a persistent guide even in the legacy confirmation workflow', async () => {
   const hook = setup()
@@ -97,7 +103,7 @@ test('opening and closing material choices never changes the guide or records a 
   const before = structuredClone(hook.result.current.projection)
   await act(async () => { await hook.result.current.openMaterialPicker() })
   expect(hook.result.current.materialPicker?.subject).toBeNull()
-  expect(hook.result.current.materialPicker?.subjects.find(item => item.subject === 'cat')).toBeTruthy()
+  expect(hook.result.current.materialPicker?.subjects).toEqual([])
   expect(hook.result.current.materialChoices).toEqual([])
   act(() => hook.result.current.closeMaterialPicker())
   expect(hook.result.current.projection).toEqual(before)
@@ -127,16 +133,19 @@ test('only a clicked material changes the guide, keeps child ink and records the
   await act(async () => { await hook.result.current.openMaterialPicker() })
   expect(hook.result.current.materialPicker?.subjects.find(item => item.subject === 'cat')?.materials[0].id).toBe('cat-2')
   await act(async () => { await hook.result.current.chooseMaterial('illustration-medium-school') })
-  expect(hook.result.current.projection!.proposal).toMatchObject({ template: 'illustration', illustrationId: 'illustration-medium-school', subject: '学校' })
+  expect(hook.result.current.projection!.proposal.recipeId).toBe('cat-2')
+  expect(hook.result.current.materialPicker?.subjects.map(group => group.subject)).toEqual(['cat'])
+  await act(async () => { await hook.result.current.chooseMaterial('illustration-library-cat-beginner-01') })
+  expect(hook.result.current.projection!.proposal).toMatchObject({ template: 'illustration', illustrationId: 'illustration-library-cat-beginner-01' })
   expect(hook.state.document).toEqual(document)
   expect(hook.commit).not.toHaveBeenCalled()
-  expect(hook.result.current.materialChoices.at(-1)).toMatchObject({ subject: 'school', difficulty: 'medium' })
+  expect(hook.result.current.materialChoices.at(-1)).toMatchObject({ subject: 'cat', difficulty: 'beginner' })
   expect(authFetch).toHaveBeenCalledOnce()
 })
 
 test.each(['close', 'clear', 'change-child'] as const)('a pending material selection cannot override %s or record a stale preference', async action => {
   const hook = setup({ ownerId: 'child-a', preferenceChildId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
-  await project(hook)
+  await projectCat(hook)
   const before = hook.result.current.projection
   await act(async () => { await hook.result.current.openMaterialPicker() })
   let finish!: () => void
@@ -158,7 +167,7 @@ test('a freshly rejected card cannot be selected or recorded and is removed from
   try {
     setMaterialCuration({ version: 1, decisions: {} })
     const hook = setup({ ownerId: 'child-a', preferenceChildId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
-    await project(hook)
+    await projectCat(hook)
     const before = hook.result.current.projection
     await act(async () => { await hook.result.current.openMaterialPicker() })
     vi.mocked(refreshMaterialCuration).mockImplementationOnce(async () => { setMaterialCuration({ version: 1, decisions: { 'cat-0': 'reject' } }) })
@@ -171,7 +180,7 @@ test('a freshly rejected card cannot be selected or recorded and is removed from
 
 test('guest choices stay in this hook session and do not become a shared guest-child profile', async () => {
   const hook = setup({ ownerId: 'guest-child', artworkId: undefined, allowDrawing: true, enabled: true, tracing: true })
-  await project(hook)
+  await projectCat(hook)
   await act(async () => { await hook.result.current.openMaterialPicker() })
   await act(async () => { await hook.result.current.chooseMaterial('cat-0') })
   expect(hook.result.current.materialChoices).toHaveLength(1)
@@ -181,23 +190,25 @@ test('guest choices stay in this hook session and do not become a shared guest-c
   expect(otherGuest.result.current.materialChoices).toEqual([])
 })
 
-test('selecting vector art from a large raster guide fits the existing size budget around its centre', async () => {
+test('selecting vector art from a large raster guide keeps its frame and still permits enlargement', async () => {
   const hook = setup({ ownerId: 'child-a', artworkId: 'work-a', allowDrawing: true, enabled: true, tracing: true })
-  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '学校的参考图。', proposal: { ...proposal,
-    template: 'illustration', illustrationId: 'illustration-medium-school', subject: '学校', x: .15, y: .14, width: .58, height: .68, rotation: 12 } })
-  await act(async () => { await hook.result.current.ask('画学校', true) })
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '小猫的参考图。', proposal: { ...proposal,
+    template: 'illustration', illustrationId: 'illustration-library-cat-beginner-01', subject: '小猫', x: .15, y: .14, width: .58, height: .68, rotation: 12 } })
+  await act(async () => { await hook.result.current.ask('画小猫', true) })
   const before = hook.result.current.projection!.proposal
   await act(async () => { await hook.result.current.openMaterialPicker() })
   await act(async () => { await hook.result.current.chooseMaterial('cat-0') })
   const next = hook.result.current.projection!.proposal
   expect(next.recipeId).toBe('cat-0')
-  expect(next.width).toBeLessThanOrEqual(.45)
-  expect(next.height).toBeLessThanOrEqual(.45)
-  expect(next.width * next.height).toBeLessThanOrEqual(.16)
+  expect(next.width).toBe(before.width)
+  expect(next.height).toBe(before.height)
   expect(next.width / next.height).toBeCloseTo(before.width / before.height)
   expect(next.x + next.width / 2).toBeCloseTo(before.x + before.width / 2)
   expect(next.y + next.height / 2).toBeCloseTo(before.y + before.height / 2)
   expect(next.rotation).toBe(before.rotation)
+  act(() => hook.result.current.edit({ width: next.width * 1.1, height: next.height * 1.1 }))
+  expect(hook.result.current.projection!.proposal.width).toBeCloseTo(next.width * 1.1)
+  expect(hook.result.current.projection!.proposal.height).toBeCloseTo(next.height * 1.1)
   expect(hook.commit).not.toHaveBeenCalled()
 })
 

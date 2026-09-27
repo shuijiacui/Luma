@@ -64,3 +64,58 @@ test('keyboard focus stays in the dialog, Escape closes it, and focus returns to
   expect(opener.inert).not.toBe(true)
   opener.remove()
 })
+
+test('replacement mode displays only the target subject, with no catalogue navigation or cross-subject search', () => {
+  const choose = vi.fn(), subjects = listMaterialSubjects()
+  const cat = subjects.find(item => item.subject === 'cat')!
+  const current = cat.materials.find(material => material.kind === 'illustration')!
+  render(<MaterialPicker subjects={subjects} initialSubject="cat" targetName="小猫" currentMaterialId={current.id} variantsOnly onChoose={choose} onClose={() => {}} />)
+  expect(screen.getByRole('dialog', { name: '给小猫换个画法' })).toBeTruthy()
+  expect(screen.queryByRole('navigation')).toBeNull()
+  expect(screen.queryByRole('textbox')).toBeNull()
+  const choices = within(screen.getByRole('region', { name: '可选画法' })).getAllByRole('button')
+  expect(choices).toHaveLength(cat.materials.length)
+  expect(choices.every(button => button.getAttribute('aria-label')?.startsWith('选择小猫画法'))).toBe(true)
+  const selected = choices.find(button => button.getAttribute('aria-pressed') === 'true') as HTMLButtonElement
+  expect(selected.querySelector('img')?.getAttribute('src')).toBe(current.src)
+  expect(selected.textContent).toContain('正在画')
+  expect(selected.disabled).toBe(true)
+  fireEvent.click(selected)
+  expect(choose).not.toHaveBeenCalled()
+  const alternative = choices.find(button => button !== selected)!
+  fireEvent.click(alternative)
+  expect(choose).toHaveBeenCalledExactlyOnceWith(cat.materials[choices.indexOf(alternative)].id)
+})
+
+test('an unavailable replacement subject has no fallback to another object and invites continuing the drawing', () => {
+  render(<MaterialPicker subjects={listMaterialSubjects()} initialSubject="unregistered-subject" targetName="云朵小屋" variantsOnly onChoose={vi.fn()} onClose={() => {}} />)
+  expect(screen.getByRole('dialog', { name: '给云朵小屋换个画法' })).toBeTruthy()
+  expect(screen.getByRole('status').textContent).toContain('先接着画')
+  expect(screen.queryByRole('textbox')).toBeNull()
+  expect(within(screen.getByRole('region', { name: '可选画法' })).queryAllByRole('button')).toHaveLength(0)
+  expect(screen.getByRole('dialog').textContent).not.toContain('换个词')
+})
+
+test('a target with only its current drawing keeps the current marker without suggesting a different object', () => {
+  const choose = vi.fn(), cat = listMaterialSubjects().find(item => item.subject === 'cat')!
+  const current = cat.materials[0]
+  render(<MaterialPicker subjects={[{ ...cat, materials: [current] }]} initialSubject="cat" currentMaterialId={current.id} variantsOnly onChoose={choose} onClose={() => {}} />)
+  expect(screen.getByRole('status').textContent).toContain('暂时没有别的画法')
+  const button = within(screen.getByRole('region', { name: '可选画法' })).getByRole('button') as HTMLButtonElement
+  expect(button.getAttribute('aria-pressed')).toBe('true')
+  expect(button.textContent).toContain('正在画')
+  expect(button.disabled).toBe(true)
+  fireEvent.click(button)
+  expect(choose).not.toHaveBeenCalled()
+  expect(screen.queryByRole('navigation')).toBeNull()
+})
+
+test('replacement mode follows the new target prop instead of retaining a previously viewed object', () => {
+  const subjects = listMaterialSubjects(), choose = vi.fn(), close = vi.fn()
+  const view = render(<MaterialPicker subjects={subjects} initialSubject="cat" variantsOnly onChoose={choose} onClose={close} />)
+  view.rerender(<MaterialPicker subjects={subjects} initialSubject="moon" targetName="天空里的月亮" variantsOnly onChoose={choose} onClose={close} />)
+  expect(screen.getByRole('dialog', { name: '给天空里的月亮换个画法' })).toBeTruthy()
+  expect(screen.queryByRole('heading', { name: '小猫' })).toBeNull()
+  expect(screen.getByRole('heading', { name: '月亮' })).toBeTruthy()
+  expect(choose).not.toHaveBeenCalled()
+})

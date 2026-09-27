@@ -9,6 +9,7 @@ import { defaultLimits, rateLimit } from '../services/security.js'
 import { interpretVoiceEdit } from '../services/niloVoiceIntent.js'
 import { ageBandForBirthDate } from '../services/niloAgeGuidance.js'
 import { refreshMaterialCuration } from '../services/niloCurationStore.js'
+import { generateNiloScene } from '../services/niloScene.js'
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
@@ -69,6 +70,7 @@ export function createNiloRouter({
   generate = generateNiloStroke,
   generatePraise = generateNiloPraise,
   generateDialogue = generateNiloDialogue,
+  generateScene = generateNiloScene,
   voice = {},
   timeoutMs,
   limits = {},
@@ -139,6 +141,21 @@ export function createNiloRouter({
     res.set('Cache-Control', 'no-store')
     res.json(voiceCapabilities(voice.config ?? voiceConfig()))
   })
+  router.post('/scene', childOnly, drawingLimit, cancellable(async (req, signal) => {
+    if (!req.body?.context || typeof req.body.context !== 'object' || Array.isArray(req.body.context)) throw Object.assign(new Error('context required'), { status: 400 })
+    let imageBase64
+    if (req.body.imageBase64 !== undefined) {
+      if (typeof req.body.imageBase64 !== 'string' || req.body.imageBase64.length > 2 * 1024 * 1024) throw Object.assign(new Error('image too large'), { status: 400 })
+      const image = readImage(req.body)
+      if (image.error) throw Object.assign(new Error(image.error), { status: image.status })
+      imageBase64 = image.encoded
+    }
+    const birthDate = req.auth?.role === 'child' && db
+      ? db.prepare("SELECT birth_date FROM accounts WHERE id = ? AND role = 'child'").get(req.auth.accountId)?.birth_date : null
+    return generateScene({ stage: req.body.stage, utterance: req.body.utterance, locale: req.body.locale, imageBase64,
+      plan: req.body.plan, context: { ...req.body.context, ageBand: ageBandForBirthDate(birthDate) } },
+    { chatText, chatWithImage, timeoutMs, signal })
+  }))
   router.post('/voice/interpret', childOnly, drawingLimit, cancellable((req, signal) => interpretVoiceEdit(req.body, { chatText, signal })))
   router.post('/voice/transcribe', childOnly, asrLimit, cancellable((req, signal) => transcribeVoice(req.body, { ...voice, signal })))
   router.post('/voice/speak', childOnly, ttsLimit, cancellable((req, signal) => synthesizeVoice(req.body, { ...voice, signal })))

@@ -1,6 +1,6 @@
 import { lt, t, useLocale } from '@/i18n'
 import { Button } from '@/components/ui'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   PARENT_QUESTIONNAIRE_ANSWER_OPTIONS,
   PARENT_QUESTIONNAIRE_DIMENSIONS,
@@ -15,6 +15,7 @@ import {
   type ParentQuestionnaireRecord,
 } from '@/lib/api/parentQuestionnaireApi'
 import { ArrowLeftIcon, HeartIcon, TimelineIcon } from './dashboard/icons'
+import './family-settings.css'
 
 type View = 'overview' | 'form' | 'history' | 'result'
 
@@ -79,7 +80,9 @@ function AnswerReview({ record }: { record: ParentQuestionnaireRecord }) {
   )
 }
 
-export function ParentQuestionnaireSection({ ownerId, token }: { ownerId: string; token?: string }) {
+export function ParentQuestionnaireSection({ ownerId, token, embedded = false, onExpandedChange }: {
+  ownerId: string; token?: string; embedded?: boolean; onExpandedChange?: (expanded: boolean) => void
+}) {
   const locale = useLocale()
   const [records, setRecords] = useState<ParentQuestionnaireRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -92,6 +95,22 @@ export function ParentQuestionnaireSection({ ownerId, token }: { ownerId: string
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [savedRecord, setSavedRecord] = useState<ParentQuestionnaireRecord | null>(null)
+  const section = useRef<HTMLElement>(null)
+  const previousView = useRef<View>('overview')
+  useEffect(() => { onExpandedChange?.(view !== 'overview') }, [view, onExpandedChange])
+  useEffect(() => {
+    if (view === previousView.current) return
+    previousView.current = view
+    const frame = window.requestAnimationFrame(() => {
+      const element = section.current
+      if (!element) return
+      element.scrollIntoView?.({ block: 'start', behavior: 'instant' })
+      const target = view === 'overview' ? element.querySelector<HTMLButtonElement>('.family-questionnaire-start-button') : element.querySelector<HTMLButtonElement>('button')
+      target?.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [view])
+  const detailClass = embedded ? 'family-questionnaire-detail' : 'rounded-[1.9rem] border border-white/70 bg-white/95 p-6 shadow-luma-card backdrop-blur-sm sm:p-7'
 
   useEffect(() => {
     let active = true
@@ -154,7 +173,7 @@ export function ParentQuestionnaireSection({ ownerId, token }: { ownerId: string
 
   if (loading && records.length === 0) {
     return (
-      <section className="rounded-[1.9rem] border border-white/70 bg-white/95 p-6 text-sm text-[#9a9280] shadow-luma-card sm:p-7">
+      <section className={embedded ? 'family-questionnaire-loading' : 'rounded-[1.9rem] border border-white/70 bg-white/95 p-6 text-sm text-[#9a9280] shadow-luma-card sm:p-7'} role="status">
         {t('正在加载问卷记录…')}
       </section>
     )
@@ -163,7 +182,7 @@ export function ParentQuestionnaireSection({ ownerId, token }: { ownerId: string
   if (view === 'form') {
     const question = step > 0 ? PARENT_QUESTIONNAIRE_QUESTIONS[step - 1] : null
     return (
-      <section className="rounded-[1.9rem] border border-white/70 bg-white/95 p-6 shadow-luma-card backdrop-blur-sm sm:p-7">
+      <section ref={section} className={detailClass}>
         <div className="flex items-center justify-between gap-3">
           <button type="button" onClick={() => setView('overview')} className="inline-flex items-center gap-2 text-sm font-semibold text-luma-teal-700">
             <ArrowLeftIcon className="size-4" />{t('返回家庭设置')}
@@ -248,7 +267,10 @@ export function ParentQuestionnaireSection({ ownerId, token }: { ownerId: string
     const delta = previous ? savedRecord.scores.total - previous.scores.total : null
     const message = scoreMessage(savedRecord.scores.total)
     return (
-      <section className="rounded-[1.9rem] border border-white/70 bg-white/95 p-6 shadow-luma-card backdrop-blur-sm sm:p-7">
+      <section ref={section} className={detailClass}>
+        <button type="button" onClick={() => setView('overview')} className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-luma-teal-700">
+          <ArrowLeftIcon className="size-4" />{t('返回家庭设置')}
+        </button>
         <div className="rounded-[1.65rem] bg-gradient-to-br from-[#f3f8ed] to-[#fdf8ed] p-6 text-center sm:p-8">
           <div className="mx-auto grid size-14 place-items-center rounded-full bg-white text-luma-grass-600 shadow-sm"><HeartIcon className="size-6" /></div>
           <div className="mt-4 text-xs font-semibold tracking-[0.15em] text-[#9a8f7a]">{t('本次陪伴感受概览')}</div>
@@ -278,7 +300,7 @@ export function ParentQuestionnaireSection({ ownerId, token }: { ownerId: string
     const previousRecord = records[1]
     const totalDelta = latestRecord && previousRecord ? latestRecord.scores.total - previousRecord.scores.total : null
     return (
-      <section className="rounded-[1.9rem] border border-white/70 bg-white/95 p-6 shadow-luma-card backdrop-blur-sm sm:p-7">
+      <section ref={section} className={detailClass}>
         <button type="button" onClick={() => setView('overview')} className="inline-flex items-center gap-2 text-sm font-semibold text-luma-teal-700">
           <ArrowLeftIcon className="size-4" />{t('返回家庭设置')}
         </button>
@@ -341,56 +363,27 @@ export function ParentQuestionnaireSection({ ownerId, token }: { ownerId: string
 
   const message = latest ? scoreMessage(latest.scores.total) : null
   return (
-    <section data-onboarding="parent-questionnaire" className="rounded-[1.9rem] border border-white/70 bg-white/95 p-6 shadow-luma-card backdrop-blur-sm sm:p-7">
-      <div className="flex items-start gap-4">
-        <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-luma-grass-50 text-luma-grass-600"><HeartIcon className="size-6" /></div>
-        <div className="min-w-0 flex-1">
-          <div className="luma-eyebrow text-[0.66rem] tracking-[0.2em] text-[#9b8a5f]">{t('家庭了解')}</div>
-          <h2 className="mt-1.5 font-display text-xl font-bold text-[#2c3a33]">{t('亲子日常陪伴小调查')}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-[#7d8777]">{t('用几分钟了解最近一个月的陪伴感受，帮助我们提供更贴合的交流提示。答案没有对错。')}</p>
-        </div>
+    <section ref={section} data-onboarding="parent-questionnaire" className={`family-questionnaire-overview${embedded ? '' : ' is-standalone'}`} aria-labelledby="family-questionnaire-title">
+      <div className="family-settings-section-heading"><span className="family-settings-section-icon"><HeartIcon /></span>
+        <div><h2 id="family-questionnaire-title">{t('亲子日常陪伴小调查')}</h2><p>{t('也留一点时间，照顾自己的感受。')}</p></div>
+      </div>
+      <p className="family-questionnaire-intro">{t('用几分钟了解最近一个月的陪伴感受，帮助我们提供更贴合的交流提示。答案没有对错。')}</p>
+      <div className="family-questionnaire-meta"><span>{t('15 道题')}</span><i aria-hidden="true" /><span>{t('约 2 分钟')}</span><i aria-hidden="true" /><span>{t('可随时修改')}</span></div>
+
+      {loadError && <div role="alert" className="family-questionnaire-error"><p>{lt(loadError)}</p><button type="button" onClick={() => setLoadRevision(value => value + 1)}>{t('重试')}</button></div>}
+
+      <div className="family-questionnaire-start">
+        {latest && message ? <div className="family-questionnaire-latest"><p>{t('最近一次填写')} · {formatDate(latest.createdAt, locale)}</p><strong>{t(message.title)}</strong></div>
+          : <p>{t('从最近的日常开始，按自己的感受回答。')}</p>}
+        <Button className="family-questionnaire-start-button" onClick={() => beginForm(latest)} disabled={Boolean(loadError)}>
+          {t(latest ? '继续了解' : '开始了解')}<span aria-hidden="true"> ↗</span>
+        </Button>
       </div>
 
-      {loadError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{lt(loadError)}</p>}
-
-      <div className="mt-5 rounded-2xl border border-[#efe8d9] bg-[#fdfcf8] p-5">
-        {latest && message ? (
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="text-xs font-semibold text-[#9a9280]">{t('最近一次填写')} · {formatDate(latest.createdAt, locale)}</div>
-              <div className="mt-1 text-sm font-bold text-[#334038]">{t(message.title)}</div>
-              <div className="mt-1 text-xs text-[#9a9280]">{t('支持性资源')} {Math.round(latest.scores.total)}</div>
-            </div>
-            <Button className="bg-luma-grass-600 hover:bg-luma-grass-700" onClick={() => beginForm(latest)}>{t('继续了解')}</Button>
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="text-sm font-bold text-[#334038]">{t('还没有填写过')}</div>
-              <div className="mt-1 text-xs text-[#9a9280]">{t('大约 2 分钟，可以随时回来修改。')}</div>
-            </div>
-            <Button className="bg-luma-grass-600 hover:bg-luma-grass-700" onClick={() => beginForm()}>{t('开始了解')}</Button>
-          </div>
-        )}
-      </div>
-
-      <button
-        type="button"
-        disabled={records.length === 0}
-        onClick={openHistory}
-        className="mt-4 flex w-full items-center justify-between gap-4 rounded-2xl border border-[#efe8d9] bg-white px-4 py-4 text-left transition hover:border-luma-grass-200 hover:bg-luma-grass-50/40 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <span className="flex items-center gap-3">
-          <span className="grid size-9 place-items-center rounded-full bg-[#f6f1e6] text-[#9b8a5f]"><TimelineIcon className="size-4" /></span>
-          <span>
-            <strong className="block text-sm text-[#334038]">{t('查看填写记录与变化')}</strong>
-            <span className="mt-0.5 block text-xs text-[#9a9280]">{records.length ? t(`共 ${records.length} 次记录`) : t('还没有填写记录。')}</span>
-          </span>
-        </span>
-        <span className="text-lg text-[#b3a98f]">›</span>
+      <button type="button" disabled={records.length === 0} onClick={openHistory} className="family-questionnaire-history">
+        <TimelineIcon /><span><strong>{t('查看填写记录与变化')}</strong><small>{records.length ? t(`共 ${records.length} 次记录`) : t('还没有填写记录。')}</small></span><span aria-hidden="true">›</span>
       </button>
-
-      <p className="mt-4 text-[0.68rem] leading-relaxed text-[#9a9280]">{t('这份记录与孩子的创作分开保存，仅用于生成家长端建议，不会写入儿童档案。')}</p>
+      <p className="family-questionnaire-note">{t('这份记录与孩子的创作分开保存，仅用于生成家长端建议，不会写入儿童档案。')}</p>
     </section>
   )
 }

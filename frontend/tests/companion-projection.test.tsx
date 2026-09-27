@@ -3,13 +3,19 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { CompanionProjection } from '@/features/child/components/CompanionProjection'
 import { proposalStrokes, type DrawingProposal } from '@/features/child/companion/proposals'
 import { createStrokePainter } from '@/features/child/brushes'
+import { createMaterialProposal, getMaterialChoices } from '../../shared/niloMaterialLibrary.mjs'
+import { loadIllustrationTrace } from '@/features/child/companion/illustrationTracing'
 
 vi.mock('@/features/child/companion/proposals', () => ({ proposalStrokes: vi.fn() }))
 vi.mock('@/features/child/brushes', () => ({ createStrokePainter: vi.fn(() => ({ moveTo: () => {} })) }))
+vi.mock('@/features/child/companion/illustrationTracing', async importOriginal => ({
+  ...await importOriginal<typeof import('@/features/child/companion/illustrationTracing')>(), loadIllustrationTrace: vi.fn(),
+}))
 const proposal: DrawingProposal = { template: 'waves', x: .2, y: .2, width: .3, height: .2,
   rotation: 0, color: '#4aa5d8', strokeWidth: 3 }
 
 beforeEach(() => {
+  vi.mocked(loadIllustrationTrace).mockReset().mockResolvedValue({ version: 1, aspect: 1, paths: [[[0, 0], [.5, 1], [1, 0]]] })
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
   vi.stubGlobal('devicePixelRatio', 2)
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ setLineDash: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), stroke: vi.fn() } as unknown as CanvasRenderingContext2D)
@@ -111,6 +117,23 @@ test('keyboard controls move and resize; drawing animation exposes no drag handl
   expect(screen.queryByRole('button',{name:'拖动 Nilo 的投影'})).toBeNull()
 })
 
+test('a catalogue SVG at the former generated-size limit responds to the touch resize handle', () => {
+  vi.mocked(proposalStrokes).mockReturnValue([{ kind: 'custom', color: '#4aa5d8', width: 3,
+    points: [{ x: .25, y: .25 }, { x: .7, y: .6 }] }])
+  const material = getMaterialChoices('cat').find(item => item.kind === 'recipe')!
+  const svg = createMaterialProposal(material.id, { x: .25, y: .25, width: .45, height: .35, rotation: 0 }, 4 / 3) as DrawingProposal
+  const onEdit = vi.fn()
+  render(<CompanionProjection proposal={svg} aspect={4 / 3} tracing onEdit={onEdit} />)
+  const resize = screen.getByRole('button', { name: '调整 Nilo 投影大小' })
+  resize.setPointerCapture = vi.fn(); resize.hasPointerCapture = vi.fn(() => true); resize.releasePointerCapture = vi.fn()
+  dragEvent(resize, 'pointerdown', 200, 150)
+  dragEvent(resize, 'pointermove', 230, 170)
+  expect(onEdit.mock.calls.at(-1)![0].width).toBeGreaterThan(.45)
+  expect(onEdit.mock.calls.at(-1)![0].width / onEdit.mock.calls.at(-1)![0].height).toBeCloseTo(svg.width / svg.height)
+  dragEvent(resize, 'pointerup', 230, 170)
+  expect(resize.releasePointerCapture).toHaveBeenCalledWith(7)
+})
+
 
 test('tracing draws neutral dashed paths with constant CSS width regardless of model brush or color', () => {
   vi.mocked(proposalStrokes).mockReturnValue([{ kind: 'custom', color: '#ff0000', width: 20, brushKind: 'marker',
@@ -128,22 +151,28 @@ test('tracing draws neutral dashed paths with constant CSS width regardless of m
   expect(screen.getAllByRole('button')).toHaveLength(2)
 })
 
-test('a trusted illustration stays a separate reference, preserves image proportions, and can be inspected or moved', () => {
+test('a trusted illustration starts as dashed centerlines and shows its original only on explicit inspection', async () => {
   vi.mocked(proposalStrokes).mockReturnValue([])
   const imageProposal: DrawingProposal = { ...proposal, template: 'illustration', illustrationId: 'illustration-reading-child', subject: '读书的孩子', rotation: 20 }
   const onEdit = vi.fn()
   render(<CompanionProjection proposal={imageProposal} aspect={4 / 3} tracing onEdit={onEdit} />)
   const overlay = screen.getByLabelText('Nilo 的插画参考底图')
+  expect(overlay.querySelector('img')).toBeNull()
+  await act(async () => { await Promise.resolve() })
+  const ctx = vi.mocked(HTMLCanvasElement.prototype.getContext).mock.results.at(-1)!.value as CanvasRenderingContext2D
+  expect(ctx.strokeStyle).toBe('#9ca3af')
+  expect(ctx.setLineDash).toHaveBeenCalled()
+  expect(ctx.stroke).toHaveBeenCalled()
+  expect(loadIllustrationTrace).toHaveBeenCalledWith(imageProposal.illustrationId)
+  fireEvent.click(screen.getByRole('button', { name: '看原图' }))
   const reference = overlay.querySelector('img')!
   expect(reference.getAttribute('src')).toMatch(/^\/nilo-illustrations\//)
   expect(reference.draggable).toBe(false)
   expect(reference.style.transform).toBe('rotate(20deg)')
-  expect(reference.classList.contains('nilo-illustration-original')).toBe(false)
-  fireEvent.click(screen.getByRole('button', { name: '看原图' }))
   expect(reference.classList.contains('nilo-illustration-original')).toBe(true)
   expect(screen.getByRole('button', { name: '继续描画' }).getAttribute('aria-pressed')).toBe('true')
   fireEvent.click(screen.getByRole('button', { name: '继续描画' }))
-  expect(reference.classList.contains('nilo-illustration-original')).toBe(false)
+  expect(overlay.querySelector('img')).toBeNull()
   fireEvent.keyDown(screen.getByRole('button', { name: '拖动 Nilo 的投影' }), { key: 'ArrowRight' })
   expect(onEdit).toHaveBeenCalledOnce()
   expect(onEdit.mock.calls[0][0].width).toBe(proposal.width)
@@ -154,9 +183,59 @@ test('a trusted illustration stays a separate reference, preserves image proport
 test('an illustration load failure leaves the canvas accessible and reports a recoverable missing reference', () => {
   vi.mocked(proposalStrokes).mockReturnValue([])
   render(<CompanionProjection proposal={{ ...proposal, template: 'illustration', illustrationId: 'illustration-reading-child' }} aspect={4 / 3} tracing onEdit={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: '看原图' }))
   fireEvent.error(document.querySelector('img')!)
   expect(screen.getByRole('status').textContent).toContain('参考图暂时没加载好')
   expect(screen.getByRole('button', { name: '拖动 Nilo 的投影' })).toBeTruthy()
   fireEvent.load(document.querySelector('img')!)
   expect(screen.queryByRole('status')).toBeNull()
+})
+
+test('a missing PNG centerline keeps editing available and never displays the original automatically', async () => {
+  vi.mocked(proposalStrokes).mockReturnValue([])
+  vi.mocked(loadIllustrationTrace).mockResolvedValue(null)
+  render(<CompanionProjection proposal={{ ...proposal, template: 'illustration', illustrationId: 'illustration-reading-child' }} aspect={4 / 3} tracing onEdit={vi.fn()} />)
+  await act(async () => { await Promise.resolve() })
+  expect(document.querySelector('img')).toBeNull()
+  expect(screen.getByRole('status').textContent).toContain('参考轮廓暂时没加载好')
+  expect(screen.getByRole('button', { name: '拖动 Nilo 的投影' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: '调整 Nilo 投影大小' })).toBeTruthy()
+  expect(createStrokePainter).not.toHaveBeenCalled()
+})
+
+test('scene controls for a PNG cannot display or reload the original image', () => {
+  vi.mocked(proposalStrokes).mockReturnValue([])
+  render(<CompanionProjection proposal={{ ...proposal, template: 'illustration', illustrationId: 'illustration-reading-child' }} aspect={4 / 3} tracing controlsOnly onEdit={vi.fn()} />)
+  expect(document.querySelector('img')).toBeNull()
+  expect(screen.queryByRole('button', { name: '看原图' })).toBeNull()
+  expect(screen.getAllByRole('button')).toHaveLength(2)
+  expect(loadIllustrationTrace).not.toHaveBeenCalled()
+  expect(HTMLCanvasElement.prototype.getContext).not.toHaveBeenCalled()
+})
+
+test('a dense standalone reference uses the gray image once, keeps its transform and returns to gray after inspection', async () => {
+  vi.mocked(proposalStrokes).mockReturnValue([])
+  vi.mocked(loadIllustrationTrace).mockResolvedValue({ version: 1, aspect: 1, projection: 'gray', paths: [[[0, 0], [1, 1]]] })
+  const p: DrawingProposal = { ...proposal, template: 'illustration', illustrationId: 'illustration-reading-child', rotation: 20 }
+  const view = render(<CompanionProjection proposal={p} aspect={4 / 3} tracing onEdit={vi.fn()} />)
+  await act(async () => { await Promise.resolve() })
+  const overlay = screen.getByLabelText('Nilo 的插画参考底图'), image = overlay.querySelector('img')!
+  expect(overlay.querySelectorAll('img')).toHaveLength(1)
+  expect(image.dataset.illustrationProjection).toBe('gray')
+  expect(image.classList.contains('nilo-illustration-gray-projection')).toBe(true)
+  expect(image.style.transform).toBe('rotate(20deg)')
+  const ctx = vi.mocked(HTMLCanvasElement.prototype.getContext).mock.results.at(-1)!.value as CanvasRenderingContext2D
+  expect(ctx.stroke).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '看原图' }))
+  expect(image.dataset.illustrationProjection).toBe('original')
+  expect(image.classList.contains('nilo-illustration-original')).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: '继续描画' }))
+  expect(image.dataset.illustrationProjection).toBe('gray')
+  expect(ctx.stroke).not.toHaveBeenCalled()
+  view.rerender(<CompanionProjection proposal={{ ...p, x: .25, width: .35, height: .25 }} aspect={4 / 3} tracing onEdit={vi.fn()} />)
+  expect(image.style.left).toBe('25%')
+  expect(image.style.width).toBe('35%')
+  expect(image.style.height).toBe('25%')
+  expect(loadIllustrationTrace).toHaveBeenCalledOnce()
+  expect(createStrokePainter).not.toHaveBeenCalled()
 })

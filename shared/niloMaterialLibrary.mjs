@@ -127,10 +127,9 @@ export function createMaterialProposal(id, source, canvasAspect = 1) {
     frame = { x: (1 - width) / 2, y: (1 - height) / 2, width, height, rotation: 0 }
   }
   if (frame.width < .025 || frame.height < .025 || Math.abs(frame.rotation) > 180) return null
-  // A large PNG frame may exceed the committed-vector protocol. Keep its
-  // centre, rotation and proportions while fitting the existing vector budget.
-  const maxSpan = material.kind === 'recipe' ? .45 : .9
-  const maxArea = material.kind === 'recipe' ? .16 : .81
+  // Both registered vectors and image references share the same paper budget.
+  // Switching to SVG must not silently shrink the child's chosen large frame.
+  const maxSpan = .9, maxArea = .81
   const factor = Math.min(1, maxSpan / frame.width, maxSpan / frame.height, Math.sqrt((maxArea - 1e-12) / (frame.width * frame.height)))
   if (factor < 1) {
     const width = frame.width * factor, height = frame.height * factor

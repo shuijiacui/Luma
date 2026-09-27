@@ -38,11 +38,24 @@ export function CompanionDock({ companion, voice, mode, visible, enabled, isDraw
   const inviteLabel = visible ? 'Nilo，你来画' : '显示 Nilo'
 
   return <div className="nilo-footer-companion" role="group" aria-label={t('Nilo 与声音')}>
+    {visible && companion.sceneIdea && <div className="nilo-scene-idea" role="group" aria-label={locale === 'en' ? 'Our drawing idea' : '一起决定怎么画'}>
+      <button type="button" className="nilo-scene-idea-close" aria-label={locale === 'en' ? 'Put this idea away' : '收起构思'} onClick={() => { voice.cancel(); companion.dismissSceneIdea() }}>×</button>
+      <p className="nilo-scene-idea-title">{companion.sceneIdea.plan.title}</p>
+      <p>{companion.sceneIdea.editing ? companion.message : companion.sceneIdea.plan.summary}</p>
+      <div className="nilo-scene-idea-actions">
+        <button type="button" disabled={!canCoCreate || isDrawing || companion.phase === 'thinking'} onClick={() => { voice.cancel(); void companion.confirmSceneIdea() }}>{locale === 'en' ? 'Yes, let’s draw it' : '好，就这样画'}</button>
+        <button type="button" disabled={!canCoCreate || isDrawing || companion.phase === 'thinking'} onClick={() => { voice.cancel(); companion.reviseSceneIdea() }}>{locale === 'en' ? 'I’d like a change' : '我想改一改'}</button>
+      </div>
+    </div>}
     {companion.materialPicker && <MaterialPicker subjects={companion.materialPicker.subjects} initialSubject={companion.materialPicker.subject}
-      currentMaterialId={companion.projection?.proposal.illustrationId ?? companion.projection?.proposal.recipeId} busy={companion.materialPicker.busy} error={companion.materialPicker.error}
+      currentMaterialId={companion.materialPicker.currentMaterialId} targetName={companion.materialPicker.targetName} variantsOnly busy={companion.materialPicker.busy} error={companion.materialPicker.error}
       onChoose={id => { void companion.chooseMaterial(id) }} onClose={companion.closeMaterialPicker} />}
     {selection?.active ? <p className="nilo-selection-hint" role="status">{t(selection.count ? '圈住可以补选，点笔迹可以取消。选好后点“选好了”。' : '圈住或点一下想修改的笔迹，再点“选好了”。')}</p>
-      : visible && !isDrawing && caption && <p className="nilo-bottom-caption" role="status" title={caption}>{caption}</p>}
+      : visible && !isDrawing && caption && !companion.sceneIdea && <p className="nilo-bottom-caption" role="status" title={caption}>{caption}</p>}
+    {visible && projected?.scene && !companion.sceneIdea && !selection?.active && <div className="nilo-scene-objects" role="group" aria-label={locale === 'en' ? 'Choose a scene object' : '选择场景里的物体'}>
+      {projected.scene.plan.objects.map(object => <button type="button" key={object.id} disabled={!canEdit} aria-pressed={projected.scene?.selectedId === object.id}
+        onClick={() => { voice.cancel(); companion.selectSceneObject(object.id) }}>{object.name}</button>)}
+    </div>}
     {visible && companion.objectChoices && <div className="nilo-object-choices" role="group" aria-label={t('选择要修改的作品')}>
       {companion.objectChoices.objects.map((object,index)=><button type="button" key={object.id} onClick={()=>{companion.chooseObject(object.id);selection?.onComplete?.()}}>{index+1}. {t(object.name)}</button>)}
       <button type="button" onClick={()=>companion.cancel()} aria-label={t('取消')}>×</button>
@@ -64,7 +77,7 @@ export function CompanionDock({ companion, voice, mode, visible, enabled, isDraw
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" strokeDasharray="3 3" /><path d="m9 9 6 6m0-6-6 6" /></svg><span>{t('清除底图')}</span>
         </button>
       </div>}
-      {!projected && <button type="button" data-onboarding="canvas-nilo" className="nilo-footer-avatar" aria-label={t(inviteLabel)} title={drawingOnlyTitle ?? t(inviteLabel)} disabled={mode === 'off' || isDrawing || (visible && (!enabled || companion.phase !== 'idle'))} onClick={() => {
+      {!projected && <button type="button" data-onboarding="canvas-nilo" className="nilo-footer-avatar" aria-label={t(inviteLabel)} title={drawingOnlyTitle ?? t(inviteLabel)} disabled={mode === 'off' || isDrawing || !!companion.sceneIdea || (visible && (!enabled || companion.phase !== 'idle'))} onClick={() => {
         if (!visible) { onVisible(true); return }
         voice.cancel(); onInvite()
       }}><img src={niloCompanion} alt="" draggable={false} className="nilo-invite-image" /><span className="nilo-invite-label">{t(companion.phase === 'thinking' ? '看画中…' : companion.projection?.turn ? '接画中…' : '轮到 Nilo')}</span></button>}

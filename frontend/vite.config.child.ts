@@ -7,6 +7,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // 儿童端 App：保持网页版，独立端口 5175
 export default defineConfig({
+  cacheDir: 'node_modules/.vite/child',
   plugins: [voiceAssets(),
     react(),
     tailwindcss(),

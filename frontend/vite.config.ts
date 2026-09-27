@@ -6,6 +6,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  // dev-all runs all three apps together; each needs its own dependency cache.
+  cacheDir: 'node_modules/.vite/portal',
   plugins: [voiceAssets(),react(), tailwindcss()],
   resolve: {
     alias: {

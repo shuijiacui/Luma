@@ -7,6 +7,7 @@ import { BRUSHES, type BrushKind } from '../brushes'
 import { SKETCH_LIMITS, validateSketch, type DrawingSketch } from './sketch'
 import { getDrawingIllustration } from '../../../../../shared/niloIllustrations.mjs'
 import { sameDrawingSubject } from '../../../../../shared/niloVariants.mjs'
+import { drawingProposalLimits, hasRegisteredRecipeGeometry } from '../../../../../shared/niloProposalLimits.mjs'
 
 export const templates = ['waves', 'fish', 'leaf', 'window', 'stars', 'cloud', 'flower', 'trail', 'flame', 'rain', 'grass', 'echo', 'sun', 'moon', 'tree', 'mountain', 'house', 'boat', 'bird', 'butterfly', 'heart'] as const
 export type BuiltinTemplate = typeof templates[number]
@@ -110,8 +111,7 @@ export function validateProposal(value: unknown): DrawingProposal | null {
   if (!(p.template === 'custom' || p.template === 'illustration' || templates.includes(p.template)) || !/^#[\da-f]{6}$/i.test(p.color)) return null
   if (p.template !== 'illustration' && p.illustrationId !== undefined) return null
   if (![p.x, p.y, p.width, p.height, p.rotation, p.strokeWidth].every(Number.isFinite)) return null
-  const maxSpan = p.template === 'illustration' ? .9 : .45
-  const maxArea = p.template === 'illustration' ? .81 : .16
+  const { maxSpan, maxArea } = drawingProposalLimits(p)
   if (p.width < .025 || p.height < .025 || p.width > maxSpan || p.height > maxSpan || p.width * p.height > maxArea) return null
   if (p.x < 0 || p.y < 0 || p.x + p.width > 1 || p.y + p.height > 1 || Math.abs(p.rotation) > 180 || p.strokeWidth < 1 || p.strokeWidth > 32) return null
   if (p.brushKind !== undefined && !BRUSHES.some(brush => brush.id === p.brushKind)) return null
@@ -276,7 +276,9 @@ function prepareAttachedProposal(p: DrawingProposal, occupancy: number[], aspect
 /** Validation for editing/accepting a complete plan; never adjusts its coordinates. */
 export function drawingPlanFits(proposals: DrawingProposal[], occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize, pixels?: InkPixels): boolean {
   const n = occupancySize(occupancy)
-  if (!n || !planBudgetFits(proposals) || proposals.reduce((area, p) => area + (p.template === 'illustration' ? 0 : p.width * p.height), 0) > .24) return false
+  // User-scaled catalogue art retains its fixed command count. The small
+  // generated-area budget must not prevent editing or keeping that larger art.
+  if (!n || !planBudgetFits(proposals) || proposals.reduce((area, p) => area + (p.template === 'illustration' || hasRegisteredRecipeGeometry(p) ? 0 : p.width * p.height), 0) > .24) return false
   const occupied = [...occupancy]
   for (const p of proposals) {
     const cells = proposalFootprint(p, n, aspect, surfaceSize)

@@ -9,6 +9,7 @@ import { companionSpeechProfile, selectCompanionVoice } from './voiceProfile'
 import { createSpeechEndpoint, recognitionContext, recognitionVocabulary, SPEECH_PAUSE_MS, type DrawingSpeechContext, recognitionAlternatives } from './voiceRecognition'
 
 export type CompanionVoiceStatus = 'idle' | 'preparing' | 'listening' | 'transcribing' | 'speaking'
+export interface CompanionSpeechOptions { resumeListening?: boolean }
 export interface CompanionVoiceController {
   status: CompanionVoiceStatus
   error: string | null
@@ -21,7 +22,7 @@ export interface CompanionVoiceController {
   start: () => void
   stop: () => void
   cancel: () => void
-  speak: (text: string) => void
+  speak: (text: string, options?: CompanionSpeechOptions) => void
   toggleSound: () => void
   setContinuous: (value: boolean) => void
 }
@@ -97,12 +98,19 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
     let currentStatus: CompanionVoiceStatus = 'idle'
     let sound = readSound(ownerId)
     let continuing = false
+    let resumeAfterSpeech = true
     let sessionTurns = 0
     let sessionTimer: ReturnType<typeof setTimeout> | undefined
     let mode: CompanionVoiceController['backend'] = 'unavailable'
     let config = { asr: false, tts: false }
     let capabilitySettled = false
     let capabilityFailed = false
+    let capabilityAuthFailed = false
+    let capabilityRetryable = false
+    let capabilityPending: Promise<boolean> | null = null
+    let capabilityCancel: (() => void) | null = null
+    let capabilityRetryTimer: ReturnType<typeof setTimeout> | undefined
+    let automaticCapabilityAttempts = 0
     let input: MediaStream | null = null
     let recorder: MediaRecorder | null = null
     let recognition: Recognition | null = null
@@ -119,7 +127,6 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
     let turnContext: DrawingSpeechContext = {}
     let traceId = newVoiceTrace(), listenStarted = 0, asrStarted = 0, speakStarted = 0
     const timers = new Set<ReturnType<typeof setTimeout>>()
-    const capabilityRequest = new AbortController()
     const voiceWindow = window as VoiceWindow
     const RecognitionApi = voiceWindow.SpeechRecognition ?? voiceWindow.webkitSpeechRecognition
     const secureContext = window.isSecureContext !== false
@@ -139,7 +146,8 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
     function unavailableMessage() {
       if (!secureContext) return '语音需要安全连接，请用 HTTPS 或 localhost 打开。'
       if (!capabilitySettled) return '语音正在准备，请稍后再点麦克风。'
-      if (capabilityFailed) return '语音服务暂时连不上，请刷新页面后重试。'
+      if (capabilityAuthFailed) return '语音权限暂时不可用，请重新登录后再试。'
+      if (capabilityFailed) return '语音服务暂时连不上，请稍后点麦克风重试。'
       if (config.asr && !canRecord) return '当前浏览器无法使用麦克风，请用支持录音的浏览器打开。'
       return '这个浏览器暂时不能听你说话，可以换个浏览器，或用按钮继续。'
     }
@@ -216,7 +224,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
     const valid = (turn: number) => !disposed && enabled && version === turn && document.visibilityState !== 'hidden'
     function resume() {
       updateStatus('idle')
-      if (!continuing) return
+      if (!continuing || !resumeAfterSpeech) return
       if (sessionTurns >= 12) { endSession(); return }
       // Allow the speaker's sound to decay before opening the microphone.
       later(() => { if (continuing) start() }, 450)
@@ -435,12 +443,28 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
     }
     function start() {
       if (!enabled || disposed || document.visibilityState === 'hidden') return
+      // Repeated starts share preparation instead of requesting another stream.
+      if (currentStatus === 'preparing') return
       clearOperation()
       setError(null); setTranscript('')
       traceId=newVoiceTrace();listenStarted=Date.now();asrStarted=0
       recordVoiceEvent({turn:traceId,stage:'listen',outcome:mode})
       turnContext = recognitionContext(drawingContext.current)
       const turn = version
+      if (mode === 'unavailable' && capabilityFailed && capabilityRetryable) {
+        updateStatus('preparing')
+        void probeCapabilities().then(available => {
+          // Only this explicit click can authorize a delayed microphone start.
+          // Cancel, speech, visibility changes and owner changes invalidate it.
+          if (!valid(turn) || currentStatus !== 'preparing') return
+          if (available) beginListening(turn)
+          else fail(unavailableMessage())
+        })
+        return
+      }
+      beginListening(turn)
+    }
+    function beginListening(turn: number) {
       if (mode === 'server') {
         updateStatus('preparing')
         void startRecording(turn)
@@ -491,9 +515,13 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
         clearTimeout(waitTimer); timers.delete(waitTimer)
       }
     }
-    async function speak(text: string) {
+    async function speak(text: string, speechOptions?: CompanionSpeechOptions) {
       if (!enabled || disposed || document.visibilityState === 'hidden') return
       clearOperation()
+      resumeAfterSpeech = speechOptions?.resumeListening !== false
+      // A progress acknowledgement is not the final reply. Keep the session
+      // quiet until the actual result, with a bounded idle fallback if it fails.
+      if (!resumeAfterSpeech) later(() => { if (!resumeAfterSpeech && continuing) endSession() }, 45000)
       setError(null)
       const turn = version
       const clean = text.trim().slice(0, 1500)
@@ -543,35 +571,59 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
     // Merely exposing SpeechRecognition does not mean the device can use its
     // recognition service, even when microphone permission has been granted.
     setVoiceReady(false); setBackend(mode); updateStatus('idle')
-    actions.current = { start, stop, cancel, speak: text => { void speak(text) }, toggleSound, setContinuous }
+    actions.current = { start, stop, cancel, speak: (text, speechOptions) => { void speak(text, speechOptions) }, toggleSound, setContinuous }
     document.addEventListener('visibilitychange', onVisibility)
-    let capabilityTimer: ReturnType<typeof setTimeout> | undefined
-    function finishCapabilities(value?: { asr: boolean; tts: boolean }) {
-      if (disposed || capabilitySettled) return
-      capabilitySettled = true
-      if (capabilityTimer) clearTimeout(capabilityTimer)
-      capabilityFailed = !value || typeof value.asr !== 'boolean' || typeof value.tts !== 'boolean'
-      if (!capabilityFailed && value) config = { asr: value.asr, tts: value.tts }
-      if (!secureContext || capabilityFailed) mode = 'unavailable'
-      else if (config.asr) mode = canRecord ? 'server' : 'unavailable'
-      else mode = RecognitionApi ? 'browser' : 'unavailable'
-      setBackend(mode); setVoiceReady(true)
+    function probeCapabilities(automatic = false): Promise<boolean> {
+      if (capabilityPending) return capabilityPending
+      if (capabilityRetryTimer) clearTimeout(capabilityRetryTimer)
+      capabilityRetryTimer = undefined
+      if (automatic) automaticCapabilityAttempts++
+      const controller = new AbortController()
+      let finish!: (value?: { asr: boolean; tts: boolean }, reason?: unknown) => void
+      capabilityPending = new Promise(resolve => {
+        let settled = false
+        finish = (value, reason) => {
+          if (settled) return
+          settled = true
+          clearTimeout(timeout)
+          capabilityPending = null; capabilityCancel = null
+          if (disposed) { resolve(false); return }
+          capabilitySettled = true
+          capabilityFailed = !value || typeof value.asr !== 'boolean' || typeof value.tts !== 'boolean'
+          capabilityAuthFailed = capabilityFailed && reason instanceof ApiError && [401, 403].includes(reason.status)
+          capabilityRetryable = capabilityFailed && secureContext && !!(canRecord || RecognitionApi)
+            && (!(reason instanceof ApiError) || reason.status === 408 || reason.status === 429 || reason.status >= 500)
+          if (!capabilityFailed && value) config = { asr: value.asr, tts: value.tts }
+          if (!secureContext || capabilityFailed) mode = 'unavailable'
+          else if (config.asr) mode = canRecord ? 'server' : 'unavailable'
+          else mode = RecognitionApi ? 'browser' : 'unavailable'
+          setBackend(mode); setVoiceReady(true)
+          if (mode !== 'unavailable') setError(previous => previous?.startsWith('语音服务暂时连不上') || previous?.startsWith('语音正在准备') ? null : previous)
+          else setError(previous => previous?.startsWith('语音正在准备') ? unavailableMessage() : previous)
+          // Brief development restarts/network failures recover without a reload.
+          // Background discovery never opens the microphone and stops after 3 tries.
+          if (automatic && capabilityRetryable && automaticCapabilityAttempts < 3) {
+            capabilityRetryTimer = setTimeout(() => {
+              capabilityRetryTimer = undefined
+              if (!disposed) void probeCapabilities(true)
+            }, automaticCapabilityAttempts * 500)
+          }
+          resolve(mode !== 'unavailable')
+        }
+      })
+      capabilityCancel = () => { controller.abort(); finish() }
+      // Separate from voice operation timers so cancel cannot strand discovery.
+      const timeout = setTimeout(() => { controller.abort(); finish() }, 4000)
+      void authFetch<{ asr: boolean; tts: boolean }>('/nilo/voice/config', { token, signal: controller.signal })
+        .then(value => finish(value))
+        .catch(reason => finish(undefined, reason))
+      return capabilityPending
     }
-    if (enabled) {
-      // Keep this timer separate from operation timers: clicking the microphone
-      // must not cancel capability discovery or leave it pending forever.
-      capabilityTimer = setTimeout(() => {
-        finishCapabilities()
-        capabilityRequest.abort()
-      }, 4000)
-      void authFetch<{ asr: boolean; tts: boolean }>('/nilo/voice/config', { token, signal: capabilityRequest.signal })
-        .then(finishCapabilities)
-        .catch(() => finishCapabilities())
-    }
+    if (enabled) void probeCapabilities(true)
     return () => {
       disposed = true
-      if (capabilityTimer) clearTimeout(capabilityTimer)
-      capabilityRequest.abort()
+      if (capabilityRetryTimer) clearTimeout(capabilityRetryTimer)
+      capabilityCancel?.()
       cancel()
       actions.current = null
       document.removeEventListener('visibilitychange', onVisibility)
@@ -581,7 +633,7 @@ export function useCompanionVoice(options: VoiceOptions): CompanionVoiceControll
   const start = useCallback(() => actions.current?.start(), [])
   const stop = useCallback(() => actions.current?.stop(), [])
   const cancel = useCallback(() => actions.current?.cancel(), [])
-  const speak = useCallback((text: string) => actions.current?.speak(text), [])
+  const speak = useCallback((text: string, speechOptions?: CompanionSpeechOptions) => actions.current?.speak(text, speechOptions), [])
   const toggleSound = useCallback(() => actions.current?.toggleSound(), [])
   const setContinuous = useCallback((value: boolean) => actions.current?.setContinuous(value), [])
   return { status, error, transcript, soundOn, continuous, backend, supported: backend !== 'unavailable', voiceReady, start, stop, cancel, speak, toggleSound, setContinuous }

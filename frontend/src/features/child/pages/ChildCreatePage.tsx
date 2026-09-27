@@ -20,6 +20,7 @@ import type { BrushKind } from '../brushes'
 import { DrawingCanvas, type DrawingCanvasHandle } from '../components/DrawingCanvas'
 import { WelcomeOverlay } from '../components/WelcomeOverlay'
 import { CompanionProjection } from '../components/CompanionProjection'
+import { SceneProjection } from '../components/SceneProjection'
 import { CompanionDock } from '../components/CompanionDock'
 import { CanvasSelection } from '../components/CanvasSelection'
 import type { SelectionBounds } from '../companion/selectionGeometry'
@@ -125,7 +126,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   const { completeInteraction, active: tourActive } = useOnboarding()
   const busy = saving || analysis === 'loading'
   const companionEnabled = !showWelcome && niloVisible && !busy && !tourActive
-  const speakRef = useRef<(message: string) => void>(() => {})
+  const speakRef = useRef<(message: string, options?: { resumeListening?: boolean }) => void>(() => {})
   const voiceCancelRef = useRef<() => void>(() => {})
   const companion = useCompanion({
     ownerId, artworkId: draft.artworkId, token: session?.token, locale,
@@ -138,7 +139,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
       const recent = canvasRef.current?.getLastDrawingStyle()
       return recent ? { brushKind: recent.brushKind, color: recent.color, brushSize: Math.max(1, Math.min(32, recent.size)) } : { brushKind, color, brushSize }
     },
-    onSpeak: message => speakRef.current(message),
+    onSpeak: (message, options) => speakRef.current(message, options),
     onUnavailable: () => voiceCancelRef.current(),
     onCommitted: invalidateDrawing,
   })
@@ -162,7 +163,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   useEffect(() => {
     const projection = currentProjection
     draft.tracingGuide = projection?.tracing
-      ? { id: projection.id, proposal: projection.proposal, additions: projection.additions, aspect: projection.aspect } : undefined
+      ? { id: projection.id, proposal: projection.proposal, additions: projection.additions, aspect: projection.aspect, ...(projection.scene ? { scene: projection.scene } : {}) } : undefined
     setDraftError(!persistChildDraft(ownerId, draftSlot, draft))
   }, [currentProjection, draft, ownerId, draftSlot])
   useEffect(() => { mounted.current = true; refreshCanvasVersion(); return () => { mounted.current = false } }, [])
@@ -368,7 +369,8 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
                 if (!p) return null
                 return <button type="button" key={object.id} className="absolute z-30 rounded-xl border-2 border-dashed border-luma-teal-600 bg-luma-teal-100/20 text-left text-sm font-bold text-luma-teal-900" style={{left:(p.x*100)+'%',top:(p.y*100)+'%',width:(p.width*100)+'%',height:(p.height*100)+'%'}} onClick={()=>{companion.chooseObject(object.id);setSelectionMode(false)}} aria-label={t('选择')+' '+(index+1)+': '+t(object.name)}>{index+1}</button>
               })}
-              {projected && !projected.pristineEdit && !projected.deleting && <CompanionProjection proposal={projected.proposal} additions={projected.additions} aspect={projected.aspect} tracing={projected.tracing} overInk={!!draft.canvas.document?.baseImage} turnDuration={projected.turn ? projected.durationMs : undefined} onEdit={mode === 'together' && companionEnabled && !busy && !isDrawing && !selectionMode && companion.phase === 'projected' ? companion.edit : undefined} onInteractionStart={voice.cancel} />}
+              {projected?.scene ? <SceneProjection projection={projected} onEdit={mode === 'together' && companionEnabled && !busy && !isDrawing && !selectionMode && companion.phase === 'projected' ? companion.editSceneObject : undefined} onInteractionStart={() => { voice.cancel(); companion.beginSceneEdit() }} />
+                : projected && !projected.pristineEdit && !projected.deleting && <CompanionProjection proposal={projected.proposal} additions={projected.additions} aspect={projected.aspect} tracing={projected.tracing} overInk={!!draft.canvas.document?.baseImage} turnDuration={projected.turn ? projected.durationMs : undefined} onEdit={mode === 'together' && companionEnabled && !busy && !isDrawing && !selectionMode && companion.phase === 'projected' ? companion.edit : undefined} onInteractionStart={voice.cancel} />}
               <CanvasSelection active={selectionMode && mode === 'together' && companionEnabled && !busy} candidates={selectionMode || selection.groupIds.length ? canvasRef.current?.getSelectionCandidates?.() ?? [] : []} selected={selection.groupIds} bounds={selection.bounds}
                 onChange={ids => canvasRef.current?.setSelection?.(ids)} onDone={finishSelection} onCancel={() => { setSelectionMode(false); companion.interrupt() }} />
             </DrawingSurface>

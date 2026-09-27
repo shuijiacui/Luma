@@ -4,10 +4,12 @@ import { createStrokePainter } from '../brushes'
 import { proposalStrokes, type DrawingProposal } from '../companion/proposals'
 import { projectionTransform } from '../companion/projectionTransform'
 import { getDrawingIllustration } from '../../../../../shared/niloIllustrations.mjs'
+import { illustrationTracePaths } from '../companion/illustrationTracing'
+import { useIllustrationTraces } from '../hooks/useIllustrationTraces'
 
 /** Tracing paths pass through to the paper; only the two handles receive gestures. */
-export function CompanionProjection({ proposal, additions, aspect, turnDuration, tracing = false, overInk = false, onEdit, onInteractionStart }: { proposal: DrawingProposal; additions?: DrawingProposal[]; aspect: number; turnDuration?: number; tracing?: boolean; overInk?: boolean; onEdit?: (patch: Partial<DrawingProposal>) => void; onInteractionStart?: () => void }) {
-  useLocale()
+export function CompanionProjection({ proposal, additions, aspect, turnDuration, tracing = false, overInk = false, controlsOnly = false, onEdit, onInteractionStart }: { proposal: DrawingProposal; additions?: DrawingProposal[]; aspect: number; turnDuration?: number; tracing?: boolean; overInk?: boolean; controlsOnly?: boolean; onEdit?: (patch: Partial<DrawingProposal>) => void; onInteractionStart?: () => void }) {
+  const locale = useLocale()
   const ref = useRef<HTMLCanvasElement>(null)
   const pen = useRef<HTMLSpanElement>(null)
   const [viewOriginal, setViewOriginal] = useState(false)
@@ -17,6 +19,7 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
     return asset ? [{ proposal: item, asset }] : []
   }), [proposal, additions])
   const illustrationKey = illustrations.map(item => item.asset.id).join(',')
+  const traces = useIllustrationTraces(controlsOnly ? [] : illustrations.map(item => item.asset.id))
   useEffect(() => { setViewOriginal(false); setFailedImages([]) }, [illustrationKey])
   // Raster illustrations are references only, including when opened from an older workflow.
   const isGuide = tracing || illustrations.length > 0
@@ -30,8 +33,8 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
     event.currentTarget.setPointerCapture(event.pointerId)
     const items = [proposal, ...(additions ?? [])]
     gesture.current = { id: event.pointerId, x: event.clientX, y: event.clientY, rect, items, mode,
-      width: Math.max(...items.map(p => p.x + p.width)) - Math.min(...items.map(p => p.x)),
-      height: Math.max(...items.map(p => p.y + p.height)) - Math.min(...items.map(p => p.y)) }
+      width: bounds ? bounds.right - bounds.left : proposal.width,
+      height: bounds ? bounds.bottom - bounds.top : proposal.height }
     onInteractionStart?.()
   }
   function move(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -64,7 +67,12 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
     const patch = projectionTransform([proposal, ...(additions ?? [])], resize || !delta ? { scale: factor } : { dx:delta[0], dy:delta[1] }, aspect, ref.current?.getBoundingClientRect())
     if (patch) onEdit?.(patch)
   }
-  const strokes = useMemo(() => [proposal, ...(additions ?? [])].flatMap(item => proposalStrokes(item, aspect)), [proposal, additions, aspect])
+  const strokes = useMemo(() => [proposal, ...(additions ?? [])].flatMap(item => {
+    if (item.template !== 'illustration') return proposalStrokes(item, aspect)
+    const trace = item.illustrationId ? traces[item.illustrationId] : undefined
+    return !viewOriginal && trace && trace.projection !== 'gray' ? illustrationTracePaths(trace, item, aspect)
+      .map(points => ({ kind: 'custom' as const, color: '#9ca3af', width: 1.5, points })) : []
+  }), [proposal, additions, aspect, traces, viewOriginal])
   const bounds = useMemo(() => {
     let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity
     // A valid contribution can contain 64 paths of 4096 points. Spreading those
@@ -85,6 +93,7 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
       ? { left, top, right, bottom } : null
   }, [strokes, illustrations, aspect])
   useEffect(() => {
+    if (controlsOnly) return
     const canvas = ref.current
     if (!canvas) return
     const started = performance.now()
@@ -138,20 +147,24 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
     draw()
     const observer = new ResizeObserver(() => { cancelAnimationFrame(frame); draw() }); observer.observe(canvas)
     return () => { observer.disconnect(); cancelAnimationFrame(frame) }
-  }, [strokes, turnDuration, isGuide])
+  }, [strokes, turnDuration, isGuide, controlsOnly])
   if (!bounds) return null
   const { left, top, right, bottom } = bounds
   return <div className={`nilo-projection pointer-events-none absolute inset-0${isGuide ? ' nilo-tracing-projection' : ''}${isGuide && overInk ? ' nilo-tracing-over-ink' : ''}${turnDuration !== undefined ? ' nilo-turn-drawing' : ''}`} aria-label={t(illustrations.length ? 'Nilo 的插画参考底图' : tracing ? 'Nilo 的灰色虚线描摹底图' : turnDuration !== undefined ? 'Nilo 正在画，接着你的这一笔' : 'Nilo 的投影，尚未加入画作')}>
-    <canvas ref={ref} className="absolute inset-0 size-full" aria-hidden="true" />
-    {illustrations.map(({ proposal: p, asset }) => <img key={asset.id} src={asset.src} alt={asset.name} draggable={false}
-      className={`nilo-illustration-guide${viewOriginal ? ' nilo-illustration-original' : ''}`}
+    <canvas ref={ref} className="absolute inset-0 size-full" style={controlsOnly ? { visibility: 'hidden' } : undefined} aria-hidden="true" />
+    {!controlsOnly && illustrations.filter(({ asset }) => viewOriginal || traces[asset.id]?.projection === 'gray').map(({ proposal: p, asset }) => <img key={asset.id} src={asset.src} alt={asset.name} draggable={false}
+      className={`nilo-illustration-guide${viewOriginal ? ' nilo-illustration-original' : ' nilo-illustration-gray-projection'}`}
+      data-illustration-projection={viewOriginal ? 'original' : 'gray'}
       style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.width * 100}%`, height: `${p.height * 100}%`, transform: `rotate(${p.rotation}deg)` }}
       onError={() => setFailedImages(ids => ids.includes(asset.id) ? ids : [...ids, asset.id])}
       onLoad={() => setFailedImages(ids => ids.filter(id => id !== asset.id))} />)}
-    {failedImages.length > 0 && <span className="nilo-illustration-notice" role="status">{t('参考图暂时没加载好，可以继续画或换个画法。')}</span>}
+    {!controlsOnly && failedImages.length > 0 && <span className="nilo-illustration-notice" role="status">{t('参考图暂时没加载好，可以继续画或换个画法。')}</span>}
+    {!controlsOnly && !viewOriginal && illustrations.some(({ asset }) => !traces[asset.id]) && <span className="nilo-illustration-notice" role="status">{illustrations.some(({ asset }) => traces[asset.id] === null)
+      ? locale === 'en' ? 'The outlines could not load. You can keep drawing or choose to view the original.' : '参考轮廓暂时没加载好，可以继续画或点“看原图”。'
+      : locale === 'en' ? 'Preparing the outlines. You can keep drawing.' : '轮廓正在准备，你可以先接着画。'}</span>}
     {turnDuration !== undefined ? <span ref={pen} className="nilo-drawing-pen" aria-hidden="true">✎</span> : <>
       <div className={`nilo-projection-controls absolute rounded-xl${isGuide ? '' : ' border border-dashed border-luma-teal-500/60'}`} style={{ left: `${left * 100}%`, top: `${top * 100}%`, width: `${(right - left) * 100}%`, height: `${(bottom - top) * 100}%` }}>
-        {illustrations.length > 0 && <button type="button" className="nilo-illustration-view" aria-pressed={viewOriginal}
+        {!controlsOnly && illustrations.length > 0 && <button type="button" className="nilo-illustration-view" aria-pressed={viewOriginal}
           onClick={() => { onInteractionStart?.(); setViewOriginal(value => !value) }}>{t(viewOriginal ? '继续描画' : '看原图')}</button>}
         {editable && <>
           <button type="button" className="nilo-projection-move" aria-label={t('拖动 Nilo 的投影')} onPointerDown={e => start(e, 'move')} onPointerMove={move} onPointerUp={e => end(e)} onPointerCancel={e => end(e, true)} onLostPointerCapture={e => end(e, true)} onKeyDown={e => keyboard(e, false)}>{isGuide && <span aria-hidden="true">✥</span>}</button>

@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // 家长端 App：手机竖屏版，独立端口 5174
 export default defineConfig({
+  cacheDir: 'node_modules/.vite/parent',
   plugins: [react(), tailwindcss()],
   define: {
     __APP_MODE__: JSON.stringify('parent'),

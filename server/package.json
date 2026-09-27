@@ -8,7 +8,8 @@
     "start": "node src/index.js",
     "test": "vitest run",
     "backup": "node scripts/backup.mjs",
-    "reports": "node scripts/reports.mjs"
+    "reports": "node scripts/reports.mjs",
+    "tracing:build": "node scripts/build-nilo-tracing-guides.mjs"
   },
   "dependencies": {
     "express": "^4.21.2",

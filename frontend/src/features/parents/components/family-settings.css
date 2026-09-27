@@ -1,0 +1,126 @@
+.family-settings {
+  --settings-ink: #354d3e;
+  --settings-muted: #838e7c;
+  --settings-line: #e9ece0;
+  container: family-settings / inline-size;
+  color: var(--settings-ink);
+  border: 1px solid #e4e8d9;
+  border-radius: 26px;
+  background: #fffefa;
+  box-shadow: 0 8px 32px #42533c05;
+  overflow: clip;
+}
+.family-settings [hidden] { display: none !important; }
+.family-settings button { cursor: pointer; }
+.family-settings button:disabled { cursor: default; opacity: .5; }
+.family-settings :is(button, summary, input):focus-visible { outline: 3px solid #a4b798; outline-offset: 4px; }
+.family-settings-account { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 32px; border-bottom: 1px solid var(--settings-line); background: linear-gradient(105deg, #f2f5e9, #fafbf5 65%, #fffefa); }
+.family-settings-identity { display: flex; align-items: center; gap: 15px; min-width: 0; }
+.family-settings-identity .luma-avatar-display > span { width: 56px; height: 56px; }
+.family-settings-identity > div { min-width: 0; }
+.family-settings-identity h2 { font-family: var(--font-display); font-size: 21px; line-height: 1.5; font-weight: 650; overflow-wrap: anywhere; }
+.family-settings-identity p { margin-top: 5px; font-size: 12px; line-height: 1.8; color: #849079; }
+.family-settings-account-actions { display: flex; flex-wrap: wrap; gap: 6px 20px; justify-content: flex-end; flex-shrink: 0; font-size: 12px; color: #77836c; }
+.family-settings-account-actions button { min-height: 34px; display: inline-flex; align-items: center; gap: 7px; }
+.family-settings-account-actions button:hover { color: #3f5d37; }
+.family-settings-columns { display: grid; grid-template-columns: minmax(0, 1fr); }
+.family-settings-members { min-width: 0; padding: 30px 32px; }
+.family-settings-section-heading { display: flex; align-items: center; gap: 12px; }
+.family-settings-section-icon { width: 38px; height: 38px; flex-shrink: 0; display: grid; place-items: center; border-radius: 12px; background: #f0f4e8; color: #879d70; }
+.family-settings-section-icon svg { width: 20px; height: 20px; }
+.family-settings-section-heading h2 { font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.5; }
+.family-settings-section-heading p { margin-top: 5px; color: var(--settings-muted, #838e7c); font-size: 12px; line-height: 1.7; }
+.family-settings-children { margin-top: 24px; }
+.family-settings-child + .family-settings-child { border-top: 1px solid var(--settings-line); margin-top: 15px; padding-top: 15px; }
+.family-settings-child-row { display: flex; align-items: center; gap: 14px; min-height: 70px; }
+.family-settings-child-row > img { width: 48px; height: 48px; flex-shrink: 0; object-fit: contain; border-radius: 50%; background: #f8f5ea; }
+.family-settings-child-copy { min-width: 0; flex: 1; }
+.family-settings-child-copy h3 { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.family-settings-child-copy p { display: flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 11px; color: #8a967e; }
+.family-settings-child-copy i { height: 5px; width: 5px; border-radius: 50%; background: #98aa85; }
+.family-settings-child-link { flex-shrink: 0; display: flex; align-items: center; gap: 5px; min-height: 36px; font-size: 12px; color: #76886b; }
+.family-settings-child-link svg { width: 14px; height: 14px; }
+.family-settings-child-link:hover { color: #38582e; }
+.family-settings-child-profile { margin-left: 62px; }
+.family-settings-child-profile > summary { display: flex; width: fit-content; align-items: center; gap: 12px; min-height: 32px; list-style: none; cursor: pointer; font-size: 11px; color: #939c88; }
+.family-settings-child-profile > summary::-webkit-details-marker { display: none; }
+.family-settings-child-profile[open] > summary > span { transform: rotate(45deg); }
+.family-settings-invite { margin-top: 24px; padding: 20px 22px; border: 1px dashed #cfd9c2; border-radius: 15px; background: #f7f9f1; }
+.family-settings-invite-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.family-settings-invite h3 { color: #526a44; font-size: 13px; font-weight: 600; }
+.family-settings-invite-heading > span { font-size: 10px; color: #939e85; }
+.family-settings-invite-code { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+.family-settings-invite-code code { font-family: var(--font-brand), sans-serif; font-size: clamp(21px, 2.2vw, 28px); font-weight: 600; line-height: 1.4; letter-spacing: .07em; color: #546f42; overflow-wrap: anywhere; user-select: all; }
+.family-settings-invite-code button { display: inline-flex; flex-shrink: 0; align-items: center; gap: 7px; padding: 6px 10px; min-height: 34px; border: 1px solid #e1e7d5; border-radius: 8px; background: #fffefa; color: #718461; font-size: 11px; }
+.family-settings-invite-code button:hover:not(:disabled) { background: #eaf0df; }
+.family-settings-invite > p { margin-top: 12px; color: #919b85; font-size: 11px; line-height: 1.8; }
+.family-settings-invite p[role="alert"] { color: #9a6339; }
+.family-settings-empty { display: flex; flex-direction: column; align-items: center; padding: 24px 8px; text-align: center; color: #929e82; }
+.family-settings-empty > svg { width: 26px; height: 26px; margin-bottom: 13px; }
+.family-settings-empty p { font-size: 14px; color: #708164; }
+.family-settings-empty > span { margin-top: 8px; font-size: 12px; line-height: 1.8; }
+.family-questionnaire-overview, .family-questionnaire-loading { min-width: 0; padding: 30px 32px; border-top: 1px solid #e9ece0; background: #fdfcf7; }
+.family-questionnaire-overview.is-standalone { border: 1px solid #e4e8d9; border-radius: 24px; }
+.family-questionnaire-overview .family-settings-section-icon { background: #f6efdf; color: #b59960; }
+.family-questionnaire-intro { margin-top: 23px; font-size: 13px; line-height: 1.9; color: #7d8775; max-width: 42em; }
+.family-questionnaire-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 12px; font-size: 11px; color: #9a9f8b; }
+.family-questionnaire-meta i { height: 3px; width: 3px; border-radius: 50%; background: #c5c8b8; }
+.family-questionnaire-start { margin-top: 25px; }
+.family-questionnaire-start > p { color: #8b947d; font-size: 12px; line-height: 1.8; }
+.family-questionnaire-latest { padding-left: 12px; border-left: 2px solid #d8dfc9; }
+.family-questionnaire-latest p { color: #949c86; font-size: 11px; line-height: 1.8; }
+.family-questionnaire-latest strong { display: block; margin-top: 4px; font-size: 13px; font-weight: 500; color: #6c7e5c; }
+.family-questionnaire-start .family-questionnaire-start-button { margin-top: 13px; min-height: 40px; padding: 8px 22px; border-radius: 10px; background: #617a4e; box-shadow: none; color: #fffefa; font-size: 13px; }
+.family-questionnaire-start .family-questionnaire-start-button:hover { background: #506941; box-shadow: none; }
+.family-questionnaire-history { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 25px; padding: 17px 0 0; border-top: 1px solid #e8eadd; text-align: left; }
+.family-questionnaire-history > svg { width: 17px; height: 17px; flex-shrink: 0; color: #99a08b; }
+.family-questionnaire-history > span:nth-child(2) { flex: 1; min-width: 0; }
+.family-questionnaire-history strong { font-size: 12px; font-weight: 500; color: #6f7e61; }
+.family-questionnaire-history small { display: block; margin-top: 4px; font-size: 10px; color: #9aa18e; }
+.family-questionnaire-history > span:last-child { font-size: 20px; color: #9ba38e; }
+.family-questionnaire-note { margin-top: 20px; color: #9a9f8e; font-size: 10px; line-height: 1.9; }
+.family-questionnaire-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; font-size: 12px; line-height: 1.8; color: #a06747; }
+.family-questionnaire-error button { flex-shrink: 0; text-decoration: underline; }
+.family-questionnaire-detail { grid-column: 1 / -1; min-width: 0; padding: 28px 32px; }
+.family-questionnaire-loading { display: grid; align-items: center; min-height: 250px; color: #8b957c; font-size: 13px; }
+.family-settings-footer { border-top: 1px solid var(--settings-line); padding: 22px 32px; }
+.family-settings .family-settings-footer--data { padding: 0; border-top: 0; }
+.family-settings-guest { display: flex; align-items: center; gap: 14px; }
+.family-settings-guest-icon { display: grid; place-items: center; flex-shrink: 0; color: #a4ad93; }
+.family-settings-guest-icon svg { width: 24px; height: 24px; }
+.family-settings-guest > div { flex: 1; min-width: 0; }
+.family-settings-guest h3 { font-size: 13px; font-weight: 500; }
+.family-settings-guest p { margin-top: 5px; color: #949d86; font-size: 11px; line-height: 1.8; }
+.family-settings-guest > button { display: inline-flex; flex-shrink: 0; align-items: center; gap: 7px; min-height: 36px; padding: 5px 11px; border: 1px solid #e0e6d5; border-radius: 9px; color: #788768; font-size: 12px; }
+.family-settings-guest button svg { width: 13px; height: 13px; }
+.luma-parent-settings-page .luma-app-content { max-width: 1240px; }
+.luma-parent-settings-page .luma-app-title { padding-bottom: 2px; }
+@container family-settings (min-width: 820px) {
+  .family-settings-columns { grid-template-columns: minmax(0, 1.06fr) minmax(0, 1fr); }
+  .family-settings-members { padding: 30px 36px 34px; }
+  .family-questionnaire-overview, .family-questionnaire-loading { border-top: 0; border-left: 1px solid #e9ece0; padding: 30px 36px 34px; }
+}
+@media (max-width: 600px) {
+  .family-settings { border-radius: 22px; }
+  .family-settings-account { padding: 20px; gap: 14px; align-items: flex-start; }
+  .family-settings-identity { gap: 10px; }
+  .family-settings-identity .luma-avatar-display > span { width: 43px; height: 43px; }
+  .family-settings-identity h2 { font-size: 18px; }
+  .family-settings-identity p { font-size: 10px; }
+  .family-settings-account-actions { flex-direction: column; align-items: flex-end; gap: 2px; font-size: 10px; }
+  .family-settings-members, .family-questionnaire-overview, .family-questionnaire-loading { padding: 24px 20px; }
+  .family-settings-section-heading { gap: 10px; }
+  .family-settings-section-heading h2 { font-size: 19px; }
+  .family-settings-section-heading p { font-size: 11px; }
+  .family-settings-invite { padding: 17px; }
+  .family-settings-invite-code code { font-size: 22px; }
+  .family-settings-child-row { gap: 10px; }
+  .family-settings-child-link { font-size: 11px; }
+  .family-settings-child-profile { margin-left: 0; }
+  .family-settings-footer { padding: 20px; }
+  .family-settings-guest { flex-wrap: wrap; gap: 12px; }
+  .family-settings-guest-icon { display: none; }
+  .family-settings-guest > div { flex-basis: 100%; }
+  .family-settings-guest > button { margin-top: 2px; }
+  .family-questionnaire-detail { padding: 22px 18px; }
+}

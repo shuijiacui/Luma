@@ -1,10 +1,8 @@
 import { lt, t, useLocale } from '@/i18n'
 import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { useChildHistory } from '@/hooks/useChildHistory'
-import { ChildBirthDate } from '@/features/parents/components/ChildBirthDate'
 import { PeriodicReportsSection } from '@/features/parents/components/PeriodicReportsSection'
-import { FamilyDataSettings } from '@/features/parents/components/FamilyDataSettings'
-import { ParentQuestionnaireSection } from '@/features/parents/components/ParentQuestionnaireSection'
+import { FamilySettings } from '@/features/parents/components/FamilySettings'
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -597,127 +595,23 @@ export function ParentDemoPage() {
   }
 
   function renderSettings() {
-    return (
-      <motion.div
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
-        className="grid gap-5"
-      >
-        <motion.section variants={fadeUp} className={cn(CARD_CLASS)}>
-          <div className="flex flex-wrap items-center justify-between gap-5 p-6 sm:p-7">
-            <div className="flex items-center gap-4">
-              <AvatarPicker userId={session?.id ?? 'guest-parent'} compact editable={false} />
-              <div>
-                <div className="text-base font-bold text-[#334038]">{lt(session?.displayName ?? '家长')}</div>
-                <div className="mt-0.5 text-xs text-[#9a9280]">
-                  {t("家长账号 ·")}{lt(isGuest ? '游客演示家庭' : '已连接家庭空间')}
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              {!isGuest && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    startOnboarding(welcomeSteps, true)
-                  }
-                >
-                  {t("重新看新手引导")}</Button>
-              )}
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                {t("退出登录")}</Button>
-            </div>
-          </div>
-        </motion.section>
-
-        <ParentQuestionnaireSection ownerId={session?.id ?? 'guest-parent'} token={isGuest ? undefined : session?.token} />
-
-        <motion.section variants={fadeUp} className={CARD_CLASS}>
-          <div className="p-6 sm:p-7">
-            <div className="luma-eyebrow text-[0.66rem] tracking-[0.2em] text-[#9b8a5f]">{t("家庭空间")}</div>
-            <h2 className="mt-1.5 font-display text-xl font-bold text-[#2c3a33]">{t("邀请孩子加入")}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-[#7d8777]">
-              {t("把这串邀请码发给孩子，ta 注册后就会出现在你的成长概览里，两个账号就连在一起了。")}</p>
-            <div data-onboarding="parent-invite" className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-luma-grass-50 px-5 py-4">
-              <span className="font-brand text-2xl font-bold tracking-[0.14em] text-luma-grass-700">
-                {inviteCode ?? '—'}
-              </span>
-              <Button
-                variant="secondary"
-                className="border-luma-grass-200 bg-white text-luma-grass-700 shadow-none hover:bg-luma-grass-100"
-                onClick={copyInviteCode}
-              >
-                {lt(copied ? '已复制 ✓' : '复制邀请码')}
-              </Button>
-            </div>
-          </div>
-        </motion.section>
-
-        <motion.section variants={fadeUp} className={CARD_CLASS}>
-          <div className="p-6 sm:p-7">
-            <div className="luma-eyebrow text-[0.66rem] tracking-[0.2em] text-[#9b8a5f]">{t("孩子管理")}</div>
-            <h2 className="mt-1.5 font-display text-xl font-bold text-[#2c3a33]">{t("和 ta 们连接")}</h2>
-            {!isGuest && selectedChild && session?.token && <ChildBirthDate key={selectedChild.id} childId={selectedChild.id} initial={me?.children.find(c => c.id === selectedChild.id)?.birthDate} token={session.token} onSaved={() => setFamilyRevision(n => n + 1)} />}
-            <div className="mt-5 space-y-2.5">
-              {children.map((child, index) => {
-                const active = child.id === selectedChild?.id
-                return (
-                  <button
-                    key={child.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedChildId(child.id)
-                      setActiveView('overview')
-                    }}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition',
-                      active
-                        ? 'border-luma-grass-200 bg-luma-grass-50'
-                        : 'border-[#efe8d9] bg-[#fdfcf8] hover:border-luma-grass-200',
-                    )}
-                  >
-                    <img src={childAvatar(child, index)} alt="" className="size-10 rounded-full object-contain" />
-                    <span className="flex-1">
-                      <span className="block text-sm font-bold text-[#334038]">{child.nickname}</span>
-                      <span className="mt-0.5 block text-xs text-[#9a9280]">{t("在成长概览中查看")}</span>
-                    </span>
-                    <ChevronRightIcon className="size-4 text-[#9a9280]" />
-                  </button>
-                )
-              })}
-              {children.length === 0 && (
-                <p className="rounded-2xl bg-[#faf7ef] px-4 py-3 text-sm text-[#9a9280]">
-                  {t("还没有孩子加入，先复制上方的邀请码吧。")}</p>
-              )}
-            </div>
-          </div>
-        </motion.section>
-
-        {!isGuest && session?.token && <div className="md:col-span-2"><FamilyDataSettings token={session.token} onDeleted={handleLogout} /></div>}
-        {isGuest && (
-          <motion.section variants={fadeUp} className={cn(CARD_CLASS)}>
-            <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-7">
-              <div>
-                <div className="text-sm font-bold text-[#334038]">{t("创建一个正式账号？")}</div>
-                <p className="mt-1 text-xs leading-relaxed text-[#9a9280]">
-                  {t("当前为演示家庭，所有内容仅用于体验呈现方式；注册后即可与真实创作数据相连。")}</p>
-              </div>
-              <Button
-                variant="primary"
-                className="bg-luma-grass-600 hover:bg-luma-grass-700"
-                onClick={() => {
-                  logout()
-                  navigate('/auth?role=parent&mode=register')
-                }}
-              >
-                {t("创建正式账号")}</Button>
-            </div>
-          </motion.section>
-        )}
-      </motion.div>
-    )
+    return <FamilySettings
+      ownerId={session?.id ?? 'guest-parent'}
+      parentName={session?.displayName ?? '家长'}
+      token={session?.token}
+      isGuest={isGuest}
+      children={children.map((child, index) => ({ id: child.id, nickname: child.nickname, avatar: childAvatar(child, index),
+        birthDate: me?.children.find(item => item.id === child.id)?.birthDate }))}
+      selectedChildId={selectedChild?.id}
+      inviteCode={inviteCode}
+      copied={copied}
+      onCopyInvite={copyInviteCode}
+      onSelectChild={id => { setSelectedChildId(id); setActiveView('overview') }}
+      onProfileSaved={() => setFamilyRevision(n => n + 1)}
+      onRestartTour={() => startOnboarding(welcomeSteps, true)}
+      onLogout={handleLogout}
+      onRegister={() => { logout(); navigate('/auth?role=parent&mode=register') }}
+    />
   }
 
   const readingMeta =
@@ -732,7 +626,7 @@ export function ParentDemoPage() {
       : null
 
   return (
-    <main className={cn('luma-parent-app luma-parent-shell text-[#3a463c]', activeView === 'communication' && 'luma-parent-chat-page')}>
+    <main className={cn('luma-parent-app luma-parent-shell text-[#3a463c]', activeView === 'communication' && 'luma-parent-chat-page', activeView === 'settings' && 'luma-parent-settings-page')}>
       <div className="luma-parent-stage">
         {/* 背景：柔和水彩底图 + 奶油色叠加，营造治愈氛围 */}
         <div className="luma-stage-bg" aria-hidden="true">

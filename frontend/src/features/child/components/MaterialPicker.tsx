@@ -19,13 +19,15 @@ interface Props {
   subjects: MaterialSubject[]
   initialSubject: string | null
   currentMaterialId?: string
+  targetName?: string
+  variantsOnly?: boolean
   busy?: boolean
   error?: string
   onChoose: (id: string) => void
   onClose: () => void
 }
 
-export function MaterialPicker({ subjects, initialSubject, currentMaterialId, busy = false, error, onChoose, onClose }: Props) {
+export function MaterialPicker({ subjects, initialSubject, currentMaterialId, targetName, variantsOnly = false, busy = false, error, onChoose, onClose }: Props) {
   const locale = useLocale()
   const en = locale === 'en'
   const titleId = useId(), searchId = useId()
@@ -37,7 +39,10 @@ export function MaterialPicker({ subjects, initialSubject, currentMaterialId, bu
   const normalized = query.trim().toLocaleLowerCase()
   const shownSubjects = subjects.filter(item => !normalized || [item.subject, item.name, ...item.aliases]
     .some(value => value.toLocaleLowerCase().includes(normalized)))
-  const selected = shownSubjects.find(item => item.subject === subject) ?? shownSubjects[0]
+  // A replacement picker never guesses a different subject, including when its
+  // requested subject is unavailable or the supplied catalogue is broader.
+  const selected = variantsOnly ? subjects.find(item => item.subject === initialSubject)
+    : shownSubjects.find(item => item.subject === subject) ?? shownSubjects[0]
 
   useEffect(() => {
     navigation.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView?.({ block: 'nearest' })
@@ -66,33 +71,37 @@ export function MaterialPicker({ subjects, initialSubject, currentMaterialId, bu
   }
 
   const subjectName = (item: MaterialSubject) => en ? item.subject.replace(/([a-z])([A-Z])/g, '$1 $2') : item.name
+  const drawingName = targetName || (selected && subjectName(selected))
+  const noOtherDrawing = variantsOnly && !selected?.materials.some(material => material.id !== currentMaterialId)
   return createPortal(<div className="nilo-material-backdrop" onClick={event => { if (event.target === event.currentTarget) onClose() }}>
-    <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="nilo-material-picker" onKeyDown={keyboard}>
+    <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className={`nilo-material-picker${variantsOnly ? ' nilo-material-picker-variants' : ''}`} onKeyDown={keyboard}>
       <header className="nilo-material-header">
-        <div><h2 id={titleId}>{en ? 'Pick a drawing' : '挑一张来画'}</h2><p>{en ? 'Choose a picture you like. Your own drawing stays.' : '看看哪张喜欢，你画的线条都留着。'}</p></div>
+        <div><h2 id={titleId}>{variantsOnly ? en ? `Another way to draw${drawingName ? ` ${drawingName}` : ''}` : drawingName ? `给${drawingName}换个画法` : '换个画法' : en ? 'Pick a drawing' : '挑一张来画'}</h2>
+          <p>{variantsOnly ? en ? 'Pick a drawing you like. Everything else stays.' : '挑张喜欢的，其他都留着。' : en ? 'Choose a picture you like. Your own drawing stays.' : '看看哪张喜欢，你画的线条都留着。'}</p></div>
         <button className="nilo-material-close" type="button" onClick={onClose} aria-label={en ? 'Close without changing' : '关闭，不换底图'}>×</button>
       </header>
-      <div className="nilo-material-search">
+      {!variantsOnly && <div className="nilo-material-search">
         <label htmlFor={searchId}>{en ? 'Find something to draw' : '找找想画什么'}</label>
         <input id={searchId} value={query} onChange={event => setQuery(event.target.value)} placeholder={en ? 'Cat, dog, school…' : '小猫、小狗、学校…'} autoComplete="off" />
-      </div>
+      </div>}
       {error && <p className="nilo-material-error" role="alert">{error}</p>}
       <div className="nilo-material-body">
-        <nav ref={navigation} className="nilo-material-subjects" aria-label={en ? 'Things to draw' : '想画的东西'}>
+        {!variantsOnly && <nav ref={navigation} className="nilo-material-subjects" aria-label={en ? 'Things to draw' : '想画的东西'}>
           {shownSubjects.map(item => <button type="button" key={item.subject} aria-pressed={selected?.subject === item.subject} onClick={() => setSubject(item.subject)}>
             <span>{subjectName(item)}</span><small>{item.materials.length}</small>
           </button>)}
-        </nav>
+        </nav>}
         <section ref={options} className="nilo-material-options" aria-label={en ? 'Drawing choices' : '可选画法'} aria-busy={busy}>
-          {selected ? <><h3>{subjectName(selected)}</h3><div className="nilo-material-grid">
-            {selected.materials.map((material, index) => <button type="button" className="nilo-material-card" key={material.id} disabled={busy}
+          {noOtherDrawing && <p className="nilo-material-empty" role="status">{en ? 'There are no other drawings of this yet. Let’s keep drawing!' : '暂时没有别的画法，我们先接着画吧。'}</p>}
+          {selected?.materials.length ? <><h3>{subjectName(selected)}</h3><div className="nilo-material-grid">
+            {selected.materials.map((material, index) => <button type="button" className="nilo-material-card" key={material.id} disabled={busy || (variantsOnly && currentMaterialId === material.id)}
               aria-label={en ? `Choose ${subjectName(selected)} drawing ${index + 1}` : `选择${subjectName(selected)}画法 ${index + 1}`}
               aria-pressed={currentMaterialId === material.id} onClick={() => onChoose(material.id)}>
               <span className="nilo-material-preview"><MaterialPreview material={material} /></span>
               <span className="nilo-material-card-caption"><span>{material.difficulty === 'beginner' ? (en ? 'Fewer lines' : '线条少一些') : material.difficulty === 'detailed' ? (en ? 'Look more closely' : '仔细观察画') : (en ? 'A few more details' : '细节多一些')}</span>
                 {currentMaterialId === material.id && <small>{en ? 'On your paper' : '正在画'}</small>}</span>
             </button>)}
-          </div></> : <p className="nilo-material-empty" role="status">{en ? 'No pictures found. Try another word.' : '还没找到，换个词试试吧。'}</p>}
+          </div></> : !variantsOnly && <p className="nilo-material-empty" role="status">{en ? 'No pictures found. Try another word.' : '还没找到，换个词试试吧。'}</p>}
         </section>
       </div>
     </div>

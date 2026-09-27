@@ -23,6 +23,8 @@ import { appendMaterialChoice, preferredMaterials, readMaterialChoices, saveMate
 import { recordTurnOutcome } from '../companion/diagnostics'
 import type { BrushKind } from '../brushes'
 import { clarificationReasons, emptyMemory, localCommand, drawingPlanFits, prepareDrawingPlan, prepareTurnProposal, proposalStrokes, readMemory, saveMemory, summarizeStroke, validateProposal, type CompanionReply, type DrawingProposal, type StoryMemory } from '../companion/proposals'
+import { sanitizeScenePlan, type ScenePlan } from '../../../../../shared/niloScenePlan.mjs'
+import { createSceneReplyPicker, editSceneLocally, isCompositeDrawingRequest, needsSceneIdea, sceneAnswer, sceneRenderResult, syncSceneGuide, type SceneGuide } from '../companion/sceneWorkflow'
 
 // Reserve space for the child's words even after many Nilo-only turns.
 function retainHistory(items: {role:'user'|'assistant';text:string}[]) {
@@ -31,8 +33,34 @@ function retainHistory(items: {role:'user'|'assistant';text:string}[]) {
 }
 type Phase = 'idle' | 'thinking' | 'sketching' | 'projected'
 interface VoiceFeedback { speak?: boolean; selectedObjectId?: string; traceId?: string; alternatives?: string[] }
-export interface Projection { tracing?: boolean; pristineEdit?: boolean; editTargetId?: string; deleting?: boolean; id: string; revision: number; proposal: DrawingProposal; additions: DrawingProposal[]; alternatives: DrawingProposal[]; aspect: number; turn?: boolean; durationMs?: number; turnSource?: 'ai' | 'local' }
+export interface Projection { scene?: SceneGuide; tracing?: boolean; pristineEdit?: boolean; editTargetId?: string; deleting?: boolean; id: string; revision: number; proposal: DrawingProposal; additions: DrawingProposal[]; alternatives: DrawingProposal[]; aspect: number; turn?: boolean; durationMs?: number; turnSource?: 'ai' | 'local' }
 const planItems = (preview: Projection) => [preview.proposal, ...preview.additions]
+function materialTarget(preview: Projection) {
+  const index = preview.scene
+    ? preview.scene.selectedId ? preview.scene.objectIds.indexOf(preview.scene.selectedId) : preview.scene.objectIds.length === 1 ? 0 : -1
+    : 0
+  if (index < 0) return null
+  const proposal = planItems(preview)[index], object = preview.scene?.plan.objects[index]
+  if (!proposal) return null
+  const render = object?.render
+  const currentMaterialId = proposal.illustrationId ?? proposal.recipeId
+    ?? (render?.kind === 'recipe' ? render.recipeId : render?.kind === 'illustration' ? render.illustrationId : undefined)
+  let subject = materialSubjectForProposal(proposal)
+  if (!subject && render?.kind === 'recipe') subject = materialSubjectForProposal({ template: 'custom', recipeId: render.recipeId })
+  if (!subject && render?.kind === 'illustration') subject = materialSubjectForProposal({ template: 'illustration', illustrationId: render.illustrationId })
+  if (!subject && render?.kind === 'compose') subject = materialSubjectForProposal({ template: render.primitive })
+  if (!subject && object) {
+    const identities = [...new Set([object.name, ...object.aliases].map(name => materialSubjectForProposal({ template: 'custom', subject: name })).filter(Boolean))]
+    if (identities.length === 1) subject = identities[0]!
+  }
+  return { index, objectId: object?.id, subject, currentMaterialId, name: object?.name ?? proposal.subject ?? proposal.template, proposal }
+}
+
+function materialReplacement(id: string, source: DrawingProposal, aspect: number) {
+  const next = validateProposal(createMaterialProposal(id, source, aspect))
+  // A different drawing must fit the frame the child already chose.
+  return next && (['x', 'y', 'width', 'height', 'rotation'] as const).every(key => Math.abs(next[key] - source[key]) < 1e-9) ? next : null
+}
 function attachmentFits(p: DrawingProposal, canvas: DrawingCanvasHandle, aspect = 1) {
   const tipScale = { round: 1, pencil: .4, marker: 1.8, crayon: 1, star: 2.5 }[p.brushKind ?? 'round']
   if (p.contact) return contactSamples(p.contact, aspect).every(point => canvas.hasInkAt(point, p.strokeWidth * tipScale / 2 + .5))
@@ -51,7 +79,7 @@ interface Options {
   aspect: () => number
   drawingStyle?: () => { brushKind: BrushKind; color: string; brushSize: number }
   surfaceSize?: () => { width: number; height: number }
-  onSpeak: (message: string) => void
+  onSpeak: (message: string, options?: { resumeListening?: boolean }) => void
   onCommitted: () => void
   onUnavailable?: () => void
 }
@@ -76,9 +104,10 @@ export function useCompanion(options: Options) {
   const setPhase = useCallback((next: Phase) => { phaseRef.current = next; setPhaseState(next) }, [])
   const [message, setMessage] = useState('')
   const [projection, setProjectionState] = useState<Projection | null>(() => options.initialGuide
-    ? { ...options.initialGuide, id: options.initialGuide.id ?? randomId(), revision: 0, alternatives: [], tracing: true } : null)
+    ? { ...options.initialGuide, ...(options.initialGuide.scene ? { scene: { ...options.initialGuide.scene, view: 'outline' } } : {}),
+      id: options.initialGuide.id ?? randomId(), revision: 0, alternatives: [], tracing: true } : null)
   const [objectChoices, setObjectChoices] = useState<{objects:CompanionEditChoice[];text:string}|null>(null)
-  const [materialPicker, setMaterialPicker] = useState<{ guideId: string; subject: string | null; subjects: MaterialSubject[]; busy?: boolean; error?: string } | null>(null)
+  const [materialPicker, setMaterialPicker] = useState<{ guideId: string; subject: string | null; subjects: MaterialSubject[]; objectId?: string; currentMaterialId?: string; targetName?: string; busy?: boolean; error?: string } | null>(null)
   const [materialChoices, setMaterialChoices] = useState(() => readMaterialChoices(options.preferenceChildId))
   const choicesRef = useRef(materialChoices)
   const materialRequest = useRef(0)
@@ -90,6 +119,11 @@ export function useCompanion(options: Options) {
   const history = useRef<{ role: 'user' | 'assistant'; text: string }[]>([])
   const recentReplies = useRef<string[]>([])
   const pickReply = useRef(createReplyPicker())
+  const pickSceneReply = useRef(createSceneReplyPicker())
+  const [sceneIdea, setSceneIdeaState] = useState<{ plan: ScenePlan; revision: number; editing?: boolean } | null>(null)
+  const sceneIdeaRef = useRef(sceneIdea)
+  const setSceneIdea = useCallback((idea: typeof sceneIdea) => { sceneIdeaRef.current = idea; setSceneIdeaState(idea) }, [])
+  const sceneUndo = useRef<Projection[]>([])
   const generation = useRef(0)
   const active = useRef<AbortController | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -124,28 +158,31 @@ export function useCompanion(options: Options) {
       : { ...previous, rejectedTemplates: recent(previous.rejectedTemplates, templates), rejectedSubjects: recent(previous.rejectedSubjects, subjects) })
   }, [remember])
   const setProjection = useCallback((value: Projection | null) => { current.current = value; setProjectionState(value); closeMaterialPicker() }, [closeMaterialPicker])
-  const say = useCallback((text: string, speak = true) => {
+  const say = useCallback((text: string, speak = true, speechOptions?: { resumeListening?: boolean }) => {
     const localized = t(text, ref.current.locale)
     setMessage(localized)
     if (speak) {
       // Wording memory only; never evidence of a child's story or authored marks.
       recentReplies.current = [...recentReplies.current, localized].slice(-3)
-      ref.current.onSpeak(localized)
+      if (speechOptions) ref.current.onSpeak(localized, speechOptions)
+      else ref.current.onSpeak(localized)
     }
   }, [])
   const cancel = useCallback((clearMessage = true, preserveGuide = false) => {
     const guide = preserveGuide && current.current?.tracing ? { ...current.current, turn: false } : null
+    if (!preserveGuide) sceneUndo.current = []
     generation.current++
     active.current?.abort(); active.current = null
     if (timer.current) clearTimeout(timer.current)
     timer.current = null
     busy.current = false
     awaitingSelection.current = null
+    setSceneIdea(null)
     ref.current.canvas.current?.previewWithoutObject?.(null)
     setObjectChoices(null)
     setProjection(guide); setPhase(guide ? 'projected' : 'idle')
     if (clearMessage) setMessage('')
-  }, [setProjection, setPhase])
+  }, [setProjection, setPhase, setSceneIdea])
   const interrupt = useCallback(() => cancel(true, true), [cancel])
   useEffect(() => {
     if (!options.enabled) interrupt()
@@ -413,6 +450,111 @@ export function useCompanion(options: Options) {
     }
   }, [cancel, drawTurn, remember, say, setPhase, setProjection, show, valid])
 
+  const requestScene = useCallback(async function runScene(stage: 'plan' | 'render', utterance: string, plan?: ScenePlan, speak = true, direct = false): Promise<void> {
+    const opt = ref.current, canvas = opt.canvas.current
+    if (!canvas || !opt.enabled || opt.allowDrawing === false || document.visibilityState === 'hidden') return
+    const previous = current.current
+    cancel(false, true)
+    const version = generation.current, revision = canvas.getRevision(), aspect = opt.aspect()
+    const controller = new AbortController(); active.current = controller; busy.current = true
+    setPhase('thinking')
+    say(stage === 'plan' ? pickSceneReply.current('thinking', opt.locale)
+      : (opt.locale === 'en' ? 'I’m preparing the scene guide we chose.' : '我来准备我们商量好的场景底图。'), stage === 'plan' && speak, { resumeListening: false })
+    const timeout = setTimeout(() => controller.abort(), stage === 'plan' ? 26000 : 32000)
+    let onAbort: (() => void) | undefined
+    try {
+      const abort = new Promise<never>((_, reject) => { onAbort = () => reject(new Error('scene_cancelled')); controller.signal.addEventListener('abort', onAbort, { once: true }) })
+      const image = canvas.exportCompanionObservation()
+      const raw = await Promise.race([authFetch<{ status: string; reply?: string; plan?: unknown; reason?: string }>('/nilo/scene', {
+        method: 'POST', token: opt.token, signal: controller.signal,
+        body: { stage, utterance, locale: opt.locale, plan, imageBase64: image?.split(',')[1], context: {
+          canvasAspect: aspect, canvasSize: opt.surfaceSize?.(), drawingStyle: opt.drawingStyle?.(), revision, requestScope: direct ? 'object' : 'scene',
+          scene: canvas.getCompanionScene(), history: history.current.slice(-6),
+          ...(previous?.scene ? { previousScene: { plan: previous.scene.plan, objects: planItems(previous).map((proposal, i) => ({
+            id: previous.scene!.objectIds[i], name: previous.scene!.plan.objects[i].name, proposal,
+          })) } } : {}),
+        } },
+      }), abort])
+      if (controller.signal.aborted || version !== generation.current || !ref.current.enabled) return
+      if (canvas.getRevision() !== revision) {
+        setPhase(current.current ? 'projected' : 'idle')
+        say(opt.locale === 'en' ? 'You added something! Let’s look at the new picture before we continue.' : '你又添了新内容，我们先看看新画面再继续吧。', speak)
+        return
+      }
+      if (stage === 'plan') {
+        const proposed = raw.status === 'proposed' ? sanitizeScenePlan(raw.plan) : null
+        if (!proposed) throw new Error(raw.reason ?? 'invalid_scene_plan')
+        if (direct) { await runScene('render', utterance, proposed, speak); return }
+        setSceneIdea({ plan: proposed, revision })
+        setPhase(current.current ? 'projected' : 'idle')
+        history.current = retainHistory([...history.current, { role: 'user', text: utterance.slice(0, 400) }])
+        say(raw.reply?.trim() || proposed.summary, speak)
+        return
+      }
+      const rendered = sceneRenderResult(raw)
+      if (!rendered || !plan || rendered.plan.objects.length !== plan.objects.length
+        || rendered.plan.objects.some((object, index) => object.id !== plan.objects[index].id || object.name !== plan.objects[index].name
+          || JSON.stringify(object.essential) !== JSON.stringify(plan.objects[index].essential))) throw new Error(raw.reason ?? 'invalid_scene_render')
+      const next: Projection = { id: randomId(), revision, aspect, tracing: true, proposal: rendered.proposals[0],
+        additions: rendered.proposals.slice(1), alternatives: [], scene: syncSceneGuide({ plan: rendered.plan, objectIds: rendered.ids, view: 'outline' }, rendered.proposals, rendered.ids, true) }
+      if (!valid(next)) throw new Error('scene_geometry')
+      sceneUndo.current = previous?.scene ? [...sceneUndo.current, previous].slice(-8) : []
+      setSceneIdea(null); setProjection(next); setPhase('projected'); rememberPlan(rendered.proposals, true)
+      history.current = retainHistory([...history.current, { role: 'assistant', text: `场景参考：${rendered.plan.summary}` }])
+      say(pickSceneReply.current('ready', opt.locale), speak)
+    } catch (error) {
+      if (version !== generation.current || !ref.current.enabled) return
+      setPhase(current.current ? 'projected' : 'idle')
+      if (stage === 'render' && plan) setSceneIdea({ plan, revision })
+      const network = error instanceof ApiError || controller.signal.aborted
+      say(network ? requestFailureMessage(error, controller.signal.aborted)
+        : stage === 'render' ? (opt.locale === 'en' ? 'This scene did not draw correctly yet. Your picture is safe. We can retry this idea or change it.' : '这幅场景还没画好，你原来的画都在。可以再试着画，或者一起改改构思。')
+          : (opt.locale === 'en' ? 'I did not finish this idea. Tell me the part you most want to draw.' : '这次构思还没整理好，告诉我你最想画的部分吧。'), speak)
+    } finally {
+      clearTimeout(timeout)
+      if (onAbort) controller.signal.removeEventListener('abort', onAbort)
+      if (version === generation.current) { busy.current = false; active.current = null }
+    }
+  }, [cancel, rememberPlan, say, setPhase, setProjection, setSceneIdea, valid])
+
+  const confirmSceneIdea = useCallback(() => {
+    const idea = sceneIdeaRef.current, canvas = ref.current.canvas.current
+    if (!idea || !canvas || busy.current) return
+    if (canvas.getRevision() !== idea.revision) {
+      return requestScene('plan', idea.plan.request, idea.plan)
+    }
+    return requestScene('render', idea.plan.request, idea.plan)
+  }, [requestScene])
+  const reviseSceneIdea = useCallback(() => {
+    const idea = sceneIdeaRef.current
+    if (!idea || busy.current) return
+    setSceneIdea({ ...idea, editing: true })
+    say(pickSceneReply.current('revise', ref.current.locale))
+  }, [say, setSceneIdea])
+  const dismissSceneIdea = useCallback(() => {
+    setSceneIdea(null)
+    say(ref.current.locale === 'en' ? 'We can leave this idea for later. Your picture stays as it is.' : '先收起这个构思，你的画保持原样。')
+  }, [say, setSceneIdea])
+  const selectSceneObject = useCallback((id?: string) => {
+    const p = current.current
+    if (!p?.scene || (id && !p.scene.objectIds.includes(id))) return
+    setProjection({ ...p, scene: { ...p.scene, selectedId: p.scene.selectedId === id ? undefined : id } })
+  }, [setProjection])
+  const editSceneObject = useCallback((id: string, patch: Partial<DrawingProposal>) => {
+    const p = current.current
+    if (!ref.current.enabled || phaseRef.current !== 'projected' || !p?.scene) return
+    const index = p.scene.objectIds.indexOf(id)
+    if (index < 0) return
+    const proposals = planItems(p), next = validateProposal({ ...proposals[index], ...patch })
+    if (!next || !placementFits(next, p.aspect, ref.current.surfaceSize?.())) return
+    proposals[index] = next
+    setProjection({ ...p, proposal: proposals[0], additions: proposals.slice(1), scene: syncSceneGuide(p.scene, proposals) })
+  }, [setProjection])
+  const beginSceneEdit = useCallback(() => {
+    const p = current.current
+    if (p?.scene) sceneUndo.current = [...sceneUndo.current, p].slice(-8)
+  }, [])
+
   const takeTurn = useCallback(() => {
     if (ref.current.allowDrawing === false || phaseRef.current !== 'idle') return
     return ask(t('轮到你了，请接着我的画继续创作。', ref.current.locale), true, { speak: true, takeTurn: true })
@@ -454,6 +596,19 @@ export function useCompanion(options: Options) {
     if (phaseRef.current !== 'projected') { if (speak) ref.current.onSpeak(''); return }
     const p = current.current
     if (!p || !valid(p)) { cancel(); say('画面已经变了，我们重新看一下吧。', speak); return }
+    if (p.scene) {
+      const target = p.scene.plan.objects.find(object => object.id === p.scene!.selectedId)
+        ?? (p.scene.plan.objects.length === 1 ? p.scene.plan.objects[0] : undefined)
+      if (!target) {
+        say(ref.current.locale === 'en' ? 'Which part? Choose an object below, then tell me your change.' : '想改哪一个？点下面的物体名字，再告诉我怎么改吧。', speak)
+        return
+      }
+      const request = ref.current.locale === 'en'
+        ? `Give only “${target.name}” a different drawing style. Keep its size and position, and keep all other scene objects unchanged.`
+        : `请只给场景中的“${target.name}”换一种画法，保留它的大小和位置，其他所有物体保持原样。`
+      await requestScene('plan', request, p.scene.plan, speak)
+      return
+    }
     const version = generation.current
     await refreshMaterialCuration()
     if (version !== generation.current || current.current?.id !== p.id || !available()) return
@@ -473,45 +628,71 @@ export function useCompanion(options: Options) {
       ? `Show a different way to draw the same ${name} in this guide. Keep its content, size and position.`
       : `请给当前底图中的“${name}”换一种画法，保留原来的内容、大小和位置。`
     void ask(request, true, { ...feedback, voiceEdit: true, variantOnly: true })
-  }, [ask, cancel, say, show, valid])
-  const materialSubjects = useCallback(() => listMaterialSubjects().map(group => ({ ...group,
-    materials: rankMaterials(group.materials, preferredMaterials(choicesRef.current, group.subject)),
-  })), [])
+  }, [ask, cancel, requestScene, say, show, valid])
+  const materialSubjects = useCallback((p: Projection, target: NonNullable<ReturnType<typeof materialTarget>>) => listMaterialSubjects()
+    .filter(group => group.subject === target.subject).map(group => ({ ...group,
+      materials: rankMaterials(group.materials, preferredMaterials(choicesRef.current, group.subject)).filter(material => {
+        const proposal = materialReplacement(material.id, target.proposal, p.aspect)
+        return proposal && placementFits(proposal, p.aspect, ref.current.surfaceSize?.())
+      }),
+    })), [])
   const openMaterialPicker = useCallback(async () => {
     const p = current.current, opt = ref.current
     if (!p || !valid(p) || phaseRef.current !== 'projected' || !opt.enabled || opt.allowDrawing === false) return
+    const target = materialTarget(p)
+    if (!target) {
+      say(opt.locale === 'en' ? 'Choose the object below, then tap “Choose another” to see its drawings.' : '先点下面想换的物品，再点“换一个”，看看它的其他画法吧。', false)
+      return
+    }
     const ticket = ++materialRequest.current, version = generation.current
     await refreshMaterialCuration()
     if (ticket !== materialRequest.current || version !== generation.current || current.current?.id !== p.id
       || !ref.current.enabled || ref.current.allowDrawing === false || document.visibilityState === 'hidden') return
-    setMaterialPicker({ guideId: p.id, subject: materialSubjectForProposal(p.proposal), subjects: materialSubjects() })
-  }, [materialSubjects, valid])
+    setMaterialPicker({ guideId: p.id, subject: target.subject, subjects: materialSubjects(p, target), objectId: target.objectId,
+      currentMaterialId: target.currentMaterialId, targetName: p.scene ? target.name : variantSubjectName(target.proposal, opt.locale) || target.name })
+  }, [materialSubjects, say, valid])
   const chooseMaterial = useCallback(async (materialId: string) => {
     const p = current.current
     const available = () => ref.current.enabled && ref.current.allowDrawing !== false && document.visibilityState !== 'hidden'
     if (!p || materialPicker?.guideId !== p.id || materialPicker.busy || !valid(p) || phaseRef.current !== 'projected'
       || !available()) return
+    const target = materialTarget(p)
+    if (!target || target.objectId !== materialPicker.objectId || target.subject !== materialPicker.subject
+      || !materialPicker.subjects.some(group => group.materials.some(material => material.id === materialId))) return
+    if (materialId === target.currentMaterialId) { closeMaterialPicker(); return }
     const ticket = ++materialRequest.current, version = generation.current
     setMaterialPicker(value => value ? { ...value, busy: true, error: undefined } : null)
     await refreshMaterialCuration()
     if (ticket !== materialRequest.current || version !== generation.current || current.current?.id !== p.id
       || !available()) return
     const material = getMaterial(materialId)
-    const proposal = material && validateProposal(createMaterialProposal(materialId, p.proposal, p.aspect))
+    const proposal = material?.subject === target.subject ? materialReplacement(materialId, target.proposal, p.aspect) : null
+    const proposals = planItems(p)
+    if (proposal) proposals[target.index] = p.scene
+      ? validateProposal({ ...proposal, subject: target.name, target: target.name, relation: target.proposal.relation }) ?? proposal
+      : proposal
+    const scene = p.scene && material ? syncSceneGuide({ ...p.scene, selectedId: target.objectId,
+      plan: { ...p.scene.plan, objects: p.scene.plan.objects.map(object => object.id === target.objectId ? { ...object,
+        name: proposals[target.index].subject ?? object.name,
+        aliases: [...new Set([object.name, ...object.aliases])].filter(name => name !== proposals[target.index].subject).slice(0, 6),
+        render: material.kind === 'recipe' ? { kind: 'recipe', recipeId: material.id } : { kind: 'illustration', illustrationId: material.id },
+      } : object) },
+    }, proposals) : undefined
     const next: Projection | null = proposal ? { id: randomId(), revision: ref.current.canvas.current!.getRevision(),
-      proposal, additions: [], alternatives: [], aspect: p.aspect, tracing: true } : null
+      proposal: proposals[0], additions: proposals.slice(1), alternatives: [], aspect: p.aspect, tracing: true, ...(scene ? { scene } : {}) } : null
     if (!material || !next || !valid(next)) {
       const error = ref.current.locale === 'en' ? 'This picture is not available here. Try another one.' : '这张暂时不能放在这里，再挑一张试试吧。'
-      setMaterialPicker(value => value ? { ...value, subjects: materialSubjects(), busy: false, error } : null)
+      setMaterialPicker(value => value ? { ...value, subjects: materialSubjects(p, target), busy: false, error } : null)
       say(error, false)
       return
     }
-    show(next, ref.current.locale === 'en' ? 'Your chosen guide is ready. Draw it your way.' : '你选的底图准备好啦，画法由你决定。', false)
+    if (p.scene) sceneUndo.current = [...sceneUndo.current, p].slice(-8)
+    show(next, ref.current.locale === 'en' ? 'Your chosen drawing is ready. Keep drawing your way.' : '换好画法啦，接着按你的想法画吧。', false)
     if (current.current?.id !== next.id) return
     const choices = appendMaterialChoice(choicesRef.current, material)
     choicesRef.current = choices; setMaterialChoices(choices)
     saveMaterialChoices(ref.current.preferenceChildId, choices)
-  }, [materialPicker, materialSubjects, say, show, valid])
+  }, [closeMaterialPicker, materialPicker, materialSubjects, say, show, valid])
   const edit = useCallback((patch: Partial<DrawingProposal>, speak = false) => {
     if (!ref.current.enabled) return
     if (phaseRef.current !== 'projected') { ref.current.onSpeak(''); return }
@@ -663,12 +844,60 @@ export function useCompanion(options: Options) {
     const traceId=feedback.traceId??newVoiceTrace(),speak=feedback.speak!==false,started=Date.now()
     if(ref.current.allowDrawing===false){await ask(text,false,{...feedback,inferDrawingIntent:true});return}
     const basic=localCommand(text)
+    const drawingAdvice = /(?:怎么|怎样|如何).*(?:画|绘)|(?:教我|教程|步骤)|\b(?:how\b.*\b(?:draw|paint|sketch)|tutorial|teach me)\b/i.test(text)
+    const requestsDrawing = !drawingAdvice && /^只画|帮.*画|请.*画|你.*画|你来|轮到你|添|加.*(点|个|一)|画.*给我|^(?:请|帮我|给我)?\s*(?:画|绘制).+|\b(draw|add)\b|your turn|help.*(paint|sketch)/i.test(text)
+    if (basic === 'stop') { interrupt(); ref.current.onSpeak(''); return }
+    const idea = sceneIdeaRef.current
+    if (idea) {
+      const answer = sceneAnswer(text)
+      if (answer === 'yes') { await confirmSceneIdea(); return }
+      if (answer === 'no') { dismissSceneIdea(); return }
+      // A new, explicit simple subject supersedes an unaccepted scene idea.
+      if ((isNewDrawingRequest(text) || requestsDrawing) && !isVoiceSuggestion(text) && !needsSceneIdea(text) && !isVoiceEditRequest(text)) setSceneIdea(null)
+      else { await requestScene('plan', text, idea.plan, speak); return }
+    }
+    if (active.current && current.current?.scene) {
+      const cancelWork = basic === 'dismiss' && !/底图|\bguide\b/i.test(text)
+      cancel(false, true)
+      if (cancelWork) { say(ref.current.locale === 'en' ? 'Stopped. Your previous scene is still here.' : '停下来了，原来的场景还在。', speak); return }
+    }
+    if ((objectEditCommand(text) === 'undo' || /^(?:撤销|撤回)[。！!]*$/.test(text.trim())) && current.current?.scene && sceneUndo.current.length) {
+      const previous = sceneUndo.current.pop()!
+      setProjection({ ...previous, revision: ref.current.canvas.current?.getRevision() ?? previous.revision }); setPhase('projected')
+      say(ref.current.locale === 'en' ? 'The previous scene is back.' : '恢复刚才的场景啦。', speak); return
+    }
+    if (needsSceneIdea(text) && !drawingAdvice && !isVoiceSuggestion(text)) {
+      await requestScene('plan', text, current.current?.scene?.plan, speak); return
+    }
+    if (current.current?.scene && !drawingAdvice && !isVoiceSuggestion(text) && (requestsDrawing || isNewDrawingRequest(text)
+      || /^(?:请|帮我|给我)?在(?:左上角|右上角|左下角|右下角|左边|右边|上面|下面)(?:再)?画/u.test(text.trim())
+      || /^(?:请|帮我)?(?:给|在).+(?:加|添)(?:一个|一颗|一棵|一扇|一点)/u.test(text.trim()))) {
+      await requestScene('plan', text, current.current.scene.plan, speak, true); return
+    }
+    if (isCompositeDrawingRequest(text) && !drawingAdvice && !isVoiceSuggestion(text)) {
+      await requestScene('plan', text, current.current?.scene?.plan, speak, true); return
+    }
+    if (current.current?.scene && isVoiceEditRequest(text) && !isNewDrawingRequest(text) && !isVoiceSuggestion(text)
+      && !['accept', 'dismiss', 'forget', 'alternative'].includes(typeof basic === 'string' ? basic : '')) {
+      const p = current.current, result = editSceneLocally(text, p.scene!, planItems(p))
+      if (result.status === 'edited') {
+        const next = { ...p, proposal: result.proposals[0], additions: result.proposals.slice(1), scene: result.scene }
+        if (!valid(next)) { say('这样调整会超出画纸，原来的场景先保留。', speak); return }
+        sceneUndo.current = [...sceneUndo.current, p].slice(-8)
+        setProjection(next); setPhase('projected'); say(pickSceneReply.current('edited', ref.current.locale), speak); return
+      }
+      if (result.status === 'empty') { dismiss(feedback); return }
+      if (result.status === 'invalid') { say('这样调整会超出画纸，原来的场景先保留。', speak); return }
+      if (result.status === 'ambiguous') {
+        say(ref.current.locale === 'en' ? 'Which part? Choose an object below, then tell me your change.' : '想改哪一个？点下面的物体名字，再告诉我怎么改吧。', speak); return
+      }
+      await requestScene('plan', text, p.scene!.plan, speak); return
+    }
     if (basic === 'accept') {
       if(/确认移除|confirm removal/i.test(text)&&!current.current?.deleting)return
       accept(feedback); return
     }
     if (basic === 'dismiss' && !/不要那|不要这/.test(text)) { dismiss(feedback); return }
-    if (basic === 'stop') { interrupt(); ref.current.onSpeak(''); return }
     if (basic === 'forget') { forget(); return }
     if(objectEditCommand(text)==='undo'){
       cancel(false)
@@ -683,7 +912,6 @@ export function useCompanion(options: Options) {
     if(basic==='alternative'){alternative(feedback);return}
     if(isVoiceSuggestion(text)){await ask(text,false,{...feedback,voiceEdit:true});return}
     if(isNewDrawingRequest(text)||!isVoiceEditRequest(text)||/^(?:请)?(?:只)?(?:帮我)?(?:画|绘制)(?:一半|半个|半边|一个|个)|^(?:please )?(?:draw|paint) /i.test(text)){
-      const requestsDrawing=/^只画|帮.*画|请.*画|你.*画|你来|轮到你|添|加.*(点|个|一)|画.*给我|^(?:请|帮我|给我)?\s*(?:画|绘制).+|\b(draw|add)\b|your turn|help.*(paint|sketch)/i.test(text)
       await ask(text,requestsDrawing,{...feedback,inferDrawingIntent:!requestsDrawing});return
     }
     const canvas=ref.current.canvas.current
@@ -762,7 +990,7 @@ export function useCompanion(options: Options) {
     say(next.tracing?pickReply.current('guideAdjusted',ref.current.locale):next.deleting?'先收起来，确认后才会移除。':'调整好啦，喜欢的话就留下来。',speak)
     if(!speak)ref.current.onSpeak('')
     recordVoiceEvent({turn:traceId,stage:'execute',outcome:'previewed',actions:plan.actions.map(a=>a.type)})
-  },[accept,alternative,ask,beginObjectEdit,cancel,dismiss,forget,interrupt,receiveAssisted,say,setPhase,setProjection,valid])
+  },[accept,alternative,ask,beginObjectEdit,cancel,confirmSceneIdea,dismiss,dismissSceneIdea,forget,interrupt,receiveAssisted,requestScene,say,setPhase,setProjection,setSceneIdea,valid])
   const notifySelectionChanged=useCallback((complete=true)=>{
     // A selection is part of the command's context. Even while adding to a
     // lasso, invalidate old inference; replay only when the child says done.
@@ -806,5 +1034,6 @@ export function useCompanion(options: Options) {
     else say('还没有可以修改的 Nilo 作品。',false)
   },[say,setPhase])
 
-  return { objectChoices, chooseObject, openObjects, materialPicker, materialChoices, openMaterialPicker, closeMaterialPicker, chooseMaterial, notifySelectionChanged, phase, message, projection, memory, metrics: metrics.current, ask, takeTurn, receive, accept, dismiss, alternative, edit, cancel, interrupt, finishTurn, say, forget }
+  return { sceneIdea, confirmSceneIdea, reviseSceneIdea, dismissSceneIdea, selectSceneObject, editSceneObject, beginSceneEdit,
+    objectChoices, chooseObject, openObjects, materialPicker, materialChoices, openMaterialPicker, closeMaterialPicker, chooseMaterial, notifySelectionChanged, phase, message, projection, memory, metrics: metrics.current, ask, takeTurn, receive, accept, dismiss, alternative, edit, cancel, interrupt, finishTurn, say, forget }
 }

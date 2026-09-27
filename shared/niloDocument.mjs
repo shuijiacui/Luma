@@ -1,5 +1,6 @@
 import { validateSketch } from './niloSketch.mjs'
 import { applyAssistedActions, applyAssistedReversal, assistedReversal } from './niloCanvasEdits.mjs'
+import { drawingProposalLimits } from './niloProposalLimits.mjs'
 const range=(v,a,b)=>typeof v==='number'&&Number.isFinite(v)&&v>=a&&v<=b
 const id=v=>typeof v==='string'&&v.length>0&&v.length<=100
 const brushes=new Set(['round','pencil','marker','crayon','star'])
@@ -28,8 +29,11 @@ export function validateDrawingDocument(value) {
     if(op.object!==undefined){
       const o=op.object
       if(op.owner!=='nilo'||!o||typeof o.name!=='string'||o.name.length>240||!range(o.aspect,.2,5)||!Array.isArray(o.proposals)||!o.proposals.length||o.proposals.length>4)return false
-      if(o.proposals.some(p=>!p||p.template==='illustration'||p.illustrationId!==undefined||!range(p.x,0,1)||!range(p.y,0,1)||!range(p.width,.025,.45)||!range(p.height,.025,.45)||p.x+p.width>1||p.y+p.height>1
-        ||!/^#[0-9a-f]{6}$/i.test(p.color)||!range(p.strokeWidth,1,32)||(p.template==='custom'&&!validateSketch(p.sketch))))return false
+      if(o.proposals.some(p=>{
+        const {minSpan,maxSpan,maxArea}=drawingProposalLimits(p)
+        return !p||p.template==='illustration'||p.illustrationId!==undefined||!range(p.x,0,1)||!range(p.y,0,1)||!range(p.width,minSpan,maxSpan)||!range(p.height,minSpan,maxSpan)||p.width*p.height>maxArea||p.x+p.width>1||p.y+p.height>1
+          ||!/^#[0-9a-f]{6}$/i.test(p.color)||!range(p.strokeWidth,1,32)||(p.template==='custom'&&!validateSketch(p.sketch))
+      }))return false
     }
     return true
   }
