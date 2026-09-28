@@ -59,7 +59,7 @@ function setup(initial: { ownerId: string; artworkId: string | undefined; allowD
     exportObservation: vi.fn(() => 'data:image/png;base64,CHILD'),
     exportCompanionObservation: vi.fn(() => 'data:image/png;base64,COMPOSITE'), commitCompanionStrokes: commit,
   } as unknown as DrawingCanvasHandle }
-  const hook = renderHook(props => useCompanion({ tracing: false, ...props, locale: 'zh', canvas, aspect: () => 1.5,
+  const hook = renderHook(props => useCompanion({ tracing: false, ...props, token: props.ownerId.startsWith('guest') ? undefined : 'test-child-token', locale: 'zh', canvas, aspect: () => 1.5,
     surfaceSize: () => ({ width: 900, height: 600 }), drawingStyle: () => ({ brushKind: 'pencil', color: '#123456', brushSize: 4 }),
     onSpeak, onCommitted, onUnavailable }), { initialProps: initial })
   return { ...hook, state, canvas, commit, onSpeak, onCommitted, onUnavailable }

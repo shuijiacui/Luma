@@ -1,3 +1,4 @@
+import { needsCreativeScenePlanning } from '../../../../../shared/niloSceneScope.mjs'
 import { sanitizeScenePlan, type ScenePlan } from '../../../../../shared/niloScenePlan.mjs'
 import { validateProposal, type DrawingProposal } from './proposals'
 import { applyVoiceActions, simpleVoiceActions } from './voiceActions'
@@ -11,19 +12,8 @@ export interface SceneGuide {
   selectedId?: string
 }
 
-/** Clear, single-object instructions keep the existing direct drawing path. */
-export function needsSceneIdea(text: string): boolean {
-  const value = text.trim()
-  // A literal book remains one object even when its title contains a scene style.
-  if (/^(?:请|帮我|给我|我想要?|我要|你|再|\s)*(?:画|绘制)(?:一?本)[^，,。！？!?]*(?:书|绘本)(?:吧|呀|啊)?[。！!？?]*$/u.test(value)
-    || /^(?:please\s+)?(?:draw|paint)\s+(?:a|one|the)\s+[^,.!?]*(?:book|storybook)[.!?]*$/i.test(value)) return false
-  if (!/画|绘|创作|设计|布置|添|加|\b(draw|paint|create|make|add)\b/i.test(value)) {
-    // Children often answer with just the setting they want, without repeating “draw”.
-    return /^(?:童话(?:故事)?|故事书|梦幻|奇幻|魔法|迪士尼)(?:里|中|那样|一样|般)?的?(?:森林|城堡|天空|海洋|花园|村庄|小镇|世界|场景)(?:场景)?[吧呀啊。！!]*$/u.test(value)
-  }
-  if (/^(?:请|帮我|给我|你|再|能不能|可以|\s)*(?:在)?(?:左上角|右上角|左下角|右下角|上面|下面|左边|右边)?(?:画|加|添)(?:一个|一颗|一轮|一朵|一棵|一只|个|颗|朵|棵|只)?(?:[红黄蓝绿粉紫橙白黑]色的?)?(?:太阳|月亮|星星|云朵?|树|小?花|小?猫|小?狗|小?船)(?:在|到|放在)?(?:左上角|右上角|左下角|右下角|上面|下面|左边|右边)?[吧呀啊。！!？?]*$/u.test(value)) return false
-  return /场景|世界|整[幅张个].*(?:画|梦幻|童话)|(?:梦幻|童话|魔法|奇幻|迪士尼).*(?:画|风格|城堡|森林|天空|海洋)|(?:画|绘|创作).*(?:梦幻|童话|魔法|奇幻|迪士尼)|\b(scene|world|landscape|dreamy|fairytale|fairy[- ]tale|disney)\b/i.test(value)
-}
+/** Keep browser routing and server understanding on the same scope boundary. */
+export const needsSceneIdea = needsCreativeScenePlanning
 
 /** A specified unusual object can use composition without another permission question. */
 export function isCompositeDrawingRequest(text: string): boolean {

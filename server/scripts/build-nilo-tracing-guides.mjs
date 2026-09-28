@@ -3,13 +3,18 @@ import { fileURLToPath } from 'node:url'
 import { resolve, sep } from 'node:path'
 import { createHash } from 'node:crypto'
 import { PNG } from 'pngjs'
-import { illustrationCatalogue, getDrawingIllustration } from '../../shared/niloIllustrations.mjs'
+import { illustrationCatalogue, getDrawingIllustration, drawingIllustrations } from '../../shared/niloIllustrations.mjs'
 import { rasterTracingPaths, tracingProjectionMode } from '../src/services/niloRasterTracing.js'
 
 const publicRoot = fileURLToPath(new URL('../../frontend/public/', import.meta.url))
 const output = resolve(publicRoot, 'nilo-tracing')
 const id = process.argv.find(value => value.startsWith('--id='))?.slice(5)
-const assets = id ? [getDrawingIllustration(id)].filter(Boolean) : illustrationCatalogue().map(item => getDrawingIllustration(item.id))
+const collection = process.argv.find(value => value.startsWith('--collection='))?.slice(13)
+if (id && collection) throw new Error('Choose --id or --collection')
+// Prepare quarantined imports too, so later reviewer approval works instantly.
+const assets = id ? [getDrawingIllustration(id)].filter(Boolean) : collection
+  ? drawingIllustrations.filter(item => item.collection === collection)
+  : illustrationCatalogue().map(item => getDrawingIllustration(item.id))
 if (!assets.length) throw new Error('No registered illustration matches --id')
 await mkdir(output, { recursive: true })
 let points = 0, bytes = 0, updated = 0

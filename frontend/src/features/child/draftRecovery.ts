@@ -18,21 +18,38 @@ export function discardStoredDraft(owner: string, artwork: string | null): boole
   try { sessionStorage.removeItem(key(owner, artwork)); return true } catch { return false }
 }
 
-export function persistChildDraft(owner: string, artwork: string | null, draft: ChildDraft): boolean {
+export interface DraftPersistence { saved: boolean; guideOmitted: boolean }
+
+export function persistChildDraftWithStatus(owner: string, artwork: string | null, draft: ChildDraft): DraftPersistence {
   try {
     const document = draft.canvas.document
     const legacyImage = draft.canvas.history.at(-1)
-    if (!draft.tracingGuide && (document ? !document.baseImage && !document.operations.length : !legacyImage)) return discardStoredDraft(owner, artwork)
+    if (!draft.tracingGuide && (document ? !document.baseImage && !document.operations.length : !legacyImage)) return { saved: discardStoredDraft(owner, artwork), guideOmitted: false }
     // Do not duplicate the full raster when replayable strokes exist, or store
     // analysis, pending requests, voice, or conversation in a recovery draft.
     const value = { version: 1, owner, artwork, document, image: document ? undefined : legacyImage,
       color: draft.color, brushSize: draft.brushSize, brushKind: draft.brushKind, isEraser: draft.isEraser,
-      artworkId: draft.artworkId, artworkRevision: draft.artworkRevision, tracingGuide: draft.tracingGuide }
+      artworkId: draft.artworkId, artworkRevision: draft.artworkRevision }
+    // A temporary reference must never prevent newer child strokes replacing
+    // the previous recovery. Keep the in-memory guide visible either way.
+    if (draft.tracingGuide) {
+      try {
+        const withGuide = JSON.stringify({ ...value, tracingGuide: draft.tracingGuide })
+        if (withGuide.length <= MAX_LENGTH) {
+          sessionStorage.setItem(key(owner, artwork), withGuide)
+          return { saved: true, guideOmitted: false }
+        }
+      } catch { /* A smaller document-only draft can still fit the quota. */ }
+    }
     const json = JSON.stringify(value)
-    if (json.length > MAX_LENGTH) return false
+    if (json.length > MAX_LENGTH) return { saved: false, guideOmitted: false }
     sessionStorage.setItem(key(owner, artwork), json)
-    return true
-  } catch { return false }
+    return { saved: true, guideOmitted: !!draft.tracingGuide }
+  } catch { return { saved: false, guideOmitted: false } }
+}
+
+export function persistChildDraft(owner: string, artwork: string | null, draft: ChildDraft): boolean {
+  return persistChildDraftWithStatus(owner, artwork, draft).saved
 }
 
 export function readStoredDraft(owner: string, artwork: string | null): ChildDraft | null {

@@ -48,3 +48,43 @@ test('approved recipes compile exact geometry and enlarged saved plans survive a
     expect(compileSceneObject(saved.objects[0])).toBeNull()
   } finally { setMaterialCuration(previous) }
 })
+
+test('generated source coordinates preserve the final request and features through plan validation and restore', () => {
+  const raw = { ...plan, request: '让整张图片倒过来', summary: '完整图案绕图片中心旋转半圈。', objects: [{ ...object,
+    name: '倒置图案', essential: ['上下和左右都翻转'], rotation: 180,
+    render: { kind: 'generated', sourceDescription: '  一幅正常朝向、保持完整结构的图案。  ' },
+  }] }
+  const before = structuredClone(raw), clean = sanitizeScenePlan(raw)
+  expect(clean).toMatchObject({ request: raw.request, summary: raw.summary, objects: [{
+    essential: raw.objects[0].essential, rotation: 180,
+    render: { kind: 'generated', sourceDescription: raw.objects[0].render.sourceDescription.trim() },
+    box: object.box,
+  }] })
+  expect(sanitizeScenePlan(JSON.parse(JSON.stringify(clean)))).toEqual(clean)
+  expect(raw).toEqual(before)
+  expect(sanitizeScenePlan({ ...raw, objects: [{ ...raw.objects[0], render: { kind: 'generated', sourceDescription: 'a'.repeat(1000) } }] })).not.toBeNull()
+})
+
+test('bare generated plans remain valid without source coordinates at either supported orientation', () => {
+  for (const rotation of [undefined, 0, 180]) {
+    const clean = sanitizeScenePlan({ ...plan, objects: [{ ...object, rotation, render: { kind: 'generated' } }] })
+    expect(clean?.objects[0].render).toEqual({ kind: 'generated' })
+    expect(clean?.objects[0].rotation).toBe(rotation)
+  }
+})
+
+test('source coordinates reject missing inversion, other render kinds and every malformed description', () => {
+  const inverted = { ...object, rotation: 180, render: { kind: 'generated', sourceDescription: '正常朝向的原图。' } }
+  for (const rotation of [undefined, 0, 90, '180']) {
+    expect(sanitizeScenePlan({ ...plan, objects: [{ ...inverted, rotation }] })).toBeNull()
+  }
+  for (const sourceDescription of [undefined, null, false, 180, {}, [], '', '  ', 'a'.repeat(1001),
+    'a\u0000b', 'a\nb', 'a\tb', 'a\u007fb', 'a\u0085b', 'a\u009fb']) {
+    expect(sanitizeScenePlan({ ...plan, objects: [{ ...inverted, render: { kind: 'generated', sourceDescription } }] })).toBeNull()
+  }
+  for (const render of [{ kind: 'custom' }, { kind: 'compose', primitive: 'cloud' },
+    { kind: 'recipe', recipeId: recipeCatalogue()[0].id }, { kind: 'illustration', illustrationId: 'illustration-library-cloud-beginner-01' }]) {
+    expect(sanitizeScenePlan({ ...plan, objects: [{ ...inverted, render: { ...render, sourceDescription: '正常朝向的原图。' } }] })).toBeNull()
+  }
+  expect(sanitizeScenePlan({ ...plan, objects: [{ ...inverted, render: { ...inverted.render, parameters: {} } }] })).toBeNull()
+})

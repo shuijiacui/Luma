@@ -1,16 +1,22 @@
 import { afterEach, expect, test, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { CommunicationSection } from '@/features/parents/components/CommunicationSection'
-import { clearParentChat, getCommunicationGuides, getParentChat, sendParentChat, type ParentChatSnapshot } from '@/lib/api/communicationApi'
+import { clearParentChat, deleteParentChat, newParentChat, getCommunicationGuides, getParentChat, sendParentChat, type ParentChatSnapshot } from '@/lib/api/communicationApi'
 import { ApiError } from '@/lib/api/client'
 import { setLocale } from '@/i18n'
 
-vi.mock('@/lib/api/communicationApi', () => ({ getParentChat: vi.fn(), sendParentChat: vi.fn(), clearParentChat: vi.fn(), getCommunicationGuides: vi.fn() }))
+vi.mock('@/lib/api/communicationApi', () => ({ getParentChat: vi.fn(), sendParentChat: vi.fn(), clearParentChat: vi.fn(), newParentChat: vi.fn(), deleteParentChat: vi.fn(), getCommunicationGuides: vi.fn() }))
 vi.mock('@/hooks/useAuthedImage', () => ({ useAuthedImage: () => null }))
 afterEach(() => { cleanup(); vi.resetAllMocks(); localStorage.clear(); sessionStorage.clear(); act(() => setLocale('zh')) })
 const work = { sourceId: 'tree', createdAt: '2026-09-25T00:00:00Z', imageUrl: null, title: '树', observation: '画面中可以看到树。', evidenceIds: ['OBS-elements'], provenance: 'child' }
 const turn = { id: 'request-0001', userText: '我也很累', reply: '每次都得你先忍住，确实很累。', createdAt: '2026-09-26T00:00:00Z', sourceId: null, sources: [] }
 const state = (changes = {}): ParentChatSnapshot => ({ revision: 0, available: true, turns: [], memory: { works: [work], scannedCount: 1, limit: 50 }, ...changes })
+const savedConversation = { id: 'chat-a', title: turn.userText, lastReply: turn.reply, updatedAt: turn.createdAt, turnCount: 1 }
+const savedState = () => state({ conversationId: 'chat-a', conversations: [savedConversation], revision: 1, turns: [turn] })
+function mockDialog() {
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
+}
 const start = async (changes = {}) => {
   vi.mocked(getParentChat).mockResolvedValue(state(changes))
   const view = render(<CommunicationSection childName="小朋友" childId="C" token="T" />)
@@ -35,6 +41,77 @@ test('the initial view keeps chat central and does not make unsolicited model ca
   fireEvent.click(screen.getByRole('button', { name: '发送' }))
   await screen.findByText(turn.reply)
   expect(sendParentChat).toHaveBeenCalledWith('C', 'T', expect.objectContaining({ text: input.value || '刚才没忍住，冲孩子发了脾气', revision: 0, sourceId: null }), expect.any(AbortSignal))
+})
+
+test('signed-in parents start fresh conversations, reopen history and keep drafts per conversation', async () => {
+  mockDialog()
+  vi.mocked(getParentChat).mockResolvedValue(savedState())
+  vi.mocked(newParentChat).mockResolvedValue(state({ revision: 2, conversationId: 'chat-b', conversations: [savedConversation] }))
+  render(<CommunicationSection childName="姐姐" childId="C" token="T" />)
+  await screen.findByText(turn.reply)
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '姐姐还没说完的事' } })
+  fireEvent.click(screen.getByRole('button', { name: '新对话' }))
+  await screen.findByText('今天，有什么想聊聊的？')
+  expect(newParentChat).toHaveBeenCalledWith('C', 'T', 1, 'zh', expect.any(AbortSignal))
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('')
+  vi.mocked(sendParentChat).mockResolvedValue({ revision: 3, conversationId: 'chat-b', turn: { ...turn, id: 'new-turn', reply: '新的回复' }, conversations: [savedConversation] })
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '一个新问题' } })
+  fireEvent.click(screen.getByRole('button', { name: '发送' }))
+  await screen.findByText('新的回复')
+  expect(sendParentChat).toHaveBeenCalledWith('C', 'T', expect.objectContaining({ conversationId: 'chat-b', revision: 2 }), expect.any(AbortSignal))
+  fireEvent.click(screen.getByRole('button', { name: '历史记录' }))
+  expect(screen.getByText('姐姐 · 想接着聊的事，都在这里。')).toBeTruthy()
+  expect(screen.getByText('保存在账号中，按孩子分别记录')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: `继续对话：${turn.userText}` }))
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  expect(getParentChat).toHaveBeenLastCalledWith('C', 'T', 'zh', expect.any(AbortSignal), 'chat-a')
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('姐姐还没说完的事')
+  expect(screen.queryByText('新的回复')).toBeNull()
+})
+
+test('server-backed deletion requires confirmation, retains failed records and clears only after success', async () => {
+  mockDialog()
+  vi.mocked(getParentChat).mockResolvedValue(savedState())
+  vi.mocked(deleteParentChat).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ revision: 2 })
+  render(<CommunicationSection childName="姐姐" childId="C" token="T" />)
+  await screen.findByText(turn.reply)
+  fireEvent.click(screen.getByRole('button', { name: '历史记录' }))
+  fireEvent.click(screen.getByRole('button', { name: `删除对话：${turn.userText}` }))
+  expect(deleteParentChat).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '确认删除' }))
+  await waitFor(() => expect(screen.getAllByText('暂时无法删除这段对话，请重试。').length).toBeGreaterThan(0))
+  expect(screen.getByRole('button', { name: `继续对话：${turn.userText}` })).toBeTruthy()
+  vi.mocked(getParentChat).mockResolvedValue(state({ revision: 2, conversationId: 'chat-b', conversations: [] }))
+  fireEvent.click(screen.getByRole('button', { name: '确认删除' }))
+  await screen.findByText('聊过的话，会留在这里')
+  expect(deleteParentChat).toHaveBeenLastCalledWith('C', 'T', 'chat-a', 1, expect.any(AbortSignal))
+  fireEvent.click(screen.getByRole('button', { name: '关闭历史记录' }))
+  expect(screen.queryByText(turn.reply)).toBeNull()
+  expect(screen.getByText('今天，有什么想聊聊的？')).toBeTruthy()
+  fireEvent.click(screen.getByText('孩子的创作'))
+  expect(screen.getByText('树')).toBeTruthy()
+})
+
+test('switching children discards an open history and ignores late history results for the previous child', async () => {
+  mockDialog()
+  vi.mocked(getParentChat).mockResolvedValue(savedState())
+  const view = render(<CommunicationSection childName="姐姐" childId="C" token="T" />)
+  await screen.findByText(turn.reply)
+  fireEvent.click(screen.getByRole('button', { name: '历史记录' }))
+  let finish!: (value: ParentChatSnapshot) => void
+  vi.mocked(getParentChat).mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+  fireEvent.click(screen.getByRole('button', { name: `继续对话：${turn.userText}` }))
+  vi.mocked(getParentChat).mockResolvedValue(state({ conversationId: 'sibling-chat', conversations: [] }))
+  view.rerender(<CommunicationSection childName="弟弟" childId="B" token="T" />)
+  await screen.findByText('今天，有什么想聊聊的？')
+  expect(vi.mocked(getParentChat).mock.calls[1][3].aborted).toBe(true)
+  await act(async () => finish(savedState()))
+  expect(screen.queryByText(turn.reply)).toBeNull()
+  expect(screen.queryByRole('dialog')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '历史记录' }))
+  expect(screen.getByText('弟弟 · 想接着聊的事，都在这里。')).toBeTruthy()
+  expect(screen.getByText('聊过的话，会留在这里')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: `继续对话：${turn.userText}` })).toBeNull()
 })
 
 test('artwork selection fills an editable draft and supplies the source only after explicit send', async () => {
@@ -102,6 +179,111 @@ test('stale history reloads without automatically resending; the written message
   await waitFor(() => expect(getParentChat).toHaveBeenCalledTimes(2))
   expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('新的问题')
   expect(sendParentChat).toHaveBeenCalledTimes(1)
+})
+
+test('a remotely deleted conversation preserves the latest unsent text and artwork as a manually recoverable draft', async () => {
+  vi.mocked(getParentChat).mockResolvedValue(savedState())
+  render(<CommunicationSection childName="姐姐" childId="C" token="T" />)
+  await screen.findByText(turn.reply)
+  fireEvent.click(screen.getByText('孩子的创作'))
+  fireEvent.click(screen.getByRole('button', { name: /聊聊这幅画/ }))
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '还没发出的想法' } })
+  let finish!: (value: ParentChatSnapshot) => void
+  vi.mocked(getParentChat).mockRejectedValueOnce(new ApiError(404, 'conversation_not_found'))
+    .mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+  fireEvent.focus(window)
+  await waitFor(() => expect(getParentChat).toHaveBeenCalledTimes(3))
+  // Typing while the fallback loads must preserve the latest text, not the
+  // text captured when the window-focus request first began.
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '还没发出的想法，还有刚补充的细节' } })
+  await act(async () => finish(state({ conversationId: 'chat-b', conversations: [], revision: 2 })))
+  expect(screen.queryByText(turn.reply)).toBeNull()
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('')
+  expect(screen.getByText('还没发出的想法，还有刚补充的细节')).toBeTruthy()
+  expect(sendParentChat).not.toHaveBeenCalled()
+  expect(newParentChat).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '恢复草稿' }))
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('还没发出的想法，还有刚补充的细节')
+  expect(screen.getByText('这次聊 · 树')).toBeTruthy()
+  expect(sendParentChat).not.toHaveBeenCalled()
+})
+
+test.each([404, 409])('a send rejected with %s after remote deletion can be recovered and sent only explicitly to the new thread', async status => {
+  vi.mocked(getParentChat).mockResolvedValue(savedState())
+  render(<CommunicationSection childName="姐姐" childId="C" token="T" />)
+  await screen.findByText(turn.reply)
+  vi.mocked(sendParentChat).mockRejectedValueOnce(new ApiError(status, 'chat_changed'))
+    .mockResolvedValueOnce({ revision: 3, conversationId: 'chat-b', turn: { ...turn, id: 'new-turn', reply: '新的回复' }, conversations: [] })
+  vi.mocked(getParentChat).mockRejectedValueOnce(new ApiError(404, 'conversation_not_found'))
+    .mockResolvedValueOnce(state({ conversationId: 'chat-b', conversations: [], revision: 2 }))
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '刚才没有发成功的文字' } })
+  fireEvent.click(screen.getByRole('button', { name: '发送' }))
+  await screen.findByRole('button', { name: '恢复草稿' })
+  await waitFor(() => expect(screen.queryByRole('status', { name: '正在回复…' })).toBeNull())
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('')
+  expect(sendParentChat).toHaveBeenCalledTimes(1)
+  const original = vi.mocked(sendParentChat).mock.calls[0][2]
+  fireEvent.click(screen.getByRole('button', { name: '恢复草稿' }))
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('刚才没有发成功的文字')
+  expect(sendParentChat).toHaveBeenCalledTimes(1)
+  fireEvent.click(screen.getByRole('button', { name: '发送' }))
+  await screen.findByText('新的回复')
+  const recovered = vi.mocked(sendParentChat).mock.calls[1][2]
+  expect(original.conversationId).toBe('chat-a')
+  expect(recovered).toMatchObject({ conversationId: 'chat-b', revision: 2, text: original.text })
+  expect(recovered.requestId).not.toBe(original.requestId)
+  expect(newParentChat).not.toHaveBeenCalled()
+})
+
+test('remote deletion recovery does not replace a destination conversation draft', async () => {
+  vi.mocked(getParentChat).mockResolvedValue(savedState())
+  vi.mocked(newParentChat).mockResolvedValue(state({ revision: 2, conversationId: 'chat-b', conversations: [savedConversation] }))
+  render(<CommunicationSection childName="姐姐" childId="C" token="T" />)
+  await screen.findByText(turn.reply)
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '原先对话自己的草稿' } })
+  fireEvent.click(screen.getByRole('button', { name: '新对话' }))
+  await screen.findByText('今天，有什么想聊聊的？')
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '被远端删除对话的草稿' } })
+  vi.mocked(getParentChat).mockRejectedValueOnce(new ApiError(404, 'conversation_not_found'))
+    .mockResolvedValueOnce({ ...savedState(), revision: 3 })
+  fireEvent.focus(window)
+  const restore = await screen.findByRole('button', { name: '恢复草稿' })
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('原先对话自己的草稿')
+  expect(restore.hasAttribute('disabled')).toBe(true)
+  fireEvent.click(restore)
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('原先对话自己的草稿')
+  expect(screen.getByText('被远端删除对话的草稿')).toBeTruthy()
+  expect(sendParentChat).not.toHaveBeenCalled()
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '' } })
+  fireEvent.click(screen.getByRole('button', { name: '恢复草稿' }))
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('被远端删除对话的草稿')
+})
+
+test.each([{ childId: 'B', token: 'T' }, { childId: 'C', token: 'OTHER' }])('recovery drafts and late deleted-chat loads remain isolated when the workspace changes to %j', async next => {
+  vi.mocked(getParentChat).mockResolvedValue(savedState())
+  const view = render(<CommunicationSection childName="姐姐" childId="C" token="T" />)
+  await screen.findByText(turn.reply)
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '姐姐的私人草稿' } })
+  vi.mocked(getParentChat).mockRejectedValueOnce(new ApiError(404, 'conversation_not_found'))
+    .mockResolvedValueOnce(state({ conversationId: 'chat-b', conversations: [], revision: 2 }))
+  fireEvent.focus(window)
+  await screen.findByRole('button', { name: '恢复草稿' })
+  let finish!: (value: ParentChatSnapshot) => void
+  vi.mocked(getParentChat).mockRejectedValueOnce(new ApiError(404, 'conversation_not_found'))
+    .mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: '另一个尚未发送的草稿' } })
+  fireEvent.focus(window)
+  await waitFor(() => expect(getParentChat).toHaveBeenCalledTimes(5))
+  vi.mocked(getParentChat).mockResolvedValue(state({ conversationId: 'other-chat', conversations: [] }))
+  view.rerender(<CommunicationSection childName="另一个空间" {...next} />)
+  await screen.findByText('今天，有什么想聊聊的？')
+  expect(vi.mocked(getParentChat).mock.calls[4][3].aborted).toBe(true)
+  await act(async () => finish(state({ conversationId: 'chat-c', conversations: [], revision: 3 })))
+  expect(screen.queryByRole('button', { name: '恢复草稿' })).toBeNull()
+  expect(screen.queryByText('姐姐的私人草稿')).toBeNull()
+  expect(screen.queryByText('另一个尚未发送的草稿')).toBeNull()
+  expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toBe('')
+  expect(sendParentChat).not.toHaveBeenCalled()
 })
 
 test('guest conversations work without login or API calls, survive reopening, and can be cleared', async () => {

@@ -1,6 +1,7 @@
 // Shared geometry ensures the review and final drawing use the same paths.
 import { compileSketch } from './niloSketch.mjs'
 import { getDrawingIllustration } from './niloIllustrations.mjs'
+import { validateGeneratedRaster } from './niloGeneratedRaster.mjs'
 const path = (...xy) => Array.from({ length: xy.length / 2 }, (_, i) => ({ x: xy[i * 2], y: xy[i * 2 + 1] }));
 const ellipse = (cx, cy, rx, ry, start = 0, end = Math.PI * 2) => Array.from({ length: 49 }, (_, i) => ({ x: cx + Math.cos(start + (end - start) * i / 48) * rx, y: cy + Math.sin(start + (end - start) * i / 48) * ry }));
 const curve = (x0, y0, x1, y1, x2, y2) => Array.from({ length: 33 }, (_, i) => { const t = i / 32; return { x: (1 - t) ** 2 * x0 + 2 * t * (1 - t) * x1 + t ** 2 * x2, y: (1 - t) ** 2 * y0 + 2 * t * (1 - t) * y1 + t ** 2 * y2 }; });
@@ -42,12 +43,12 @@ export function localPaths(template) {
                 const a = i / 64 * Math.PI * 2;
                 return { x: .5 + Math.sin(a) ** 3 * .4, y: .47 - (13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) * .026 };
             })];
-        case 'illustration': return []; // Bitmap references remain guides; they never become authored ink.
+        case 'illustration': case 'generated': return []; // Bitmap references remain guides; they never become authored ink.
         case 'echo': return []; // Echo paths must come from the child's actual stroke, never a generic curve.
     }
 }
 export function sampleProposalGeometry(p, aspect = 1) {
-    if (p.template === 'illustration') return [];
+    if (['illustration', 'generated'].includes(p.template)) return [];
     if (!Number.isFinite(aspect) || aspect <= 0)
         return [];
     const angle = p.rotation * Math.PI / 180;
@@ -71,8 +72,8 @@ export function sampleProposalGeometry(p, aspect = 1) {
 /** Visible bounds for placement and handles. Images use their rotated frame,
  * while vector guides continue to use their actual sampled contours. */
 export function proposalBoundsPoints(p, aspect = 1) {
-    if (p.template !== 'illustration') return sampleProposalGeometry(p, aspect).flatMap(stroke => stroke.points);
-    if (!getDrawingIllustration(p.illustrationId) || !Number.isFinite(aspect) || aspect <= 0
+    if (!['illustration', 'generated'].includes(p.template)) return sampleProposalGeometry(p, aspect).flatMap(stroke => stroke.points);
+    if (!(p.template === 'generated' ? validateGeneratedRaster(p.raster) : getDrawingIllustration(p.illustrationId)) || !Number.isFinite(aspect) || aspect <= 0
         || ![p.x, p.y, p.width, p.height, p.rotation].every(Number.isFinite) || p.width <= 0 || p.height <= 0) return [];
     const angle = p.rotation * Math.PI / 180;
     return [[0, 0], [1, 0], [1, 1], [0, 1]].map(([x, y]) => {
@@ -91,7 +92,7 @@ export function proportionedProposal(p, aspect) {
     let width = p.width * aspect;
     let height = p.height;
     if (p.template !== 'echo') {
-        const ratio = p.template === 'illustration' ? getDrawingIllustration(p.illustrationId)?.aspect
+        const ratio = p.template === 'generated' ? p.raster?.width / p.raster?.height : p.template === 'illustration' ? getDrawingIllustration(p.illustrationId)?.aspect
             : p.template === 'custom' ? p.sketch.aspect : naturalRatios[p.template];
         if (!Number.isFinite(ratio) || ratio <= 0) return p;
         if (width / height > ratio)

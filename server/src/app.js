@@ -61,6 +61,8 @@ export function createApp(deps = {}) {
     db,
     chatWithImage: deps.chatWithImage ?? undefined,
     chatText: deps.chatText ?? (process.env.NODE_ENV === 'test' ? null : chatText),
+    sceneChatText: deps.sceneChatText ?? (process.env.NODE_ENV === 'test' ? null : undefined),
+    sceneChatWithImage: deps.sceneChatWithImage ?? (process.env.NODE_ENV === 'test' ? null : undefined),
     timeoutMs: deps.niloTimeoutMs,
     voice: deps.voice,
     limits,

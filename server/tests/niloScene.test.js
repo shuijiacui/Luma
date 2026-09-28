@@ -47,6 +47,27 @@ test('only explicit render stage compiles the confirmed plan, without another mo
   expect(chatText).not.toHaveBeenCalled()
 })
 
+test('whole-object inversion survives the plan boundary and deterministic rendering', async () => {
+  const tree = object({ name: '小树', aliases: ['树'], essential: ['树冠和树干'], rotation: 180,
+    render: { kind: 'illustration', illustrationId: 'illustration-library-tree-beginner-01' } })
+  const result = await generateNiloScene(input('render', plan([tree])))
+  expect(result.status).toBe('ready')
+  expect(result.plan.objects[0].rotation).toBe(180)
+  expect(result.objects[0].proposal).toMatchObject({ template: 'illustration', rotation: 180, illustrationId: tree.render.illustrationId })
+  for (const rotation of [90, -180, '180', Infinity]) {
+    expect(() => sanitizeSceneInput(input('render', plan([{ ...tree, rotation }])))).toThrow('valid scene plan required')
+  }
+})
+
+test('an explicit inversion edit updates a reused object without regenerating its geometry', async () => {
+  const original = plan(), previous = await generateNiloScene(input('render', original))
+  const revised = plan([{ ...original.objects[0], rotation: 180 }])
+  const result = await generateNiloScene({ ...input('render', revised), context: { ...input().context, previousScene: previous } })
+  expect(result.status).toBe('ready')
+  expect(result.metrics.reused).toBe(1)
+  expect(result.objects[0].proposal.rotation).toBe(180)
+})
+
 test('revisions carry the accepted intent and instruct the model to preserve unrelated objects and layout', async () => {
   const prior = plan(), chatText = vi.fn(async () => ({ plan: prior }))
   await generateNiloScene({ ...input('plan', prior), utterance: '把城堡改成蘑菇屋' }, { chatText })
@@ -205,13 +226,15 @@ test('invalid model plan does not draw, and provider messages never reach childr
   expect(result.reason).toBe('provider_error'); expect(JSON.stringify(result)).not.toContain('secret')
 })
 
-test('a malformed plan receives one precise bounded repair without changing its requested subject', async () => {
+test('a numeric frame error is repaired locally without another model call or changing its subject', async () => {
   const valid = plan(), invalid = plan([object({ box: { x: .2, y: .1, width: .7, height: .6 } })])
   const chatText = vi.fn().mockResolvedValueOnce({ plan: invalid }).mockResolvedValueOnce({ plan: valid })
   const result = await generateNiloScene(input(), { chatText })
-  expect(result).toMatchObject({ status: 'proposed', plan: valid, metrics: { plans: 2, repairs: 1 } })
-  expect(chatText.mock.calls[1][0]).toContain('Resize this object\'s box, do not replace its subject')
-  expect(chatText.mock.calls[1][0]).toContain('do not simplify away any explicit feature')
+  expect(result).toMatchObject({ status: 'proposed', metrics: { plans: 1, repairs: 0 } })
+  expect(result.metrics.layoutRepairs).toBeGreaterThan(0)
+  expect(result.plan.objects[0]).toMatchObject({ name: valid.objects[0].name, essential: valid.objects[0].essential, render: valid.objects[0].render })
+  expect(result.plan.objects[0].box.width * result.plan.objects[0].box.height).toBeLessThanOrEqual(.16 + 1e-9)
+  expect(chatText).toHaveBeenCalledOnce()
   const empty = vi.fn(async () => ({}))
   expect(await generateNiloScene(input(), { chatText: empty })).toMatchObject({ status: 'unavailable', reason: 'invalid_plan' })
   expect(empty).toHaveBeenCalledTimes(2)
@@ -221,32 +244,33 @@ test('object requests cannot silently add backgrounds, and an existing opinion q
   const requested = input(), valid = plan(), decorated = plan([object(), object({ id: 'cloud_1', name: '云朵', aliases: ['云'], role: 'atmosphere', render: { kind: 'compose', primitive: 'cloud' } })])
   requested.context.requestScope = 'object'
   const chatText = vi.fn().mockResolvedValueOnce({ plan: decorated }).mockResolvedValueOnce({ plan: valid })
-  expect(await generateNiloScene(requested, { chatText })).toMatchObject({ status: 'proposed', plan: valid })
+  expect(await generateNiloScene(requested, { chatText })).toMatchObject({ status: 'proposed', plan: { ...valid, preserve: ['小船'] } })
   expect(chatText.mock.calls[1][0]).toContain('has NO basis in the explicit request')
   const question = { ...valid, summary: '你喜欢云上的城堡吗？' }
   const result = await generateNiloScene(input(), { chatText: async () => ({ plan: question }) })
   expect(result.reply).toBe(question.summary)
 })
 
-test('one repair reports scope and frame failures together instead of spending its only retry on one problem', async () => {
+test('numeric errors are compiled before spending a model repair on a genuine scope error', async () => {
   const requested = input(); requested.context.requestScope = 'object'
   const oversized = object({ box: { x: .2, y: .1, width: .44, height: .42 } })
   const sea = object({ id: 'sea_1', role: 'support', name: '海浪', aliases: ['海浪'], essential: ['三条波浪线'], render: { kind: 'compose', primitive: 'water' }, box: { x: .04, y: .7, width: .92, height: .22 } })
   const cloud = object({ id: 'cloud_1', role: 'atmosphere', name: '云朵', render: { kind: 'compose', primitive: 'cloud' } })
   const chatText = vi.fn().mockResolvedValueOnce({ plan: plan([oversized, sea, cloud]) }).mockResolvedValueOnce({ plan: plan() })
   expect(await generateNiloScene(requested, { chatText })).toMatchObject({ status: 'proposed' })
-  const repair = chatText.mock.calls[1][0].split('Repair the SAME intended idea once.')[1]
+  const repair = chatText.mock.calls[1][0].split('Repair the SAME child intent once.')[1]
   expect(repair).toContain('Object cloud_1 (云朵) has NO basis')
-  expect(repair).toContain('objects[0].box=')
-  expect(repair).toContain('objects[1].box=')
-  expect(repair).toContain('width <=0.45')
+  expect(repair).not.toContain('box=')
+  const previous = JSON.parse(repair.split('PREVIOUS INVALID OUTPUT: ')[1].split('\nReturn')[0])
+  expect(previous.objects[0].essential).toEqual(oversized.essential)
+  expect(repair).toContain('omit boxes for changed new relationships')
 })
 
 test('explicit environmental relationships permit reliable support objects instead of forcing a giant custom object', async () => {
   const requested = input(); requested.context.requestScope = 'object'
   const sea = object({ id: 'sea_1', role: 'support', name: '海浪', aliases: ['海浪'], essential: ['三条波浪线'], render: { kind: 'compose', primitive: 'water' }, box: { x: .3, y: .65, width: .4, height: .15 } })
   const approved = plan([object(), sea]), chatText = vi.fn(async () => ({ plan: approved }))
-  expect(await generateNiloScene(requested, { chatText })).toMatchObject({ status: 'proposed', plan: approved, metrics: { plans: 1 } })
+  expect(await generateNiloScene(requested, { chatText })).toMatchObject({ status: 'proposed', plan: { ...approved, preserve: ['小船'] }, metrics: { plans: 1 } })
   expect(chatText).toHaveBeenCalledOnce()
   expect(chatText.mock.calls[0][0]).toContain('flying over the sea permits a separate water support')
 })
@@ -299,7 +323,7 @@ test('unmatched inventions retain a custom route and review cannot pass without 
 test('scene route enforces child access, image validation and drawing cost limits', async () => {
   const chatText = vi.fn(async () => ({ plan: plan() }))
   const app = (role, max = 10) => express().use(express.json()).use((req, _res, next) => { req.auth = { role }; next() })
-    .use('/nilo', createNiloRouter({ chatText, limits: { nilo: { windowMs: 60000, max } } }))
+    .use('/nilo', createNiloRouter({ sceneChatText: chatText, limits: { nilo: { windowMs: 60000, max } } }))
     .use((error, _req, res, _next) => res.status(error.status ?? 500).json({ error: error.message }))
   expect((await request(app('parent')).post('/nilo/scene').send(input())).status).toBe(403)
   expect((await request(app('child')).post('/nilo/scene').send({ ...input(), imageBase64: 'not-an-image' })).status).toBe(400)

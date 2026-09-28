@@ -1,7 +1,7 @@
 import { t, useLocale } from '@/i18n'
 import { LanguageSwitcher } from '@/i18n/LanguageSwitcher'
 import { AnimatePresence } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Brand } from '@/components/brand'
 import { useAuth } from '@/features/auth/AuthContext'
@@ -10,7 +10,7 @@ import { analyzeDrawing, type FeatureJSON } from '@/lib/api/lumaApi'
 import { ApiError } from '@/lib/api/client'
 import { randomId } from '@/lib/randomId'
 import { clearChildDraft, getChildDraft, restoreChildArtwork, resumeChildDraft } from '../draft'
-import { discardStoredDraft, persistChildDraft, readStoredDraft } from '../draftRecovery'
+import { discardStoredDraft, persistChildDraftWithStatus, readStoredDraft } from '../draftRecovery'
 import { DraftRecovery } from '../components/DraftRecovery'
 import { readArtwork, saveArtwork } from '../artworks'
 import { getCanvasProvenance, lastUndoOwner, type CanvasProvenance } from '../canvasDocument'
@@ -21,6 +21,7 @@ import { DrawingCanvas, type DrawingCanvasHandle } from '../components/DrawingCa
 import { WelcomeOverlay } from '../components/WelcomeOverlay'
 import { CompanionProjection } from '../components/CompanionProjection'
 import { SceneProjection } from '../components/SceneProjection'
+import { DetailCreationCard } from '../components/DetailCreationCard'
 import { CompanionDock } from '../components/CompanionDock'
 import { CanvasSelection } from '../components/CanvasSelection'
 import type { SelectionBounds } from '../companion/selectionGeometry'
@@ -117,6 +118,12 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
   const savingRef = useRef(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [draftError, setDraftError] = useState(false)
+  const [guideRecoveryOmitted, setGuideRecoveryOmitted] = useState(false)
+  const persistRecovery = useCallback(() => {
+    const result = persistChildDraftWithStatus(ownerId, draftSlot, draft)
+    if (mounted.current) { setDraftError(!result.saved); setGuideRecoveryOmitted(result.guideOmitted) }
+    return result.saved
+  }, [ownerId, draftSlot, draft])
   const [showWelcome, setShowWelcome] = useState(() => !hasWelcomed(ownerId) && !draft.artworkId && !draft.canvas.document?.operations.length && !draft.canvas.history.some(Boolean))
   const [moreOpen, setMoreOpen] = useState(false)
   const [shapeId, setShapeId] = useState<WarmupShapeId | null>(null)
@@ -164,18 +171,18 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     const projection = currentProjection
     draft.tracingGuide = projection?.tracing
       ? { id: projection.id, proposal: projection.proposal, additions: projection.additions, aspect: projection.aspect, ...(projection.scene ? { scene: projection.scene } : {}) } : undefined
-    setDraftError(!persistChildDraft(ownerId, draftSlot, draft))
-  }, [currentProjection, draft, ownerId, draftSlot])
+    persistRecovery()
+  }, [currentProjection, draft, persistRecovery])
   useEffect(() => { mounted.current = true; refreshCanvasVersion(); return () => { mounted.current = false } }, [])
   useEffect(() => {
     draft.color = color; draft.features = features; draft.brushSize = brushSize
     draft.brushKind = brushKind; draft.isEraser = isEraser
-    setDraftError(!persistChildDraft(ownerId, draftSlot, draft))
-  }, [draft, ownerId, draftSlot, color, features, brushSize, brushKind, isEraser])
+    persistRecovery()
+  }, [draft, persistRecovery, color, features, brushSize, brushKind, isEraser])
   useEffect(() => {
     const flush = () => {
       canvasRef.current?.flushDraft()
-      return persistChildDraft(ownerId, draftSlot, draft)
+      return persistRecovery()
     }
     const beforeUnload = (event: BeforeUnloadEvent) => {
       if (!flush()) { event.preventDefault(); event.returnValue = '' }
@@ -190,7 +197,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
       document.removeEventListener('visibilitychange', visibility)
       flush()
     }
-  }, [draft, ownerId, draftSlot])
+  }, [persistRecovery])
   const cancelProjection = companion.interrupt
   useEffect(() => {
     const paper = paperRef.current
@@ -228,7 +235,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     // Refresh its highlight without treating our own completed edit as stale.
     setSelection(canvasRef.current?.getSelection?.() ?? { groupIds: [], bounds: null })
     submission.current = null; draft.submission = undefined
-    setDraftError(!persistChildDraft(ownerId, draftSlot, draft))
+    persistRecovery()
   }
   function handleStrokeStart() {
     setIsDrawing(true)
@@ -279,7 +286,7 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
     draft.artworkId ??= randomId()
     const result = await saveArtwork(session, draft.artworkId, draft.artworkRevision ?? 0, snapshot, canvas.getDocument())
     draft.artworkRevision = result.revision; draft.savedSnapshot = snapshot
-    setDraftError(!persistChildDraft(ownerId, draftSlot, draft))
+    persistRecovery()
     saveMemory(ownerId, draft.artworkId, companion.memory)
     if (mounted.current) setSaveMessage('已保存到历史图画，下次还能继续画')
   }
@@ -353,11 +360,17 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
       <DrawingTools color={color} brushKind={brushKind} brushSize={brushSize} isEraser={isEraser} disabled={busy} shapeLabel={currentShapeLabel}
         onColor={value => { setColor(value); setIsEraser(false) }} onBrush={value => { setBrushKind(value); setIsEraser(false) }}
         onSize={setBrushSize} onEraser={() => setIsEraser(value => !value)} onNextShape={handleNextShape} onClearShape={() => setShapeId(null)}
-        onUndo={undoLastStroke} onClear={() => { companion.cancel(); voice.cancel(); canvasRef.current?.clear(); invalidateDrawing() }} onSave={handleSave} onFinish={handleFinish}
-        footerAddon={<CompanionDock companion={companion} voice={voice} mode={mode} visible={niloVisible} enabled={companionEnabled} isDrawing={isDrawing || busy} onVisible={changeNiloVisible} onInvite={inviteNilo}
-          selection={{ active: selectionMode, count: selection.groupIds.length, onToggle: toggleSelection, onClear: () => canvasRef.current?.setSelection?.([]), onComplete: () => setSelectionMode(false) }} />}>
+        onUndo={undoLastStroke} onClear={() => { companion.resetSceneSession(); voice.cancel(); canvasRef.current?.clear(); invalidateDrawing() }} onSave={handleSave} onFinish={handleFinish}
+        footerAddon={<>
+          {niloVisible && mode === 'together' && companion.detailInvitation && !companion.sceneIdea && !selectionMode && <DetailCreationCard
+            invitation={companion.detailInvitation} locale={locale} disabled={!companionEnabled || busy || isDrawing || companion.phase === 'thinking'}
+            onChoose={choice => { voice.cancel(); companion.chooseDetailHelp(choice) }} onClose={() => { voice.cancel(); companion.dismissDetailHelp() }} />}
+          <CompanionDock companion={companion} voice={voice} mode={mode} visible={niloVisible} enabled={companionEnabled} isDrawing={isDrawing || busy} onVisible={changeNiloVisible} onInvite={inviteNilo}
+            selection={{ active: selectionMode, count: selection.groupIds.length, onToggle: toggleSelection, onClear: () => canvasRef.current?.setSelection?.([]), onComplete: () => setSelectionMode(false) }} />
+        </>}>
         <section className="relative flex min-h-0 min-w-0 w-full flex-1">
           {draftError && <p role="alert" className="absolute bottom-3 left-3 right-3 z-30 mx-auto w-fit rounded-xl bg-white/95 px-4 py-2 text-sm text-red-700">{t('草稿暂存失败，请先保存或下载，再刷新页面。')}</p>}
+          {!draftError && guideRecoveryOmitted && <p role="status" className="pointer-events-none absolute bottom-3 left-3 right-3 z-30 mx-auto w-fit rounded-xl bg-white/95 px-4 py-2 text-sm text-luma-teal-800">{locale === 'en' ? 'Your drawing is saved in this tab. The reference guide will disappear if you reload.' : '画作已暂存，参考底图在刷新后会消失。'}</p>}
           {(busy || saveMessage) && <p role="status" className="pointer-events-none absolute top-3 right-3 left-3 z-30 mx-auto w-fit max-w-[90%] rounded-2xl bg-luma-teal-50/95 px-4 py-2 text-center text-sm font-bold text-luma-teal-800 shadow-luma-sm">{t(saving ? '正在保存图画…' : analysis === 'loading' ? 'Nilo 正在仔细看你的画…' : saveMessage!)}</p>}
           <div data-onboarding="canvas-paper" className="relative mx-auto flex min-h-0 min-w-0 w-full flex-col">
             <DrawingSurface surfaceRef={paperRef} document={draft.canvas.document} guideAspect={projected ? projected.aspect : undefined} onReady={refreshCanvasVersion}>
@@ -371,6 +384,9 @@ function ChildDrawingEditor({ draftSlot }: { draftSlot: string | null }) {
               })}
               {projected?.scene ? <SceneProjection projection={projected} onEdit={mode === 'together' && companionEnabled && !busy && !isDrawing && !selectionMode && companion.phase === 'projected' ? companion.editSceneObject : undefined} onInteractionStart={() => { voice.cancel(); companion.beginSceneEdit() }} />
                 : projected && !projected.pristineEdit && !projected.deleting && <CompanionProjection proposal={projected.proposal} additions={projected.additions} aspect={projected.aspect} tracing={projected.tracing} overInk={!!draft.canvas.document?.baseImage} turnDuration={projected.turn ? projected.durationMs : undefined} onEdit={mode === 'together' && companionEnabled && !busy && !isDrawing && !selectionMode && companion.phase === 'projected' ? companion.edit : undefined} onInteractionStart={voice.cancel} />}
+              {projected?.detailGuide && <CompanionProjection proposal={projected.detailGuide} aspect={projected.aspect} tracing
+                onEdit={mode === 'together' && companionEnabled && !busy && !isDrawing && !selectionMode && companion.phase === 'projected' ? companion.editDetailGuide : undefined}
+                onInteractionStart={() => { voice.cancel(); companion.beginSceneEdit() }} />}
               <CanvasSelection active={selectionMode && mode === 'together' && companionEnabled && !busy} candidates={selectionMode || selection.groupIds.length ? canvasRef.current?.getSelectionCandidates?.() ?? [] : []} selected={selection.groupIds} bounds={selection.bounds}
                 onChange={ids => canvasRef.current?.setSelection?.(ids)} onDone={finishSelection} onCancel={() => { setSelectionMode(false); companion.interrupt() }} />
             </DrawingSurface>

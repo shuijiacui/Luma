@@ -1,0 +1,1734 @@
+{
+  "version": 1,
+  "source": "synthetic scene evaluations only",
+  "assets": [
+    {
+      "id": "illustration-scene-paper-realm-a04c49a10e72",
+      "pixelHash": "a04c49a10e72c078927c17ae39d398590e5303dd02dfdb3d2a39a088c086a2f5",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-36-19-279Z/paper_realm.json",
+          "kind": "generated-object",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "7fcdcba03b7a6049401308f31947463e28af317958de51a02231a12d291abc63",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-magic-world-fdceceaadcab",
+      "pixelHash": "fdceceaadcab7c59a7f8358d9d94c26764b677385dd25831dc4c1f521e5c8e0f",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-39-20-453Z/magic_world.json",
+          "kind": "generated-object",
+          "case": "magic_world",
+          "rotation": 0,
+          "sourceHash": "8042e13a3eb07b53838168d1214360c682926372aa54045f39aab07e063590ef",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-paper-realm-b11203b9839e",
+      "pixelHash": "b11203b9839eef28575cdf786519ee38fe5014abfba57589fa9cc09569dfd360",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-39-20-453Z/paper_realm.json",
+          "kind": "generated-object",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "98e5de2292a63ec8ef11069e3e2023fe0f2b31dbd4e1a148b38c4273bfef3bdc",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-whale-town-f22bdfd7c501",
+      "pixelHash": "f22bdfd7c501eeafeea9067e8f92074df13d5bb31b2c0320cc79404bbdee0e3c",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-39-20-453Z/whale_town.json",
+          "kind": "generated-object",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "85be6a99399ae3c0670b35b4fdcca9c57614a3bcd1188860e3010ddfbe0878c1",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-magic-world-a6b697b88a07",
+      "pixelHash": "a6b697b88a07b62c1d070b3efaa9569be7dff8dd0fb8841fe98b885f9ed42237",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-43-07-889Z/magic_world.json",
+          "kind": "generated-object",
+          "case": "magic_world",
+          "rotation": 0,
+          "sourceHash": "fccf11a60c14d95f581ff237e3fe1c162e2a98e8e2665219b86ff47740092e4c",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-paper-realm-248f9de8a152",
+      "pixelHash": "248f9de8a15254eeed8d199662f81bf8f34be8e102a7b7109aba0828967930fb",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-43-07-889Z/paper_realm.json",
+          "kind": "generated-object",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "a4de29809fb622091c776fbb829cb744ebe92fb646dc978bfe93d6246f90cf95",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-tiny-garden-9a693b281e45",
+      "pixelHash": "9a693b281e45463141703482a90b40ea33fce81cab90eba4687b48c61cde5f07",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-43-07-889Z/tiny_garden.json",
+          "kind": "generated-object",
+          "case": "tiny_garden",
+          "rotation": 0,
+          "sourceHash": "215ef5c08c2de7b31aad3ec57d67a0f08411bb77e582a328508e17c734604c66",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-whale-town-db23cf363ce7",
+      "pixelHash": "db23cf363ce77b5eaeacfafcf2201efe08a693842bedbef75d6ec401f589750d",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-43-07-889Z/whale_town.json",
+          "kind": "generated-object",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "a53507d8ef75253d629359db424af7b4a65eff4685f2629c65ae1d6829ae9403",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-candy-planet-5177da4b39d2",
+      "pixelHash": "5177da4b39d2813b7ed958fa818cdf59d7b4df232523fa7f545df130523ff8b0",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-47-16-721Z/candy_planet.json",
+          "kind": "generated-object",
+          "case": "candy_planet",
+          "rotation": 0,
+          "sourceHash": "36d485db19f2f3307e02604c7250f632d9e76572a32fa528df6435c10c2757b2",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-47-16-721Z/candy_planet-candidate-04.png",
+          "kind": "candidate",
+          "case": "candy_planet",
+          "rotation": 0,
+          "sourceHash": "36d485db19f2f3307e02604c7250f632d9e76572a32fa528df6435c10c2757b2",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-paper-realm-1f37272e7d90",
+      "pixelHash": "1f37272e7d90c09df23cc91496ce38426847d6bb32d30ce303addba9cc9a54e4",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-47-16-721Z/paper_realm.json",
+          "kind": "generated-object",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "b324199cb19370aae3f9c158c17d29afa621eee6f84c75eeb9397f55915e1b77",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-47-16-721Z/paper_realm-candidate-04.png",
+          "kind": "candidate",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "b324199cb19370aae3f9c158c17d29afa621eee6f84c75eeb9397f55915e1b77",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-tiny-garden-e8252350cceb",
+      "pixelHash": "e8252350cceb6c3f93e70285ec7dfeecc45f324f4f88f2a580b1f0bba7d3b99a",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-47-16-721Z/tiny_garden.json",
+          "kind": "generated-object",
+          "case": "tiny_garden",
+          "rotation": 0,
+          "sourceHash": "4adf8f81bf2056cb3d4218fd965ee520e1255e33e4df7fc65d1a3e7f90b7abef",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-47-16-721Z/tiny_garden-candidate-04.png",
+          "kind": "candidate",
+          "case": "tiny_garden",
+          "rotation": 0,
+          "sourceHash": "4adf8f81bf2056cb3d4218fd965ee520e1255e33e4df7fc65d1a3e7f90b7abef",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-whale-town-6033550f0f44",
+      "pixelHash": "6033550f0f4467cb933a262414a4cee0ad1c8c3f6e1185132c59036a132b699a",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-47-16-721Z/whale_town.json",
+          "kind": "generated-object",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "eb03e99ce260669f03b770db54a53651f2ddaf0ed3b9f8c7104608a4142e4b7c",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-47-16-721Z/whale_town-candidate-04.png",
+          "kind": "candidate",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "eb03e99ce260669f03b770db54a53651f2ddaf0ed3b9f8c7104608a4142e4b7c",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-candy-planet-11e61213aacf",
+      "pixelHash": "11e61213aacf0b2f26789d04cf7522e08756359c3377694bb2e7648ad158f0ac",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/candy_planet.json",
+          "kind": "generated-object",
+          "case": "candy_planet",
+          "rotation": 0,
+          "sourceHash": "4adae89a7934c6a9328279f2e6fb68e108f9d099ae08beded1704876ed3c0492",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/candy_planet-candidate-04.png",
+          "kind": "candidate",
+          "case": "candy_planet",
+          "rotation": 0,
+          "sourceHash": "4adae89a7934c6a9328279f2e6fb68e108f9d099ae08beded1704876ed3c0492",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-magic-world-c359120b125b",
+      "pixelHash": "c359120b125be0e10af2f4c9bbd215915331e5b30400572ee2c87244239eb0ab",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/magic_world.json",
+          "kind": "generated-object",
+          "case": "magic_world",
+          "rotation": 0,
+          "sourceHash": "71378ccb961ec9653ab5163f22d090dc13e34ec5311e7263d5800302999cbca8",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/magic_world-candidate-04.png",
+          "kind": "candidate",
+          "case": "magic_world",
+          "rotation": 0,
+          "sourceHash": "71378ccb961ec9653ab5163f22d090dc13e34ec5311e7263d5800302999cbca8",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-paper-realm-b84bf1134635",
+      "pixelHash": "b84bf11346350435f66f7958d84442a731097f68612b163e0cee17d2a685dd7f",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/paper_realm.json",
+          "kind": "generated-object",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "78abe1d98651f2d4e2f67cc0b8e6e71ca5289541b23b1e4b14a850c8a75cf8ce",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/paper_realm-candidate-04.png",
+          "kind": "candidate",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "78abe1d98651f2d4e2f67cc0b8e6e71ca5289541b23b1e4b14a850c8a75cf8ce",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-quiet-wonder-247d73a652f0",
+      "pixelHash": "247d73a652f029b69a79b0723243881db012358430f9a259d6d49b9a907290d7",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/quiet_wonder.json",
+          "kind": "generated-object",
+          "case": "quiet_wonder",
+          "rotation": 0,
+          "sourceHash": "05dfa5ba8afdc910f4434dee1d64fb1d374c70503a6dbbc3ccbc6a3ce0059091",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/quiet_wonder-candidate-04.png",
+          "kind": "candidate",
+          "case": "quiet_wonder",
+          "rotation": 0,
+          "sourceHash": "05dfa5ba8afdc910f4434dee1d64fb1d374c70503a6dbbc3ccbc6a3ce0059091",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-tiny-garden-e9ff5963ecfe",
+      "pixelHash": "e9ff5963ecfe635e115b1f896b4b98eccd96fb6a97b31b67aa67c5962c627190",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/tiny_garden.json",
+          "kind": "generated-object",
+          "case": "tiny_garden",
+          "rotation": 0,
+          "sourceHash": "adf84d89d441ec9a5be66a4f034be303cdf5cbd7bdd1cd2170f39f0f0f999811",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/tiny_garden-candidate-04.png",
+          "kind": "candidate",
+          "case": "tiny_garden",
+          "rotation": 0,
+          "sourceHash": "adf84d89d441ec9a5be66a4f034be303cdf5cbd7bdd1cd2170f39f0f0f999811",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-whale-town-9e7442451a8f",
+      "pixelHash": "9e7442451a8fa017a2a8a6d940b878d450e15b4c641af84a5f6c11ebbe9c3565",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/whale_town.json",
+          "kind": "generated-object",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "31d35c2266d817ada7415997e06e93ab0c2aefc1cd29a7e068040ad8a0290463",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-51-49-671Z/whale_town-candidate-04.png",
+          "kind": "candidate",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "31d35c2266d817ada7415997e06e93ab0c2aefc1cd29a7e068040ad8a0290463",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-bottle-garden-38c172c29eec",
+      "pixelHash": "38c172c29eecf911328f456c837ef57f93aeb7539f70d6a2eadcd9039c42f2c9",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/bottle_garden.json",
+          "kind": "generated-object",
+          "case": "bottle_garden",
+          "rotation": 0,
+          "sourceHash": "2f2374d0d45c237c242e8048a5a2e86ea4ebf213151b60e0224c4fa890fc796e",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/bottle_garden-candidate-04.png",
+          "kind": "candidate",
+          "case": "bottle_garden",
+          "rotation": 0,
+          "sourceHash": "2f2374d0d45c237c242e8048a5a2e86ea4ebf213151b60e0224c4fa890fc796e",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-brave-journey-78a08eac5145",
+      "pixelHash": "78a08eac514522e0930247747df465268f3eb00722c66dbec12c6a3e4b991643",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/brave_journey.json",
+          "kind": "generated-object",
+          "case": "brave_journey",
+          "rotation": 0,
+          "sourceHash": "97c81b26fd28df77b5cd29548877d13f0add58b9bf4ab4a9512f24652fcaebbe",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/brave_journey-candidate-04.png",
+          "kind": "candidate",
+          "case": "brave_journey",
+          "rotation": 0,
+          "sourceHash": "97c81b26fd28df77b5cd29548877d13f0add58b9bf4ab4a9512f24652fcaebbe",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-candy-planet-7e802fed9878",
+      "pixelHash": "7e802fed9878fe7743279ff0bf1fed74b1ba27da0e0898890a4d9b5356fa5255",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/candy_planet.json",
+          "kind": "generated-object",
+          "case": "candy_planet",
+          "rotation": 0,
+          "sourceHash": "815ba5282cb68238d4fed56680015323692e3aa093b94b57f0049d9419c613aa",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/candy_planet-candidate-04.png",
+          "kind": "candidate",
+          "case": "candy_planet",
+          "rotation": 0,
+          "sourceHash": "815ba5282cb68238d4fed56680015323692e3aa093b94b57f0049d9419c613aa",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-cosy-rain-eee5c3b92a4b",
+      "pixelHash": "eee5c3b92a4b0d5c302f70ec5f5c941dfcf3f87f72ae50e09987f7acab35779a",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/cosy_rain.json",
+          "kind": "generated-object",
+          "case": "cosy_rain",
+          "rotation": 0,
+          "sourceHash": "74f5dee3cdb82b9656dbed022a7a4c1179854f2c92e65dd57a3ecc60ce5a14d6",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/cosy_rain-candidate-04.png",
+          "kind": "candidate",
+          "case": "cosy_rain",
+          "rotation": 0,
+          "sourceHash": "74f5dee3cdb82b9656dbed022a7a4c1179854f2c92e65dd57a3ecc60ce5a14d6",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-english-quiet-e39ff0a75ad3",
+      "pixelHash": "e39ff0a75ad3fad67b7e95cd35456cf4b54a3d518ac049563272a329afd3f75e",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/english_quiet-candidate-04.png",
+          "kind": "candidate",
+          "case": "english_quiet",
+          "rotation": 0,
+          "sourceHash": "a20357542d844f82fc70375d5dfb180b61b72cc9ebf0f2d728caafddf66d67b8",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-english-whale-970b250ab646",
+      "pixelHash": "970b250ab646759971a454b2bc441ecdccc834ebc0b69bf2091dcd9b2616c305",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/english_whale.json",
+          "kind": "generated-object",
+          "case": "english_whale",
+          "rotation": 0,
+          "sourceHash": "9e6f0438e2d45db7ae08383366feefbb698406c6f3b6abc531bff4897ec3fdab",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/english_whale-candidate-04.png",
+          "kind": "candidate",
+          "case": "english_whale",
+          "rotation": 0,
+          "sourceHash": "9e6f0438e2d45db7ae08383366feefbb698406c6f3b6abc531bff4897ec3fdab",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-home-for-giants-410e766193b3",
+      "pixelHash": "410e766193b346188eb6c3e9903329464ce54ef99ac7c192913565095a1ea9fc",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/home_for_giants.json",
+          "kind": "generated-object",
+          "case": "home_for_giants",
+          "rotation": 0,
+          "sourceHash": "6c14b39c8c4c98b82bebe6805a9718da6458aaf46192ab573fd907f3f2dc88c3",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/home_for_giants-candidate-04.png",
+          "kind": "candidate",
+          "case": "home_for_giants",
+          "rotation": 0,
+          "sourceHash": "6c14b39c8c4c98b82bebe6805a9718da6458aaf46192ab573fd907f3f2dc88c3",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-magic-world-52b738c7df0a",
+      "pixelHash": "52b738c7df0a4914421b81f15c4cfbdf59e64dfc4eb938ce90893fc77ac06c38",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/magic_world.json",
+          "kind": "generated-object",
+          "case": "magic_world",
+          "rotation": 0,
+          "sourceHash": "4fd20c3358ee71266d226bac9b8a5581b6c900cff50f088df58d4e9be7c55ddb",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/magic_world-candidate-04.png",
+          "kind": "candidate",
+          "case": "magic_world",
+          "rotation": 0,
+          "sourceHash": "4fd20c3358ee71266d226bac9b8a5581b6c900cff50f088df58d4e9be7c55ddb",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-moon-playground-15825dc6c42b",
+      "pixelHash": "15825dc6c42bcf9a305da1841235fb905406c88ae38a3be7a219bd459a100fe4",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/moon_playground.json",
+          "kind": "generated-object",
+          "case": "moon_playground",
+          "rotation": 0,
+          "sourceHash": "c4c60b47221c5101e63d83b80af8ffd995846dcf4822a84a8d3d15d08cf769f2",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/moon_playground-candidate-04.png",
+          "kind": "candidate",
+          "case": "moon_playground",
+          "rotation": 0,
+          "sourceHash": "c4c60b47221c5101e63d83b80af8ffd995846dcf4822a84a8d3d15d08cf769f2",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-no-castle-efedc8ec98d5",
+      "pixelHash": "efedc8ec98d5015c089415b84acd1df5ce33d1b265a394d2a3f685d9bd98fe45",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/no_castle.json",
+          "kind": "generated-object",
+          "case": "no_castle",
+          "rotation": 0,
+          "sourceHash": "6fe140bbc5643eea870f26c42a3d7708003a325b26a4e078e7f15b8f5ef7d599",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/no_castle-candidate-04.png",
+          "kind": "candidate",
+          "case": "no_castle",
+          "rotation": 0,
+          "sourceHash": "6fe140bbc5643eea870f26c42a3d7708003a325b26a4e078e7f15b8f5ef7d599",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-paper-realm-51c25ddd6255",
+      "pixelHash": "51c25ddd62550a31c7aa89ffcfe6ab8c18bceafe67961fa082df407f8b68b94e",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/paper_realm.json",
+          "kind": "generated-object",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "39183ef319f26aeac278d80a524edf15ce75203a046e4b33a035654d8411773a",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/paper_realm-candidate-04.png",
+          "kind": "candidate",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "39183ef319f26aeac278d80a524edf15ce75203a046e4b33a035654d8411773a",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-preserve-child-boat-f768a8635ea2",
+      "pixelHash": "f768a8635ea269da53b8341e9449a5029341db1ca8a6c136b8016cf5452fe5b9",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/preserve_child_boat.json",
+          "kind": "generated-object",
+          "case": "preserve_child_boat",
+          "rotation": 0,
+          "sourceHash": "f9f071e401327864d2e9326a5b73cd626ef1066039e7dc63300956bf2918392c",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/preserve_child_boat-candidate-04.png",
+          "kind": "candidate",
+          "case": "preserve_child_boat",
+          "rotation": 0,
+          "sourceHash": "f9f071e401327864d2e9326a5b73cd626ef1066039e7dc63300956bf2918392c",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-quiet-wonder-427e8aaf2e87",
+      "pixelHash": "427e8aaf2e87d6ac0667d9e0e6b48e175f1e8c1e6bab8ba3d578aed8eb543990",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/quiet_wonder.json",
+          "kind": "generated-object",
+          "case": "quiet_wonder",
+          "rotation": 0,
+          "sourceHash": "ce79e2c8cd484ebf0d329262bb4e40eb4adebf969e5da6a4b8939f4c1c367431",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/quiet_wonder-candidate-04.png",
+          "kind": "candidate",
+          "case": "quiet_wonder",
+          "rotation": 0,
+          "sourceHash": "ce79e2c8cd484ebf0d329262bb4e40eb4adebf969e5da6a4b8939f4c1c367431",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-reference-not-book-0d1986d132d6",
+      "pixelHash": "0d1986d132d67664e7330fb2cd1533ddbb5fe7e3164250a55accc37d3b844a95",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/reference_not_book.json",
+          "kind": "generated-object",
+          "case": "reference_not_book",
+          "rotation": 0,
+          "sourceHash": "e7cc840c368b6ce2580e3ee2355eaf7dccb71344fa7e1f1f6aa5b79687633b25",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/reference_not_book-candidate-04.png",
+          "kind": "candidate",
+          "case": "reference_not_book",
+          "rotation": 0,
+          "sourceHash": "e7cc840c368b6ce2580e3ee2355eaf7dccb71344fa7e1f1f6aa5b79687633b25",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-tiny-garden-8c15f082377e",
+      "pixelHash": "8c15f082377eba14c6cd5e0d2a0f3c2aa917fee71a61520c2a92d16efc0bd826",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/tiny_garden.json",
+          "kind": "generated-object",
+          "case": "tiny_garden",
+          "rotation": 0,
+          "sourceHash": "a1788316d6935fca0de89d2d3833ed108c2b39a6903ebd35662bf9613dbd8d79",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/tiny_garden-candidate-04.png",
+          "kind": "candidate",
+          "case": "tiny_garden",
+          "rotation": 0,
+          "sourceHash": "a1788316d6935fca0de89d2d3833ed108c2b39a6903ebd35662bf9613dbd8d79",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-tree-library-202173582e80",
+      "pixelHash": "202173582e80d1530ce4705a2d730f4c973403077d542e5958889d86c345c9d4",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/tree_library.json",
+          "kind": "generated-object",
+          "case": "tree_library",
+          "rotation": 0,
+          "sourceHash": "8a5d6add1fe9fcb278ba74a50a161b370f1c9814f7d02da9cf2b6398c68c28e7",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/tree_library-candidate-04.png",
+          "kind": "candidate",
+          "case": "tree_library",
+          "rotation": 0,
+          "sourceHash": "8a5d6add1fe9fcb278ba74a50a161b370f1c9814f7d02da9cf2b6398c68c28e7",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-underwater-town-777c578d7bec",
+      "pixelHash": "777c578d7bece7f1a20348511aad2f134205dc8a6f4e0e1e3ae53dd888a5fa30",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/underwater_town.json",
+          "kind": "generated-object",
+          "case": "underwater_town",
+          "rotation": 0,
+          "sourceHash": "3f877ab3fcfe57d881eaf3451807d536b573e47c01a98d3d207d66d9e2c37a42",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/underwater_town-candidate-04.png",
+          "kind": "candidate",
+          "case": "underwater_town",
+          "rotation": 0,
+          "sourceHash": "3f877ab3fcfe57d881eaf3451807d536b573e47c01a98d3d207d66d9e2c37a42",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-upside-forest-7ed0358fe135",
+      "pixelHash": "7ed0358fe135013c851817870dad2324929e408ce03a777a75fa2abd3102c886",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/upside_forest.json",
+          "kind": "generated-object",
+          "case": "upside_forest",
+          "rotation": 0,
+          "sourceHash": "5259faff77e7668484b9f13d17b236c01cb2c9f95237b21382e610ae76702b46",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/upside_forest-candidate-04.png",
+          "kind": "candidate",
+          "case": "upside_forest",
+          "rotation": 0,
+          "sourceHash": "5259faff77e7668484b9f13d17b236c01cb2c9f95237b21382e610ae76702b46",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-whale-town-21881c16d14c",
+      "pixelHash": "21881c16d14c50be9d1022bba96dc886ba4f748d0d4b5941871dd08c1bca3e18",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/whale_town.json",
+          "kind": "generated-object",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "3065f8bf3fd920ef56d0d2f486a69a55037b0320ef21c9c37e60055c1da1d4c6",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T02-59-27-560Z/whale_town-candidate-04.png",
+          "kind": "candidate",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "3065f8bf3fd920ef56d0d2f486a69a55037b0320ef21c9c37e60055c1da1d4c6",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-bottle-garden-bc540132f41a",
+      "pixelHash": "bc540132f41a729a2087353481a9e45c8755a98653bebcb028d9189e2a50c8c8",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/bottle_garden.json",
+          "kind": "generated-object",
+          "case": "bottle_garden",
+          "rotation": 0,
+          "sourceHash": "5f65e139ff1cb4ccc5d0a1c8addbd937b2934815b807742d694b8a6067e3b550",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/bottle_garden-candidate-07.png",
+          "kind": "candidate",
+          "case": "bottle_garden",
+          "rotation": 0,
+          "sourceHash": "5f65e139ff1cb4ccc5d0a1c8addbd937b2934815b807742d694b8a6067e3b550",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-bottle-garden-e94d5ab1ed8c",
+      "pixelHash": "e94d5ab1ed8ca76947eef932b97b7da676cbd36edbf2f3289704bec948d6de1d",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/bottle_garden-candidate-04.png",
+          "kind": "candidate",
+          "case": "bottle_garden",
+          "rotation": 0,
+          "sourceHash": "9888b28e046428f34d8f7499902347a4fa9b47ee0bedc21c828b6a1a8fda8e07",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-cloud-railway-0c9adaeae952",
+      "pixelHash": "0c9adaeae95262a53a2368a480bbc3d869a76e5b1687e8204087ee5fec3f1676",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/cloud_railway.json",
+          "kind": "generated-object",
+          "case": "cloud_railway",
+          "rotation": 0,
+          "sourceHash": "db1bf16cd10c54ae849ccb0ee16fd868e80a14527650f2a072943e7905703571",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/cloud_railway-candidate-04.png",
+          "kind": "candidate",
+          "case": "cloud_railway",
+          "rotation": 0,
+          "sourceHash": "db1bf16cd10c54ae849ccb0ee16fd868e80a14527650f2a072943e7905703571",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-moon-playground-85c6621e7f0d",
+      "pixelHash": "85c6621e7f0d9cf8a0d105ab6d1f3c5472b703d7454925b0965e8c0117da0808",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/moon_playground.json",
+          "kind": "generated-object",
+          "case": "moon_playground",
+          "rotation": 0,
+          "sourceHash": "f20b607449339fef6d0e3c7dff6c6ed5d8a935fccee00024c8957da7c4cf30fd",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/moon_playground-candidate-04.png",
+          "kind": "candidate",
+          "case": "moon_playground",
+          "rotation": 0,
+          "sourceHash": "f20b607449339fef6d0e3c7dff6c6ed5d8a935fccee00024c8957da7c4cf30fd",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-underwater-town-469eeef4c5ac",
+      "pixelHash": "469eeef4c5aca4e1647cc05496f2f1fc0d02592fd93dedb1a6eb0ce76216d434",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/underwater_town.json",
+          "kind": "generated-object",
+          "case": "underwater_town",
+          "rotation": 0,
+          "sourceHash": "014fd45ce357d981c8cc8e826124d5ef3ed309994803789c2151ff7e473a445a",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/underwater_town-candidate-04.png",
+          "kind": "candidate",
+          "case": "underwater_town",
+          "rotation": 0,
+          "sourceHash": "014fd45ce357d981c8cc8e826124d5ef3ed309994803789c2151ff7e473a445a",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-upside-forest-2932c545b520",
+      "pixelHash": "2932c545b520a48bf30a1500f87a55cbd95903ad95577cca0ab4d0129ccb6cd5",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/upside_forest-candidate-04.png",
+          "kind": "candidate",
+          "case": "upside_forest",
+          "rotation": 0,
+          "sourceHash": "4a146c253db2e2118970b839baa2bf2b18adb8691b62e39683894d171f4f7dd3",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-upside-forest-0d1b1768fbf5",
+      "pixelHash": "0d1b1768fbf5479be7a2700fedb97fd551545f6203c846c7b441c388fb7dc06f",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T03-34-08-115Z/upside_forest-candidate-07.png",
+          "kind": "candidate",
+          "case": "upside_forest",
+          "rotation": 0,
+          "sourceHash": "306544e7928879394a0e770177e5fe85f97fe90bb321bdcd7d5f911044751348",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-preserve-child-boat-b7431aea5311",
+      "pixelHash": "b7431aea5311a7a0d494ff6cc7ce66b776b29dfa4ff720f3bb6e43bff5d59d51",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-19-40-004Z/preserve_child_boat.json",
+          "kind": "generated-object",
+          "case": "preserve_child_boat",
+          "rotation": 0,
+          "sourceHash": "2ef80b69da286b105076d80282d8a76557dc6b95f927ec7100a1d79b9de1353f",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-19-40-004Z/preserve_child_boat-candidate-05.png",
+          "kind": "candidate",
+          "case": "preserve_child_boat",
+          "rotation": 0,
+          "sourceHash": "2ef80b69da286b105076d80282d8a76557dc6b95f927ec7100a1d79b9de1353f",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-bottle-garden-4d44680c574b",
+      "pixelHash": "4d44680c574b58c054bca7ec60c9d93f679db6734c59e73c1d68577bfbb67cbc",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/bottle_garden-candidate-04.png",
+          "kind": "candidate",
+          "case": "bottle_garden",
+          "rotation": 0,
+          "sourceHash": "f19464bb416d93bf8365216883d88417256d22348747f54f39156a1d86a5c77d",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-bottle-garden-b836bb404857",
+      "pixelHash": "b836bb40485780241486fab922ea028a70370d68ca8960b8ffa0a1f9d9fb2eec",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/bottle_garden-candidate-07.png",
+          "kind": "candidate",
+          "case": "bottle_garden",
+          "rotation": 0,
+          "sourceHash": "0dcce94e3854412ab18a34e3f2889d03b580c8957aeca117e668db4407741364",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-brave-journey-94191f8cf04d",
+      "pixelHash": "94191f8cf04d93d15b2d757b93a22f30bc0f9b657382aec9904e2c981ae626a6",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/brave_journey-candidate-04.png",
+          "kind": "candidate",
+          "case": "brave_journey",
+          "rotation": 0,
+          "sourceHash": "e73387d5f7172540b81bd72049c5a7902e58f81b40c4a030f0b1f817f53d9873",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-brave-journey-749e18570332",
+      "pixelHash": "749e185703321707b352a82190ea3de1648443dfa60510eb3994f120fe4e913a",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/brave_journey-candidate-07.png",
+          "kind": "candidate",
+          "case": "brave_journey",
+          "rotation": 0,
+          "sourceHash": "de7d5eda9c7d8eb4c0159489080a26ef74193b15033b1e17355001852c8f140e",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-candy-planet-5db6edf42b0b",
+      "pixelHash": "5db6edf42b0b5dcd15fd2bb5008dc7d2a4d466f3d24a34b814dd81f2b0e280d2",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/candy_planet-candidate-04.png",
+          "kind": "candidate",
+          "case": "candy_planet",
+          "rotation": 0,
+          "sourceHash": "cba90e0fc9e06597cdc61a2fd7696fd0773b0939b209cd180e33114188da5bf5",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-candy-planet-71f23890c645",
+      "pixelHash": "71f23890c645ff3714da07c42b152bb3f2e77a03b635e3b49256a538ab0c226c",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/candy_planet-candidate-07.png",
+          "kind": "candidate",
+          "case": "candy_planet",
+          "rotation": 0,
+          "sourceHash": "ceb0d9495df0c3c449ee7c4e39562f41ce7c6277987488e52ed43206bfad6c60",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-cloud-railway-1574d7723d77",
+      "pixelHash": "1574d7723d77dacd20e33946e922abfcaf2747727ea8d126be363635f1c6b8ef",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/cloud_railway.json",
+          "kind": "generated-object",
+          "case": "cloud_railway",
+          "rotation": 0,
+          "sourceHash": "62fa06b4a96d62eb60731f63963c029052ce187f611ae3482041a3bb60bf8fd6",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/cloud_railway-candidate-04.png",
+          "kind": "candidate",
+          "case": "cloud_railway",
+          "rotation": 0,
+          "sourceHash": "62fa06b4a96d62eb60731f63963c029052ce187f611ae3482041a3bb60bf8fd6",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-correction-5082dc4f654b",
+      "pixelHash": "5082dc4f654bdfc285e1a493fa5cbe5f406138a86bba720202e4a2530598526c",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/correction.json",
+          "kind": "generated-object",
+          "case": "correction",
+          "rotation": 0,
+          "sourceHash": "055f635ff28a98c958374ebc9595d13835f3b59f526fc2030312049ad41025fd",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/correction-candidate-04.png",
+          "kind": "candidate",
+          "case": "correction",
+          "rotation": 0,
+          "sourceHash": "055f635ff28a98c958374ebc9595d13835f3b59f526fc2030312049ad41025fd",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-cosy-rain-e832f5f01d8d",
+      "pixelHash": "e832f5f01d8d6420946b632b7a98b949cc0cb19191dc835f8c563cf0a2c653a5",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/cosy_rain.json",
+          "kind": "generated-object",
+          "case": "cosy_rain",
+          "rotation": 0,
+          "sourceHash": "e0b7e10c34788d8f3693abf51251622d95a0fbd19bc9d76a0bc29ace09708c3a",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/cosy_rain-candidate-04.png",
+          "kind": "candidate",
+          "case": "cosy_rain",
+          "rotation": 0,
+          "sourceHash": "e0b7e10c34788d8f3693abf51251622d95a0fbd19bc9d76a0bc29ace09708c3a",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-english-quiet-f175e0aa50f3",
+      "pixelHash": "f175e0aa50f30ae316a21bf59126f0811ee2bb11c71f453f74bf62445d30a156",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/english_quiet-candidate-04.png",
+          "kind": "candidate",
+          "case": "english_quiet",
+          "rotation": 0,
+          "sourceHash": "1ae6173079a368ca87b40c4a0e22b5ffe22f295a9aca20c4dd634159374e9c14",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-english-quiet-eefe3c2bbc6d",
+      "pixelHash": "eefe3c2bbc6dea452360172fc37aac4634819434883013e5a9cbf7e8ab5fe25e",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/english_quiet-candidate-07.png",
+          "kind": "candidate",
+          "case": "english_quiet",
+          "rotation": 0,
+          "sourceHash": "fb3a94453fca0b1be11dc015d288ea345005e097231c6b846742a03ff02f68af",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-english-whale-318197412dc0",
+      "pixelHash": "318197412dc055dd8d258a4156492be22dc9b4547c6442d6ecb01c8609b8a2d3",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/english_whale.json",
+          "kind": "generated-object",
+          "case": "english_whale",
+          "rotation": 0,
+          "sourceHash": "da658a0e2534f4570ea403b079b79a0c2f486b9617617f1411f5922fb842e4e9",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/english_whale-candidate-04.png",
+          "kind": "candidate",
+          "case": "english_whale",
+          "rotation": 0,
+          "sourceHash": "da658a0e2534f4570ea403b079b79a0c2f486b9617617f1411f5922fb842e4e9",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-home-for-giants-9a63c96c32f9",
+      "pixelHash": "9a63c96c32f98f405b740ee30cb244ec158a2ce24b2599c632e5c64920154c0c",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/home_for_giants-candidate-04.png",
+          "kind": "candidate",
+          "case": "home_for_giants",
+          "rotation": 0,
+          "sourceHash": "88649a6b27bf5cbad29cb994ce2b6f776b0f47a9f10bbbe471b7fe3d2f87b958",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-home-for-giants-71985dfdb6b5",
+      "pixelHash": "71985dfdb6b577175de9d8f8aaf81a8ea2f6c27dc03285ab24c7af6050ca82b2",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/home_for_giants-candidate-07.png",
+          "kind": "candidate",
+          "case": "home_for_giants",
+          "rotation": 0,
+          "sourceHash": "bba769e448833e1bfb3774a4a8d7c953b1246d952c20e9681ae1469810df3002",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-magic-world-5028bcf50350",
+      "pixelHash": "5028bcf50350d806aff18d500409fca93d309b0b5beb683eec8df5ecb7aa7acb",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/magic_world-candidate-04.png",
+          "kind": "candidate",
+          "case": "magic_world",
+          "rotation": 0,
+          "sourceHash": "a1e46296a2093e3563d1f1eb1669c8442f7580f51b7dc52bd5a1a7aed6fb6079",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-magic-world-3520f7735889",
+      "pixelHash": "3520f773588984e59605586602c012d146088fbb56ed2a38ca193d5b0c4a8c5c",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/magic_world-candidate-07.png",
+          "kind": "candidate",
+          "case": "magic_world",
+          "rotation": 0,
+          "sourceHash": "56c646a4f03cb83d24a4826dd1d56e3dabb1d7b3b2db92fa61da660f655cdbf5",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-moon-playground-6fec4ecf15e2",
+      "pixelHash": "6fec4ecf15e24e141fae958777aab35cfb74571cd603d743cce184a7c0015c17",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/moon_playground.json",
+          "kind": "generated-object",
+          "case": "moon_playground",
+          "rotation": 0,
+          "sourceHash": "b6ae7fd2915e4e7295d2257925031b61134a19ac7d7ef7758e87bf8c88bad52d",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/moon_playground-candidate-04.png",
+          "kind": "candidate",
+          "case": "moon_playground",
+          "rotation": 0,
+          "sourceHash": "b6ae7fd2915e4e7295d2257925031b61134a19ac7d7ef7758e87bf8c88bad52d",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-no-castle-e885292c1870",
+      "pixelHash": "e885292c18703a1c7fd3f0fa7ae8d88fd15092f1fa260dff721b3ecb036a6532",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/no_castle.json",
+          "kind": "generated-object",
+          "case": "no_castle",
+          "rotation": 0,
+          "sourceHash": "b0cb150230b98bdf1f95888bdc4699e03a9df7d5b7134fe8d01ea297ba9e9d08",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/no_castle-candidate-04.png",
+          "kind": "candidate",
+          "case": "no_castle",
+          "rotation": 0,
+          "sourceHash": "b0cb150230b98bdf1f95888bdc4699e03a9df7d5b7134fe8d01ea297ba9e9d08",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-paper-realm-8c565cb6d104",
+      "pixelHash": "8c565cb6d104456e03d25f8c8ed00d6c34200d980d1d1b899cb54a3c6d22657a",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/paper_realm.json",
+          "kind": "generated-object",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "189dd7d2b7accd7dda20cc4292c25874e934dfc3d993570536716d8379893f15",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/paper_realm-candidate-04.png",
+          "kind": "candidate",
+          "case": "paper_realm",
+          "rotation": 0,
+          "sourceHash": "189dd7d2b7accd7dda20cc4292c25874e934dfc3d993570536716d8379893f15",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-quiet-wonder-02ffa3650bad",
+      "pixelHash": "02ffa3650bad8a29650c14d7594908525eb794ee283e9168b609913b7c235d2a",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/quiet_wonder.json",
+          "kind": "generated-object",
+          "case": "quiet_wonder",
+          "rotation": 0,
+          "sourceHash": "4d78f37d95c2606f92bfa82fc2eef5ff0ac20f5478c21a2e361bd73484bfe7b5",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/quiet_wonder-candidate-04.png",
+          "kind": "candidate",
+          "case": "quiet_wonder",
+          "rotation": 0,
+          "sourceHash": "4d78f37d95c2606f92bfa82fc2eef5ff0ac20f5478c21a2e361bd73484bfe7b5",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-reference-not-book-da2eff592b01",
+      "pixelHash": "da2eff592b013c67b14da2d9ff62afd748923ac32748d08e18b27646e36b034d",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/reference_not_book.json",
+          "kind": "generated-object",
+          "case": "reference_not_book",
+          "rotation": 0,
+          "sourceHash": "2d72df9bb160e3e0db136578151e2688f0623c1a4d35471f89ef1a4e90310174",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/reference_not_book-candidate-04.png",
+          "kind": "candidate",
+          "case": "reference_not_book",
+          "rotation": 0,
+          "sourceHash": "2d72df9bb160e3e0db136578151e2688f0623c1a4d35471f89ef1a4e90310174",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-tiny-garden-d0c5080b55c8",
+      "pixelHash": "d0c5080b55c8bf0807c458f1580bd17344c4f0ab0877a26e2f157d39a0a1205d",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/tiny_garden.json",
+          "kind": "generated-object",
+          "case": "tiny_garden",
+          "rotation": 0,
+          "sourceHash": "cccb95113de43e6e79996e2e3176f9b25cdf76cd19dc1537055b5815a97e8716",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/tiny_garden-candidate-04.png",
+          "kind": "candidate",
+          "case": "tiny_garden",
+          "rotation": 0,
+          "sourceHash": "cccb95113de43e6e79996e2e3176f9b25cdf76cd19dc1537055b5815a97e8716",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-tree-library-ed0b2a69891e",
+      "pixelHash": "ed0b2a69891e08717313035bed9176e61d7436095d96aeca5e98c7fa9c195274",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/tree_library.json",
+          "kind": "generated-object",
+          "case": "tree_library",
+          "rotation": 0,
+          "sourceHash": "3021700d34295c7109759f681f16d2e3a4c7f78419e669f2fa8835d6d3b87b62",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/tree_library-candidate-04.png",
+          "kind": "candidate",
+          "case": "tree_library",
+          "rotation": 0,
+          "sourceHash": "3021700d34295c7109759f681f16d2e3a4c7f78419e669f2fa8835d6d3b87b62",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-underwater-town-0dbd344550fe",
+      "pixelHash": "0dbd344550feebe45125c257443dfc3ca5fd1e028b65018b03c8d874e93ad488",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/underwater_town.json",
+          "kind": "generated-object",
+          "case": "underwater_town",
+          "rotation": 0,
+          "sourceHash": "62f3db7b18d5f3f1bfa7e5d65c4090ba9792d2420266932f24bb07e44b45a299",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/underwater_town-candidate-04.png",
+          "kind": "candidate",
+          "case": "underwater_town",
+          "rotation": 0,
+          "sourceHash": "62f3db7b18d5f3f1bfa7e5d65c4090ba9792d2420266932f24bb07e44b45a299",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-upside-forest-a4c6bc26eea4",
+      "pixelHash": "a4c6bc26eea44656793231c0806c5d2ab58543c4d86e0db2122707323a03e887",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/upside_forest-candidate-04.png",
+          "kind": "candidate",
+          "case": "upside_forest",
+          "rotation": 180,
+          "sourceHash": "2c0d13a3a5dceb733f74671287c5803f2e997166b68863938f3a60d4bc2e34e8",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-upside-forest-991626851720",
+      "pixelHash": "991626851720688e80b40cd2bed98e489afb547e6455e126703ba9c033485b95",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/upside_forest-candidate-07.png",
+          "kind": "candidate",
+          "case": "upside_forest",
+          "rotation": 180,
+          "sourceHash": "715f23ef55df8fca061cc372c19cddbe0eb3f5dc700271b63f62683e11d8af94",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-whale-town-5227ae27fa2e",
+      "pixelHash": "5227ae27fa2e9ae1be8985b984126cb429e1425c05e3e229611c3fea5977739e",
+      "initialDecision": "keep",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/whale_town.json",
+          "kind": "generated-object",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "de8fd77edd4630397d42c9448729f527a994f04882846997de6debdd5f1317eb",
+          "approved": true,
+          "note": "已有绑定记录的独立看图通过；仅收录生成图，不含孩子原画。"
+        },
+        {
+          "file": "server/.tmp/nilo-open-scenes/2026-09-28T04-42-38-298Z/whale_town-candidate-04.png",
+          "kind": "candidate",
+          "case": "whale_town",
+          "rotation": 0,
+          "sourceHash": "de8fd77edd4630397d42c9448729f527a994f04882846997de6debdd5f1317eb",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-cosy-rain-dbca6d41e6b6",
+      "pixelHash": "dbca6d41e6b6e76df47638ffcdcfff68ba0f495829d64331f1afdf59af87f98e",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-cosy-probe/2026-09-28T04-26-43-678Z/cosy_rain-candidate-04.png",
+          "kind": "candidate",
+          "case": "cosy_rain",
+          "rotation": 0,
+          "sourceHash": "6943ba9ef22391799d23ca6942969663616985d48864239e670c3ded0c7bb738",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-cosy-rain-dbee2da3763b",
+      "pixelHash": "dbee2da3763b58f8ebefad1c7b1a3787542c4aca61112bc1c5d8190bdae9161c",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-cosy-probe/2026-09-28T04-26-43-678Z/cosy_rain-candidate-06.png",
+          "kind": "candidate",
+          "case": "cosy_rain",
+          "rotation": 0,
+          "sourceHash": "dbf8af29ac19eae03fc77421debc2203cfd01974bf0984ca5351027a715e556a",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-cosy-rain-2b48491055c5",
+      "pixelHash": "2b48491055c5b82d98852c727e62be9b55ff26942a4e0d978793c580f9d773d1",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-cosy-probe/2026-09-28T04-36-33-904Z/cosy_rain.json",
+          "kind": "generated-object",
+          "case": "cosy_rain",
+          "rotation": 0,
+          "sourceHash": "c783f5bebeb7903eb91b8488ae49b7a6c0f9b67ea157257c95f686c1db08fba9",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-cosy-probe/2026-09-28T04-36-33-904Z/cosy_rain-candidate-05.png",
+          "kind": "candidate",
+          "case": "cosy_rain",
+          "rotation": 0,
+          "sourceHash": "c783f5bebeb7903eb91b8488ae49b7a6c0f9b67ea157257c95f686c1db08fba9",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-upside-forest-f0ba066a9976",
+      "pixelHash": "f0ba066a9976b2dcb10aea1244bb5de8624d18cdfb39b39f2a436a99909ff993",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-inversion-probe/2026-09-28T04-26-42-866Z/upside_forest-candidate-06.png",
+          "kind": "candidate",
+          "case": "upside_forest",
+          "rotation": 180,
+          "sourceHash": "65f64393e22fdfdfe4867f3125c93ae59d2636e99c875faee7873de54398ef2f",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-upside-forest-b355c8e4a6cb",
+      "pixelHash": "b355c8e4a6cb1c01f360426fb5377f10c20796163bdc7d192fe5e16e227a6aae",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-inversion-probe/2026-09-28T04-26-42-866Z/upside_forest-candidate-09.png",
+          "kind": "candidate",
+          "case": "upside_forest",
+          "rotation": 180,
+          "sourceHash": "154a982b3a55b840a0183525dc79978464e6a1f8c3cb2fe4bb80d95c81728113",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-upside-forest-a5d7b55a4459",
+      "pixelHash": "a5d7b55a44591593efb9bee1bdb35b363cf75d87216c096299f391bcb7fee917",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-targeted-budget/2026-09-28T05-16-04-435Z/upside_forest.json",
+          "kind": "generated-object",
+          "case": "upside_forest",
+          "rotation": 180,
+          "sourceHash": "2007a738d0c960c0a26d694afe582e72070ac8a7a1252dc8efd0a8e02de4fa28",
+          "approved": false,
+          "note": "已保存生成结果，入库后仍需复核。"
+        },
+        {
+          "file": "server/.tmp/nilo-targeted-budget/2026-09-28T05-16-04-435Z/upside_forest-candidate-04.png",
+          "kind": "candidate",
+          "case": "upside_forest",
+          "rotation": 180,
+          "sourceHash": "2007a738d0c960c0a26d694afe582e72070ac8a7a1252dc8efd0a8e02de4fa28",
+          "approved": false,
+          "note": "测试候选图；包含被拒绝或未完成的尝试，不等同于审核通过。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-candy-planet-ca3f6f9a533d",
+      "pixelHash": "ca3f6f9a533dbfcbc90e9e88902d0c3f07f887558cd9bc7c9876c329de27d8a6",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/compact-scene-prompt-probe/candy_planet.png",
+          "kind": "compact-prompt-probe",
+          "case": "candy_planet",
+          "rotation": 0,
+          "sourceHash": "0e7594e0cb3d3ba64045283720b2ba3d88e13c5cf746ea3e6174fb5617bb5735",
+          "approved": false,
+          "note": "简洁提示试验，待素材复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-magic-world-e30e28bd3646",
+      "pixelHash": "e30e28bd364688955a6e216507f7bb55ab987c81a7572fe39554da19adf6cfa9",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/compact-scene-prompt-probe/magic_world.png",
+          "kind": "compact-prompt-probe",
+          "case": "magic_world",
+          "rotation": 0,
+          "sourceHash": "3aec916a4ede423a5dc0d4846a24d268f34d77d5d993b66f73e5fa5808d18816",
+          "approved": false,
+          "note": "简洁提示试验，待素材复核。"
+        }
+      ]
+    },
+    {
+      "id": "illustration-scene-bottle-garden-ca0759d88da9",
+      "pixelHash": "ca0759d88da925c9402702554e8713bb83c060434ef44841503178f5e8e3206e",
+      "initialDecision": "reject",
+      "sources": [
+        {
+          "file": "server/.tmp/nilo-targeted-budget/2026-09-28T05-16-04-435Z/bottle-prompt-check.png",
+          "kind": "prompt-check",
+          "case": "bottle_garden",
+          "rotation": 0,
+          "sourceHash": "d5bf0391766859e9d68ed00a457941fc342baf22d0ff10ff979bec7f7eaa5f6e",
+          "approved": false,
+          "note": "中央主体正确，但周围多出重复瓶子；暂不自动使用。"
+        }
+      ]
+    }
+  ]
+}

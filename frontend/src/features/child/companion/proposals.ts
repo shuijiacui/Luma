@@ -8,10 +8,11 @@ import { SKETCH_LIMITS, validateSketch, type DrawingSketch } from './sketch'
 import { getDrawingIllustration } from '../../../../../shared/niloIllustrations.mjs'
 import { sameDrawingSubject } from '../../../../../shared/niloVariants.mjs'
 import { drawingProposalLimits, hasRegisteredRecipeGeometry } from '../../../../../shared/niloProposalLimits.mjs'
+import { validateGeneratedRaster, type GeneratedRaster } from '../../../../../shared/niloGeneratedRaster.mjs'
 
 export const templates = ['waves', 'fish', 'leaf', 'window', 'stars', 'cloud', 'flower', 'trail', 'flame', 'rain', 'grass', 'echo', 'sun', 'moon', 'tree', 'mountain', 'house', 'boat', 'bird', 'butterfly', 'heart'] as const
 export type BuiltinTemplate = typeof templates[number]
-export type Template = BuiltinTemplate | 'custom' | 'illustration'
+export type Template = BuiltinTemplate | 'custom' | 'illustration' | 'generated'
 export interface SubjectAnchor { x: number; y: number; width: number; height: number }
 export type ProposalPlacement = 'above' | 'below' | 'left' | 'right' | 'inside' | 'near'
 export interface DrawingProposal {
@@ -20,6 +21,8 @@ export interface DrawingProposal {
   recipeId?: string
   /** A trusted catalogue identifier. Raster guides never contain URLs or authored ink. */
   illustrationId?: string
+  /** Bounded, self-contained PNG reference; never authored ink. */
+  raster?: GeneratedRaster
   template: Template
   x: number; y: number; width: number; height: number
   rotation: number; color: string; strokeWidth: number
@@ -102,14 +105,15 @@ type Point = { x:number; y:number }
 export function validateProposal(value: unknown): DrawingProposal | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
   const raw = value as DrawingProposal
-  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'illustrationId', 'placementPolicy'].includes(key))) return null
+  if (Object.keys(raw).some(key => !['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'anchor', 'placement', 'echoPoints', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'illustrationId', 'placementPolicy', 'raster'].includes(key))) return null
   if (raw.placementPolicy !== undefined && (raw.placementPolicy !== 'free' || raw.contribution !== 'object')) return null
   if (raw.contribution !== undefined && raw.contribution !== 'object') return null
   if (raw.recipeId !== undefined && (typeof raw.recipeId !== 'string' || !/^[a-z]+-[0-9]+$/.test(raw.recipeId))) return null
   if (raw.contribution === 'object' && (raw.attachment || raw.contact)) return null
   const p = { ...raw, rotation: raw.rotation === undefined ? 0 : raw.rotation, strokeWidth: raw.strokeWidth === undefined ? 4 : raw.strokeWidth }
-  if (!(p.template === 'custom' || p.template === 'illustration' || templates.includes(p.template)) || !/^#[\da-f]{6}$/i.test(p.color)) return null
+  if (!(p.template === 'custom' || p.template === 'illustration' || p.template === 'generated' || templates.includes(p.template)) || !/^#[\da-f]{6}$/i.test(p.color)) return null
   if (p.template !== 'illustration' && p.illustrationId !== undefined) return null
+  if (p.template !== 'generated' && Object.hasOwn(p, 'raster')) return null
   if (![p.x, p.y, p.width, p.height, p.rotation, p.strokeWidth].every(Number.isFinite)) return null
   const { maxSpan, maxArea } = drawingProposalLimits(p)
   if (p.width < .025 || p.height < .025 || p.width > maxSpan || p.height > maxSpan || p.width * p.height > maxArea) return null
@@ -119,6 +123,7 @@ export function validateProposal(value: unknown): DrawingProposal | null {
   const relation = typeof p.relation === 'string' ? p.relation.trim().slice(0, 180) : ''
   if (!target || !relation) return null
   let sketch: DrawingSketch | null = null
+  let raster: GeneratedRaster | null = null
   let subject = ''
   if (p.template === 'custom') {
     subject = typeof p.subject === 'string' ? p.subject.trim() : ''
@@ -129,6 +134,10 @@ export function validateProposal(value: unknown): DrawingProposal | null {
     if (!illustration || ['sketch', 'recipeId', 'attachment', 'contact', 'echoPoints'].some(key => Object.hasOwn(p, key))) return null
     subject = typeof p.subject === 'string' ? p.subject.trim() : ''
     if (!subject || subject.length > 60 || !sameDrawingSubject(p, { ...p, subject: illustration.subject })) return null
+  } else if (p.template === 'generated') {
+    raster = validateGeneratedRaster(p.raster)
+    subject = typeof p.subject === 'string' ? p.subject.trim() : ''
+    if (!raster || !subject || subject.length > 60 || ['sketch', 'recipeId', 'illustrationId', 'attachment', 'contact', 'echoPoints'].some(key => Object.hasOwn(p, key))) return null
   } else if ('subject' in p || 'sketch' in p) return null
   if (p.placement !== undefined && !['above', 'below', 'left', 'right', 'inside', 'near'].includes(p.placement)) return null
   if (p.anchor !== undefined) {
@@ -149,10 +158,10 @@ export function validateProposal(value: unknown): DrawingProposal | null {
     const xs = p.echoPoints.map(point => point.x), ys = p.echoPoints.map(point => point.y)
     if (Math.max(...xs) - Math.min(...xs) + Math.max(...ys) - Math.min(...ys) < .005) return null
   } else if (p.echoPoints !== undefined) return null
-  return { ...p, color: p.color.toLowerCase(), target, relation, ...(sketch ? { subject, sketch } : p.template === 'illustration' ? { subject } : {}), ...(p.anchor ? { anchor: { ...p.anchor } } : {}), ...(contact ? { contact } : {}), ...(p.echoPoints ? { echoPoints: p.echoPoints.map(({ x, y }) => ({ x, y })) } : {}) }
+  return { ...p, color: p.color.toLowerCase(), target, relation, ...(sketch ? { subject, sketch } : raster ? { subject, raster } : p.template === 'illustration' ? { subject } : {}), ...(p.anchor ? { anchor: { ...p.anchor } } : {}), ...(contact ? { contact } : {}), ...(p.echoPoints ? { echoPoints: p.echoPoints.map(({ x, y }) => ({ x, y })) } : {}) }
 }
 export function proposalStrokes(p: DrawingProposal, aspect = 1): NiloStrokeSpec[] {
-  return p.template !== 'illustration' && validateProposal(p) ? sampleProposalGeometry(p, aspect) : []
+  return !['illustration', 'generated'].includes(p.template) && validateProposal(p) ? sampleProposalGeometry(p, aspect) : []
 }
 type SurfaceSize = { width: number; height: number }
 export function projectionFits(p: DrawingProposal, occupancy: number[], aspect = 1, surfaceSize?: SurfaceSize, pixels?: InkPixels): boolean {
@@ -278,7 +287,7 @@ export function drawingPlanFits(proposals: DrawingProposal[], occupancy: number[
   const n = occupancySize(occupancy)
   // User-scaled catalogue art retains its fixed command count. The small
   // generated-area budget must not prevent editing or keeping that larger art.
-  if (!n || !planBudgetFits(proposals) || proposals.reduce((area, p) => area + (p.template === 'illustration' || hasRegisteredRecipeGeometry(p) ? 0 : p.width * p.height), 0) > .24) return false
+  if (!n || !planBudgetFits(proposals) || proposals.reduce((area, p) => area + (['illustration', 'generated'].includes(p.template) || hasRegisteredRecipeGeometry(p) ? 0 : p.width * p.height), 0) > .24) return false
   const occupied = [...occupancy]
   for (const p of proposals) {
     const cells = proposalFootprint(p, n, aspect, surfaceSize)
@@ -309,7 +318,7 @@ export function prepareDrawingPlan(proposals: DrawingProposal[], occupancy: numb
 
 function planBudgetFits(proposals: DrawingProposal[]): boolean {
   if (!Array.isArray(proposals) || proposals.length < 1 || proposals.length > 4) return false
-  if (proposals.some(proposal => proposal?.template === 'illustration') && proposals.length !== 1) return false
+  if (proposals.some(proposal => ['illustration', 'generated'].includes(proposal?.template)) && proposals.length !== 1) return false
   let strokes = 0, commands = 0
   for (const value of proposals) {
     const p = validateProposal(value)
@@ -317,7 +326,7 @@ function planBudgetFits(proposals: DrawingProposal[]): boolean {
     if (p.template === 'custom') {
       strokes += p.sketch!.paths.length
       commands += p.sketch!.paths.reduce((sum, path) => sum + path.length, 0)
-    } else strokes += p.template === 'echo' || p.template === 'illustration' ? 1 : localPaths(p.template).length
+    } else strokes += ['echo', 'illustration', 'generated'].includes(p.template) ? 1 : localPaths(p.template).length
     if (strokes > SKETCH_LIMITS.planStrokes || commands > SKETCH_LIMITS.planCommands) return false
   }
   return true

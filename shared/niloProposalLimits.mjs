@@ -30,5 +30,5 @@ export function hasRegisteredRecipeGeometry(proposal) {
 /** Scaling a registered SVG adds no paths or commands. Give it the same paper
  * budget as an image reference; keep generated sketches within their budget. */
 export function drawingProposalLimits(proposal) {
-  return proposal?.template === 'illustration' || hasRegisteredRecipeGeometry(proposal) ? referenceLimits : generatedLimits
+  return ['illustration', 'generated'].includes(proposal?.template) || hasRegisteredRecipeGeometry(proposal) ? referenceLimits : generatedLimits
 }

@@ -137,5 +137,29 @@ export function createDb(path = process.env.DB_PATH || DEFAULT_DB_PATH) {
     FOREIGN KEY(child_id, parent_id) REFERENCES parent_conversations(child_id, parent_id)
   );
   CREATE INDEX IF NOT EXISTS idx_parent_conversation_time ON parent_conversation_turns(child_id, parent_id, created_at);`)
+  // Add conversation identity without discarding existing single-chat history.
+  const chatColumns = new Set(db.prepare('PRAGMA table_info(parent_conversations)').all().map(row => row.name))
+  const turnColumns = new Set(db.prepare('PRAGMA table_info(parent_conversation_turns)').all().map(row => row.name))
+  db.exec('BEGIN IMMEDIATE')
+  try {
+    if (!chatColumns.has('active_conversation_id')) db.exec("ALTER TABLE parent_conversations ADD COLUMN active_conversation_id TEXT NOT NULL DEFAULT 'legacy'")
+    if (!turnColumns.has('conversation_id')) db.exec("ALTER TABLE parent_conversation_turns ADD COLUMN conversation_id TEXT NOT NULL DEFAULT 'legacy'")
+    db.exec(`CREATE TABLE IF NOT EXISTS parent_chat_threads (
+      child_id TEXT NOT NULL,
+      parent_id TEXT NOT NULL,
+      id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY(child_id, parent_id, id),
+      FOREIGN KEY(child_id, parent_id) REFERENCES parent_conversations(child_id, parent_id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_parent_chat_thread_turns ON parent_conversation_turns(child_id, parent_id, conversation_id, created_at);`)
+    if (!chatColumns.has('active_conversation_id') || !turnColumns.has('conversation_id')) {
+      db.exec(`INSERT OR IGNORE INTO parent_chat_threads (child_id, parent_id, id, created_at)
+        SELECT c.child_id, c.parent_id, 'legacy', COALESCE((SELECT MIN(t.created_at) FROM parent_conversation_turns t
+          WHERE t.child_id = c.child_id AND t.parent_id = c.parent_id), strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+        FROM parent_conversations c`)
+    }
+    db.exec('COMMIT')
+  } catch (error) { db.exec('ROLLBACK'); throw error }
   return db
 }

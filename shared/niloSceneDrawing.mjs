@@ -26,16 +26,17 @@ export function sanitizeScenePlan(raw) {
   if (raw.materialProfile !== undefined && (!keys(raw.materialProfile, ['style', 'detail']) || !['storybook', 'illustrated', 'realistic'].includes(raw.materialProfile.style) || !['simple', 'moderate', 'rich'].includes(raw.materialProfile.detail))) return null
   const palette = { ...scenePalette, ...raw.palette }, ids = new Set(), objects = []
   for (const item of raw.objects) {
-    if (!keys(item, ['id', 'name', 'aliases', 'role', 'essential', 'render', 'box', 'color', 'connectTo'])) return null
+    if (!keys(item, ['id', 'name', 'aliases', 'role', 'essential', 'render', 'box', 'color', 'connectTo', 'rotation'])) return null
+    if (item.rotation !== undefined && ![0, 180].includes(item.rotation)) return null
     const id = text(item.id, 64), name = text(item.name, 60), essential = strings(item.essential, 4, 100), aliases = strings(item.aliases ?? [], 6, 100)
     const box = item.box, render = item.render
-    const registered = render?.kind === 'recipe' && !!getDrawingRecipe(render.recipeId) || render?.kind === 'illustration' && !!getDrawingIllustration(render.illustrationId)
+    const registered = render?.kind === 'recipe' && !!getDrawingRecipe(render.recipeId) || render?.kind === 'illustration' && !!getDrawingIllustration(render.illustrationId) || render?.kind === 'generated'
     if (!id || !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(id) || ids.has(id) || !name || !essential?.length || !aliases
       || !['main', 'support', 'atmosphere'].includes(item.role)
       || !keys(box, ['x', 'y', 'width', 'height']) || !['x', 'y', 'width', 'height'].every(key => typeof box[key] === 'number' && Number.isFinite(box[key]))
       || box.x < 0 || box.y < 0 || box.width < .025 || box.height < .025 || box.width > (registered ? .9 : .45) || box.height > (registered ? .9 : .45) || box.width * box.height > (registered ? .81 : .16) + 1e-9
       || box.x + box.width > 1 + 1e-9 || box.y + box.height > 1 + 1e-9 || !color(item.color)
-      || !keys(render, ['kind', 'recipeId', 'illustrationId', 'primitive', 'parameters']) || !['recipe', 'illustration', 'compose', 'custom'].includes(render.kind)) return null
+      || !keys(render, ['kind', 'recipeId', 'illustrationId', 'primitive', 'parameters', 'sourceDescription']) || !['recipe', 'illustration', 'compose', 'custom', 'generated'].includes(render.kind)) return null
     let cleanRender
     if (render.kind === 'recipe') {
       if (!keys(render, ['kind', 'recipeId']) || !getDrawingRecipe(render.recipeId)) return null
@@ -48,14 +49,22 @@ export function sanitizeScenePlan(raw) {
       const parameters = render.parameters ?? {}, allowed = sceneDrawingCapabilities[render.primitive]
       if (!record(parameters) || !Object.entries(parameters).every(([key, value]) => Object.hasOwn(allowed, key) && allowed[key].includes(value))) return null
       cleanRender = { kind: 'compose', primitive: render.primitive, parameters: { ...parameters } }
+    } else if (render.kind === 'generated') {
+      if (!keys(render, ['kind', 'sourceDescription'])) return null
+      cleanRender = { kind: 'generated' }
+      if (Object.hasOwn(render, 'sourceDescription')) {
+        const sourceDescription = text(render.sourceDescription, 1000)
+        if (item.rotation !== 180 || !sourceDescription || /[\u0080-\u009f]/.test(sourceDescription)) return null
+        cleanRender.sourceDescription = sourceDescription
+      }
     } else {
       if (!keys(render, ['kind'])) return null
-      cleanRender = { kind: 'custom' }
+      cleanRender = { kind: render.kind }
     }
     if (item.connectTo !== undefined && (!text(item.connectTo, 64) || cleanRender.kind !== 'compose' || cleanRender.primitive !== 'path')) return null
     ids.add(id)
     objects.push({ id, name, aliases, role: item.role, essential, render: cleanRender, box: { ...box }, color: color(item.color),
-      ...(item.connectTo ? { connectTo: item.connectTo } : {}) })
+      ...(item.connectTo ? { connectTo: item.connectTo } : {}), ...(item.rotation !== undefined ? { rotation: item.rotation } : {}) })
   }
   if (objects.some(item => item.connectTo && (!ids.has(item.connectTo) || item.connectTo === item.id
     || objects.find(target => target.id === item.connectTo)?.render.primitive === 'path'))) return null

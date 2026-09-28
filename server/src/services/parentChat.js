@@ -1,8 +1,8 @@
-import { readQuestionnaireContext, questionnairePrompt } from './parentQuestionnaireContext.js'
 import crypto from 'node:crypto'
 import catalog from '../../../knowledge/observation/catalog.json' with { type: 'json' }
 import { buildObservationReport } from './observationReport.js'
 import { gateFeatures, validateFeatures } from './extractFeatures.js'
+import { readQuestionnaireContext, questionnairePrompt } from './parentQuestionnaireContext.js'
 
 const error = (status, message) => Object.assign(new Error(message), { status })
 const fingerprint = value => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex')
@@ -111,14 +111,32 @@ function currentTurnHint(text) {
 }
 
 function session(db, childId, parentId) {
-  return db.prepare('SELECT revision FROM parent_conversations WHERE child_id = ? AND parent_id = ?').get(childId, parentId)
+  return db.prepare('SELECT revision, active_conversation_id FROM parent_conversations WHERE child_id = ? AND parent_id = ?').get(childId, parentId)
 }
 function ensureSession(db, childId, parentId) {
+  const current = session(db, childId, parentId)
+  if (current) return current
   db.prepare('INSERT OR IGNORE INTO parent_conversations (child_id, parent_id) VALUES (?, ?)').run(childId, parentId)
+  db.prepare('INSERT OR IGNORE INTO parent_chat_threads (child_id, parent_id, id, created_at) VALUES (?, ?, ?, ?)')
+    .run(childId, parentId, 'legacy', new Date().toISOString())
   return session(db, childId, parentId)
 }
-function rowsFor(db, childId, parentId) {
-  return db.prepare(`SELECT * FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ? ORDER BY created_at, rowid`).all(childId, parentId)
+function requireThread(db, childId, parentId, id) {
+  if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(id)) throw error(400, 'invalid_conversation_id')
+  if (!db.prepare('SELECT 1 FROM parent_chat_threads WHERE child_id = ? AND parent_id = ? AND id = ?').get(childId, parentId, id)) throw error(404, 'conversation_not_found')
+  return id
+}
+function rowsFor(db, childId, parentId, conversationId) {
+  return db.prepare(`SELECT * FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ? AND conversation_id = ? ORDER BY created_at, rowid`).all(childId, parentId, conversationId)
+}
+function conversationList(db, childId, parentId) {
+  return db.prepare(`SELECT c.id,
+    (SELECT user_text FROM parent_conversation_turns t WHERE t.child_id=c.child_id AND t.parent_id=c.parent_id AND t.conversation_id=c.id ORDER BY created_at, rowid LIMIT 1) AS title,
+    (SELECT assistant_text FROM parent_conversation_turns t WHERE t.child_id=c.child_id AND t.parent_id=c.parent_id AND t.conversation_id=c.id ORDER BY created_at DESC, rowid DESC LIMIT 1) AS lastReply,
+    (SELECT MAX(created_at) FROM parent_conversation_turns t WHERE t.child_id=c.child_id AND t.parent_id=c.parent_id AND t.conversation_id=c.id) AS updatedAt,
+    (SELECT COUNT(*) FROM parent_conversation_turns t WHERE t.child_id=c.child_id AND t.parent_id=c.parent_id AND t.conversation_id=c.id) AS turnCount
+    FROM parent_chat_threads c WHERE c.child_id = ? AND c.parent_id = ? ORDER BY updatedAt DESC, c.created_at DESC, c.id`)
+    .all(childId, parentId).filter(item => item.turnCount > 0)
 }
 function projectTurn(row, works) {
   const ids = JSON.parse(row.source_ids_json)
@@ -126,21 +144,64 @@ function projectTurn(row, works) {
     sourceId: row.selected_source_id, sources: works.filter(work => ids.includes(work.sourceId)) }
 }
 
-export function chatSnapshot(db, childId, auth, locale) {
+export function chatSnapshot(db, childId, auth, locale, requestedId) {
   authorizeParentChat(db, childId, auth)
   const memory = readArtworkMemory(db, childId, locale)
-  const revision = session(db, childId, auth.accountId)?.revision ?? 0
-  return { revision, memory, turns: rowsFor(db, childId, auth.accountId).map(row => projectTurn(row, memory.works)) }
+  const current = ensureSession(db, childId, auth.accountId)
+  const conversationId = requireThread(db, childId, auth.accountId, requestedId ?? current.active_conversation_id)
+  return { revision: current.revision, conversationId, conversations: conversationList(db, childId, auth.accountId),
+    memory, turns: rowsFor(db, childId, auth.accountId, conversationId).map(row => projectTurn(row, memory.works)) }
 }
 
-export function resetChat(db, childId, auth, revision) {
+export function resetChat(db, childId, auth, revision, requestedId) {
   authorizeParentChat(db, childId, auth)
   const current = ensureSession(db, childId, auth.accountId)
+  const conversationId = requireThread(db, childId, auth.accountId, requestedId ?? current.active_conversation_id)
   if (!Number.isInteger(revision) || current.revision !== revision) throw error(409, 'chat_changed')
   db.exec('BEGIN IMMEDIATE')
   try {
-    db.prepare('DELETE FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ?').run(childId, auth.accountId)
+    db.prepare('DELETE FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ? AND conversation_id = ?').run(childId, auth.accountId, conversationId)
     db.prepare('UPDATE parent_conversations SET revision = revision + 1 WHERE child_id = ? AND parent_id = ?').run(childId, auth.accountId)
+    db.exec('COMMIT')
+  } catch (err) { db.exec('ROLLBACK'); throw err }
+  return { revision: revision + 1 }
+}
+
+export function newChat(db, childId, auth, revision, locale) {
+  authorizeParentChat(db, childId, auth)
+  const current = ensureSession(db, childId, auth.accountId)
+  if (!Number.isInteger(revision) || current.revision !== revision) throw error(409, 'chat_changed')
+  // Repeated clicks/retries reuse the existing blank chat rather than filling history.
+  if (!rowsFor(db, childId, auth.accountId, current.active_conversation_id).length) return chatSnapshot(db, childId, auth, locale)
+  if (conversationList(db, childId, auth.accountId).length >= 30) throw error(409, 'conversation_limit')
+  const id = crypto.randomUUID()
+  db.exec('BEGIN IMMEDIATE')
+  try {
+    db.prepare('INSERT INTO parent_chat_threads (child_id, parent_id, id, created_at) VALUES (?, ?, ?, ?)').run(childId, auth.accountId, id, new Date().toISOString())
+    db.prepare('UPDATE parent_conversations SET revision = revision + 1, active_conversation_id = ? WHERE child_id = ? AND parent_id = ?').run(id, childId, auth.accountId)
+    db.exec('COMMIT')
+  } catch (err) { db.exec('ROLLBACK'); throw err }
+  return chatSnapshot(db, childId, auth, locale)
+}
+
+export function deleteChat(db, childId, auth, conversationId, revision) {
+  authorizeParentChat(db, childId, auth)
+  const current = ensureSession(db, childId, auth.accountId)
+  requireThread(db, childId, auth.accountId, conversationId)
+  if (!Number.isInteger(revision) || current.revision !== revision) throw error(409, 'chat_changed')
+  db.exec('BEGIN IMMEDIATE')
+  try {
+    db.prepare('DELETE FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ? AND conversation_id = ?').run(childId, auth.accountId, conversationId)
+    db.prepare('DELETE FROM parent_chat_threads WHERE child_id = ? AND parent_id = ? AND id = ?').run(childId, auth.accountId, conversationId)
+    let activeId = current.active_conversation_id
+    if (activeId === conversationId) {
+      activeId = db.prepare('SELECT id FROM parent_chat_threads WHERE child_id = ? AND parent_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1').get(childId, auth.accountId)?.id
+      if (!activeId) {
+        activeId = crypto.randomUUID()
+        db.prepare('INSERT INTO parent_chat_threads (child_id, parent_id, id, created_at) VALUES (?, ?, ?, ?)').run(childId, auth.accountId, activeId, new Date().toISOString())
+      }
+    }
+    db.prepare('UPDATE parent_conversations SET revision = revision + 1, active_conversation_id = ? WHERE child_id = ? AND parent_id = ?').run(activeId, childId, auth.accountId)
     db.exec('COMMIT')
   } catch (err) { db.exec('ROLLBACK'); throw err }
   return { revision: revision + 1 }
@@ -168,23 +229,24 @@ export function createParentChatService({ db, chatMessages, timeoutMs = 40_000 }
       || !['zh', 'en'].includes(locale) || (sourceId !== null && (typeof sourceId !== 'string' || sourceId.length > 100))) throw error(400, 'invalid_chat_request')
     const memory = readArtworkMemory(db, childId, locale)
     if (sourceId && !memory.works.some(w => w.sourceId === sourceId)) throw error(404, 'artwork_memory_not_found')
+    const current = ensureSession(db, childId, auth.accountId)
+    const conversationId = requireThread(db, childId, auth.accountId, input.conversationId ?? current.active_conversation_id)
     const existing = db.prepare('SELECT * FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ? AND request_id = ?')
       .get(childId, auth.accountId, requestId)
     if (existing) {
-      if (existing.user_text !== text.trim() || existing.selected_source_id !== sourceId || existing.locale !== locale) throw error(409, 'request_id_conflict')
-      return { revision: session(db, childId, auth.accountId).revision, turn: projectTurn(existing, memory.works) }
+      if (existing.conversation_id !== conversationId || existing.user_text !== text.trim() || existing.selected_source_id !== sourceId || existing.locale !== locale) throw error(409, 'request_id_conflict')
+      return { revision: current.revision, conversationId, conversations: conversationList(db, childId, auth.accountId), turn: projectTurn(existing, memory.works) }
     }
-    const current = ensureSession(db, childId, auth.accountId)
     if (current.revision !== revision) throw error(409, 'chat_changed')
     if (!chatMessages) throw error(503, 'chat_unavailable')
     const key = `${childId}:${auth.accountId}`
-    const signature = fingerprint({ text: text.trim(), requestId, revision, sourceId, locale })
+    const signature = fingerprint({ text: text.trim(), requestId, revision, sourceId, locale, conversationId })
     if (active.has(key)) {
       const pending = active.get(key)
       if (pending.signature === signature) return pending.promise
       throw error(409, 'chat_in_progress')
     }
-    const history = rowsFor(db, childId, auth.accountId)
+    const history = rowsFor(db, childId, auth.accountId, conversationId)
     const previousSourceIds = history.length ? JSON.parse(history.at(-1).source_ids_json) : []
     const selected = selectMemory(memory.works, text, sourceId, previousSourceIds)
     const sourceHash = fingerprint(selected)
@@ -247,15 +309,15 @@ export function createParentChatService({ db, chatMessages, timeoutMs = 40_000 }
       const createdAt = new Date().toISOString()
       db.exec('BEGIN IMMEDIATE')
       try {
-        db.prepare(`INSERT INTO parent_conversation_turns (child_id,parent_id,request_id,user_text,assistant_text,source_ids_json,selected_source_id,locale,created_at)
-          VALUES (?,?,?,?,?,?,?,?,?)`).run(childId, auth.accountId, requestId, text.trim(), checked.reply, JSON.stringify(checked.sourceIds), sourceId, locale, createdAt)
-        db.prepare('UPDATE parent_conversations SET revision = revision + 1 WHERE child_id = ? AND parent_id = ?').run(childId, auth.accountId)
-        db.prepare(`DELETE FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ? AND request_id NOT IN
-          (SELECT request_id FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ? ORDER BY created_at DESC,rowid DESC LIMIT 60)`)
-          .run(childId, auth.accountId, childId, auth.accountId)
+        db.prepare(`INSERT INTO parent_conversation_turns (child_id,parent_id,request_id,user_text,assistant_text,source_ids_json,selected_source_id,locale,created_at,conversation_id)
+          VALUES (?,?,?,?,?,?,?,?,?,?)`).run(childId, auth.accountId, requestId, text.trim(), checked.reply, JSON.stringify(checked.sourceIds), sourceId, locale, createdAt, conversationId)
+        db.prepare('UPDATE parent_conversations SET revision = revision + 1, active_conversation_id = ? WHERE child_id = ? AND parent_id = ?').run(conversationId, childId, auth.accountId)
+        db.prepare(`DELETE FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ? AND conversation_id = ? AND request_id NOT IN
+          (SELECT request_id FROM parent_conversation_turns WHERE child_id = ? AND parent_id = ? AND conversation_id = ? ORDER BY created_at DESC,rowid DESC LIMIT 60)`)
+          .run(childId, auth.accountId, conversationId, childId, auth.accountId, conversationId)
         db.exec('COMMIT')
       } catch (err) { db.exec('ROLLBACK'); throw err }
-      return { revision: revision + 1, turn: { id: requestId, userText: text.trim(), reply: checked.reply, createdAt,
+      return { revision: revision + 1, conversationId, conversations: conversationList(db, childId, auth.accountId), turn: { id: requestId, userText: text.trim(), reply: checked.reply, createdAt,
         sourceId, sources: selected.filter(w => checked.sourceIds.includes(w.sourceId)) } }
     }
     const promise = work().finally(() => active.delete(key))

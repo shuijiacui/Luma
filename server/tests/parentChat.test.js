@@ -1,10 +1,13 @@
 import { afterEach, expect, test, vi } from 'vitest'
 import request from 'supertest'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { createDb } from '../src/db.js'
 import { createApp } from '../src/app.js'
 import { registerParent, registerChild } from '../src/services/authService.js'
 import { insertAnalysis } from '../src/services/historyService.js'
-import { chatSnapshot, createParentChatService, readArtworkMemory, resetChat, validateChatReply } from '../src/services/parentChat.js'
+import { chatSnapshot, createParentChatService, deleteChat, newChat, readArtworkMemory, resetChat, validateChatReply } from '../src/services/parentChat.js'
 
 const databases = []
 afterEach(() => { for (const db of databases.splice(0)) db.close(); vi.restoreAllMocks() })
@@ -194,6 +197,95 @@ test('deleting a referenced artwork removes its turns and prevents late replies;
   expect(family.status).toBe(200)
   expect(s.db.prepare('SELECT count(*) AS n FROM parent_conversation_turns').get().n).toBe(0)
   expect(s.db.prepare('SELECT count(*) AS n FROM parent_conversations').get().n).toBe(0)
+  expect(s.db.prepare('SELECT count(*) AS n FROM parent_chat_threads').get().n).toBe(0)
+})
+
+test('new conversations preserve history and give the model only the selected conversation', async () => {
+  const model = vi.fn().mockResolvedValue(reply), s = setup({ parentChatMessages: model })
+  const first = await s.post()
+  const created = await request(s.app).post(`${s.path}/conversations`).set('Authorization', `Bearer ${s.parent.token}`).send({ revision: 1 })
+  expect(created.status).toBe(200)
+  const next = created.body
+  expect(next).toMatchObject({ revision: 2, turns: [], conversations: [{ id: first.body.conversationId, title: s.input().text }] })
+  expect(next.conversationId).not.toBe(first.body.conversationId)
+  const repeated = newChat(s.db, s.child.session.id, s.auth, 2, 'zh')
+  expect(repeated.conversationId).toBe(next.conversationId)
+  expect((await s.post(s.input({ revision: 2, conversationId: next.conversationId, requestId: 'new-chat-0001', text: '聊聊学校' }))).status).toBe(200)
+  expect(model.mock.calls[1][0].filter(m => m.role !== 'system')).toEqual([{ role: 'user', content: '聊聊学校' }])
+  const old = await request(s.app).get(`${s.path}?conversationId=${first.body.conversationId}`).set('Authorization', `Bearer ${s.parent.token}`)
+  expect(old.body.turns).toEqual([first.body.turn])
+  expect(old.body.conversations).toHaveLength(2)
+  await s.post(s.input({ revision: 3, conversationId: first.body.conversationId, requestId: 'old-chat-0002', text: '接着刚才的话' }))
+  expect(model.mock.calls[2][0].filter(m => m.role === 'user').map(m => m.content)).toEqual([s.input().text, '接着刚才的话'])
+  resetChat(s.db, s.child.session.id, s.auth, 4, next.conversationId)
+  expect(chatSnapshot(s.db, s.child.session.id, s.auth, 'zh', first.body.conversationId).turns).toHaveLength(2)
+  expect(chatSnapshot(s.db, s.child.session.id, s.auth, 'zh', next.conversationId).turns).toEqual([])
+})
+
+test('conversation access and deletion stay scoped to the parent and child, including siblings', async () => {
+  const s = setup({ parentChatMessages: vi.fn().mockResolvedValue(reply) })
+  const sibling = registerChild(s.db, { nickname: 'Sibling', creationCode: '5678', inviteCode: s.parent.family.inviteCode })
+  await s.post()
+  const next = newChat(s.db, s.child.session.id, s.auth, 1, 'zh')
+  await s.post(s.input({ revision: 2, conversationId: next.conversationId, requestId: 'next-chat-0001' }))
+  const siblingPath = `/api/children/${sibling.session.id}/chat`
+  const siblingPost = await request(s.app).post(siblingPath).set('Authorization', `Bearer ${s.parent.token}`).send(s.input({ text: '弟弟的事情' }))
+  expect(siblingPost.status).toBe(200)
+  const other = registerParent(s.db, { name: 'Other', email: 'other@test.dev', password: 'secret123' })
+  for (const token of [other.token, s.child.token]) {
+    expect((await request(s.app).post(`${s.path}/conversations`).set('Authorization', `Bearer ${token}`).send({ revision: 3 })).status).toBe(403)
+    expect((await request(s.app).delete(`${s.path}/conversations/${next.conversationId}`).set('Authorization', `Bearer ${token}`).send({ revision: 3 })).status).toBe(403)
+  }
+  expect((await request(s.app).get(`${siblingPath}?conversationId=${next.conversationId}`).set('Authorization', `Bearer ${s.parent.token}`)).status).toBe(404)
+  expect((await request(s.app).delete(`${siblingPath}/conversations/${next.conversationId}`).set('Authorization', `Bearer ${s.parent.token}`).send({ revision: 1 })).status).toBe(404)
+  const removed = await request(s.app).delete(`${s.path}/conversations/${next.conversationId}`).set('Authorization', `Bearer ${s.parent.token}`).send({ revision: 3 })
+  expect(removed.status).toBe(200)
+  expect((await s.get()).body.conversations).toHaveLength(1)
+  const siblingState = await request(s.app).get(siblingPath).set('Authorization', `Bearer ${s.parent.token}`)
+  expect(siblingState.body.turns).toEqual([siblingPost.body.turn])
+  expect(siblingState.body.conversations).toHaveLength(1)
+})
+
+test('deletion removes stored turns and pending replies cannot recreate the deleted conversation', async () => {
+  const s = setup({ parentChatMessages: vi.fn().mockResolvedValue(reply) }), source = s.add()
+  const first = (await s.post()).body
+  let finish
+  const service = createParentChatService({ db: s.db, chatMessages: () => new Promise(resolve => { finish = resolve }) })
+  const pending = service(s.child.session.id, s.auth, s.input({ conversationId: first.conversationId, revision: 1, requestId: 'pending-0002' }))
+  deleteChat(s.db, s.child.session.id, s.auth, first.conversationId, 1)
+  finish(reply)
+  await expect(pending).rejects.toMatchObject({ status: 409 })
+  expect(s.db.prepare('SELECT count(*) AS n FROM parent_conversation_turns').get().n).toBe(0)
+  const state = (await s.get()).body
+  expect(state).toMatchObject({ turns: [], conversations: [], revision: 2 })
+  expect(state.conversationId).not.toBe(first.conversationId)
+  expect(state.memory.works[0].sourceId).toBe(source)
+  expect((await s.post(s.input({ revision: 2, conversationId: first.conversationId }))).status).toBe(404)
+  expect((await s.get()).body.turns).toEqual([])
+})
+
+test('old single-chat databases migrate without loss and deleted legacy chats stay deleted after restart', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'luma-chat-migration-'))
+  const path = join(directory, 'test.sqlite')
+  let db = createDb(path)
+  try {
+    const parent = registerParent(db, { name: 'Parent', email: 'migration@test.dev', password: 'secret123' })
+    const child = registerChild(db, { nickname: 'Child', creationCode: '1234', inviteCode: parent.family.inviteCode })
+    const auth = { role: 'parent', accountId: parent.session.id, familyId: parent.session.familyId }
+    const send = createParentChatService({ db, chatMessages: async () => reply })
+    await send(child.session.id, auth, { text: '以前聊过的事', requestId: 'migration-0001', revision: 0 })
+    db.exec(`DROP INDEX idx_parent_chat_thread_turns;
+      DROP TABLE parent_chat_threads;
+      ALTER TABLE parent_conversation_turns DROP COLUMN conversation_id;
+      ALTER TABLE parent_conversations DROP COLUMN active_conversation_id;`)
+    db.close(); db = createDb(path)
+    const migrated = chatSnapshot(db, child.session.id, auth, 'zh')
+    expect(migrated).toMatchObject({ conversationId: 'legacy', revision: 1, turns: [{ userText: '以前聊过的事' }], conversations: [{ title: '以前聊过的事' }] })
+    deleteChat(db, child.session.id, auth, 'legacy', 1)
+    db.close(); db = createDb(path)
+    expect(chatSnapshot(db, child.session.id, auth, 'zh')).toMatchObject({ turns: [], conversations: [], revision: 2 })
+    expect(() => chatSnapshot(db, child.session.id, auth, 'zh', 'legacy')).toThrow('conversation_not_found')
+  } finally { db.close(); rmSync(directory, { recursive: true, force: true }) }
 })
 
 test('invalid requests are rejected before model work; saved and supplied history are bounded', async () => {

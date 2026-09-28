@@ -69,7 +69,7 @@ function setup(initialGuide?: TracingGuide) {
   } as unknown as DrawingCanvasHandle }
   let current!: ReturnType<typeof useCompanion>
   function Harness() {
-    current = useCompanion({ ownerId: 'child', artworkId: 'scene-work', locale: 'zh', enabled: true, allowDrawing: true,
+    current = useCompanion({ ownerId: 'child', token: 'test-child-token', artworkId: 'scene-work', locale: 'zh', enabled: true, allowDrawing: true,
       canvas, initialGuide, aspect: () => 1, surfaceSize: () => ({ width: 600, height: 600 }), onSpeak, onCommitted })
     return <>
       <CompanionDock companion={current} voice={voice} mode="together" visible enabled isDrawing={false}

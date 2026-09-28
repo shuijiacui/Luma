@@ -53,6 +53,9 @@ export function thinkingOptions(config, model, disableThinking) {
   let hostname
   try { hostname = new URL(config.baseUrl).hostname } catch { return {} }
   if (hostname === 'api.deepseek.com') return { thinking: { type: 'disabled' } }
+  if ((hostname === 'dashscope.aliyuncs.com' || hostname.endsWith('.maas.aliyuncs.com')) && /^qwen3(?:[.-]|$)/i.test(model ?? '')) {
+    return { enable_thinking: false }
+  }
   if (hostname === 'api-inference.modelscope.cn' && /^Qwen\/Qwen3(?:[.\/-]|$)/.test(model ?? '')) {
     return { enable_thinking: false }
   }

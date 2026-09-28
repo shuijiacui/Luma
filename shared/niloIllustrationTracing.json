@@ -1,4 +1,102 @@
 {
+  "illustration-scene-bottle-garden-38c172c29eec": {
+    "aspect": 1.3333333333333333,
+    "left": 0.29297,
+    "top": 0.06563,
+    "right": 0.69609,
+    "bottom": 0.90104
+  },
+  "illustration-scene-candy-planet-7e802fed9878": {
+    "aspect": 1.3333333333333333,
+    "left": 0.13203,
+    "top": 0.14271,
+    "right": 0.85859,
+    "bottom": 0.82396
+  },
+  "illustration-scene-correction-5082dc4f654b": {
+    "aspect": 1.3333333333333333,
+    "left": 0.05547,
+    "top": 0.13646,
+    "right": 0.92891,
+    "bottom": 0.86354
+  },
+  "illustration-scene-english-whale-318197412dc0": {
+    "aspect": 1.3333333333333333,
+    "left": 0.00078,
+    "top": 0.00104,
+    "right": 0.99922,
+    "bottom": 0.99896
+  },
+  "illustration-scene-magic-world-52b738c7df0a": {
+    "aspect": 1.3333333333333333,
+    "left": 0.13828,
+    "top": 0.08854,
+    "right": 0.82109,
+    "bottom": 0.90521
+  },
+  "illustration-scene-moon-playground-15825dc6c42b": {
+    "aspect": 1.3333333333333333,
+    "left": 0.10703,
+    "top": 0.06354,
+    "right": 0.88047,
+    "bottom": 0.89687
+  },
+  "illustration-scene-paper-realm-51c25ddd6255": {
+    "aspect": 1.3333333333333333,
+    "left": 0.00234,
+    "top": 0.04896,
+    "right": 0.99922,
+    "bottom": 0.95937
+  },
+  "illustration-scene-quiet-wonder-02ffa3650bad": {
+    "aspect": 1.3333333333333333,
+    "left": 0.00078,
+    "top": 0.00104,
+    "right": 0.99922,
+    "bottom": 0.99896
+  },
+  "illustration-scene-quiet-wonder-427e8aaf2e87": {
+    "aspect": 1.3333333333333333,
+    "left": 0.05234,
+    "top": 0.08229,
+    "right": 0.95859,
+    "bottom": 0.89479
+  },
+  "illustration-scene-tiny-garden-8c15f082377e": {
+    "aspect": 1.3333333333333333,
+    "left": 0.16328,
+    "top": 0.07396,
+    "right": 0.80234,
+    "bottom": 0.89063
+  },
+  "illustration-scene-tiny-garden-d0c5080b55c8": {
+    "aspect": 1.3333333333333333,
+    "left": 0.02891,
+    "top": 0.02604,
+    "right": 0.98047,
+    "bottom": 0.91979
+  },
+  "illustration-scene-underwater-town-0dbd344550fe": {
+    "aspect": 1.3333333333333333,
+    "left": 0.00078,
+    "top": 0.00104,
+    "right": 0.99922,
+    "bottom": 0.99896
+  },
+  "illustration-scene-whale-town-21881c16d14c": {
+    "aspect": 1.3333333333333333,
+    "left": 0.08828,
+    "top": 0.19062,
+    "right": 0.93203,
+    "bottom": 0.80521
+  },
+  "illustration-scene-whale-town-5227ae27fa2e": {
+    "aspect": 1.3333333333333333,
+    "left": 0.06172,
+    "top": 0.15937,
+    "right": 0.96641,
+    "bottom": 0.80937
+  },
   "illustration-library-boat-beginner-01": {
     "aspect": 1,
     "left": 0.06797,

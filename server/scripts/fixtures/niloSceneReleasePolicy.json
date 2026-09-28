@@ -1,0 +1,19 @@
+{
+  "version": "nilo-scene-release-v1",
+  "requiredRegressionCases": 24,
+  "requiredHoldoutCases": 8,
+  "requiredReadyRate": 1,
+  "requiredIndependentVisualPassRate": 1,
+  "allowPartial": false,
+  "timing": {
+    "planningP95Ms": 12000,
+    "simpleRenderP95Ms": 3000,
+    "complexRenderP95Ms": 30000,
+    "complexRenderMaxMs": 48000,
+    "complexRenderTargetMs": 30000,
+    "complexThresholdStatus": "fixed_before_final_acceptance",
+    "excludeChildConfirmationPause": true
+  },
+  "requiredDimensions": ["originalIntent", "visibleRelationships", "summaryMatchesImage", "styleConsistency", "layoutAndReadability", "preservation", "requestedModification"],
+  "satisfaction": "not_measured_by_synthetic_cases_or_assistant_visual_review"
+}

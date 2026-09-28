@@ -51,6 +51,8 @@ export interface ParentChatTurn {
 }
 
 export interface ParentChatSnapshot {
+  conversationId?: string
+  conversations?: ParentConversation[]
   revision: number
   available: boolean
   turns: ParentChatTurn[]
@@ -58,6 +60,7 @@ export interface ParentChatSnapshot {
 }
 
 export interface ParentChatInput {
+  conversationId?: string
   text: string
   requestId: string
   revision: number
@@ -65,18 +68,30 @@ export interface ParentChatInput {
   locale: 'zh' | 'en'
 }
 
-export function getParentChat(childId: string, token: string, locale: 'zh' | 'en', signal: AbortSignal) {
-  return authFetch<ParentChatSnapshot>(`/children/${encodeURIComponent(childId)}/chat?locale=${locale}`, { token, signal })
+export interface ParentConversation {
+  id: string; title: string; lastReply: string; updatedAt: string; turnCount: number
+}
+
+export function getParentChat(childId: string, token: string, locale: 'zh' | 'en', signal: AbortSignal, conversationId?: string) {
+  return authFetch<ParentChatSnapshot>(`/children/${encodeURIComponent(childId)}/chat?locale=${locale}${conversationId ? `&conversationId=${encodeURIComponent(conversationId)}` : ''}`, { token, signal })
 }
 
 export function sendParentChat(childId: string, token: string, body: ParentChatInput, signal: AbortSignal) {
-  return authFetch<{ revision: number; turn: ParentChatTurn }>(`/children/${encodeURIComponent(childId)}/chat`, {
+  return authFetch<{ revision: number; turn: ParentChatTurn; conversationId?: string; conversations?: ParentConversation[] }>(`/children/${encodeURIComponent(childId)}/chat`, {
     method: 'POST', token, body, signal,
   })
 }
 
-export function clearParentChat(childId: string, token: string, revision: number, signal: AbortSignal) {
+export function clearParentChat(childId: string, token: string, revision: number, signal: AbortSignal, conversationId?: string) {
   return authFetch<{ revision: number }>(`/children/${encodeURIComponent(childId)}/chat/reset`, {
-    method: 'POST', token, body: { revision }, signal,
+    method: 'POST', token, body: { revision, ...(conversationId ? { conversationId } : {}) }, signal,
   })
+}
+
+export function newParentChat(childId: string, token: string, revision: number, locale: 'zh' | 'en', signal: AbortSignal) {
+  return authFetch<ParentChatSnapshot>(`/children/${encodeURIComponent(childId)}/chat/conversations`, { method: 'POST', token, body: { revision, locale }, signal })
+}
+
+export function deleteParentChat(childId: string, token: string, conversationId: string, revision: number, signal: AbortSignal) {
+  return authFetch<{ revision: number }>(`/children/${encodeURIComponent(childId)}/chat/conversations/${encodeURIComponent(conversationId)}`, { method: 'DELETE', token, body: { revision }, signal })
 }

@@ -319,7 +319,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
   }
 
   function commitCompanionStrokes(specs: NiloStrokeSpec[], expectedRevision: number, object?: { proposals: DrawingProposal[]; aspect: number }, targetId?: string) {
-    if (object?.proposals.some(proposal => proposal.template === 'illustration')) return false
+    if (object?.proposals.some(proposal => ['illustration', 'generated'].includes(proposal.template) || proposal.raster !== undefined)) return false
     const canvas = canvasRef.current
     const context = canvas?.getContext('2d')
     if (disabled || restoringRef.current || pointerRef.current !== null || !canvas || !context || expectedRevision !== revisionRef.current

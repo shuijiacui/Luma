@@ -38,7 +38,7 @@ function setup() {
     getDocument: () => ({ version: 1, baseSource: 'child', operations: [] }), exportCompanionObservation: () => 'data:image/png;base64,AAAA',
     commitCompanionStrokes: commit, getEditableTargets: () => [], hasInkAt: () => false,
   } as unknown as DrawingCanvasHandle }
-  const hook = renderHook(({ artworkId }) => useCompanion({ ownerId: 'child', artworkId, locale: 'zh', enabled: true, allowDrawing: true,
+  const hook = renderHook(({ artworkId }) => useCompanion({ ownerId: 'child', token: 'test-child-token', artworkId, locale: 'zh', enabled: true, allowDrawing: true,
     canvas, aspect: () => 1.4, surfaceSize: () => ({ width: 840, height: 600 }), onSpeak, onCommitted: vi.fn() }), { initialProps: { artworkId: 'one' } })
   return { ...hook, state, commit, onSpeak }
 }
@@ -84,6 +84,31 @@ test('asking to revise keeps the idea, speaks an invitation, and makes no model 
   expect(hook.onSpeak.mock.lastCall?.[0]).toContain('麦克风')
   expect(authFetch).toHaveBeenCalledOnce()
   expect(hook.result.current.projection).toBeNull()
+})
+
+test('a failed scene retains its full request for an explicit retry, without treating retry as a new idea', async () => {
+  const hook = setup()
+  const request = '我想画一个魔法世界'
+  vi.mocked(authFetch).mockResolvedValueOnce({ status: 'unavailable', reason: 'invalid_plan' })
+  await act(async () => { await hook.result.current.receive(request) })
+  expect(hook.onSpeak.mock.lastCall?.[0]).toContain('再试一次')
+  expect(hook.commit).not.toHaveBeenCalled()
+  vi.mocked(authFetch).mockResolvedValueOnce({ status: 'proposed', reply: plan.summary, plan })
+  await act(async () => { await hook.result.current.receive('再试一次') })
+  expect(vi.mocked(authFetch).mock.lastCall?.[1]?.body).toMatchObject({ stage: 'plan', utterance: request })
+  expect(hook.result.current.sceneIdea?.plan).toEqual(sanitizeScenePlan(plan))
+  expect(hook.result.current.projection).toBeNull()
+  expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('a failed scene is not retried in another artwork', async () => {
+  const hook = setup()
+  vi.mocked(authFetch).mockResolvedValueOnce({ status: 'unavailable', reason: 'invalid_plan' })
+  await act(async () => { await hook.result.current.receive('我想画一个魔法世界') })
+  hook.rerender({ artworkId: 'another' })
+  vi.mocked(authFetch).mockResolvedValueOnce({ reply: '想画些什么？', proposals: [] })
+  await act(async () => { await hook.result.current.receive('再试一次') })
+  expect(vi.mocked(authFetch).mock.lastCall?.[0]).not.toBe('/nilo/scene')
 })
 test('a child correction goes back to planning, never executes an unaccepted change', async () => {
   const hook = setup(); await propose(hook)
@@ -415,6 +440,43 @@ test('switching a scene object between PNG and SVG preserves layout, other objec
   expect(hook.result.current.projection).toEqual(original)
   expect(authFetch).toHaveBeenCalledTimes(2)
   expect(hook.commit).not.toHaveBeenCalled()
+})
+
+test('changing a connected destination preserves the road geometry and detaches stale connection metadata through save and undo', async () => {
+  const hook = setup(), connected = structuredClone(plan)
+  connected.objects[0] = { ...connected.objects[0], id: 'tree', name: '小树', aliases: ['树'], essential: ['树干和树冠'], render: { kind: 'compose', primitive: 'tree' }, rotation: 180 }
+  connected.objects.push({ id: 'path', name: '小路', aliases: ['路'], role: 'support', essential: ['弯弯的小路'],
+    render: { kind: 'compose', primitive: 'path', parameters: { curve: 'left' } }, connectTo: 'tree',
+    box: { x: .3, y: .61, width: .24, height: .24 }, color: '#66729b' })
+  vi.mocked(authFetch).mockResolvedValueOnce({ status: 'proposed', plan: connected, reply: connected.summary })
+  await act(async () => { await hook.result.current.receive(connected.request) })
+  const response = rendered(connected); response.objects[0].proposal.rotation = 180
+  vi.mocked(authFetch).mockResolvedValueOnce(response)
+  await act(async () => { await hook.result.current.confirmSceneIdea() })
+  act(() => hook.result.current.selectSceneObject('tree'))
+  const before = structuredClone(hook.result.current.projection!)
+  expect(before.scene!.plan.objects[2].connectTo).toBe('tree')
+  await act(async () => { await hook.result.current.openMaterialPicker() })
+  await act(async () => { await hook.result.current.chooseMaterial('illustration-library-tree-beginner-01') })
+  const after = hook.result.current.projection!
+  expect(after.proposal.illustrationId).toBe('illustration-library-tree-beginner-01')
+  expect(after.proposal.rotation).toBe(180)
+  expect(after.scene!.plan.objects[0].rotation).toBe(180)
+  expect(after.additions).toEqual(before.additions)
+  expect(after.scene!.plan.objects[1]).toEqual(before.scene!.plan.objects[1])
+  expect(after.scene!.plan.objects[2]).toEqual(expect.objectContaining({ id: 'path', box: before.scene!.plan.objects[2].box }))
+  expect(after.scene!.plan.objects[2]).not.toHaveProperty('connectTo')
+  const restored = validateTracingGuide(JSON.parse(JSON.stringify(after)))!
+  expect(restored.scene!.plan.objects[2]).not.toHaveProperty('connectTo')
+  expect(restored.proposal.rotation).toBe(180)
+  const next = sanitizeSceneInput({ stage: 'plan', utterance: '再加一颗星星', plan: restored.scene!.plan, context: {
+    previousScene: { plan: restored.scene!.plan, objects: [restored.proposal, ...restored.additions].map((proposal, index) => ({ id: restored.scene!.objectIds[index], proposal })) },
+  } })
+  expect(next.plan!.objects[2]).not.toHaveProperty('connectTo')
+  await act(async () => { await hook.result.current.receive('撤销') })
+  expect(hook.result.current.projection).toEqual(before)
+  expect(hook.commit).not.toHaveBeenCalled()
+  expect(authFetch).toHaveBeenCalledTimes(2)
 })
 
 test('a decorated scene object uses its known shape identity, never a substring or an unrelated catalogue', async () => {

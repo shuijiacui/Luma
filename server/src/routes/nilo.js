@@ -1,6 +1,7 @@
 // POST /api/nilo/stroke —— Nilo 添一笔（结构化指令）
 // POST /api/nilo/praise —— Nilo 看着孩子的画说一句具体夸奖 + 下一步建议
 import { Router } from 'express'
+import { createHash } from 'node:crypto'
 import { asyncRoute } from '../services/http.js'
 import { NILO_STROKE_KINDS, generateNiloPraise, generateNiloStroke } from '../services/niloCompanion.js'
 import { generateNiloDialogue, sanitizeDialogueContext, validateBounds } from '../services/niloDialogue.js'
@@ -10,6 +11,10 @@ import { interpretVoiceEdit } from '../services/niloVoiceIntent.js'
 import { ageBandForBirthDate } from '../services/niloAgeGuidance.js'
 import { refreshMaterialCuration } from '../services/niloCurationStore.js'
 import { generateNiloScene } from '../services/niloScene.js'
+import { sceneChatText as defaultSceneText, sceneChatWithImage as defaultSceneVision } from '../services/niloSceneModels.js'
+import { niloSceneModelConfig } from '../services/niloSceneModels.js'
+import { generateNiloImage, niloImageConfig } from '../services/niloImageGenerator.js'
+import { createSceneRequests, createSceneOwner, createSceneImageGate } from '../services/niloSceneRequests.js'
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
@@ -67,6 +72,8 @@ export function createNiloRouter({
   db,
   chatWithImage,
   chatText,
+  sceneChatText = defaultSceneText,
+  sceneChatWithImage = defaultSceneVision,
   generate = generateNiloStroke,
   generatePraise = generateNiloPraise,
   generateDialogue = generateNiloDialogue,
@@ -76,6 +83,16 @@ export function createNiloRouter({
   limits = {},
 } = {}) {
   const router = Router()
+  const sceneRequests = createSceneRequests(), sceneOwner = createSceneOwner()
+  // Finish an already dispatched image within its own bounded provider
+  // deadline, even if its scene waiter leaves. A retry can inspect those same
+  // private pixels; they are never displayed without the normal quality gate.
+  const imageRequests = createSceneRequests({ cancelGraceMs: 30000, maxEntries: 32, maxOwnerEntries: 4, maxBytes: 8_000_000 })
+  const setting = (value, fallback, ceiling) => /^\d+$/.test(value ?? '') && Number(value) > 0 ? Math.min(ceiling, Number(value)) : fallback
+  const imageGate = createSceneImageGate({
+    maxAttempts: setting(process.env.NILO_IMAGE_REQUESTS_PER_HOUR, 12, 100),
+    globalConcurrency: setting(process.env.NILO_IMAGE_CONCURRENCY, 2, 4),
+  })
   // Public catalogue decisions contain no child or account information.
   router.get('/materials/curation', asyncRoute(async (_req, res) => {
     res.set('Cache-Control', 'no-store').json(refreshMaterialCuration())
@@ -96,7 +113,7 @@ export function createNiloRouter({
     req.once('aborted', abort)
     res.once('close', abort)
     try {
-      const result = await run(req, controller.signal)
+      const result = await run(req, controller.signal, res)
       if (!controller.signal.aborted) res.json(result)
     } finally {
       req.off('aborted', abort)
@@ -141,7 +158,11 @@ export function createNiloRouter({
     res.set('Cache-Control', 'no-store')
     res.json(voiceCapabilities(voice.config ?? voiceConfig()))
   })
-  router.post('/scene', childOnly, drawingLimit, cancellable(async (req, signal) => {
+  router.get('/scene/session', childOnly, capabilitiesLimit, (req, res) => {
+    sceneOwner(req, res, { renew: true })
+    res.set('Cache-Control', 'no-store').json({ ready: true })
+  })
+  router.post('/scene', childOnly, drawingLimit, cancellable(async (req, signal, res) => {
     if (!req.body?.context || typeof req.body.context !== 'object' || Array.isArray(req.body.context)) throw Object.assign(new Error('context required'), { status: 400 })
     let imageBase64
     if (req.body.imageBase64 !== undefined) {
@@ -152,9 +173,28 @@ export function createNiloRouter({
     }
     const birthDate = req.auth?.role === 'child' && db
       ? db.prepare("SELECT birth_date FROM accounts WHERE id = ? AND role = 'child'").get(req.auth.accountId)?.birth_date : null
-    return generateScene({ stage: req.body.stage, utterance: req.body.utterance, locale: req.body.locale, imageBase64,
-      plan: req.body.plan, context: { ...req.body.context, ageBand: ageBandForBirthDate(birthDate) } },
-    { chatText, chatWithImage, timeoutMs, signal })
+    const input = { stage: req.body.stage, utterance: req.body.utterance, locale: req.body.locale, imageBase64,
+      plan: req.body.plan, variantObjectId: req.body.variantObjectId,
+      context: { ...req.body.context, ageBand: ageBandForBirthDate(birthDate) } }
+    const owner = sceneOwner(req, res), model = niloSceneModelConfig(), image = niloImageConfig()
+    // IP is a guest abuse/cost bucket ONLY, never a shared result-cache identity.
+    const budgetOwner = req.auth?.role === 'child' ? owner : `guest-ip:${req.ip ?? req.socket.remoteAddress}`
+    const policy = { version: 'library-first-v1', text: model.textModel, vision: model.visionModel, image: image.model,
+      imageEnabled: image.enabled, curation: refreshMaterialCuration() }
+    res.set('Cache-Control', 'no-store')
+    return sceneRequests.run({ owner, scopeKey: req.body.requestScopeKey, artworkId: req.body.artworkId,
+      requestId: req.body.requestId, stage: input.stage, input, policy, signal }, (jobSignal, job) => generateScene(input,
+    { chatText: sceneChatText, chatWithImage: sceneChatWithImage, timeoutMs, signal: jobSignal, beforeProviderCall: job.beforeDispatch,
+      ...(image.enabled ? { generateImage: async (object, plan, options) => {
+        const imageInput = { operation: req.body.requestId, object, plan, missing: options.missing ?? [], variation: !!options.variation }
+        const requestId = req.body.requestId === undefined ? undefined
+          : createHash('sha256').update(JSON.stringify(imageInput)).digest('hex')
+        const saved = await imageRequests.run({ owner, scopeKey: req.body.requestScopeKey, artworkId: req.body.artworkId,
+          requestId, stage: 'image', input: imageInput, policy: { model: image.model, baseUrl: image.baseUrl }, signal: options.signal }, imageSignal =>
+          imageGate(budgetOwner, imageSignal, async () => ({ status: 'ready',
+            raster: await generateNiloImage(object, plan, { ...options, signal: imageSignal, config: image }) })))
+        return saved.raster
+      } } : {}) }))
   }))
   router.post('/voice/interpret', childOnly, drawingLimit, cancellable((req, signal) => interpretVoiceEdit(req.body, { chatText, signal })))
   router.post('/voice/transcribe', childOnly, asrLimit, cancellable((req, signal) => transcribeVoice(req.body, { ...voice, signal })))

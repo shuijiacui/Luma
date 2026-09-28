@@ -6,6 +6,7 @@ import { illustrationTracePaths } from '../companion/illustrationTracing'
 import { useIllustrationTraces } from '../hooks/useIllustrationTraces'
 import { CompanionProjection } from './CompanionProjection'
 import { getDrawingIllustration } from '../../../../../shared/niloIllustrations.mjs'
+import { validateGeneratedRaster } from '../../../../../shared/niloGeneratedRaster.mjs'
 
 /** Scene geometry is always a tracing aid, separate from the child's painted ink. */
 export function SceneProjection({ projection, onEdit, onInteractionStart }: {
@@ -20,10 +21,12 @@ export function SceneProjection({ projection, onEdit, onInteractionStart }: {
   const traces = useIllustrationTraces(illustrationIds)
   const [failedImages, setFailedImages] = useState<string[]>([])
   const objects = useMemo(() => proposals.map((proposal, index) => {
-    const trace = proposal.illustrationId ? traces[proposal.illustrationId] : undefined
-    const gray = proposal.template === 'illustration' && trace?.projection === 'gray'
-      ? getDrawingIllustration(proposal.illustrationId!) : undefined
-    const strokes = proposal.template === 'illustration'
+    const raster = proposal.template === 'generated' ? validateGeneratedRaster(proposal.raster) : null
+    const trace = raster ? { version: 1 as const, aspect: raster.width / raster.height, projection: raster.projection, paths: raster.paths ?? [] }
+      : proposal.illustrationId ? traces[proposal.illustrationId] : undefined
+    const gray = raster?.projection === 'gray' ? { id: `generated-${index}`, name: proposal.subject ?? '', src: `data:image/png;base64,${raster.pngBase64}` }
+      : proposal.template === 'illustration' && trace?.projection === 'gray' ? getDrawingIllustration(proposal.illustrationId!) : undefined
+    const strokes = ['illustration', 'generated'].includes(proposal.template)
       ? trace && !gray ? illustrationTracePaths(trace, proposal, projection.aspect).map(points => ({ points })) : []
       : proposalStrokes(proposal, projection.aspect)
     return { proposal, object: scene.plan.objects[index], strokes, gray }

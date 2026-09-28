@@ -1,9 +1,8 @@
+import { guidePaths, grayGuide, rasterGuide } from './nilo-scene-preview.mjs'
 // Explicit opt-in smoke test. Only synthetic instructions and a blank canvas are sent.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { PNG } from 'pngjs'
-import { sampleProposalGeometry } from '../../shared/niloGeometry.mjs'
-import { getDrawingIllustration } from '../../shared/niloIllustrations.mjs'
 
 const previewOnly = process.argv.includes('--preview')
 if (!process.argv.includes('--live') && !previewOnly) {
@@ -38,76 +37,6 @@ const requested = process.argv.find(arg => arg.startsWith('--case='))?.split('='
 const rows = []
 const history = []
 const xml = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c])
-function guidePaths(proposal, aspect) {
-  if (proposal.template !== 'illustration') return sampleProposalGeometry(proposal, aspect).map(stroke => stroke.points)
-  const asset = getDrawingIllustration(proposal.illustrationId)
-  if (!asset) throw new Error('Unknown illustration in preview')
-  const guide = JSON.parse(readFileSync(new URL(`../../frontend/public/nilo-tracing/${asset.id}.json`, import.meta.url)))
-  if (guide.projection === 'gray') return []
-  let width = proposal.width, height = proposal.height
-  if (width * aspect / height > guide.aspect) width = height * guide.aspect / aspect
-  else height = width * aspect / guide.aspect
-  const angle = proposal.rotation * Math.PI / 180
-  return guide.paths.map(path => path.map(([x, y]) => {
-    const dx = (x - .5) * width, dy = (y - .5) * height
-    return { x: proposal.x + proposal.width / 2 + Math.cos(angle) * dx - Math.sin(angle) * dy / aspect,
-      y: proposal.y + proposal.height / 2 + Math.sin(angle) * dx * aspect + Math.cos(angle) * dy }
-  }))
-}
-function grayGuide(proposal) {
-  if (proposal.template !== 'illustration') return null
-  const asset = getDrawingIllustration(proposal.illustrationId)
-  const guide = JSON.parse(readFileSync(new URL(`../../frontend/public/nilo-tracing/${asset.id}.json`, import.meta.url)))
-  if (guide.projection !== 'gray') return null
-  const source = readFileSync(new URL(`../../frontend/public${asset.src}`, import.meta.url))
-  const width = Math.min(proposal.width * 840, proposal.height * 600 * guide.aspect)
-  return { source, width, height: width / guide.aspect, cx: (proposal.x + proposal.width / 2) * 840, cy: (proposal.y + proposal.height / 2) * 600, rotation: proposal.rotation }
-}
-function rasterGuide(proposals) {
-  const png = new PNG({ width: 840, height: 600 }); png.data.fill(255)
-  const dot = (x, y) => {
-    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
-      const px = Math.round(x) + dx, py = Math.round(y) + dy
-      if (px < 0 || px >= 840 || py < 0 || py >= 600) continue
-      const alpha = Math.max(0, Math.min(1, 1.25 - Math.hypot(px - x, py - y)))
-      for (let c = 0; c < 3; c++) { const i = (py * 840 + px) * 4 + c; png.data[i] = Math.min(png.data[i], Math.round(255 * (1 - alpha) + [156, 163, 175][c] * alpha)) }
-    }
-  }
-  for (const proposal of proposals) {
-    const gray = grayGuide(proposal)
-    if (gray) {
-      const source = PNG.sync.read(gray.source), angle = gray.rotation * Math.PI / 180, c = Math.cos(angle), s = Math.sin(angle)
-      const samples = Math.min(8, Math.max(1, Math.ceil(source.width / gray.width)))
-      for (let y = 0; y < 600; y++) for (let x = 0; x < 840; x++) {
-        const dx = x + .5 - gray.cx, dy = y + .5 - gray.cy
-        const u = (dx * c + dy * s) / gray.width + .5, v = (-dx * s + dy * c) / gray.height + .5
-        if (u < 0 || u >= 1 || v < 0 || v >= 1) continue
-        let darkness = 0
-        for (let sy = 0; sy < samples; sy++) for (let sx = 0; sx < samples; sx++) {
-          const du = (sx + .5) / samples - .5, dv = (sy + .5) / samples - .5
-          const ix = Math.floor((u + (du * c + dv * s) / gray.width) * source.width)
-          const iy = Math.floor((v + (-du * s + dv * c) / gray.height) * source.height)
-          if (ix < 0 || ix >= source.width || iy < 0 || iy >= source.height) continue
-          const i = (iy * source.width + ix) * 4
-          const luminance = .2126 * source.data[i] + .7152 * source.data[i + 1] + .0722 * source.data[i + 2]
-          darkness += (1 - luminance / 255) * source.data[i + 3] / 255
-        }
-        const factor = 1 - darkness / (samples * samples) * .38
-        for (let channel = 0; channel < 3; channel++) png.data[(y * 840 + x) * 4 + channel] *= factor
-      }
-      continue
-    }
-    for (const path of guidePaths(proposal, 1.4)) {
-    let offset = 0
-    for (let i = 1; i < path.length; i++) {
-      const a = path[i - 1], b = path[i], length = Math.hypot((b.x - a.x) * 840, (b.y - a.y) * 600), steps = Math.max(1, Math.ceil(length * 3))
-      for (let j = 0; j <= steps; j++) if ((offset + length * j / steps) % 11 < 6) dot((a.x + (b.x - a.x) * j / steps) * 840, (a.y + (b.y - a.y) * j / steps) * 600)
-      offset += length
-    }
-    }
-  }
-  return PNG.sync.write(png)
-}
 for (const fixture of cases.filter(item => !requested || (['library', 'semantic'].includes(requested) ? item.id.startsWith(`${requested}-`) : item.id === requested))) {
   const context = { canvasAspect: 1.4, canvasSize: { width: 840, height: 600 }, requestScope: fixture.scope,
     scene: { childBounds: null, niloBounds: null, recentContributions: [] }, history: fixture.id === 'library-dream-2' ? [...history] : [], drawingStyle: { brushKind: 'round', brushSize: 3, color: '#66729b' } }

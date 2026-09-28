@@ -6,9 +6,15 @@ export interface SceneObject {
   aliases: string[]
   role: 'main' | 'support' | 'atmosphere'
   essential: string[]
-  render: {kind:'recipe';recipeId:string} | {kind:'illustration';illustrationId:string} | {kind:'compose';primitive:ScenePrimitive;parameters?:Record<string,string|number|boolean>} | {kind:'custom'}
+  render: {kind:'recipe';recipeId:string} | {kind:'illustration';illustrationId:string} | {kind:'compose';primitive:ScenePrimitive;parameters?:Record<string,string|number|boolean>} | {kind:'custom'} | {
+    kind: 'generated'
+    /** Normal source-image coordinates before rotation; permitted only when this object's rotation is 180. */
+    sourceDescription?: string
+  }
   box: {x:number;y:number;width:number;height:number}
   color: string
+  /** Deliberate whole-object inversion; ordinary/manual rotations remain in proposals. */
+  rotation?: 0 | 180
   /** A path starts at the visible bottom center of this scene object. */
   connectTo?: string
 }

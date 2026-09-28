@@ -1,0 +1,2027 @@
+[
+  {
+    "id": "illustration-scene-bottle-garden-38c172c29eec",
+    "subject": "scene-bottle-garden",
+    "name": "玻璃瓶里的微型花园",
+    "label": "一个透明玻璃瓶，里面铺着泥土，长着高低不同的小花、蕨叶和小蘑菇。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个透明玻璃瓶，里面铺着泥土，长着高低不同的小花、蕨叶和小蘑菇。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-bottle-garden-38c172c29eec.png"
+  },
+  {
+    "id": "illustration-scene-bottle-garden-4d44680c574b",
+    "subject": "scene-bottle-garden",
+    "name": "玻璃瓶里的小花园",
+    "label": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三朵高低不同的小花和几片叶子。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三朵高低不同的小花和几片叶子。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-bottle-garden-4d44680c574b.png"
+  },
+  {
+    "id": "illustration-scene-bottle-garden-b836bb404857",
+    "subject": "scene-bottle-garden",
+    "name": "玻璃瓶里的小花园",
+    "label": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三朵高低不同的小花和几片叶子。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三朵高低不同的小花和几片叶子。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-bottle-garden-b836bb404857.png"
+  },
+  {
+    "id": "illustration-scene-bottle-garden-bc540132f41a",
+    "subject": "scene-bottle-garden",
+    "name": "玻璃瓶中的小花园",
+    "label": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三株高低不同的小花和两片蕨叶。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三株高低不同的小花和两片蕨叶。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-bottle-garden-bc540132f41a.png"
+  },
+  {
+    "id": "illustration-scene-bottle-garden-ca0759d88da9",
+    "subject": "scene-bottle-garden",
+    "name": "瓶中花园（多瓶候选）",
+    "label": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三朵高低不同的小花和几片叶子。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三朵高低不同的小花和几片叶子。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-bottle-garden-ca0759d88da9.png"
+  },
+  {
+    "id": "illustration-scene-bottle-garden-e94d5ab1ed8c",
+    "subject": "scene-bottle-garden",
+    "name": "玻璃瓶中的小花园",
+    "label": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三株高低不同的小花和两片蕨叶。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个圆肩玻璃瓶，瓶底铺着泥土，里面长着三株高低不同的小花和两片蕨叶。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-bottle-garden-e94d5ab1ed8c.png"
+  },
+  {
+    "id": "illustration-scene-brave-journey-749e18570332",
+    "subject": "scene-brave-journey",
+    "name": "小朋友在林间小路入口出发去冒险的场景",
+    "label": "背着小书包的小朋友站在林间小路入口，迈步走向远方的树林。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "背着小书包的小朋友站在林间小路入口，迈步走向远方的树林。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-brave-journey-749e18570332.png"
+  },
+  {
+    "id": "illustration-scene-brave-journey-78a08eac5145",
+    "subject": "scene-brave-journey",
+    "name": "小朋友踏上冒险旅途",
+    "label": "背着书包的小朋友站在小山坡上，大步迈向远方蜿蜒的山间小路。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "背着书包的小朋友站在小山坡上，大步迈向远方蜿蜒的山间小路。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-brave-journey-78a08eac5145.png"
+  },
+  {
+    "id": "illustration-scene-brave-journey-94191f8cf04d",
+    "subject": "scene-brave-journey",
+    "name": "小朋友在林间小路入口出发去冒险的场景",
+    "label": "背着小书包的小朋友站在林间小路入口，迈步走向远方的树林。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "背着小书包的小朋友站在林间小路入口，迈步走向远方的树林。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-brave-journey-94191f8cf04d.png"
+  },
+  {
+    "id": "illustration-scene-candy-planet-11e61213aacf",
+    "subject": "scene-candy-planet",
+    "name": "糖果星球与小飞碟",
+    "label": "一颗表面由棒棒糖、软糖和甜甜圈构成的圆形星球，悬浮在太空中，旁边有一架小飞碟。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一颗表面由棒棒糖、软糖和甜甜圈构成的圆形星球，悬浮在太空中，旁边有一架小飞碟。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-candy-planet-11e61213aacf.png"
+  },
+  {
+    "id": "illustration-scene-candy-planet-5177da4b39d2",
+    "subject": "scene-candy-planet",
+    "name": "糖果星球",
+    "label": "一颗由棒棒糖、软糖和糖霜构成的奇幻星球漂浮在太空中，旁边有一艘小火箭正在靠近。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一颗由棒棒糖、软糖和糖霜构成的奇幻星球漂浮在太空中，旁边有一艘小火箭正在靠近。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-candy-planet-5177da4b39d2.png"
+  },
+  {
+    "id": "illustration-scene-candy-planet-5db6edf42b0b",
+    "subject": "scene-candy-planet",
+    "name": "糖果星球场景",
+    "label": "一个圆圆的星球，表面长着棒棒糖树和巧克力山丘，还有软糖小房子。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个圆圆的星球，表面长着棒棒糖树和巧克力山丘，还有软糖小房子。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-candy-planet-5db6edf42b0b.png"
+  },
+  {
+    "id": "illustration-scene-candy-planet-71f23890c645",
+    "subject": "scene-candy-planet",
+    "name": "糖果星球场景",
+    "label": "一个圆圆的星球，表面长着棒棒糖树和巧克力山丘，还有软糖小房子。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个圆圆的星球，表面长着棒棒糖树和巧克力山丘，还有软糖小房子。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-candy-planet-71f23890c645.png"
+  },
+  {
+    "id": "illustration-scene-candy-planet-7e802fed9878",
+    "subject": "scene-candy-planet",
+    "name": "糖果星球与小火箭",
+    "label": "一颗表面长满棒棒糖和软糖的圆球星球，旁边停着一艘小火箭。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一颗表面长满棒棒糖和软糖的圆球星球，旁边停着一艘小火箭。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-candy-planet-7e802fed9878.png"
+  },
+  {
+    "id": "illustration-scene-candy-planet-ca3f6f9a533d",
+    "subject": "scene-candy-planet",
+    "name": "糖果星球",
+    "label": "一个圆圆的星球，表面长着棒棒糖树和巧克力山丘，还有软糖小房子。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个圆圆的星球，表面长着棒棒糖树和巧克力山丘，还有软糖小房子。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-candy-planet-ca3f6f9a533d.png"
+  },
+  {
+    "id": "illustration-scene-cloud-railway-0c9adaeae952",
+    "subject": "scene-cloud-railway",
+    "name": "云朵间旅行的小火车场景",
+    "label": "一列小蒸汽火车行驶在弯弯的云朵轨道上，周围飘着高低错落的蓬松云朵。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一列小蒸汽火车行驶在弯弯的云朵轨道上，周围飘着高低错落的蓬松云朵。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-cloud-railway-0c9adaeae952.png"
+  },
+  {
+    "id": "illustration-scene-cloud-railway-1574d7723d77",
+    "subject": "scene-cloud-railway",
+    "name": "云朵间旅行的小火车场景",
+    "label": "一列小蒸汽火车行驶在弯弯曲曲的轨道上，轨道架在几朵蓬松的云朵之间。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一列小蒸汽火车行驶在弯弯曲曲的轨道上，轨道架在几朵蓬松的云朵之间。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-cloud-railway-1574d7723d77.png"
+  },
+  {
+    "id": "illustration-scene-correction-5082dc4f654b",
+    "subject": "scene-correction",
+    "name": "春天花园场景",
+    "label": "一座小花园里开着郁金香和雏菊，一只蝴蝶停在花旁，地上长着小草。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座小花园里开着郁金香和雏菊，一只蝴蝶停在花旁，地上长着小草。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-correction-5082dc4f654b.png"
+  },
+  {
+    "id": "illustration-scene-cosy-rain-2b48491055c5",
+    "subject": "scene-cosy-rain",
+    "name": "雨天温暖的小亭子场景",
+    "label": "一座四柱小亭子，亭下有一把长椅和一只趴着的小猫，亭外飘着斜斜的雨丝。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座四柱小亭子，亭下有一把长椅和一只趴着的小猫，亭外飘着斜斜的雨丝。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-cosy-rain-2b48491055c5.png"
+  },
+  {
+    "id": "illustration-scene-cosy-rain-dbca6d41e6b6",
+    "subject": "scene-cosy-rain",
+    "name": "雨中温暖小屋场景",
+    "label": "一座尖顶小屋，屋顶上方有云朵和落下的雨滴，门口撑着一把小雨伞，屋旁蹲着一只小猫。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座尖顶小屋，屋顶上方有云朵和落下的雨滴，门口撑着一把小雨伞，屋旁蹲着一只小猫。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-cosy-rain-dbca6d41e6b6.png"
+  },
+  {
+    "id": "illustration-scene-cosy-rain-dbee2da3763b",
+    "subject": "scene-cosy-rain",
+    "name": "雨中温暖小屋场景",
+    "label": "一座尖顶小屋，屋顶上方有云朵和落下的雨滴，门口撑着一把小雨伞，屋旁蹲着一只小猫。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座尖顶小屋，屋顶上方有云朵和落下的雨滴，门口撑着一把小雨伞，屋旁蹲着一只小猫。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-cosy-rain-dbee2da3763b.png"
+  },
+  {
+    "id": "illustration-scene-cosy-rain-e832f5f01d8d",
+    "subject": "scene-cosy-rain",
+    "name": "雨中温暖的小屋场景",
+    "label": "一座尖顶小屋，门开着，小猫趴在门口，天上飘着云朵和雨滴。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座尖顶小屋，门开着，小猫趴在门口，天上飘着云朵和雨滴。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-cosy-rain-e832f5f01d8d.png"
+  },
+  {
+    "id": "illustration-scene-cosy-rain-eee5c3b92a4b",
+    "subject": "scene-cosy-rain",
+    "name": "雨天温暖小屋场景",
+    "label": "尖顶小屋敞开门，一只小熊坐在门口看斜斜的雨丝落下。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "尖顶小屋敞开门，一只小熊坐在门口看斜斜的雨丝落下。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-cosy-rain-eee5c3b92a4b.png"
+  },
+  {
+    "id": "illustration-scene-english-quiet-e39ff0a75ad3",
+    "subject": "scene-english-quiet",
+    "name": "Quiet leaf-built world with cottage bridge and floating leaf",
+    "label": "A tiny cottage built from overlapping leaves, with a leaf-bridge over a stream of drifting leaves and one round leaf floating upward.",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "A tiny cottage built from overlapping leaves, with a leaf-bridge over a stream of drifting leaves and one round leaf floating upward.",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-english-quiet-e39ff0a75ad3.png"
+  },
+  {
+    "id": "illustration-scene-english-quiet-eefe3c2bbc6d",
+    "subject": "scene-english-quiet",
+    "name": "Village built entirely from leaves",
+    "label": "A quiet little village where houses, trees and paths are all shaped from big leaves.",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "A quiet little village where houses, trees and paths are all shaped from big leaves.",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-english-quiet-eefe3c2bbc6d.png"
+  },
+  {
+    "id": "illustration-scene-english-quiet-f175e0aa50f3",
+    "subject": "scene-english-quiet",
+    "name": "Village built entirely from leaves",
+    "label": "A quiet little village where houses, trees and paths are all shaped from big leaves.",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "A quiet little village where houses, trees and paths are all shaped from big leaves.",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-english-quiet-f175e0aa50f3.png"
+  },
+  {
+    "id": "illustration-scene-english-whale-318197412dc0",
+    "subject": "scene-english-whale",
+    "name": "Town on whale back",
+    "label": "A large whale swimming with a small town of houses and a lighthouse resting on its broad back.",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "A large whale swimming with a small town of houses and a lighthouse resting on its broad back.",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-english-whale-318197412dc0.png"
+  },
+  {
+    "id": "illustration-scene-english-whale-970b250ab646",
+    "subject": "scene-english-whale",
+    "name": "Whale carrying a little town on its back",
+    "label": "A large whale swimming with a small town of houses and a church built on its broad back.",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "A large whale swimming with a small town of houses and a church built on its broad back.",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-english-whale-970b250ab646.png"
+  },
+  {
+    "id": "illustration-scene-home-for-giants-410e766193b3",
+    "subject": "scene-home-for-giants",
+    "name": "巨人与小动物共居的村庄场景",
+    "label": "巨人坐在大房子旁，小兔子和小松鼠围在身边，远处有适合小动物的小屋和树。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "巨人坐在大房子旁，小兔子和小松鼠围在身边，远处有适合小动物的小屋和树。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-home-for-giants-410e766193b3.png"
+  },
+  {
+    "id": "illustration-scene-home-for-giants-71985dfdb6b5",
+    "subject": "scene-home-for-giants",
+    "name": "巨人与小动物共住的村庄场景",
+    "label": "一个友善的巨人坐在村庄中央，周围有几座小房子，小兔子和小松鼠在巨人脚边玩耍。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个友善的巨人坐在村庄中央，周围有几座小房子，小兔子和小松鼠在巨人脚边玩耍。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-home-for-giants-71985dfdb6b5.png"
+  },
+  {
+    "id": "illustration-scene-home-for-giants-9a63c96c32f9",
+    "subject": "scene-home-for-giants",
+    "name": "巨人与小动物共住的村庄场景",
+    "label": "一个友善的巨人坐在村庄中央，周围有几座小房子，小兔子和小松鼠在巨人脚边玩耍。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个友善的巨人坐在村庄中央，周围有几座小房子，小兔子和小松鼠在巨人脚边玩耍。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-home-for-giants-9a63c96c32f9.png"
+  },
+  {
+    "id": "illustration-scene-magic-world-3520f7735889",
+    "subject": "scene-magic-world",
+    "name": "魔法塔与蘑菇小路场景",
+    "label": "一座尖顶魔法塔立在弯曲小路边，巨大的蘑菇旁有星星和弯月。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座尖顶魔法塔立在弯曲小路边，巨大的蘑菇旁有星星和弯月。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-magic-world-3520f7735889.png"
+  },
+  {
+    "id": "illustration-scene-magic-world-5028bcf50350",
+    "subject": "scene-magic-world",
+    "name": "魔法塔与蘑菇小路场景",
+    "label": "一座尖顶魔法塔立在弯曲小路边，巨大的蘑菇旁有星星和弯月。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座尖顶魔法塔立在弯曲小路边，巨大的蘑菇旁有星星和弯月。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-magic-world-5028bcf50350.png"
+  },
+  {
+    "id": "illustration-scene-magic-world-52b738c7df0a",
+    "subject": "scene-magic-world",
+    "name": "魔法拱门与塔楼场景",
+    "label": "一扇圆拱石门旁长着大蘑菇，门内露出一座尖顶小塔和几颗星星。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一扇圆拱石门旁长着大蘑菇，门内露出一座尖顶小塔和几颗星星。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-magic-world-52b738c7df0a.png"
+  },
+  {
+    "id": "illustration-scene-magic-world-a6b697b88a07",
+    "subject": "scene-magic-world",
+    "name": "发光蘑菇与小精灵的奇幻森林",
+    "label": "巨大的彩色蘑菇如房屋般矗立，小精灵在发光的蘑菇伞盖间飞舞。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "巨大的彩色蘑菇如房屋般矗立，小精灵在发光的蘑菇伞盖间飞舞。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-magic-world-a6b697b88a07.png"
+  },
+  {
+    "id": "illustration-scene-magic-world-c359120b125b",
+    "subject": "scene-magic-world",
+    "name": "浮空岛上的魔法塔与飞碟",
+    "label": "黑线稿：一座尖顶魔法塔立在浮空岛屿上，旁边有飞碟和小星星。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "黑线稿：一座尖顶魔法塔立在浮空岛屿上，旁边有飞碟和小星星。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-magic-world-c359120b125b.png"
+  },
+  {
+    "id": "illustration-scene-magic-world-e30e28bd3646",
+    "subject": "scene-magic-world",
+    "name": "魔法塔与蘑菇小路",
+    "label": "一座尖顶魔法塔立在弯曲小路边，巨大的蘑菇旁有星星和弯月。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座尖顶魔法塔立在弯曲小路边，巨大的蘑菇旁有星星和弯月。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-magic-world-e30e28bd3646.png"
+  },
+  {
+    "id": "illustration-scene-magic-world-fdceceaadcab",
+    "subject": "scene-magic-world",
+    "name": "发光蘑菇与猫头鹰的魔法森林",
+    "label": "发光的巨大蘑菇林中，小猫头鹰栖息在蘑菇伞盖上仰望星空。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "发光的巨大蘑菇林中，小猫头鹰栖息在蘑菇伞盖上仰望星空。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-magic-world-fdceceaadcab.png"
+  },
+  {
+    "id": "illustration-scene-moon-playground-15825dc6c42b",
+    "subject": "scene-moon-playground",
+    "name": "月亮游乐园",
+    "label": "弯弯的大月牙上建着摩天轮和滑梯，周围飘着小星星。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "弯弯的大月牙上建着摩天轮和滑梯，周围飘着小星星。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-moon-playground-15825dc6c42b.png"
+  },
+  {
+    "id": "illustration-scene-moon-playground-6fec4ecf15e2",
+    "subject": "scene-moon-playground",
+    "name": "月亮上的游乐园",
+    "label": "弯弯的大月牙上建着摩天轮和滑梯，旁边停着一架小火箭。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "弯弯的大月牙上建着摩天轮和滑梯，旁边停着一架小火箭。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-moon-playground-6fec4ecf15e2.png"
+  },
+  {
+    "id": "illustration-scene-moon-playground-85c6621e7f0d",
+    "subject": "scene-moon-playground",
+    "name": "月亮游乐园",
+    "label": "弯弯的大月牙上建着摩天轮和滑梯，旁边停着一艘小火箭。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "弯弯的大月牙上建着摩天轮和滑梯，旁边停着一艘小火箭。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-moon-playground-85c6621e7f0d.png"
+  },
+  {
+    "id": "illustration-scene-no-castle-e885292c1870",
+    "subject": "scene-no-castle",
+    "name": "大树与巨蘑菇和小兔子的魔法森林",
+    "label": "一棵大树下长着巨大的圆帽蘑菇，一只小兔子坐在蘑菇旁边。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一棵大树下长着巨大的圆帽蘑菇，一只小兔子坐在蘑菇旁边。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-no-castle-e885292c1870.png"
+  },
+  {
+    "id": "illustration-scene-no-castle-efedc8ec98d5",
+    "subject": "scene-no-castle",
+    "name": "魔法森林一角",
+    "label": "一棵大树下长着大蘑菇和螺旋藤蔓，旁边飘着一盏提灯，没有城堡也没有星星。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一棵大树下长着大蘑菇和螺旋藤蔓，旁边飘着一盏提灯，没有城堡也没有星星。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-no-castle-efedc8ec98d5.png"
+  },
+  {
+    "id": "illustration-scene-paper-realm-1f37272e7d90",
+    "subject": "scene-paper-realm",
+    "name": "纸做的国度",
+    "label": "一个由折纸城堡、纸树和纸皇冠组成的奇幻纸质王国，所有景物呈现手工纸张质感。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一个由折纸城堡、纸树和纸皇冠组成的奇幻纸质王国，所有景物呈现手工纸张质感。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-paper-realm-1f37272e7d90.png"
+  },
+  {
+    "id": "illustration-scene-paper-realm-248f9de8a152",
+    "subject": "scene-paper-realm",
+    "name": "纸艺折痕国度",
+    "label": "由折纸山峦、纸树和纸屋构成的手工感幻想世界，展现纸张的折叠纹理与层次。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "由折纸山峦、纸树和纸屋构成的手工感幻想世界，展现纸张的折叠纹理与层次。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-paper-realm-248f9de8a152.png"
+  },
+  {
+    "id": "illustration-scene-paper-realm-51c25ddd6255",
+    "subject": "scene-paper-realm",
+    "name": "纸做的国度全景",
+    "label": "折纸城堡与纸片树木、纸船河流组成的奇幻国度，所有景物都有清晰的纸张折痕。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "折纸城堡与纸片树木、纸船河流组成的奇幻国度，所有景物都有清晰的纸张折痕。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-paper-realm-51c25ddd6255.png"
+  },
+  {
+    "id": "illustration-scene-paper-realm-8c565cb6d104",
+    "subject": "scene-paper-realm",
+    "name": "纸做的国度场景",
+    "label": "折纸城堡、纸树和纸船组成的小国度，地面是折叠的纸张。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "折纸城堡、纸树和纸船组成的小国度，地面是折叠的纸张。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-paper-realm-8c565cb6d104.png"
+  },
+  {
+    "id": "illustration-scene-paper-realm-a04c49a10e72",
+    "subject": "scene-paper-realm",
+    "name": "折纸城堡与纸质森林",
+    "label": "画面中央是一座由折纸折叠而成的尖顶城堡，周围环绕着纸质卷曲树木和剪纸云朵，整体呈现手工纸艺质感。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "画面中央是一座由折纸折叠而成的尖顶城堡，周围环绕着纸质卷曲树木和剪纸云朵，整体呈现手工纸艺质感。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-paper-realm-a04c49a10e72.png"
+  },
+  {
+    "id": "illustration-scene-paper-realm-b11203b9839e",
+    "subject": "scene-paper-realm",
+    "name": "纸艺折叠国度全景",
+    "label": "由折纸山丘、纸树和纸屋构成的手工质感世界，呈现清晰的远近层次。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "由折纸山丘、纸树和纸屋构成的手工质感世界，呈现清晰的远近层次。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-paper-realm-b11203b9839e.png"
+  },
+  {
+    "id": "illustration-scene-paper-realm-b84bf1134635",
+    "subject": "scene-paper-realm",
+    "name": "纸做的国度",
+    "label": "一座由折纸城堡、纸板山丘和纸船小河组成的黑白线稿王国，等待涂色。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座由折纸城堡、纸板山丘和纸船小河组成的黑白线稿王国，等待涂色。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-paper-realm-b84bf1134635.png"
+  },
+  {
+    "id": "illustration-scene-preserve-child-boat-b7431aea5311",
+    "subject": "scene-preserve-child-boat",
+    "name": "云朵托起的漂浮花园",
+    "label": "在孩子画的小船上方，画一座由云朵托起的空中花园，长着大树和花朵。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "在孩子画的小船上方，画一座由云朵托起的空中花园，长着大树和花朵。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-preserve-child-boat-b7431aea5311.png"
+  },
+  {
+    "id": "illustration-scene-preserve-child-boat-f768a8635ea2",
+    "subject": "scene-preserve-child-boat",
+    "name": "云朵上的漂浮花园",
+    "label": "在小船上方画一座浮在云朵上的花园，长着圆冠小树、蘑菇和五瓣小花。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "在小船上方画一座浮在云朵上的花园，长着圆冠小树、蘑菇和五瓣小花。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-preserve-child-boat-f768a8635ea2.png"
+  },
+  {
+    "id": "illustration-scene-quiet-wonder-02ffa3650bad",
+    "subject": "scene-quiet-wonder",
+    "name": "月亮湖奇幻静景",
+    "label": "弯月小船静静漂在湖面上，岸边长着大蘑菇，天空中一朵闭眼微笑的云朵在睡觉。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "弯月小船静静漂在湖面上，岸边长着大蘑菇，天空中一朵闭眼微笑的云朵在睡觉。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-quiet-wonder-02ffa3650bad.png"
+  },
+  {
+    "id": "illustration-scene-quiet-wonder-247d73a652f0",
+    "subject": "scene-quiet-wonder",
+    "name": "月亮船停靠的静谧星空湖",
+    "label": "一弯带笑脸的月亮小船静静停在星形小湖边，上方飘着闭眼安睡的云朵，岸边长着圆帽蘑菇。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一弯带笑脸的月亮小船静静停在星形小湖边，上方飘着闭眼安睡的云朵，岸边长着圆帽蘑菇。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-quiet-wonder-247d73a652f0.png"
+  },
+  {
+    "id": "illustration-scene-quiet-wonder-427e8aaf2e87",
+    "subject": "scene-quiet-wonder",
+    "name": "月亮船停靠的奇幻森林",
+    "label": "弯月小船静静停在蘑菇与大树旁的草地上，上方飘着闭眼微笑的云朵。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "弯月小船静静停在蘑菇与大树旁的草地上，上方飘着闭眼微笑的云朵。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-quiet-wonder-427e8aaf2e87.png"
+  },
+  {
+    "id": "illustration-scene-reference-not-book-0d1986d132d6",
+    "subject": "scene-reference-not-book",
+    "name": "童话森林场景",
+    "label": "几棵高低不同的大树围出一条弯曲小路，路边长着大蘑菇和小花，一只小兔站在路旁。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "几棵高低不同的大树围出一条弯曲小路，路边长着大蘑菇和小花，一只小兔站在路旁。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-reference-not-book-0d1986d132d6.png"
+  },
+  {
+    "id": "illustration-scene-reference-not-book-da2eff592b01",
+    "subject": "scene-reference-not-book",
+    "name": "童话森林场景",
+    "label": "几棵高低不同的大树围成一片森林，树下有一条弯弯曲曲的小路通向远处一个开着圆门的小树屋。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "几棵高低不同的大树围成一片森林，树下有一条弯弯曲曲的小路通向远处一个开着圆门的小树屋。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-reference-not-book-da2eff592b01.png"
+  },
+  {
+    "id": "illustration-scene-tiny-garden-8c15f082377e",
+    "subject": "scene-tiny-garden",
+    "name": "巨大花朵下躲着小房子的花园",
+    "label": "花园里一朵巨大的花朵像伞一样罩住下方的小房子，周围长着几丛小草。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "花园里一朵巨大的花朵像伞一样罩住下方的小房子，周围长着几丛小草。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-tiny-garden-8c15f082377e.png"
+  },
+  {
+    "id": "illustration-scene-tiny-garden-9a693b281e45",
+    "subject": "scene-tiny-garden",
+    "name": "躲在巨大绣球花下的小房子",
+    "label": "一座尖顶小房子安静地躲在巨大的圆团绣球花下方，周围点缀着几片蕨叶。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一座尖顶小房子安静地躲在巨大的圆团绣球花下方，周围点缀着几片蕨叶。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-tiny-garden-9a693b281e45.png"
+  },
+  {
+    "id": "illustration-scene-tiny-garden-d0c5080b55c8",
+    "subject": "scene-tiny-garden",
+    "name": "巨大花朵下藏着小房子的花园",
+    "label": "花园里一朵巨大的花像伞一样张开，下面藏着一座带门的小房子。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "花园里一朵巨大的花像伞一样张开，下面藏着一座带门的小房子。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-tiny-garden-d0c5080b55c8.png"
+  },
+  {
+    "id": "illustration-scene-tiny-garden-e8252350cceb",
+    "subject": "scene-tiny-garden",
+    "name": "巨大花朵庇护小房子的花园",
+    "label": "花园里一朵巨大的花像伞一样罩住下方一座小房子，周围点缀小草丛。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "花园里一朵巨大的花像伞一样罩住下方一座小房子，周围点缀小草丛。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-tiny-garden-e8252350cceb.png"
+  },
+  {
+    "id": "illustration-scene-tiny-garden-e9ff5963ecfe",
+    "subject": "scene-tiny-garden",
+    "name": "巨大花朵罩着小房子的花园",
+    "label": "一朵巨大的花像伞一样罩住下方一座小房子，周围长着小草，组成童话花园。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一朵巨大的花像伞一样罩住下方一座小房子，周围长着小草，组成童话花园。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-tiny-garden-e9ff5963ecfe.png"
+  },
+  {
+    "id": "illustration-scene-tree-library-202173582e80",
+    "subject": "scene-tree-library",
+    "name": "藏在树枝间的图书馆小屋",
+    "label": "粗壮的树枝交错围成拱形，中间藏着一座带圆窗和书架的小屋。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "粗壮的树枝交错围成拱形，中间藏着一座带圆窗和书架的小屋。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-tree-library-202173582e80.png"
+  },
+  {
+    "id": "illustration-scene-tree-library-ed0b2a69891e",
+    "subject": "scene-tree-library",
+    "name": "树枝间隐藏的图书馆",
+    "label": "粗壮的树枝交织成拱形，中间藏着一座带小门和书架的树屋图书馆。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "粗壮的树枝交织成拱形，中间藏着一座带小门和书架的树屋图书馆。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-tree-library-ed0b2a69891e.png"
+  },
+  {
+    "id": "illustration-scene-underwater-town-0dbd344550fe",
+    "subject": "scene-underwater-town",
+    "name": "热闹的海底城市全景",
+    "label": "海底沙地上有圆顶屋、塔楼和拱桥，小鱼与章鱼穿梭其间，上方漂着水母。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "海底沙地上有圆顶屋、塔楼和拱桥，小鱼与章鱼穿梭其间，上方漂着水母。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-underwater-town-0dbd344550fe.png"
+  },
+  {
+    "id": "illustration-scene-underwater-town-469eeef4c5ac",
+    "subject": "scene-underwater-town",
+    "name": "海底城市全景",
+    "label": "海底沙地上排列着圆顶小屋，中间有拱门广场，小鱼和水母在建筑间穿梭游动。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "海底沙地上排列着圆顶小屋，中间有拱门广场，小鱼和水母在建筑间穿梭游动。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-underwater-town-469eeef4c5ac.png"
+  },
+  {
+    "id": "illustration-scene-underwater-town-777c578d7bec",
+    "subject": "scene-underwater-town",
+    "name": "热闹的海底城市全景",
+    "label": "海底沙地上有圆顶珊瑚屋、贝壳商店和海草塔楼，小鱼和章鱼在建筑间游动。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "海底沙地上有圆顶珊瑚屋、贝壳商店和海草塔楼，小鱼和章鱼在建筑间游动。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-underwater-town-777c578d7bec.png"
+  },
+  {
+    "id": "illustration-scene-upside-forest-0d1b1768fbf5",
+    "subject": "scene-upside-forest",
+    "name": "倒着生长的森林",
+    "label": "一片奇幻森林，粗壮的树根朝上扎进云层，树干向下伸展，树冠和蘑菇长在画面最下方。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一片奇幻森林，粗壮的树根朝上扎进云层，树干向下伸展，树冠和蘑菇长在画面最下方。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-upside-forest-0d1b1768fbf5.png"
+  },
+  {
+    "id": "illustration-scene-upside-forest-2932c545b520",
+    "subject": "scene-upside-forest",
+    "name": "倒着生长的森林",
+    "label": "一片奇幻森林，粗壮的树根朝上扎进云层，树干向下伸展，树冠和蘑菇长在画面最下方。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一片奇幻森林，粗壮的树根朝上扎进云层，树干向下伸展，树冠和蘑菇长在画面最下方。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-upside-forest-2932c545b520.png"
+  },
+  {
+    "id": "illustration-scene-upside-forest-7ed0358fe135",
+    "subject": "scene-upside-forest",
+    "name": "倒着生长的奇幻森林",
+    "label": "一片奇幻森林里树木上下颠倒，粗壮的树根伸向天空，圆圆的树冠垂向地面。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一片奇幻森林里树木上下颠倒，粗壮的树根伸向天空，圆圆的树冠垂向地面。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-upside-forest-7ed0358fe135.png"
+  },
+  {
+    "id": "illustration-scene-upside-forest-991626851720",
+    "subject": "scene-upside-forest",
+    "name": "倒着生长的森林",
+    "label": "一片倒着生长的森林，树根朝向天空伸展，圆圆的树冠朝下，像一把把大伞。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一片倒着生长的森林，树根朝向天空伸展，圆圆的树冠朝下，像一把把大伞。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-upside-forest-991626851720.png"
+  },
+  {
+    "id": "illustration-scene-upside-forest-a4c6bc26eea4",
+    "subject": "scene-upside-forest",
+    "name": "倒着生长的森林",
+    "label": "一片倒着生长的森林，树根朝向天空伸展，圆圆的树冠朝下，像一把把大伞。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一片倒着生长的森林，树根朝向天空伸展，圆圆的树冠朝下，像一把把大伞。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-upside-forest-a4c6bc26eea4.png"
+  },
+  {
+    "id": "illustration-scene-upside-forest-a5d7b55a4459",
+    "subject": "scene-upside-forest",
+    "name": "倒着生长的森林",
+    "label": "地面在上方，树根扎进泥土，树干向下延伸，树叶和云朵飘在下方。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "地面在上方，树根扎进泥土，树干向下延伸，树叶和云朵飘在下方。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-upside-forest-a5d7b55a4459.png"
+  },
+  {
+    "id": "illustration-scene-upside-forest-b355c8e4a6cb",
+    "subject": "scene-upside-forest",
+    "name": "倒着生长的森林",
+    "label": "一片倒着生长的森林，树根朝上抓着云朵，圆圆的树冠朝下，一只小松鼠倒挂在树枝上。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一片倒着生长的森林，树根朝上抓着云朵，圆圆的树冠朝下，一只小松鼠倒挂在树枝上。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-upside-forest-b355c8e4a6cb.png"
+  },
+  {
+    "id": "illustration-scene-upside-forest-f0ba066a9976",
+    "subject": "scene-upside-forest",
+    "name": "倒着生长的森林",
+    "label": "一片倒着生长的森林，树根朝上抓着云朵，圆圆的树冠朝下，一只小松鼠倒挂在树枝上。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一片倒着生长的森林，树根朝上抓着云朵，圆圆的树冠朝下，一只小松鼠倒挂在树枝上。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-upside-forest-f0ba066a9976.png"
+  },
+  {
+    "id": "illustration-scene-whale-town-21881c16d14c",
+    "subject": "scene-whale-town",
+    "name": "鲸鱼背上的小镇",
+    "label": "一头巨大的鲸鱼在波浪中游泳，宽阔的背上建着几座尖顶小屋和一棵小树。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一头巨大的鲸鱼在波浪中游泳，宽阔的背上建着几座尖顶小屋和一棵小树。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-whale-town-21881c16d14c.png"
+  },
+  {
+    "id": "illustration-scene-whale-town-5227ae27fa2e",
+    "subject": "scene-whale-town",
+    "name": "鲸鱼背上的小镇",
+    "label": "一只巨大的鲸鱼浮在海面上，宽阔的背上坐落着几座尖顶小屋和一棵小树。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一只巨大的鲸鱼浮在海面上，宽阔的背上坐落着几座尖顶小屋和一棵小树。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-whale-town-5227ae27fa2e.png"
+  },
+  {
+    "id": "illustration-scene-whale-town-6033550f0f44",
+    "subject": "scene-whale-town",
+    "name": "鲸鱼背上的小镇",
+    "label": "一头巨大的鲸鱼在海中游动，宽阔的背上建着几座彩色小房子和一座灯塔。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一头巨大的鲸鱼在海中游动，宽阔的背上建着几座彩色小房子和一座灯塔。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-whale-town-6033550f0f44.png"
+  },
+  {
+    "id": "illustration-scene-whale-town-9e7442451a8f",
+    "subject": "scene-whale-town",
+    "name": "鲸鱼背上的小镇",
+    "label": "一头大鲸鱼背上建着几座高低错落的小房子和一棵小树，下方有简单水纹线条。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一头大鲸鱼背上建着几座高低错落的小房子和一棵小树，下方有简单水纹线条。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-whale-town-9e7442451a8f.png"
+  },
+  {
+    "id": "illustration-scene-whale-town-db23cf363ce7",
+    "subject": "scene-whale-town",
+    "name": "鲸鱼背上的小镇",
+    "label": "一只巨大的鲸鱼浮在海面，宽阔的背上坐落着几座尖顶小屋和一棵小树。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一只巨大的鲸鱼浮在海面，宽阔的背上坐落着几座尖顶小屋和一棵小树。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-whale-town-db23cf363ce7.png"
+  },
+  {
+    "id": "illustration-scene-whale-town-f22bdfd7c501",
+    "subject": "scene-whale-town",
+    "name": "鲸鱼背上的微型小镇",
+    "label": "一只巨大的鲸鱼浮在平静海面上，背上坐落着几座彩色的小房子。",
+    "style": "storybook",
+    "category": "landscape",
+    "detail": "moderate",
+    "difficulty": "medium",
+    "related": [
+      "landscape"
+    ],
+    "aliases": [],
+    "aspect": 1.3333333333333333,
+    "minPixels": 280,
+    "ageBands": [
+      "5-7",
+      "8-9",
+      "10-12"
+    ],
+    "learning": "一只巨大的鲸鱼浮在平静海面上，背上坐落着几座彩色的小房子。",
+    "collection": "scene-tests-2026-09-28",
+    "completeScene": true,
+    "src": "/nilo-illustrations/illustration-scene-whale-town-f22bdfd7c501.png"
+  }
+]

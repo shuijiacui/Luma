@@ -14,7 +14,7 @@ function brushMargins(p, n, surfaceSize) {
   };
 }
 function proposalFootprint(p, n, aspect, surfaceSize) {
-  if (p.template === 'illustration') return illustrationFootprint(p, n, aspect, surfaceSize);
+  if (['illustration', 'generated'].includes(p.template)) return illustrationFootprint(p, n, aspect, surfaceSize);
   let strokes;
   try { strokes = sampleProposalGeometry(p, aspect); } catch { return null; }
   if (!strokes.length) return null;

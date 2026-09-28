@@ -1,6 +1,11 @@
 import { expect, test, vi } from 'vitest'
 import { needsSceneUnderstanding, sanitizeSceneUnderstanding, sceneUnderstandingPrompt } from '../src/services/niloSceneIntent.js'
-import { generateNiloScene } from '../src/services/niloScene.js'
+import { generateNiloScene as generateScene } from '../src/services/niloScene.js'
+import { sceneIntentIssues, sceneMaterialContext } from '../src/services/niloSceneMaterials.js'
+
+// This file isolates interpretation and grounding; quality review has separate
+// end-to-end sequencing and real-pixel tests in niloSceneQuality.test.js.
+const generateNiloScene = (input, options) => generateScene(input, { retrieveMaterials: async () => null, reviewScene: async () => ({ accepted: true, issues: [] }), ...options })
 
 const brief = overrides => ({ version: 1, intent: '一处能走进去探险的梦幻森林，参考故事里的奇妙氛围。', reference: [{ phrase: '故事书里的', meaning: '有远近层次和发现感的童话世界' }], setting: '森林', mood: ['奇妙', '有发现感'],
   requiredSubjects: ['森林'], excludedSubjects: [], referenceOnlySubjects: ['故事书'], motifs: [{ subject: '树', role: 'setting', reason: '前后围合出可以走进去的森林' }, { subject: '小兔子', role: 'focal', reason: '引导视线走向林间的发现' }], relationships: ['小兔子在树前，面向林间留出的空地'], ...overrides })
@@ -28,11 +33,87 @@ test('semantic input is bounded data, while unfamiliar inventions are retained',
   }
 })
 
+test('new understanding schema omits brainstorming while old object motifs remain compatible', () => {
+  const prompt = sceneUnderstandingPrompt(input())
+  const schema = JSON.parse(prompt.split('Return ONLY JSON ')[1].split('. At most 3 references.')[0])
+  expect(schema.brief).not.toHaveProperty('motifs')
+  const legacy = brief(), before = structuredClone(legacy)
+  expect(sanitizeSceneUnderstanding(legacy).motifs).toEqual(legacy.motifs)
+  const missing = brief(); delete missing.motifs
+  expect(sanitizeSceneUnderstanding(missing)).toMatchObject({ motifs: [], requiredSubjects: missing.requiredSubjects, relationships: missing.relationships })
+  expect(legacy).toEqual(before)
+})
+
+test('bounded string motifs are discarded without losing or promoting explicit requirements and relationships', () => {
+  const raw = brief({ intent: '小兔子在大树旁避雨，不要城堡', requiredSubjects: ['小兔子', '大树'], excludedSubjects: ['城堡'],
+    relationships: ['小兔子在大树旁'], motifs: ['壁炉', '温暖的小路', '城堡'] })
+  const before = structuredClone(raw), parsed = sanitizeSceneUnderstanding(raw)
+  expect(parsed).toMatchObject({ intent: raw.intent, requiredSubjects: raw.requiredSubjects,
+    excludedSubjects: raw.excludedSubjects, relationships: raw.relationships, motifs: [] })
+  expect(raw).toEqual(before)
+  const materials = sceneMaterialContext({ utterance: raw.intent, semanticBrief: parsed })
+  expect(materials.requestedSubjects).toEqual(expect.arrayContaining(['rabbit', 'tree']))
+  expect(materials.requestedSubjects).not.toEqual(expect.arrayContaining(['castle']))
+  // Existing validators continue to enforce the actual required rabbit even
+  // when the discarded optional field happened to name other things.
+  expect(sceneIntentIssues(plan([imageObject('tree', '小树')]), parsed).join(' ')).toContain('rabbit is missing')
+})
+
+test('optional motif normalization never accepts oversized, mixed, unknown or invalid required data', () => {
+  for (const motifs of [null, '壁炉', [''], ['x'.repeat(161)], ['屋檐\n小路'], Array(7).fill('小路'),
+    [brief().motifs[0], '壁炉'], [{ ...brief().motifs[0], url: 'https://example.com' }],
+    [{ ...brief().motifs[0], subject: 'x'.repeat(61) }], [{ ...brief().motifs[0], reason: 'x'.repeat(161) }]]) {
+    expect(sanitizeSceneUnderstanding(brief({ motifs }))).toBeNull()
+  }
+  for (const patch of [{ surprise: 'not allowed' }, { requiredSubjects: '大树' }, { requiredSubjects: ['x'.repeat(61)] },
+    { requiredSubjects: Array(9).fill('大树') }, { requiredSubjects: ['城堡'], excludedSubjects: ['城堡'] }]) {
+    expect(sanitizeSceneUnderstanding(brief({ motifs: ['壁炉'], ...patch }))).toBeNull()
+  }
+})
+
+test.each([undefined, ['屋檐', '壁炉', 'OPTIONAL_PRIVATE_DO_NOT_PROMOTE']])('cozy-rain understanding with omitted or string motifs needs no extra provider repair: %j', async motifs => {
+  const request = input({ utterance: '画一个下雨天也很温暖的地方' })
+  const semantic = brief({ intent: request.utterance, setting: '下雨天', mood: ['温暖'], reference: [],
+    requiredSubjects: [], excludedSubjects: [], referenceOnlySubjects: [], relationships: [], motifs })
+  const candidate = { ...plan([{ id: 'shelter', name: '避雨的小屋', aliases: ['小屋'], role: 'main', essential: ['屋檐下留有避雨空地', '屋外的雨线'],
+    render: { kind: 'generated' }, box: { x: .1, y: .1, width: .8, height: .7 }, color: '#66729b' }]),
+    title: '屋檐下的暖意', summary: '屋檐遮着门前的一小块空地，屋外有雨线。', request: request.utterance }
+  const chatText = vi.fn(async (prompt, options) => {
+    if (options.kind === 'nilo_scene_understand') return { brief: semantic }
+    expect(options.kind).toBe('nilo_scene_plan')
+    expect(prompt).toContain(request.utterance)
+    expect(prompt).not.toContain('OPTIONAL_PRIVATE_DO_NOT_PROMOTE')
+    return { plan: candidate }
+  })
+  const reviewScene = vi.fn(async assessment => {
+    expect(assessment.utterance).toBe(request.utterance)
+    expect(assessment.brief).toMatchObject({ intent: request.utterance, requiredSubjects: [], relationships: [], motifs: [] })
+    return { accepted: true, issues: [] }
+  })
+  const result = await generateNiloScene(request, { chatText, generateImage: vi.fn(), reviewScene })
+  expect(result).toMatchObject({ status: 'proposed', metrics: { understandings: 1, plans: 1, repairs: 0 }, plan: { request: request.utterance } })
+  expect(chatText).toHaveBeenCalledTimes(2)
+  expect(reviewScene).toHaveBeenCalledOnce()
+})
+
+test('discarding optional string motifs cannot bypass exact grounding of mandatory subjects', async () => {
+  const chatText = vi.fn(async () => ({ brief: brief({ requiredSubjects: ['并非原话的物体'], motifs: ['壁炉'] }) }))
+  expect(await generateNiloScene(input(), { chatText })).toMatchObject({ status: 'unavailable', reason: 'invalid_response', metrics: { understandings: 2, plans: 0, repairs: 1 } })
+  expect(chatText).toHaveBeenCalledTimes(2)
+})
+
 test('ordinary object requests and local position edits do not add an understanding call', () => {
   expect(needsSceneUnderstanding(input({ utterance: '画一个太阳', context: { requestScope: 'object' } }))).toBe(false)
   expect(needsSceneUnderstanding(input({ utterance: '把树移到左边' }))).toBe(false)
   expect(needsSceneUnderstanding(input({ utterance: '我想画迪士尼那样的梦幻场景' }))).toBe(true)
   expect(needsSceneUnderstanding(input({ utterance: 'make a scene that feels like an underwater adventure' }))).toBe(true)
+})
+
+test('image-capable new scene scope always gets interpretation, without adding calls to objects or local edits', () => {
+  const scene = input({ utterance: '画一辆穿过云端的火车', rasterGeneration: true })
+  expect(needsSceneUnderstanding(scene)).toBe(true)
+  expect(needsSceneUnderstanding({ ...scene, context: { requestScope: 'object' } })).toBe(false)
+  expect(needsSceneUnderstanding({ ...scene, utterance: '把它移到左边', plan: plan([]) })).toBe(false)
 })
 
 test('a catalogue-free text interpretation precedes visual planning, under the same cancellation signal', async () => {
@@ -68,10 +149,17 @@ test('literal books remain drawable when the child actually requests one', async
   expect(await generateNiloScene(input({ utterance: '画森林里的一本故事书' }), { chatText })).toMatchObject({ status: 'proposed' })
 })
 
-test('invalid understanding stops before catalogue planning rather than silently drawing a random idea', async () => {
+test('invalid understanding gets one bounded repair and never silently draws a random idea', async () => {
   const chatText = vi.fn(async () => ({ brief: { intent: 'bad' } }))
-  expect(await generateNiloScene(input(), { chatText })).toMatchObject({ status: 'unavailable', reason: 'invalid_response', metrics: { understandings: 1, plans: 0 } })
-  expect(chatText).toHaveBeenCalledOnce()
+  expect(await generateNiloScene(input(), { chatText })).toMatchObject({ status: 'unavailable', reason: 'invalid_response', metrics: { understandings: 2, plans: 0, repairs: 1 } })
+  expect(chatText).toHaveBeenCalledTimes(2)
+})
+
+test('an incomplete brief can recover once before planning without changing the child request', async () => {
+  const chatText = vi.fn().mockResolvedValueOnce({ brief: { intent: '森林' } })
+    .mockResolvedValueOnce({ brief: brief() }).mockResolvedValueOnce({ plan: plan([imageObject('tree', '小树'), imageObject('rabbit', '小兔子')]) })
+  expect(await generateNiloScene(input(), { chatText })).toMatchObject({ status: 'proposed', metrics: { understandings: 2, plans: 1, repairs: 1 } })
+  expect(chatText.mock.calls[1][0]).toContain('include version, intent, setting')
 })
 
 test('invented mandatory subjects use the shared repair allowance before material planning', async () => {

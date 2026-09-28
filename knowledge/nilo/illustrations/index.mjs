@@ -1,5 +1,6 @@
 import mediumPlan from './medium-plan.json' with { type: 'json' }
 import libraryExpansion from './library-expansion.json' with { type: 'json' }
+import testScenes from './test-scenes.json' with { type: 'json' }
 // Original picture-book references. Asset URLs are project-owned, never model supplied.
 const entries = [
   ['illustration-reading-child', 'readingchild', '读书的孩子', 'illustrated', 'people', ['character', 'person', 'book', 'library'], '观察低头阅读的姿态、手与书的关系，再选几条喜欢的衣褶。'],
@@ -13,6 +14,7 @@ const base = (id) => ({
   tracing: 'Choose the outer contour first; inner details are optional. Match the child’s current drawing and interest, not age alone.',
 })
 export const drawingIllustrations = [
+  ...testScenes.map(item => ({ ...base(item.id), ...item })),
   ...libraryExpansion.map(item => ({ ...base(item.id), ...item })),
   ...mediumPlan.assets.map(({ prompt, ...item }) => ({
     ...base(item.id), ...item, label: '轻松描画',

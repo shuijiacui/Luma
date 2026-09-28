@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { t, useLocale } from '@/i18n'
 import { ApiError } from '@/lib/api/client'
 import { randomId } from '@/lib/randomId'
-import { getParentChat, sendParentChat, clearParentChat, type ArtworkMemory, type ParentChatInput, type ParentChatSnapshot } from '@/lib/api/communicationApi'
+import { getParentChat, sendParentChat, clearParentChat, newParentChat, deleteParentChat, type ArtworkMemory, type ParentChatInput, type ParentChatSnapshot } from '@/lib/api/communicationApi'
 import { ArtworkSuggestions, SourcePreview } from './ArtworkSuggestions'
 import { AuthedArtwork } from './dashboard/AuthedArtwork'
 import { demoArtworkKind, sendDemoChat } from '../demo/parentChatDemo'
@@ -20,6 +20,7 @@ interface Props {
 
 const STARTERS = ['刚才没忍住，冲孩子发了脾气', '孩子不愿意跟我说学校的事', '想聊聊孩子最近的画']
 const EMPTY: ParentChatSnapshot = { revision: 0, turns: [], available: false, memory: { works: [], scannedCount: 0, limit: 50 } }
+type ChatDraft = { text: string; sourceId: string | null }
 
 export function CommunicationSection(props: Props) {
   const locale = useLocale()
@@ -35,6 +36,7 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
   const [storageError, setStorageError] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [draft, setDraft] = useState('')
+  const [recoveredDrafts, setRecoveredDrafts] = useState<(ChatDraft & { conversationId: string })[]>([])
   const [selected, setSelected] = useState<ArtworkMemory | null>(null)
   const [preview, setPreview] = useState<ArtworkMemory | null>(null)
   const [pendingText, setPendingText] = useState<string | null>(null)
@@ -51,7 +53,21 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
   const mounted = useRef(true)
   const controllers = useRef(new Set<AbortController>())
   const loadSequence = useRef(0)
-  const drafts = useRef(new Map<string, { text: string; sourceId: string | null }>())
+  const drafts = useRef(new Map<string, ChatDraft>())
+  const composerDraft = useRef<ChatDraft>({ text: '', sourceId: null })
+  const pendingInput = useRef<ParentChatInput | null>(null)
+  composerDraft.current = { text: draft, sourceId: selected?.sourceId ?? null }
+  const activeConversation = useRef<string | undefined>(undefined)
+  const acceptRealSnapshot = useCallback((data: ParentChatSnapshot) => {
+    if (data.conversationId !== activeConversation.current) {
+      const saved = data.conversationId ? drafts.current.get(data.conversationId) : undefined
+      setDraft(saved?.text ?? '')
+      setSelected(data.memory.works.find(work => work.sourceId === saved?.sourceId) ?? null)
+      setFailed(null); setConfirmClear(false)
+    } else setSelected(value => data.memory.works.find(work => work.sourceId === value?.sourceId) ?? null)
+    activeConversation.current = data.conversationId
+    setRealSnapshot(data); setLoadError(false)
+  }, [])
 
   const setSnapshot = (update: (current: ParentChatSnapshot | null) => ParentChatSnapshot | null) => {
     if (isGuest) setDemoHistory(current => {
@@ -62,19 +78,38 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
     else setRealSnapshot(update)
   }
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (id: string | null | undefined = activeConversation.current) => {
     if (!childId || !token || isGuest) return
     const sequence = ++loadSequence.current
     const controller = new AbortController(); controllers.current.add(controller)
     try {
-      const data = await getParentChat(childId, token, locale, controller.signal)
+      let data: ParentChatSnapshot
+      let deletedConversation: string | undefined
+      try { data = id ? await getParentChat(childId, token, locale, controller.signal, id) : await getParentChat(childId, token, locale, controller.signal) }
+      catch (error) {
+        // A chat deleted on another device must not leave a writable stale view.
+        if (!(error instanceof ApiError) || error.status !== 404 || !id || controller.signal.aborted) throw error
+        deletedConversation = id
+        data = await getParentChat(childId, token, locale, controller.signal)
+      }
       if (!controller.signal.aborted && sequence === loadSequence.current) {
-        setRealSnapshot(data); setLoadError(false)
-        setSelected(value => data.memory.works.find(work => work.sourceId === value?.sourceId) ?? null)
+        if (deletedConversation) {
+          // Recovery belongs to this child/account workspace, never to a deleted
+          // thread. Keep it separate so the destination's draft stays untouched.
+          const saved = deletedConversation === activeConversation.current
+            ? pendingInput.current ?? composerDraft.current : drafts.current.get(deletedConversation)
+          if (saved?.text.trim()) {
+            const recovered = { conversationId: deletedConversation, text: saved.text, sourceId: saved.sourceId }
+            setRecoveredDrafts(current => [...current.filter(item => item.conversationId !== deletedConversation), recovered])
+          }
+          drafts.current.delete(deletedConversation)
+        }
+        acceptRealSnapshot(data)
+        return data
       }
     } catch { if (!controller.signal.aborted && sequence === loadSequence.current) setLoadError(true) }
     finally { controllers.current.delete(controller) }
-  }, [childId, token, isGuest, locale])
+  }, [childId, token, isGuest, locale, acceptRealSnapshot])
 
   useEffect(() => {
     mounted.current = true
@@ -108,7 +143,25 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
     textarea.current?.focus()
   }
 
-  const switchConversation = (id?: string) => {
+  const switchConversation = async (id?: string) => {
+    if (!isGuest) {
+      if (busy.current || !snapshot || !childId || !token) return
+      if (snapshot.conversationId) drafts.current.set(snapshot.conversationId, { text: draft, sourceId: selected?.sourceId ?? null })
+      busy.current = true; loadSequence.current++; setClearing(true); setNotice('')
+      const controller = new AbortController(); controllers.current.add(controller)
+      try {
+        const data = id ? await reload(id) : await newParentChat(childId, token, snapshot.revision, locale, controller.signal)
+        if (!data || controller.signal.aborted || !mounted.current) return
+        if (!id) acceptRealSnapshot(data)
+        setFailed(null); setConfirmClear(false); setHistoryOpen(false)
+      } catch (error) {
+        if (controller.signal.aborted || !mounted.current) return
+        setNotice(error instanceof ApiError && error.message === 'conversation_limit'
+          ? t('已保存 30 段对话，删除一段后就可以新建。') : t('暂时无法打开这段对话，请重试。'))
+        if (error instanceof ApiError && error.status === 409) await reload()
+      } finally { controllers.current.delete(controller); busy.current = false; if (mounted.current) setClearing(false) }
+      return
+    }
     if (!demoHistory || busy.current) return
     const next = id ? { ...demoHistory, activeId: id } : newDemoConversation(demoHistory, locale)
     if (!next.conversations.some(item => item.id === next.activeId)) return
@@ -122,8 +175,29 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
     setFailed(null); setNotice(''); setConfirmClear(false); setHistoryOpen(false)
   }
 
-  const deleteConversation = (id: string) => {
-    if (!demoHistory || busy.current) return
+  const deleteConversation = async (id: string) => {
+    if (!isGuest) {
+      if (busy.current || !snapshot || !childId || !token) return false
+      busy.current = true; loadSequence.current++; setClearing(true); setNotice('')
+      const controller = new AbortController(); controllers.current.add(controller)
+      try {
+        await deleteParentChat(childId, token, id, snapshot.revision, controller.signal)
+        if (controller.signal.aborted || !mounted.current) return false
+        drafts.current.delete(id)
+        if (id === snapshot.conversationId) { setDraft(''); setSelected(null); setFailed(null); setConfirmClear(false) }
+        // Remove only after the server confirms deletion, even if the reload fails.
+        setRealSnapshot(current => current ? { ...current, conversations: current.conversations?.filter(item => item.id !== id),
+          ...(id === current.conversationId ? { turns: [] } : {}) } : current)
+        await reload(id === snapshot.conversationId ? null : snapshot.conversationId)
+        return true
+      } catch (error) {
+        if (controller.signal.aborted || !mounted.current) return false
+        setNotice(t('暂时无法删除这段对话，请重试。'))
+        if (error instanceof ApiError && (error.status === 409 || error.status === 404)) await reload()
+        return false
+      } finally { controllers.current.delete(controller); busy.current = false; if (mounted.current) setClearing(false) }
+    }
+    if (!demoHistory || busy.current) return false
     const next = deleteDemoConversation(demoHistory, id, locale)
     setDemoHistory(next); drafts.current.delete(id)
     if (id === demoHistory.activeId) {
@@ -132,22 +206,27 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
       setSelected(activeDemoConversation(next).snapshot.memory.works.find(work => work.sourceId === saved?.sourceId) ?? null)
       setFailed(null); setNotice(''); setConfirmClear(false)
     }
+    return true
   }
 
   const send = async (retry?: ParentChatInput) => {
     if (busy.current || !snapshot?.available || (!isGuest && (!childId || !token)) || (!retry && !draft.trim())) return
     const previous = failed?.input
     const input = retry ?? (previous?.text === draft.trim() && previous.sourceId === (selected?.sourceId ?? null) ? previous
-      : { text: draft.trim(), requestId: randomId(), revision: snapshot.revision, sourceId: selected?.sourceId ?? null, locale })
+      : { text: draft.trim(), requestId: randomId(), revision: snapshot.revision, sourceId: selected?.sourceId ?? null, locale,
+        ...(!isGuest && snapshot.conversationId ? { conversationId: snapshot.conversationId } : {}) })
     busy.current = true; loadSequence.current++
+    pendingInput.current = input
     setPendingText(input.text); setFailed(null); setNotice(''); setDraft('')
     const controller = new AbortController(); controllers.current.add(controller)
     try {
-      const result = isGuest ? await sendDemoChat(snapshot, input, controller.signal)
+      const result: Awaited<ReturnType<typeof sendParentChat>> = isGuest ? await sendDemoChat(snapshot, input, controller.signal)
         : await sendParentChat(childId!, token!, input, controller.signal)
       if (controller.signal.aborted || !mounted.current) return
       setSnapshot(current => current ? { ...current, revision: result.revision,
+        ...(result.conversations ? { conversations: result.conversations } : {}),
         turns: [...current.turns.filter(turn => turn.id !== result.turn.id), result.turn].slice(isGuest ? -30 : -60) } : current)
+      if (snapshot.conversationId) drafts.current.delete(snapshot.conversationId)
       setSelected(null)
     } catch (err) {
       if (controller.signal.aborted || !mounted.current) return
@@ -161,6 +240,7 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
         setFailed({ input, message })
       }
     } finally {
+      pendingInput.current = null
       controllers.current.delete(controller); busy.current = false
       if (mounted.current) setPendingText(null)
     }
@@ -172,9 +252,12 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
     const controller = new AbortController(); controllers.current.add(controller)
     try {
       const result = isGuest ? { revision: snapshot.revision + 1 }
-        : await clearParentChat(childId!, token!, snapshot.revision, controller.signal)
+        : snapshot.conversationId ? await clearParentChat(childId!, token!, snapshot.revision, controller.signal, snapshot.conversationId)
+          : await clearParentChat(childId!, token!, snapshot.revision, controller.signal)
       if (!controller.signal.aborted) {
-        setSnapshot(current => current ? { ...current, revision: result.revision, turns: [] } : current)
+        setSnapshot(current => current ? { ...current, revision: result.revision, turns: [],
+          conversations: current.conversations?.filter(item => item.id !== current.conversationId) } : current)
+        if (snapshot.conversationId) drafts.current.delete(snapshot.conversationId)
         setFailed(null); setDraft(''); setSelected(null); setConfirmClear(false); setNotice('')
       }
     } catch { if (!controller.signal.aborted) { setNotice(t('暂时无法清空聊天，请重试。')); await reload() } }
@@ -182,6 +265,10 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
   }
 
   const canChat = Boolean(snapshot?.available && (isGuest || (childId && token)))
+  const history = demoHistory ? { activeId: demoHistory.activeId, conversations: demoHistory.conversations.flatMap(item => {
+    const last = item.snapshot.turns.at(-1)
+    return last ? [{ id: item.id, title: item.title, lastReply: last.reply, updatedAt: last.createdAt, turnCount: item.snapshot.turns.length }] : []
+  }) } : realSnapshot?.conversations ? { activeId: realSnapshot.conversationId ?? '', conversations: realSnapshot.conversations } : null
   const hasMessages = Boolean(snapshot?.turns.length || pendingText)
   const works = snapshot?.memory.works ?? []
   const displayWorks = allMemory ? works : works.slice(0, 4)
@@ -192,7 +279,7 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
     <section id="communication" className="parent-chat-layout" aria-label={t('家长对话空间')}>
       <div className="parent-chat-main">
         <div className="parent-chat-toolbar">
-          {demoHistory ? <>
+          {history ? <>
             <button type="button" className="parent-chat-history-trigger" disabled={pendingText !== null || clearing} onClick={() => setHistoryOpen(true)}><HistoryIcon />{t('历史记录')}</button>
             <div className="parent-chat-toolbar-actions"><button type="button" className="parent-chat-new" disabled={pendingText !== null || clearing} onClick={() => switchConversation()}><span aria-hidden="true">＋</span>{t('新对话')}</button>
               {!!snapshot?.turns.length && <button type="button" className="parent-chat-clear-trigger" aria-label={t('清空聊天')} title={t('清空聊天')} disabled={pendingText !== null || clearing} onClick={() => setConfirmClear(true)}><TrashIcon /></button>}
@@ -233,6 +320,19 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
           </div>}
         </div>
         <div className="parent-chat-input-area">
+          {recoveredDrafts.map(saved => <div className="parent-chat-clear" role="status" key={saved.conversationId}>
+            <p>{locale === 'en' ? 'The original conversation was deleted. Your unsent draft is safe here.' : '原对话已删除，未发送的文字已保留。'}<br />
+              <q>{saved.text.slice(0, 60)}{saved.text.length > 60 ? '…' : ''}</q>
+              {!!draft.trim() && <><br />{locale === 'en' ? 'Send or clear the current input before restoring this draft.' : '当前输入已有文字，发送或清空后可恢复这份草稿。'}</>}
+            </p>
+            <button type="button" disabled={!canChat || !!draft.trim() || pendingText !== null || clearing || loadError} onClick={() => {
+              if (busy.current || draft.trim() || loadError || !canChat) return
+              setDraft(saved.text); setSelected(snapshot?.memory.works.find(work => work.sourceId === saved.sourceId) ?? null)
+              setFailed(null); setNotice('')
+              setRecoveredDrafts(current => current.filter(item => item.conversationId !== saved.conversationId))
+              textarea.current?.focus()
+            }}>{locale === 'en' ? 'Restore draft' : '恢复草稿'}</button>
+          </div>)}
           {failed && <div className="parent-chat-error" role="alert"><span>{failed.message}</span><button type="button" onClick={() => void send(failed.input)}>{t('重试')}</button></div>}
           {notice && <p className="parent-chat-error" role="status">{notice}</p>}
           {storageError && <p className="parent-chat-error" role="status">{t('这次未能保存到浏览器，当前页面仍可继续聊天。')}</p>}
@@ -249,7 +349,7 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
           {isGuest ? <p className="parent-chat-footnote">{t('聊过的话自动保存，可以从历史记录接着聊。')}</p>
             : !childId ? <p className="parent-chat-footnote">{t('连接孩子的创作空间后，就可以开始聊天。')}</p>
               : snapshot && !snapshot.available ? <p className="parent-chat-footnote">{t('聊天服务暂未配置，作品建议仍可查看。')}</p>
-                : <p className="parent-chat-footnote">{t('聊天按孩子分别保存，你可以随时清空。')}</p>}
+                : <p className="parent-chat-footnote">{t('聊天按孩子分别保存，可以在历史记录中继续或删除。')}</p>}
         </div>
       </div>
       <aside className="parent-chat-aside" aria-label={t('作品与沟通建议')}>
@@ -276,7 +376,8 @@ function ParentChatWorkspace({ childName, childId, token, isGuest = false, onCho
           {guidesOpen && <ArtworkSuggestions childName={childName} childId={childId} token={token} isGuest={isGuest} onChooseArtwork={onChooseArtwork} onDiscuss={chooseWork} />}
         </details>
       </aside>
-      {historyOpen && demoHistory && <ChatHistory history={demoHistory} locale={locale} onClose={() => setHistoryOpen(false)} onOpen={switchConversation} onDelete={deleteConversation} />}
+      {historyOpen && history && <ChatHistory history={history} locale={locale} childName={childName} persistent={!isGuest} busy={clearing} error={notice || (loadError ? t('暂时无法读取聊天记录。') : undefined)}
+        onClose={() => setHistoryOpen(false)} onOpen={id => { void switchConversation(id) }} onDelete={deleteConversation} />}
       {preview && <SourcePreview guide={{ ...preview, demoKind: isGuest ? demoArtworkKind(preview.sourceId) : undefined, provenanceNote: preview.provenance === 'co-created' ? t('这幅是共创作品，话题依据孩子自己的笔迹。') : null }} token={token} onClose={() => setPreview(null)} />}
     </section>
   )

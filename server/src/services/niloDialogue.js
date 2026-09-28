@@ -28,6 +28,7 @@ import { niloReplyStyle } from './niloReplyStyle.js'
 import { generateNiloVariation } from './niloVariation.js'
 import { getDrawingIllustration } from '../../../shared/niloIllustrations.mjs'
 import { sameDrawingSubject } from '../../../shared/niloVariants.mjs'
+import { validateGeneratedRaster } from '../../../shared/niloGeneratedRaster.mjs'
 
 export const NILO_TEMPLATES = ['waves', 'fish', 'leaf', 'window', 'stars', 'cloud', 'flower', 'trail', 'flame', 'rain', 'grass', 'echo', 'sun', 'moon', 'tree', 'mountain', 'house', 'boat', 'bird', 'butterfly', 'heart', 'custom', 'illustration']
 export const NILO_BRUSH_KINDS = ['round', 'pencil', 'marker', 'crayon', 'star']
@@ -347,17 +348,18 @@ function compileVoiceDetails(raw, context) {
 }
 
 export function validateProposal(raw, context = {}) {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !NILO_TEMPLATES.includes(raw.template)) return null
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw) || (!NILO_TEMPLATES.includes(raw.template) && raw.template !== 'generated')) return null
   const simpleRequest = parseSimpleDrawingRequest(context.utterance, context.tracingGuide === true)
   if (!['custom', 'illustration'].includes(raw.template) && context.rejectedTemplates?.includes(raw.template) && !explicitlyRequests(raw.template, context.utterance) && simpleRequest?.template !== raw.template) return null
-  const allowed = new Set(['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'echoPoints', 'anchor', 'placement', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'illustrationId', 'placementPolicy'])
+  const allowed = new Set(['template', 'x', 'y', 'width', 'height', 'rotation', 'color', 'strokeWidth', 'brushKind', 'target', 'relation', 'echoPoints', 'anchor', 'placement', 'subject', 'sketch', 'attachment', 'contact', 'contribution', 'recipeId', 'illustrationId', 'placementPolicy', 'raster'])
   if (Object.keys(raw).some(key => !allowed.has(key))) return null
   if (raw.placementPolicy !== undefined && (raw.placementPolicy !== 'free' || raw.contribution !== 'object')) return null
   if (raw.contribution !== undefined && raw.contribution !== 'object') return null
   if (raw.contribution === 'object' && (raw.attachment || raw.contact)) return null
   if (raw.recipeId !== undefined && (typeof raw.recipeId !== 'string' || !/^[a-z]+-[0-9]+$/.test(raw.recipeId))) return null
   if (raw.template !== 'illustration' && Object.hasOwn(raw, 'illustrationId')) return null
-  let subject, sketch
+  if (raw.template !== 'generated' && Object.hasOwn(raw, 'raster')) return null
+  let subject, sketch, raster
   if (raw.template === 'custom') {
     if (!validSubject(raw.subject)) return null
     subject = raw.subject.trim()
@@ -375,6 +377,10 @@ export function validateProposal(raw, context = {}) {
     if (!sameDrawingSubject(raw, { template: 'illustration', illustrationId: illustration.id, subject: illustration.subject })) return null
     if (context.rejectedSubjects?.includes(subject) && !explicitlyRequestsSubject(subject, context.utterance)
       && simpleRequest?.subject !== subject && simpleRequest?.english !== subject) return null
+  } else if (raw.template === 'generated') {
+    raster = validateGeneratedRaster(raw.raster)
+    if (!raster || !validSubject(raw.subject) || ['recipeId', 'illustrationId', 'sketch', 'attachment', 'contact', 'echoPoints'].some(key => Object.hasOwn(raw, key))) return null
+    subject = raw.subject.trim()
   } else if (Object.hasOwn(raw, 'subject') || Object.hasOwn(raw, 'sketch')) return null
   // A button turn must grow a leaf from the picture, not place the stock icon
   // in unrelated empty space. Explicit voice requests keep their own preview flow.
@@ -423,7 +429,7 @@ export function validateProposal(raw, context = {}) {
   const color = !changes.color && validColor(style.color) ? style.color : normalized.color
   const finalWidth = !changes.strokeWidth && validBrushSize(style.strokeWidth) ? style.strokeWidth : strokeWidth
   const brushKind = !changes.brushKind && validBrushKind(style.brushKind) ? style.brushKind : raw.brushKind ?? style.brushKind
-  return { ...(raw.placementPolicy?{placementPolicy:raw.placementPolicy}:{}), ...(raw.contribution?{contribution:raw.contribution}:{}), ...(raw.recipeId?{recipeId:raw.recipeId}:{}), template: raw.template, x, y, width, height, rotation, color: color.toLowerCase(), strokeWidth: finalWidth, ...(brushKind ? { brushKind } : {}), target, relation, ...(sketch ? { subject, sketch } : raw.template === 'illustration' ? { subject, illustrationId: raw.illustrationId } : {}), ...(echoPoints ? { echoPoints } : {}), ...(anchor ? { anchor } : {}), ...(raw.placement ? { placement: raw.placement } : {}), ...(attachment ? { attachment } : {}), ...(contact ? { contact } : {}) }
+  return { ...(raw.placementPolicy?{placementPolicy:raw.placementPolicy}:{}), ...(raw.contribution?{contribution:raw.contribution}:{}), ...(raw.recipeId?{recipeId:raw.recipeId}:{}), template: raw.template, x, y, width, height, rotation, color: color.toLowerCase(), strokeWidth: finalWidth, ...(brushKind ? { brushKind } : {}), target, relation, ...(sketch ? { subject, sketch } : raster ? { subject, raster } : raw.template === 'illustration' ? { subject, illustrationId: raw.illustrationId } : {}), ...(echoPoints ? { echoPoints } : {}), ...(anchor ? { anchor } : {}), ...(raw.placement ? { placement: raw.placement } : {}), ...(attachment ? { attachment } : {}), ...(contact ? { contact } : {}) }
 }
 
 export function validateDialogue(raw, context, hasImage) {
@@ -462,7 +468,7 @@ export function validateDialogue(raw, context, hasImage) {
   // This is a model-reply boundary, unlike validateProposal which also restores
   // saved guides. Do not let a model bypass curation by naming a hidden ID.
   // Moving/resizing an already present guide remains available after downlisting.
-  const availableSelection = (item, current) => ['recipeId', 'illustrationId'].every(key =>
+  const availableSelection = (item, current) => item?.template !== 'generated' && !item?.raster && ['recipeId', 'illustrationId'].every(key =>
     !item?.[key] || isMaterialEnabled(item[key]) || (raw.intent === 'edit' && item[key] === current?.[key]))
   if (!availableSelection(raw.proposal, context.currentProposal)
     || (raw.additions ?? []).some((item, index) => !availableSelection(item, context.currentAdditions?.[index]))) return null

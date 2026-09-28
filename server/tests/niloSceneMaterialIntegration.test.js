@@ -7,7 +7,7 @@ import * as curationStore from '../src/services/niloCurationStore.js'
 const profile = { style: 'storybook', detail: 'simple' }
 // These fixtures isolate material compilation/repair. The catalogue-free stage
 // has its own end-to-end provider sequencing tests in niloSceneIntent.test.js.
-const generateNiloScene = (input, options = {}) => generateScene(input, { ...options, chatText: (prompt, request) => request.kind === 'nilo_scene_understand'
+const generateNiloScene = (input, options = {}) => generateScene(input, { retrieveMaterials: async () => null, reviewScene: async () => ({ accepted: true, issues: [] }), ...options, chatText: (prompt, request) => request.kind === 'nilo_scene_understand'
   ? Promise.resolve({ brief: { version: 1, intent: input.utterance, reference: [], setting: '', mood: [], requiredSubjects: [], excludedSubjects: [], referenceOnlySubjects: [], motifs: [{ subject: '小兔子', role: 'focal', reason: '语义阶段测试替身，当前文件独立验证素材编译' }], relationships: [] } })
   : options.chatText?.(prompt, request) })
 const initial = getMaterialCuration()
@@ -26,11 +26,11 @@ test('material-first planning supplies one server-selected profile, real PNG cho
   expect(prompt).toContain('ONE shared style AND detail level')
   expect(prompt).toContain('minPixels')
   expect(prompt).toContain('200..260 pixels')
-  expect(prompt).toContain('SCENE scope may include')
-  expect(prompt).toContain('shared ground or shoreline level')
+  expect(prompt).toContain('3..4 related objects')
+  expect(prompt).toContain('share a ground level')
   expect(prompt).toContain('visibleBounds')
-  expect(prompt).toContain('monochrome dashed-line or pale-gray drawing reference')
-  expect(prompt).toContain('does not create a reflection')
+  expect(prompt).toContain('monochrome dashed/pale-gray guide')
+  expect(prompt).toContain('no painted glow, colors, reflections')
   expect(prompt).toContain('"width":840,"height":600')
   expect(prompt).not.toContain('"id":"castle_1"')
 })

@@ -6,6 +6,9 @@ import { projectionTransform } from '../companion/projectionTransform'
 import { getDrawingIllustration } from '../../../../../shared/niloIllustrations.mjs'
 import { illustrationTracePaths } from '../companion/illustrationTracing'
 import { useIllustrationTraces } from '../hooks/useIllustrationTraces'
+import { validateGeneratedRaster, type GeneratedRaster } from '../../../../../shared/niloGeneratedRaster.mjs'
+
+type ImageGuide = { proposal: DrawingProposal; asset: { id: string; name: string; src: string; aspect: number }; generated: GeneratedRaster | null }
 
 /** Tracing paths pass through to the paper; only the two handles receive gestures. */
 export function CompanionProjection({ proposal, additions, aspect, turnDuration, tracing = false, overInk = false, controlsOnly = false, onEdit, onInteractionStart }: { proposal: DrawingProposal; additions?: DrawingProposal[]; aspect: number; turnDuration?: number; tracing?: boolean; overInk?: boolean; controlsOnly?: boolean; onEdit?: (patch: Partial<DrawingProposal>) => void; onInteractionStart?: () => void }) {
@@ -14,12 +17,14 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
   const pen = useRef<HTMLSpanElement>(null)
   const [viewOriginal, setViewOriginal] = useState(false)
   const [failedImages, setFailedImages] = useState<string[]>([])
-  const illustrations = useMemo(() => [proposal, ...(additions ?? [])].flatMap(item => {
+  const illustrations = useMemo(() => [proposal, ...(additions ?? [])].flatMap<ImageGuide>((item, index) => {
+    const generated = item.template === 'generated' ? validateGeneratedRaster(item.raster) : null
+    if (generated) return [{ proposal: item, asset: { id: `generated-${index}`, name: item.subject ?? '', src: `data:image/png;base64,${generated.pngBase64}`, aspect: generated.width / generated.height }, generated }]
     const asset = item.template === 'illustration' && item.illustrationId ? getDrawingIllustration(item.illustrationId) : undefined
-    return asset ? [{ proposal: item, asset }] : []
+    return asset ? [{ proposal: item, asset, generated: null }] : []
   }), [proposal, additions])
-  const illustrationKey = illustrations.map(item => item.asset.id).join(',')
-  const traces = useIllustrationTraces(controlsOnly ? [] : illustrations.map(item => item.asset.id))
+  const illustrationKey = illustrations.map(item => item.asset.src).join(',')
+  const traces = useIllustrationTraces(controlsOnly ? [] : illustrations.filter(item => !item.generated).map(item => item.asset.id))
   useEffect(() => { setViewOriginal(false); setFailedImages([]) }, [illustrationKey])
   // Raster illustrations are references only, including when opened from an older workflow.
   const isGuide = tracing || illustrations.length > 0
@@ -68,11 +73,12 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
     if (patch) onEdit?.(patch)
   }
   const strokes = useMemo(() => [proposal, ...(additions ?? [])].flatMap(item => {
-    if (item.template !== 'illustration') return proposalStrokes(item, aspect)
-    const trace = item.illustrationId ? traces[item.illustrationId] : undefined
+    if (!['illustration', 'generated'].includes(item.template)) return proposalStrokes(item, aspect)
+    const raster = illustrations.find(image => image.proposal === item)?.generated
+    const trace = raster ? { version: 1 as const, aspect: raster.width / raster.height, projection: raster.projection, paths: raster.paths ?? [] } : item.illustrationId ? traces[item.illustrationId] : undefined
     return !viewOriginal && trace && trace.projection !== 'gray' ? illustrationTracePaths(trace, item, aspect)
       .map(points => ({ kind: 'custom' as const, color: '#9ca3af', width: 1.5, points })) : []
-  }), [proposal, additions, aspect, traces, viewOriginal])
+  }), [proposal, additions, aspect, traces, viewOriginal, illustrations])
   const bounds = useMemo(() => {
     let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity
     // A valid contribution can contain 64 paths of 4096 points. Spreading those
@@ -152,14 +158,14 @@ export function CompanionProjection({ proposal, additions, aspect, turnDuration,
   const { left, top, right, bottom } = bounds
   return <div className={`nilo-projection pointer-events-none absolute inset-0${isGuide ? ' nilo-tracing-projection' : ''}${isGuide && overInk ? ' nilo-tracing-over-ink' : ''}${turnDuration !== undefined ? ' nilo-turn-drawing' : ''}`} aria-label={t(illustrations.length ? 'Nilo 的插画参考底图' : tracing ? 'Nilo 的灰色虚线描摹底图' : turnDuration !== undefined ? 'Nilo 正在画，接着你的这一笔' : 'Nilo 的投影，尚未加入画作')}>
     <canvas ref={ref} className="absolute inset-0 size-full" style={controlsOnly ? { visibility: 'hidden' } : undefined} aria-hidden="true" />
-    {!controlsOnly && illustrations.filter(({ asset }) => viewOriginal || traces[asset.id]?.projection === 'gray').map(({ proposal: p, asset }) => <img key={asset.id} src={asset.src} alt={asset.name} draggable={false}
+    {!controlsOnly && illustrations.filter(({ asset, generated }) => viewOriginal || (generated?.projection ?? traces[asset.id]?.projection) === 'gray').map(({ proposal: p, asset }) => <img key={asset.id} src={asset.src} alt={asset.name} draggable={false}
       className={`nilo-illustration-guide${viewOriginal ? ' nilo-illustration-original' : ' nilo-illustration-gray-projection'}`}
       data-illustration-projection={viewOriginal ? 'original' : 'gray'}
       style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.width * 100}%`, height: `${p.height * 100}%`, transform: `rotate(${p.rotation}deg)` }}
       onError={() => setFailedImages(ids => ids.includes(asset.id) ? ids : [...ids, asset.id])}
       onLoad={() => setFailedImages(ids => ids.filter(id => id !== asset.id))} />)}
     {!controlsOnly && failedImages.length > 0 && <span className="nilo-illustration-notice" role="status">{t('参考图暂时没加载好，可以继续画或换个画法。')}</span>}
-    {!controlsOnly && !viewOriginal && illustrations.some(({ asset }) => !traces[asset.id]) && <span className="nilo-illustration-notice" role="status">{illustrations.some(({ asset }) => traces[asset.id] === null)
+    {!controlsOnly && !viewOriginal && illustrations.some(({ asset, generated }) => !generated && !traces[asset.id]) && <span className="nilo-illustration-notice" role="status">{illustrations.some(({ asset, generated }) => !generated && traces[asset.id] === null)
       ? locale === 'en' ? 'The outlines could not load. You can keep drawing or choose to view the original.' : '参考轮廓暂时没加载好，可以继续画或点“看原图”。'
       : locale === 'en' ? 'Preparing the outlines. You can keep drawing.' : '轮廓正在准备，你可以先接着画。'}</span>}
     {turnDuration !== undefined ? <span ref={pen} className="nilo-drawing-pen" aria-hidden="true">✎</span> : <>
