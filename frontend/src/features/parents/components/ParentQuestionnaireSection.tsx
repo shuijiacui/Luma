@@ -1,6 +1,6 @@
 import { lt, t, useLocale } from '@/i18n'
 import { Button } from '@/components/ui'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   PARENT_QUESTIONNAIRE_ANSWER_OPTIONS,
   PARENT_QUESTIONNAIRE_DIMENSIONS,
@@ -12,6 +12,9 @@ import { ApiError } from '@/lib/api/client'
 import {
   listParentQuestionnaireRecords,
   saveParentQuestionnaireRecord,
+  setQuestionnairePreference,
+  questionnaireDraftKey,
+  readQuestionnaireDraft,
   type ParentQuestionnaireRecord,
 } from '@/lib/api/parentQuestionnaireApi'
 import { ArrowLeftIcon, HeartIcon, TimelineIcon } from './dashboard/icons'
@@ -40,7 +43,7 @@ function formatDate(value: string, locale: 'zh' | 'en') {
   })
 }
 
-function ScoreBreakdown({ record, previous }: { record: ParentQuestionnaireRecord; previous?: ParentQuestionnaireRecord }) {
+function ScoreBreakdown({ record, previous, previousPending = false }: { record: ParentQuestionnaireRecord; previous?: ParentQuestionnaireRecord; previousPending?: boolean }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {PARENT_QUESTIONNAIRE_DIMENSIONS.map(dimension => {
@@ -56,7 +59,7 @@ function ScoreBreakdown({ record, previous }: { record: ParentQuestionnaireRecor
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eee7d7]">
               <div className="h-full rounded-full bg-gradient-to-r from-luma-grass-300 to-luma-teal-500" style={{ width: `${score}%` }} />
             </div>
-            <div className="mt-2 text-[0.68rem] text-[#9a9280]">{deltaText(delta)}</div>
+            <div className="mt-2 text-[0.68rem] text-[#9a9280]">{previousPending ? t('加载更早记录后可比较') : deltaText(delta)}</div>
           </div>
         )
       })}
@@ -80,8 +83,27 @@ function AnswerReview({ record }: { record: ParentQuestionnaireRecord }) {
   )
 }
 
-export function ParentQuestionnaireSection({ ownerId, token, embedded = false, onExpandedChange }: {
+interface QuestionnaireProps {
   ownerId: string; token?: string; embedded?: boolean; onExpandedChange?: (expanded: boolean) => void
+  children?: { id: string; nickname: string }[]; selectedChildId?: string
+}
+
+export function ParentQuestionnaireSection(props: QuestionnaireProps) {
+  const children = props.children ?? []
+  const [choice, setChoice] = useState(props.selectedChildId ?? children[0]?.id ?? '')
+  const childId = children.some(child => child.id === choice) ? choice : null
+  const childName = children.find(child => child.id === childId)?.nickname
+  const selector = children.length > 0 ? <label className="family-questionnaire-child">{t('这次想回顾与谁的相处？')}
+    <select value={childId ?? ''} onChange={event => setChoice(event.target.value)}>
+      {children.map(child => <option key={child.id} value={child.id}>{child.nickname}</option>)}
+      <option value="">{t('未关联孩子的记录')}</option>
+    </select>
+  </label> : null
+  return <QuestionnaireWorkspace key={`${props.ownerId}:${Boolean(props.token)}:${childId}`} {...props} childId={childId} childName={childName} selector={selector} />
+}
+
+function QuestionnaireWorkspace({ ownerId, token, embedded = false, onExpandedChange, childId, childName, selector }: QuestionnaireProps & {
+  childId: string | null; childName?: string; selector: ReactNode
 }) {
   const locale = useLocale()
   const [records, setRecords] = useState<ParentQuestionnaireRecord[]>([])
@@ -95,6 +117,19 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [savedRecord, setSavedRecord] = useState<ParentQuestionnaireRecord | null>(null)
+  const [nextOffset, setNextOffset] = useState<number | null>(null)
+  const [latestRevision, setLatestRevision] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [historyError, setHistoryError] = useState('')
+  const [enabled, setEnabled] = useState(false)
+  const [preferenceBusy, setPreferenceBusy] = useState(false)
+  const [preferenceError, setPreferenceError] = useState('')
+  const draftKey = questionnaireDraftKey(ownerId, childId, Boolean(token))
+  const [draft, setDraft] = useState(() => readQuestionnaireDraft(draftKey))
+  const [draftError, setDraftError] = useState(false)
+  const [baseRevision, setBaseRevision] = useState(0)
+  const [conflict, setConflict] = useState(false)
   const section = useRef<HTMLElement>(null)
   const previousView = useRef<View>('overview')
   useEffect(() => { onExpandedChange?.(view !== 'overview') }, [view, onExpandedChange])
@@ -115,10 +150,14 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
   useEffect(() => {
     let active = true
     setLoading(true)
-    listParentQuestionnaireRecords(ownerId, token)
+    listParentQuestionnaireRecords(ownerId, token, 0, childId)
       .then(page => {
         if (!active) return
         setRecords(page.records)
+        setNextOffset(page.nextOffset)
+        setLatestRevision(page.latestRevision)
+        setTotal(page.total)
+        setEnabled(page.enabled)
         setLoadError('')
       })
       .catch(error => {
@@ -126,7 +165,39 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
       })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [ownerId, token, loadRevision])
+  }, [ownerId, token, loadRevision, childId])
+
+  useEffect(() => {
+    if (view !== 'form') return
+    const value = { childAge, answers, step, revision: baseRevision }
+    setDraft(value)
+    try { localStorage.setItem(draftKey, JSON.stringify(value)); setDraftError(false) }
+    catch { setDraftError(true) }
+  }, [view, childAge, answers, step, baseRevision, draftKey])
+
+  async function togglePreference() {
+    if (!token || !childId || preferenceBusy) return
+    setPreferenceBusy(true); setPreferenceError('')
+    try { setEnabled((await setQuestionnairePreference(childId, !enabled, token)).enabled) }
+    catch { setPreferenceError('设置未保存，请重试。') }
+    finally { setPreferenceBusy(false) }
+  }
+
+  async function loadMore() {
+    if (nextOffset === null || loadingMore) return
+    setLoadingMore(true); setHistoryError('')
+    try {
+      const page = await listParentQuestionnaireRecords(ownerId, token, nextOffset, childId)
+      if (page.latestRevision !== latestRevision) {
+        setLoadRevision(value => value + 1)
+        setHistoryError('记录已更新，已重新加载最新记录，请继续查看更多。')
+        return
+      }
+      setRecords(current => [...current, ...page.records.filter(item => !current.some(record => record.id === item.id))])
+      setNextOffset(page.nextOffset)
+    } catch { setHistoryError('历史记录加载失败，请重试。') }
+    finally { setLoadingMore(false) }
+  }
 
   const latest = records[0]
   const ageNumber = Number(childAge)
@@ -134,9 +205,11 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
   const completeAnswers = useMemo(() => normalizeParentQuestionnaireAnswers(answers), [answers])
 
   function beginForm(record?: ParentQuestionnaireRecord) {
-    setChildAge(record ? String(record.childAge) : '')
-    setAnswers(record ? { ...record.answers } : {})
-    setStep(0)
+    setChildAge(draft?.childAge ?? (record ? String(record.childAge) : ''))
+    setAnswers(draft?.answers ?? (record ? { ...record.answers } : {}))
+    setStep(draft?.step ?? 0)
+    setBaseRevision(draft?.revision ?? latestRevision)
+    setConflict(false)
     setSaveError('')
     setView('form')
   }
@@ -155,17 +228,23 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
     setSaveError('')
     try {
       const saved = await saveParentQuestionnaireRecord(ownerId, {
-        revision: latest?.revision ?? 0,
+        revision: baseRevision,
+        childId,
         childAge: ageNumber,
         answers: completeAnswers,
       }, token)
       setRecords(current => [saved, ...current.filter(item => item.id !== saved.id)])
       setSavedRecord(saved)
+      setLatestRevision(saved.revision)
+      setTotal(value => value + 1)
+      setNextOffset(value => value === null ? null : value + 1)
+      setDraft(null)
+      try { localStorage.removeItem(draftKey) } catch { /* The saved server record remains authoritative. */ }
       setView('result')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : '保存失败，请稍后重试。')
-      if (error instanceof ApiError && error.status === 409) setLoadRevision(value => value + 1)
+      if (error instanceof ApiError && error.status === 409) { setConflict(true); setLoadRevision(value => value + 1) }
     } finally {
       setSaving(false)
     }
@@ -189,6 +268,8 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
           </button>
           <span className="text-xs font-semibold text-[#9a9280]">{lt(step > 0 ? `${step}/15` : '准备开始')}</span>
         </div>
+        <p className="mt-4 text-center text-xs text-[#7d8777]">{childName ?? t('未关联孩子的记录')} · {t('回顾最近一个月')}</p>
+        <p className="mt-2 text-center text-xs text-[#7d8777]" role="status">{t(draftError ? '草稿暂时无法保存，请保持页面打开并完成提交。' : '填写进度会保存在此浏览器，可稍后继续。')}</p>
 
         {step === 0 ? (
           <div className="mx-auto max-w-xl py-8 text-center sm:py-12">
@@ -196,7 +277,7 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
               <HeartIcon className="size-7" />
             </div>
             <h2 className="mt-5 font-display text-2xl font-bold text-[#2c3a33]">{t('先说说孩子的年龄')}</h2>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#7d8777]">{t('这能帮助我们选择更合适的表达方式，年龄仅用于家长端建议。')}</p>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#7d8777]">{t('记录填写时的年龄，方便以后回顾。')}</p>
             <label className="mx-auto mt-6 block max-w-xs text-left text-sm font-semibold text-[#4c594f]">
               {t('孩子年龄')}
               <span className="relative mt-2 block">
@@ -256,6 +337,8 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
               )}
             </div>
             {saveError && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{lt(saveError)}</p>}
+            {conflict && <Button variant="secondary" disabled={loading || Boolean(loadError)} onClick={() => { setBaseRevision(latestRevision); setConflict(false); setSaveError('') }}>{t('保留答案，更新保存版本')}</Button>}
+            {conflict && loadError && <button type="button" onClick={() => setLoadRevision(value => value + 1)}>{t('重试')}</button>}
           </div>
         ) : null}
       </section>
@@ -263,7 +346,7 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
   }
 
   if (view === 'result' && savedRecord) {
-    const previous = records.find(record => record.revision === savedRecord.revision - 1)
+    const previous = records.find(record => record.revision < savedRecord.revision)
     const delta = previous ? savedRecord.scores.total - previous.scores.total : null
     const message = scoreMessage(savedRecord.scores.total)
     return (
@@ -277,7 +360,7 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
           <h2 className="mt-2 font-display text-2xl font-bold text-[#2c3a33]">{t(message.title)}</h2>
           <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#6f786d]">{t(message.detail)}</p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-[#8f856c]">
-            <span className="rounded-full bg-white/80 px-3 py-1.5">{t(`第 ${savedRecord.revision} 次记录`)}</span>
+            <span className="rounded-full bg-white/80 px-3 py-1.5">{t(`记录版本 ${savedRecord.revision}`)}</span>
             <span className="rounded-full bg-white/80 px-3 py-1.5">{t('支持性资源')} {Math.round(savedRecord.scores.total)}</span>
             <span className="rounded-full bg-white/80 px-3 py-1.5">{deltaText(delta)}</span>
           </div>
@@ -333,16 +416,16 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
                     <details open={index === 0} className="group rounded-2xl border border-[#efe8d9] bg-[#fdfcf8]">
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
                         <span>
-                          <strong className="block text-sm text-[#334038]">{t(`第 ${record.revision} 次记录`)}</strong>
+                          <strong className="block text-sm text-[#334038]">{t(`记录版本 ${record.revision}`)}</strong>
                           <span className="mt-1 block text-xs text-[#9a9280]">{formatDate(record.createdAt, locale)} · {record.childAge} {t('岁')}</span>
                         </span>
                         <span className="text-right">
                           <strong className="block font-display text-xl text-[#334038]">{Math.round(record.scores.total)}</strong>
-                          <span className="mt-1 block text-[0.68rem] text-[#9a9280]">{deltaText(delta)}</span>
+                          <span className="mt-1 block text-[0.68rem] text-[#9a9280]">{!previous && nextOffset !== null ? t('加载更早记录后可比较') : deltaText(delta)}</span>
                         </span>
                       </summary>
                       <div className="border-t border-[#f0eadf] p-4">
-                        <ScoreBreakdown record={record} previous={previous} />
+                        <ScoreBreakdown record={record} previous={previous} previousPending={!previous && nextOffset !== null} />
                         <details className="mt-4 rounded-2xl border border-[#efe8d9] px-4 py-3">
                           <summary className="cursor-pointer text-xs font-semibold text-[#4c594f]">{t('查看本次作答')}</summary>
                           <div className="mt-3"><AnswerReview record={record} /></div>
@@ -353,6 +436,8 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
                 )
               })}
             </ol>
+            {historyError && <p className="mt-4 text-sm" role="alert">{t(historyError)}</p>}
+            {nextOffset !== null && <Button className="mt-5" variant="secondary" isLoading={loadingMore} onClick={loadMore}>{t('加载更早记录')}</Button>}
           </>
         ) : (
           <div className="mt-5 rounded-2xl bg-[#faf7ef] p-8 text-center text-sm text-[#9a9280]">{t('还没有填写记录。')}</div>
@@ -367,7 +452,8 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
       <div className="family-settings-section-heading"><span className="family-settings-section-icon"><HeartIcon /></span>
         <div><h2 id="family-questionnaire-title">{t('亲子日常陪伴小调查')}</h2><p>{t('也留一点时间，照顾自己的感受。')}</p></div>
       </div>
-      <p className="family-questionnaire-intro">{t('用几分钟了解最近一个月的陪伴感受，帮助我们提供更贴合的交流提示。答案没有对错。')}</p>
+      <p className="family-questionnaire-intro">{t('用几分钟回顾最近一个月的陪伴感受。答案没有对错，也不是对你或孩子的评价。')}</p>
+      {selector}
       <div className="family-questionnaire-meta"><span>{t('15 道题')}</span><i aria-hidden="true" /><span>{t('约 2 分钟')}</span><i aria-hidden="true" /><span>{t('可随时修改')}</span></div>
 
       {loadError && <div role="alert" className="family-questionnaire-error"><p>{lt(loadError)}</p><button type="button" onClick={() => setLoadRevision(value => value + 1)}>{t('重试')}</button></div>}
@@ -376,14 +462,25 @@ export function ParentQuestionnaireSection({ ownerId, token, embedded = false, o
         {latest && message ? <div className="family-questionnaire-latest"><p>{t('最近一次填写')} · {formatDate(latest.createdAt, locale)}</p><strong>{t(message.title)}</strong></div>
           : <p>{t('从最近的日常开始，按自己的感受回答。')}</p>}
         <Button className="family-questionnaire-start-button" onClick={() => beginForm(latest)} disabled={Boolean(loadError)}>
-          {t(latest ? '继续了解' : '开始了解')}<span aria-hidden="true"> ↗</span>
+          {t(draft ? '继续未完成的问卷' : latest ? '继续了解' : '开始了解')}<span aria-hidden="true"> ↗</span>
         </Button>
       </div>
+      {draft && <button type="button" className="mt-2 text-xs text-[#7d8777]" onClick={() => {
+        try { localStorage.removeItem(draftKey); setDraft(null); setDraftError(false) } catch { setDraftError(true) }
+      }}>{t('放弃这份草稿')}</button>}
+      {draftError && <p role="alert" className="text-xs">{t('草稿暂时无法保存，请保持页面打开并完成提交。')}</p>}
 
       <button type="button" disabled={records.length === 0} onClick={openHistory} className="family-questionnaire-history">
-        <TimelineIcon /><span><strong>{t('查看填写记录与变化')}</strong><small>{records.length ? t(`共 ${records.length} 次记录`) : t('还没有填写记录。')}</small></span><span aria-hidden="true">›</span>
+        <TimelineIcon /><span><strong>{t('查看填写记录与变化')}</strong><small>{total ? t(`共 ${total} 次记录`) : t('还没有填写记录。')}</small></span><span aria-hidden="true">›</span>
       </button>
-      <p className="family-questionnaire-note">{t('这份记录与孩子的创作分开保存，仅用于生成家长端建议，不会写入儿童档案。')}</p>
+      {token && childId && <div className="family-questionnaire-preference">
+        <label><span>{t('让沟通助手参考这份问卷')}</span><input type="checkbox" role="switch" checked={enabled} disabled={preferenceBusy || Boolean(loadError)} onChange={togglePreference} /></label>
+        <p>{t('开启后，聊天会参考你为这个孩子填写的最近 90 天内的最新回答摘要；默认关闭，可随时调整。')}</p>
+        <p>{t('关闭后不再读取问卷，已经生成的聊天仍会保留。')}</p>
+        {enabled && (!latest || Date.now() - Date.parse(latest.createdAt) > 90 * 86400000) && <p>{t('填写一份近期问卷后，助手才能参考。')}</p>}
+        {preferenceError && <p role="alert">{t(preferenceError)}</p>}
+      </div>}
+      <p className="family-questionnaire-note">{t(!token ? '游客问卷与草稿只保存在此浏览器，用于个人回顾。' : !childId ? '这些记录尚未关联孩子，不会用于聊天。请选择孩子后填写一份新记录。' : '问卷与你的孩子创作记录分开保存，仅你自己的沟通助手可按设置参考。')}</p>
     </section>
   )
 }

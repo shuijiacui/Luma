@@ -83,7 +83,7 @@ export function FamilySettings(props: Props) {
         </div>
       </section>
 
-      <ParentQuestionnaireSection ownerId={ownerId} token={isGuest ? undefined : token} embedded onExpandedChange={setQuestionnaireOpen} />
+      <ParentQuestionnaireSection ownerId={ownerId} token={isGuest ? undefined : token} children={children} selectedChildId={selectedChildId} embedded onExpandedChange={setQuestionnaireOpen} />
     </div>
 
     <div className={`family-settings-footer${!isGuest ? ' family-settings-footer--data' : ''}`} hidden={questionnaireOpen}>

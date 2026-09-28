@@ -12,7 +12,7 @@ const answers = Object.fromEntries(
 beforeEach(() => localStorage.clear())
 
 test('guest questionnaire history keeps every revision and rejects stale saves', async () => {
-  expect(await listParentQuestionnaireRecords('guest-parent')).toEqual({ records: [], nextOffset: null })
+  expect(await listParentQuestionnaireRecords('guest-parent')).toMatchObject({ records: [], nextOffset: null, latestRevision: 0, total: 0, enabled: false })
 
   const first = await saveParentQuestionnaireRecord('guest-parent', { revision: 0, childAge: 6, answers })
   expect(first).toMatchObject({ revision: 1, childAge: 6 })

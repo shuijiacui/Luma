@@ -15,9 +15,9 @@ vi.mock('@/lib/api/authApi', () => ({ fetchMe: vi.fn(), listAnalyses: vi.fn(), f
 vi.mock('@/hooks/useChildHistory', () => ({ useChildHistory: vi.fn() }))
 vi.mock('@/hooks/useAuthedImage', () => ({ useAuthedImage: () => null }))
 vi.mock('@/lib/api/communicationApi', () => ({ getCommunicationGuides: vi.fn(), getParentChat: vi.fn() }))
-vi.mock('@/lib/api/parentQuestionnaireApi', () => ({ listParentQuestionnaireRecords: vi.fn(), saveParentQuestionnaireRecord: vi.fn() }))
+vi.mock('@/lib/api/parentQuestionnaireApi', async importOriginal => ({ ...await importOriginal<typeof import('@/lib/api/parentQuestionnaireApi')>(), listParentQuestionnaireRecords: vi.fn(), saveParentQuestionnaireRecord: vi.fn() }))
 afterEach(() => { cleanup(); vi.clearAllMocks() })
-beforeEach(() => { vi.mocked(listParentQuestionnaireRecords).mockResolvedValue({ records: [], nextOffset: null }) })
+beforeEach(() => { localStorage.clear(); vi.mocked(listParentQuestionnaireRecords).mockResolvedValue({ records: [], nextOffset: null, latestRevision: 0, total: 0, enabled: false }) })
 function family() {
   vi.mocked(fetchMe).mockResolvedValue({ children: [{ id: 'C', nickname: '小朋友', createdAt: '2026-01-01' }], family: { inviteCode: 'TEST23' } } as Awaited<ReturnType<typeof fetchMe>>)
 }

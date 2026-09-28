@@ -7,7 +7,8 @@ import { listParentQuestionnaireRecords } from '@/lib/api/parentQuestionnaireApi
 import { setLocale } from '@/i18n'
 
 vi.mock('@/lib/api/authFetch', () => ({ authFetch: vi.fn() }))
-vi.mock('@/lib/api/parentQuestionnaireApi', () => ({
+vi.mock('@/lib/api/parentQuestionnaireApi', async importOriginal => ({
+  ...await importOriginal<typeof import('@/lib/api/parentQuestionnaireApi')>(),
   listParentQuestionnaireRecords: vi.fn(),
   saveParentQuestionnaireRecord: vi.fn(),
 }))
@@ -16,7 +17,7 @@ beforeEach(() => {
   localStorage.clear()
   setLocale('zh')
   vi.mocked(authFetch).mockResolvedValue({ ok: true })
-  vi.mocked(listParentQuestionnaireRecords).mockResolvedValue({ records: [], nextOffset: null })
+  vi.mocked(listParentQuestionnaireRecords).mockResolvedValue({ records: [], nextOffset: null, latestRevision: 0, total: 0, enabled: false })
 })
 
 afterEach(() => {
@@ -101,7 +102,7 @@ test('questionnaire opens without surrounding settings and restores them on retu
   expect(screen.queryByRole('button', { name: '复制邀请码' })).toBeNull()
 
   fireEvent.click(screen.getByRole('button', { name: '返回家庭设置' }))
-  await screen.findByRole('button', { name: '开始了解' })
+  await screen.findByRole('button', { name: '继续未完成的问卷' })
   expect(screen.getByRole('region', { name: '家长账号' })).toBeTruthy()
   expect(screen.getByRole('region', { name: '家庭成员' })).toBeTruthy()
   expect(screen.getByRole('button', { name: '注销整个家庭' })).toBeTruthy()
@@ -121,7 +122,7 @@ test('guest settings hide real profile and deletion controls and explain failed 
   expect(screen.queryByText('编辑孩子资料')).toBeNull()
   expect(screen.queryByLabelText('出生日期（由家长填写）')).toBeNull()
   expect(screen.queryByRole('button', { name: '注销整个家庭' })).toBeNull()
-  expect(listParentQuestionnaireRecords).toHaveBeenCalledWith('guest-parent', undefined)
+  expect(listParentQuestionnaireRecords).toHaveBeenCalledWith('guest-parent', undefined, 0, 'child-one')
 
   fireEvent.click(screen.getByRole('button', { name: '复制邀请码' }))
   expect((await screen.findByRole('alert')).textContent).toBe('暂时无法自动复制，请选中邀请码手动复制。')

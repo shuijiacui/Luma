@@ -44,6 +44,51 @@ test('daily conversations need no artwork; turns persist and retries do not dupl
   expect((await s.post(s.input({ text: 'different' }))).status).toBe(409)
 })
 
+test('chat only receives the opted-in latest questionnaire for this parent and child; old reports expire', async () => {
+  const model = vi.fn().mockResolvedValue(reply), s = setup({ parentChatMessages: model })
+  const answers = Object.fromEntries(Array.from({ length: 15 }, (_, index) => [`q${index + 1}`, 3]))
+  const save = (revision, childId) => request(s.app).post('/api/parent-questionnaire').set('Authorization', `Bearer ${s.parent.token}`).send({ revision, childId, childAge: 7, answers })
+  const toggle = enabled => request(s.app).put('/api/parent-questionnaire/preferences').set('Authorization', `Bearer ${s.parent.token}`).send({ childId: s.child.session.id, enabled })
+  const context = () => model.mock.calls.at(-1)[0].find(message => message.content.startsWith('家长自愿提供的近期问卷背景'))?.content
+  await save(0, null).expect(201)
+  await toggle(true).expect(200)
+  await s.post().expect(200)
+  expect(context()).toBeUndefined() // Unbound legacy answers must not be assigned implicitly.
+  const record = (await save(1, s.child.session.id).expect(201)).body
+  await toggle(false).expect(200)
+  await s.post(s.input({ revision: 1, requestId: 'questionnaire-02' })).expect(200)
+  expect(context()).toBeUndefined()
+  await toggle(true).expect(200)
+  await s.post(s.input({ revision: 2, requestId: 'questionnaire-03' })).expect(200)
+  expect(context()).toContain(record.createdAt)
+  expect(context()).toContain('照顾孩子的日常起居让我感到有些疲惫')
+  expect(context()).toContain('家长当前的说法和纠正优先于问卷')
+  expect(context()).not.toMatch(/"scores"|"total"|"dimensions"/)
+  const sibling = registerChild(s.db, { nickname: 'Sibling', creationCode: '5678', inviteCode: s.parent.family.inviteCode })
+  await request(s.app).post(`/api/children/${sibling.session.id}/chat`).set('Authorization', `Bearer ${s.parent.token}`).send(s.input()).expect(200)
+  expect(context()).toBeUndefined()
+  s.db.prepare('UPDATE parent_questionnaire_versions SET created_at = ? WHERE id = ?').run('2020-01-01T00:00:00.000Z', record.id)
+  await s.post(s.input({ revision: 3, requestId: 'questionnaire-04' })).expect(200)
+  expect(context()).toBeUndefined()
+})
+
+test('revoking questionnaire access while a reply is pending prevents persisting stale personalization', async () => {
+  let finish
+  const model = vi.fn(() => new Promise(resolve => { finish = resolve }))
+  const s = setup({ parentChatMessages: model })
+  const answers = Object.fromEntries(Array.from({ length: 15 }, (_, index) => [`q${index + 1}`, 3]))
+  await request(s.app).post('/api/parent-questionnaire').set('Authorization', `Bearer ${s.parent.token}`)
+    .send({ revision: 0, childId: s.child.session.id, childAge: 7, answers }).expect(201)
+  const toggle = enabled => request(s.app).put('/api/parent-questionnaire/preferences').set('Authorization', `Bearer ${s.parent.token}`).send({ childId: s.child.session.id, enabled })
+  await toggle(true).expect(200)
+  const pending = s.post().then(response => response)
+  await vi.waitFor(() => expect(model).toHaveBeenCalledOnce())
+  await toggle(false).expect(200)
+  finish(reply)
+  expect((await pending).status).toBe(409)
+  expect((await s.get()).body.turns).toEqual([])
+})
+
 test('artwork memory uses visible observations before report creation and validates citations', async () => {
   const model = vi.fn(), s = setup({ parentChatMessages: model }), id = s.add()
   model.mockResolvedValue({ reply: '这幅画里识别到了树。可以问问他想不想讲讲这棵树。', sourceIds: [id] })

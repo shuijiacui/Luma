@@ -100,6 +100,16 @@ export function createDb(path = process.env.DB_PATH || DEFAULT_DB_PATH) {
   );
   CREATE INDEX IF NOT EXISTS idx_parent_questionnaire_versions
     ON parent_questionnaire_versions(parent_id, revision DESC);`)
+  const questionnaireColumns = new Set(db.prepare('PRAGMA table_info(parent_questionnaire_versions)').all().map(row => row.name))
+  if (!questionnaireColumns.has('child_id')) db.exec('ALTER TABLE parent_questionnaire_versions ADD COLUMN child_id TEXT REFERENCES accounts(id)')
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_questionnaire_child ON parent_questionnaire_versions(parent_id, child_id, revision DESC);
+    CREATE TABLE IF NOT EXISTS parent_questionnaire_preferences (
+      parent_id TEXT NOT NULL REFERENCES accounts(id),
+      child_id TEXT NOT NULL REFERENCES accounts(id),
+      enabled INTEGER NOT NULL DEFAULT 0 CHECK(enabled IN (0, 1)),
+      version INTEGER NOT NULL DEFAULT 1,
+      PRIMARY KEY(parent_id, child_id)
+    );`)
   db.exec(`CREATE TABLE IF NOT EXISTS communication_guides (
     child_id TEXT NOT NULL REFERENCES accounts(id),
     locale TEXT NOT NULL CHECK(locale IN ('zh', 'en')),

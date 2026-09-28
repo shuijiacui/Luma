@@ -4,6 +4,7 @@ import { createApp } from '../src/app.js'
 import { createDb } from '../src/db.js'
 import { registerChild, registerParent } from '../src/services/authService.js'
 import { deleteFamily } from '../src/services/familyDeletion.js'
+import { readQuestionnaireContext } from '../src/services/parentQuestionnaireContext.js'
 
 const resources = []
 afterEach(() => { for (const cleanup of resources.splice(0).reverse()) cleanup() })
@@ -60,4 +61,35 @@ test('parent questionnaire appends immutable revisions and isolates records by p
 
   deleteFamily(db, parent.session.familyId, '.')
   expect(db.prepare('SELECT COUNT(*) AS n FROM parent_questionnaire_versions WHERE parent_id = ?').get(parent.session.id).n).toBe(0)
+})
+
+test('child-scoped history retains legacy records, paginates, and keeps consent private', async () => {
+  const { db, app, parent, otherParent, child } = setup()
+  const sibling = registerChild(db, { nickname: '小花', creationCode: '5678', inviteCode: parent.family.inviteCode })
+  const save = body => request(app).post('/api/parent-questionnaire').set('Authorization', auth(parent)).send({ childAge: 7, answers, ...body })
+  const history = id => request(app).get(`/api/parent-questionnaire/history?childId=${id}`).set('Authorization', auth(parent))
+  await save({ revision: 0 }).expect(201)
+  for (let revision = 1; revision <= 25; revision++) await save({ revision, childId: child.session.id }).expect(201)
+  await save({ revision: 26, childId: sibling.session.id }).expect(201)
+  const page = (await history(child.session.id)).body
+  expect(page).toMatchObject({ total: 25, latestRevision: 27, nextOffset: 24, enabled: false })
+  expect(page.responses).toHaveLength(24)
+  expect(page.responses.every(row => row.childId === child.session.id)).toBe(true)
+  const older = (await request(app).get(`/api/parent-questionnaire/history?childId=${child.session.id}&offset=24`).set('Authorization', auth(parent))).body
+  expect(older.responses.map(row => row.revision)).toEqual([2])
+  expect(older.nextOffset).toBeNull()
+  expect((await history('')).body.responses.map(row => row.revision)).toEqual([1])
+  expect((await history(sibling.session.id)).body.responses.map(row => row.revision)).toEqual([27])
+  const preference = token => request(app).put('/api/parent-questionnaire/preferences').set('Authorization', auth(token))
+  await preference(otherParent).send({ childId: child.session.id, enabled: true }).expect(403)
+  await preference(child).send({ childId: child.session.id, enabled: true }).expect(403)
+  await preference(parent).send({ childId: child.session.id, enabled: 'true' }).expect(400)
+  await preference(parent).send({ childId: child.session.id, enabled: true }).expect(200)
+  expect((await history(child.session.id)).body.enabled).toBe(true)
+  expect(readQuestionnaireContext(db, parent.session.id, sibling.session.id)).toBeNull()
+  expect(readQuestionnaireContext(db, otherParent.session.id, child.session.id)).toBeNull()
+  await request(app).get(`/api/parent-questionnaire/history?childId=${child.session.id}`).set('Authorization', auth(otherParent)).expect(403)
+  await request(app).post('/api/parent-questionnaire').set('Authorization', auth(otherParent)).send({ revision: 0, childAge: 7, answers, childId: child.session.id }).expect(403)
+  deleteFamily(db, parent.session.familyId, '.')
+  expect(db.prepare('SELECT COUNT(*) AS n FROM parent_questionnaire_preferences').get().n).toBe(0)
 })

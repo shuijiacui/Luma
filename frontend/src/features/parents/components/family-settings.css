@@ -95,6 +95,17 @@
 .family-settings-guest button svg { width: 13px; height: 13px; }
 .luma-parent-settings-page .luma-app-content { max-width: 1240px; }
 .luma-parent-settings-page .luma-app-title { padding-bottom: 2px; }
+.family-questionnaire-child { display: grid; gap: 8px; margin-top: 20px; color: #63725d; font-size: 12px; }
+.family-questionnaire-child select { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid #dfe5d6; border-radius: 10px; background: #fcfcf8; color: #3e503c; }
+.family-questionnaire-preference { margin-top: 20px; padding-top: 18px; border-top: 1px solid #e9ece0; }
+.family-questionnaire-preference label { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 13px; color: #4f6147; cursor: pointer; }
+.family-questionnaire-preference input { appearance: none; width: 36px; height: 21px; flex-shrink: 0; border: 1px solid #cbd4c3; border-radius: 20px; background: #e8ede2; cursor: pointer; }
+.family-questionnaire-preference input::before { content: ''; display: block; width: 15px; height: 15px; margin: 2px; border-radius: 50%; background: white; box-shadow: 0 1px 3px #3e503c26; }
+.family-questionnaire-preference input:checked { background: #71875f; border-color: #71875f; }
+.family-questionnaire-preference input:checked::before { transform: translateX(15px); }
+.family-questionnaire-preference input:disabled { cursor: wait; opacity: .6; }
+.family-questionnaire-preference p { margin-top: 8px; font-size: 11px; color: #838d7a; line-height: 1.8; }
+.family-questionnaire-preference input:focus-visible, .family-questionnaire-child select:focus-visible { outline: 2px solid #71875f; outline-offset: 3px; }
 @container family-settings (min-width: 820px) {
   .family-settings-columns { grid-template-columns: minmax(0, 1.06fr) minmax(0, 1fr); }
   .family-settings-members { padding: 30px 36px 34px; }
