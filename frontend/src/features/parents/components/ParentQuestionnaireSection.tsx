@@ -480,7 +480,7 @@ function QuestionnaireWorkspace({ ownerId, token, embedded = false, onExpandedCh
         {enabled && (!latest || Date.now() - Date.parse(latest.createdAt) > 90 * 86400000) && <p>{t('填写一份近期问卷后，助手才能参考。')}</p>}
         {preferenceError && <p role="alert">{t(preferenceError)}</p>}
       </div>}
-      <p className="family-questionnaire-note">{t(!token ? '游客问卷与草稿只保存在此浏览器，用于个人回顾。' : !childId ? '这些记录尚未关联孩子，不会用于聊天。请选择孩子后填写一份新记录。' : '问卷与你的孩子创作记录分开保存，仅你自己的沟通助手可按设置参考。')}</p>
+      <p className="family-questionnaire-note">{t(!token ? '游客问卷与草稿只保存在此浏览器，用于个人回顾。' : !childId ? '这些记录尚未关联孩子，不会用于聊天。请选择孩子后填写一份新记录。' : '回答将按隐私说明安全保存，并在您主动开启后用于家长端沟通助手的语境调整；不会向孩子展示，也不用于心理诊断。')}</p>
     </section>
   )
 }

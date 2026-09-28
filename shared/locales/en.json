@@ -1345,5 +1345,5 @@
   "设置未保存，请重试。": "Your setting was not saved. Please try again.",
   "游客问卷与草稿只保存在此浏览器，用于个人回顾。": "Guest questionnaires and drafts stay in this browser for your own reflection.",
   "这些记录尚未关联孩子，不会用于聊天。请选择孩子后填写一份新记录。": "These records are not linked to a child and will not be used in chat. Choose a child to complete a new record.",
-  "问卷与你的孩子创作记录分开保存，仅你自己的沟通助手可按设置参考。": "Questionnaires are stored separately from your child's artwork. Only your own chat assistant can use them, according to your settings."
+  "回答将按隐私说明安全保存，并在您主动开启后用于家长端沟通助手的语境调整；不会向孩子展示，也不用于心理诊断。": "Your responses are stored securely under our privacy notice. Only after you enable it will they be used to adjust the context for the parent conversation assistant. They will not be shown to your child or used for psychological diagnosis."
 }
